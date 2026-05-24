@@ -13,6 +13,7 @@ interface TaskFormModalProps {
   members: TeamMember[];
   membersLoading?: boolean;
   defaultAssignees?: string[];
+  defaultDueDate?: string | null;
 }
 
 const TaskFormModal = ({
@@ -23,6 +24,7 @@ const TaskFormModal = ({
   members,
   membersLoading = false,
   defaultAssignees = [],
+  defaultDueDate = null,
 }: TaskFormModalProps) => {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -42,9 +44,9 @@ const TaskFormModal = ({
           ? defaultAssignees
           : []
     );
-    setDueDate(initial?.dueDate ?? "");
+    setDueDate(initial?.dueDate ?? defaultDueDate ?? "");
     setUrgent(initial?.urgent ?? false);
-  }, [open, initial, defaultAssignees]);
+  }, [open, initial, defaultAssignees, defaultDueDate]);
 
   if (!open) return null;
 

@@ -20,6 +20,7 @@ export interface TasksDocument {
 
 export type TaskFilter = "all" | "active" | "completed";
 export type TaskOwnershipFilter = "all" | "mine";
+export type TaskViewMode = "board" | "calendar";
 
 export interface CreateTaskInput {
   title: string;

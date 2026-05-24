@@ -22,11 +22,13 @@ import type {
   ManagementTask,
   TaskFilter,
   TaskOwnershipFilter,
+  TaskViewMode,
 } from "@/types/task";
 import type { TeamMember } from "@/types/teamMember";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import TaskFormModal from "./TaskFormModal";
+import TaskCalendar from "./TaskCalendar";
 import UrgentFlag from "./UrgentFlag";
 
 interface TaskBoardProps {
@@ -45,6 +47,11 @@ const ownershipFilters: { id: TaskOwnershipFilter; label: string }[] = [
   { id: "mine", label: "My tasks" },
 ];
 
+const viewModes: { id: TaskViewMode; label: string }[] = [
+  { id: "board", label: "Board" },
+  { id: "calendar", label: "Calendar" },
+];
+
 const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
   const [tasks, setTasks] = useState<ManagementTask[]>([]);
   const [members, setMembers] = useState<TeamMember[]>([]);
@@ -53,8 +60,10 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
   const [filter, setFilter] = useState<TaskFilter>("all");
   const [ownershipFilter, setOwnershipFilter] =
     useState<TaskOwnershipFilter>("all");
+  const [viewMode, setViewMode] = useState<TaskViewMode>("board");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ManagementTask | null>(null);
+  const [defaultDueDate, setDefaultDueDate] = useState<string | null>(null);
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
@@ -192,11 +201,13 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
 
   const openEdit = (task: ManagementTask) => {
     setEditing(task);
+    setDefaultDueDate(null);
     setModalOpen(true);
   };
 
-  const openNew = () => {
+  const openNew = (dueDate?: string | null) => {
     setEditing(null);
+    setDefaultDueDate(dueDate ?? null);
     setModalOpen(true);
   };
 
@@ -220,7 +231,7 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
           </div>
           <button
             type="button"
-            onClick={openNew}
+            onClick={() => openNew()}
             className="shrink-0 rounded-full bg-white px-6 py-3 text-sm font-semibold text-nurture-sage-dark shadow-md transition hover:scale-[1.02] hover:shadow-lg"
           >
             + Add task
@@ -255,6 +266,22 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
 
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex rounded-full border border-nurture-sage/25 bg-white p-1 shadow-sm">
+            {viewModes.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setViewMode(option.id)}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                  viewMode === option.id
+                    ? "bg-nurture-charcoal text-white shadow-sm"
+                    : "text-nurture-charcoal/70 hover:text-nurture-sage-dark"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
           <div className="inline-flex rounded-full border border-nurture-sage/25 bg-white p-1 shadow-sm">
             {ownershipFilters.map((option) => (
               <button
@@ -301,6 +328,12 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
         <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-nurture-sage/30 bg-white/60">
           <p className="text-nurture-charcoal/50">Loading tasks…</p>
         </div>
+      ) : viewMode === "calendar" ? (
+        <TaskCalendar
+          tasks={filtered}
+          onTaskClick={openEdit}
+          onDayClick={(dateKey) => openNew(dateKey)}
+        />
       ) : filtered.length === 0 ? (
         <div className="flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed border-nurture-sage/30 bg-white/80 p-8 text-center">
           <p className="font-serif text-xl text-nurture-charcoal">
@@ -328,7 +361,7 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
           ) : (
             <button
               type="button"
-              onClick={openNew}
+              onClick={() => openNew()}
               className="mt-6 rounded-full bg-nurture-sage px-6 py-2.5 text-sm font-medium text-white hover:bg-nurture-sage-dark"
             >
               Create a task
@@ -495,12 +528,14 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
         onClose={() => {
           setModalOpen(false);
           setEditing(null);
+          setDefaultDueDate(null);
         }}
         onSubmit={handleCreateOrUpdate}
         initial={editing}
         members={members}
         membersLoading={membersLoading}
         defaultAssignees={defaultAssignees}
+        defaultDueDate={defaultDueDate}
       />
     </div>
   );
