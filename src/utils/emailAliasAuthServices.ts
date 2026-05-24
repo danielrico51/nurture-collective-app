@@ -12,6 +12,7 @@ import {
   type SignInInput,
   type SignUpInput,
 } from "aws-amplify/auth";
+import { buildRequiredSignUpAttributes } from "@/utils/signUpAttributes";
 
 const PENDING_SIGN_UP_USERNAME_KEY = "nurture_pending_sign_up_username";
 
@@ -66,15 +67,17 @@ export const emailAliasAuthServices = {
     const username = createInternalUsername();
     rememberPendingUsername(username);
 
+    const userAttributes = buildRequiredSignUpAttributes(
+      email,
+      (input.options?.userAttributes ?? {}) as Record<string, string | undefined>
+    );
+
     return signUp({
       username,
       password: input.password,
       options: {
         ...input.options,
-        userAttributes: {
-          ...input.options?.userAttributes,
-          email,
-        },
+        userAttributes,
       },
     });
   },

@@ -36,6 +36,15 @@ const SignupPage = () => {
                 if (!formData.email) {
                   errors.email = "Email is required";
                 }
+                if (!formData.family_name) {
+                  errors.family_name = "Last name is required";
+                }
+                if (!formData.phone_number) {
+                  errors.phone_number = "Phone number is required";
+                }
+                if (!formData.address) {
+                  errors.address = "Address is required";
+                }
                 return errors;
               },
             }}
@@ -64,22 +73,35 @@ const SignupPage = () => {
                   label: "Last name",
                   placeholder: "Your last name",
                   order: 2,
+                  isRequired: true,
+                },
+                phone_number: {
+                  label: "Phone",
+                  placeholder: "+12065550100",
+                  order: 3,
+                  isRequired: true,
+                },
+                address: {
+                  label: "Address",
+                  placeholder: "City, state or full mailing address",
+                  order: 4,
+                  isRequired: true,
                 },
                 email: {
                   label: "Email",
                   placeholder: "you@example.com",
-                  order: 3,
+                  order: 5,
                   isRequired: true,
                 },
                 password: {
                   label: "Password",
                   placeholder: "Create a password",
-                  order: 4,
+                  order: 6,
                   isRequired: true,
                 },
                 confirm_password: {
                   label: "Confirm password",
-                  order: 5,
+                  order: 7,
                   isRequired: true,
                 },
               },
@@ -91,7 +113,13 @@ const SignupPage = () => {
                 },
               },
             }}
-            signUpAttributes={["email", "given_name", "family_name"]}
+            signUpAttributes={[
+              "email",
+              "given_name",
+              "family_name",
+              "phone_number",
+              "address",
+            ]}
           />
           <p className="pb-6 text-center text-sm text-nurture-charcoal/70">
             Already a member?{" "}
