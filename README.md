@@ -53,8 +53,32 @@ A Next.js marketing site and member portal for pre- and postpartum mom concierge
 | `/signup` | Create account (email verification code) |
 | `/signin` | Sign in |
 | `/dashboard` | Protected member area (requires sign-in) |
+| `/management/tasks` | Shared management task board (requires sign-in) |
 
 After sign-in or sign-up, you are redirected to `/dashboard`.
+
+## Management task board
+
+Internal checklist for your team: add, edit, complete, and delete tasks. Everyone signed in sees the same list (title, assignee, deadline, status).
+
+Tasks are stored as JSON in **Amazon S3** (`TASKS_S3_BUCKET`).
+
+### Setup S3
+
+1. Create a bucket (e.g. `nurture-collective-tasks-prod`) in the same region as Cognito.
+2. Add to `.env.local` (and Amplify environment variables):
+
+   ```env
+   TASKS_S3_BUCKET=your-bucket-name
+   ```
+
+3. **Local dev:** grant your AWS profile `s3:GetObject` and `s3:PutObject` on `arn:aws:s3:::your-bucket-name/*` (or set `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` in `.env.local`).
+
+4. **Amplify Hosting:** attach an IAM policy to the app’s **Compute role** (App settings → IAM roles) with the same S3 permissions on that bucket.
+
+5. Optional: set `MANAGEMENT_COGNITO_GROUP=management` and add users to that Cognito group to restrict access. If unset, any authenticated user can use the board.
+
+6. Redeploy after adding env vars in Amplify.
 
 ## Build
 
@@ -70,7 +94,7 @@ Cognito env vars must be set for auth pages to work. For CI/Amplify Hosting, set
 1. Push this repo to GitHub.
 2. In [AWS Amplify Console](https://console.aws.amazon.com/amplify/), create a new app → **Host web app** → connect the repository.
 3. Deploy the backend with Gen 2 pipeline or link an existing sandbox branch.
-4. Add environment variables in **Hosting → Environment variables** (same three `NEXT_PUBLIC_*` Cognito values).
+4. Add environment variables in **Hosting → Environment variables** (`NEXT_PUBLIC_*` Cognito values and `TASKS_S3_BUCKET`).
 5. Redeploy.
 
 ## Project structure

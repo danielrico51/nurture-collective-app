@@ -6,6 +6,7 @@ import { getCurrentUser } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { emailAliasAuthServices } from "@/utils/emailAliasAuthServices";
 import { useEffect } from "react";
 
 const SigninPage = () => {
@@ -45,6 +46,7 @@ const SigninPage = () => {
           <Authenticator
             initialState="signIn"
             hideSignUp
+            services={emailAliasAuthServices}
             formFields={{
               signIn: {
                 username: {

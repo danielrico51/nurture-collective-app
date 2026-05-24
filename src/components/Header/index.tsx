@@ -72,6 +72,12 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
               >
                 Dashboard
               </Link>
+              <Link
+                href="/management/tasks"
+                className="text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
+              >
+                Tasks
+              </Link>
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -127,6 +133,12 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
               <>
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
                   Dashboard
+                </Link>
+                <Link
+                  href="/management/tasks"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Tasks
                 </Link>
                 <button type="button" onClick={handleSignOut}>
                   Sign out

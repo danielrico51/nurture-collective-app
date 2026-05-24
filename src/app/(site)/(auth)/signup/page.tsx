@@ -6,6 +6,7 @@ import type { ValidatorResult } from "@aws-amplify/ui";
 import { Hub } from "aws-amplify/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { emailAliasAuthServices } from "@/utils/emailAliasAuthServices";
 import { useEffect } from "react";
 
 const SignupPage = () => {
@@ -28,6 +29,16 @@ const SignupPage = () => {
         <div className="mx-auto max-w-lg rounded-xl bg-white p-2 shadow-auth">
           <Authenticator
             initialState="signUp"
+            services={{
+              ...emailAliasAuthServices,
+              async validateCustomSignUp(formData) {
+                const errors: ValidatorResult = {};
+                if (!formData.email) {
+                  errors.email = "Email is required";
+                }
+                return errors;
+              },
+            }}
             components={{
               Header() {
                 return (
@@ -40,15 +51,6 @@ const SignupPage = () => {
                     </p>
                   </div>
                 );
-              },
-            }}
-            services={{
-              async validateCustomSignUp(formData) {
-                const errors: ValidatorResult = {};
-                if (!formData.email) {
-                  errors.email = "Email is required";
-                }
-                return errors;
               },
             }}
             formFields={{
