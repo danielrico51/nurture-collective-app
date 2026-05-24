@@ -1,5 +1,9 @@
 import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
-import { defaultProvider } from "@aws-sdk/credential-provider-node";
+import {
+  getServerCredentialHint,
+  getServerCredentials,
+  hasExplicitServerCredentials,
+} from "@/lib/aws/amplifyCredentials";
 
 export const getCognitoRegion = () =>
   process.env.AWS_REGION ??
@@ -9,12 +13,12 @@ export const getCognitoRegion = () =>
 export const getCognitoClient = () =>
   new CognitoIdentityProviderClient({
     region: getCognitoRegion(),
-    credentials: defaultProvider(),
+    credentials: getServerCredentials(),
   });
 
 export const getRuntimeCredentialHint = () => ({
-  hasAccessKey: Boolean(process.env.AWS_ACCESS_KEY_ID),
-  hasSessionToken: Boolean(process.env.AWS_SESSION_TOKEN),
+  ...getServerCredentialHint(),
+  usingExplicitServerCredentials: hasExplicitServerCredentials(),
   region: getCognitoRegion(),
   poolId: process.env.NEXT_PUBLIC_USER_POOL_ID?.trim() ?? "",
 });
@@ -32,8 +36,9 @@ export const formatCognitoListError = (error: unknown) => {
     return {
       name,
       detail,
-      userMessage:
-        "Showing your account only. Amplify SSR compute credentials were not available. Confirm the compute role is set on the main branch and redeploy.",
+      userMessage: hint.usingExplicitServerCredentials
+        ? "Showing your account only. Server AWS credentials are configured but Cognito still could not be reached."
+        : "Showing your account only. Set SERVER_AWS_ACCESS_KEY_ID and SERVER_AWS_SECRET_ACCESS_KEY in Amplify environment variables for the team list.",
       hint,
     };
   }
@@ -48,7 +53,7 @@ export const formatCognitoListError = (error: unknown) => {
       name,
       detail,
       userMessage:
-        "Showing your account only. Grant cognito-idp:ListUsers on the Amplify compute role for the full team list.",
+        "Showing your account only. The server IAM user needs cognito-idp:ListUsers on your user pool.",
       hint,
     };
   }

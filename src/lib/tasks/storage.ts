@@ -10,6 +10,7 @@ import {
   writeLocalTasksDocument,
 } from "@/lib/tasks/localStorage";
 import { normalizeTask } from "@/lib/tasks/normalize";
+import { getServerCredentials } from "@/lib/aws/amplifyCredentials";
 
 const DEFAULT_KEY = "management/tasks.json";
 const DEFAULT_TASKS_BUCKET = "nurture-collective-tasks";
@@ -31,7 +32,10 @@ const getS3Client = () => {
     process.env.AWS_REGION ??
     process.env.NEXT_PUBLIC_AWS_REGION ??
     "us-east-1";
-  return new S3Client({ region });
+  return new S3Client({
+    region,
+    credentials: getServerCredentials(),
+  });
 };
 
 const getBucket = () =>

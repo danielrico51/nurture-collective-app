@@ -19,6 +19,8 @@ frontend:
           AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-us-east-1}
           TASKS_S3_KEY=${TASKS_S3_KEY}
           MANAGEMENT_COGNITO_GROUP=${MANAGEMENT_COGNITO_GROUP}
+          SERVER_AWS_ACCESS_KEY_ID=${SERVER_AWS_ACCESS_KEY_ID}
+          SERVER_AWS_SECRET_ACCESS_KEY=${SERVER_AWS_SECRET_ACCESS_KEY}
           EOF
         - npm run build
   artifacts:
