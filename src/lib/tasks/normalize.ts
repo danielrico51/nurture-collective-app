@@ -10,19 +10,21 @@ export const parseAssigneeList = (
   legacyAssignee?: string
 ): string[] => {
   if (Array.isArray(assignees)) {
-    return [...new Set(assignees.map((name) => name.trim()).filter(Boolean))];
+    return Array.from(
+      new Set(assignees.map((name) => name.trim()).filter(Boolean))
+    );
   }
 
   if (!legacyAssignee?.trim()) return [];
 
-  return [
-    ...new Set(
+  return Array.from(
+    new Set(
       legacyAssignee
         .split(/[/,]+/)
         .map((name) => name.trim())
         .filter(Boolean)
-    ),
-  ];
+    )
+  );
 };
 
 export const normalizeTask = (raw: RawTask): ManagementTask => {

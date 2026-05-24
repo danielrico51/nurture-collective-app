@@ -27,7 +27,7 @@ export const getUserAssigneeMatchers = (
     add(member.label.split(/\s+/)[0]);
   }
 
-  return [...matchers];
+  return Array.from(matchers);
 };
 
 export const taskAssignedToUser = (
