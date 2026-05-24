@@ -1,5 +1,6 @@
 import { fetchAuthSession } from "aws-amplify/auth";
 import type { CreateTaskInput, ManagementTask, UpdateTaskInput } from "@/types/task";
+import type { TeamMember } from "@/types/teamMember";
 
 const authHeaders = async (): Promise<HeadersInit> => {
   const session = await fetchAuthSession();
@@ -28,6 +29,15 @@ export const fetchTasks = async (): Promise<ManagementTask[]> => {
   });
   const data = await handleResponse<{ tasks: ManagementTask[] }>(response);
   return data.tasks;
+};
+
+export const fetchTeamMembers = async (): Promise<TeamMember[]> => {
+  const response = await fetch("/api/tasks/members", {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  const data = await handleResponse<{ members: TeamMember[] }>(response);
+  return data.members;
 };
 
 export const createTask = async (

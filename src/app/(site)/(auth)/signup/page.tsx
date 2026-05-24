@@ -36,6 +36,19 @@ const SignupPage = () => {
                 if (!formData.email) {
                   errors.email = "Email is required";
                 }
+                const username = String(
+                  formData["custom:username"] ?? formData.custom_username ?? ""
+                ).trim();
+                if (!username || username.length < 3) {
+                  errors["custom:username"] =
+                    "Username is required (at least 3 characters)";
+                } else if (username.includes("@")) {
+                  errors["custom:username"] =
+                    "Username cannot be an email address";
+                } else if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
+                  errors["custom:username"] =
+                    "Use only letters, numbers, dots, underscores, and hyphens";
+                }
                 if (!formData.family_name) {
                   errors.family_name = "Last name is required";
                 }
@@ -64,44 +77,50 @@ const SignupPage = () => {
             }}
             formFields={{
               signUp: {
+                "custom:username": {
+                  label: "Username",
+                  placeholder: "Choose a username",
+                  order: 1,
+                  isRequired: true,
+                },
                 given_name: {
                   label: "First name",
                   placeholder: "Your first name",
-                  order: 1,
+                  order: 2,
                 },
                 family_name: {
                   label: "Last name",
                   placeholder: "Your last name",
-                  order: 2,
+                  order: 3,
                   isRequired: true,
                 },
                 phone_number: {
                   label: "Phone",
                   placeholder: "+12065550100",
-                  order: 3,
+                  order: 4,
                   isRequired: true,
                 },
                 address: {
                   label: "Address",
                   placeholder: "City, state or full mailing address",
-                  order: 4,
+                  order: 5,
                   isRequired: true,
                 },
                 email: {
                   label: "Email",
                   placeholder: "you@example.com",
-                  order: 5,
+                  order: 6,
                   isRequired: true,
                 },
                 password: {
                   label: "Password",
                   placeholder: "Create a password",
-                  order: 6,
+                  order: 7,
                   isRequired: true,
                 },
                 confirm_password: {
                   label: "Confirm password",
-                  order: 7,
+                  order: 8,
                   isRequired: true,
                 },
               },

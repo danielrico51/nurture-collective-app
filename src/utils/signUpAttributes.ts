@@ -18,6 +18,25 @@ export const normalizePhoneNumber = (value: string) => {
 
 type AttributeMap = Record<string, string | undefined>;
 
+export const resolveCognitoUsername = (raw: AttributeMap) => {
+  const username =
+    raw["custom:username"]?.trim() ?? raw.custom_username?.trim() ?? "";
+
+  if (!username || username.length < 3) {
+    throw new Error("Username is required (at least 3 characters)");
+  }
+  if (username.includes("@")) {
+    throw new Error("Username cannot be an email address");
+  }
+  if (!/^[a-zA-Z0-9._-]+$/.test(username)) {
+    throw new Error(
+      "Username can only contain letters, numbers, dots, underscores, and hyphens"
+    );
+  }
+
+  return username.toLowerCase();
+};
+
 export const buildRequiredSignUpAttributes = (
   email: string,
   raw: AttributeMap
@@ -26,6 +45,7 @@ export const buildRequiredSignUpAttributes = (
   const familyName = raw.family_name?.trim() ?? "";
   const phoneNumber = normalizePhoneNumber(raw.phone_number ?? "");
   const address = raw.address?.trim() ?? "";
+  const customUsername = resolveCognitoUsername(raw);
   const name =
     raw.name?.trim() ||
     [givenName, familyName].filter(Boolean).join(" ").trim();
@@ -49,5 +69,6 @@ export const buildRequiredSignUpAttributes = (
     name,
     phone_number: phoneNumber,
     address,
+    "custom:username": customUsername,
   };
 };

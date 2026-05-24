@@ -50,8 +50,8 @@ const SigninPage = () => {
             formFields={{
               signIn: {
                 username: {
-                  label: "Email",
-                  placeholder: "you@example.com",
+                  label: "Username or email",
+                  placeholder: "yourname or you@example.com",
                   isRequired: true,
                 },
                 password: {
@@ -69,7 +69,7 @@ const SigninPage = () => {
                       Welcome back
                     </h2>
                     <p className="mt-2 text-sm text-nurture-charcoal/70">
-                      Sign in to your member dashboard
+                      Sign in with your username or email
                     </p>
                   </div>
                 );

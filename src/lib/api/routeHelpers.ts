@@ -26,7 +26,10 @@ export const handleStorageError = (error: unknown) => {
 
   if (message.includes("TASKS_S3_BUCKET")) {
     return NextResponse.json(
-      { error: "Task storage is not configured on the server" },
+      {
+        error:
+          "Task storage is not configured. Set TASKS_S3_BUCKET in .env.local (local) or Amplify environment variables (production).",
+      },
       { status: 503 }
     );
   }

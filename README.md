@@ -61,7 +61,9 @@ After sign-in or sign-up, you are redirected to `/dashboard`.
 
 Internal checklist for your team: add, edit, complete, and delete tasks. Everyone signed in sees the same list (title, assignee, deadline, status).
 
-Tasks are stored as JSON in **Amazon S3** (`TASKS_S3_BUCKET`).
+Tasks are stored as JSON in **Amazon S3** (`TASKS_S3_BUCKET`). Without it, local dev falls back to `.data/management/tasks.json`.
+
+Team assignees are loaded from your **Cognito user pool** (or a Cognito group if `MANAGEMENT_COGNITO_GROUP` is set).
 
 ### Setup S3
 
@@ -74,7 +76,9 @@ Tasks are stored as JSON in **Amazon S3** (`TASKS_S3_BUCKET`).
 
 3. **Local dev:** grant your AWS profile `s3:GetObject` and `s3:PutObject` on `arn:aws:s3:::your-bucket-name/*` (or set `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` in `.env.local`).
 
-4. **Amplify Hosting:** attach an IAM policy to the app’s **Compute role** (App settings → IAM roles) with the same S3 permissions on that bucket.
+4. **Amplify Hosting:** attach an IAM policy to the app’s **Compute role** with:
+   - `s3:GetObject` and `s3:PutObject` on `arn:aws:s3:::your-bucket-name/*`
+   - `cognito-idp:ListUsers` on your user pool (and `ListUsersInGroup` if using a group)
 
 5. Optional: set `MANAGEMENT_COGNITO_GROUP=management` and add users to that Cognito group to restrict access. If unset, any authenticated user can use the board.
 

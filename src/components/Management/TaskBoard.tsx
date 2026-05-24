@@ -4,6 +4,7 @@ import {
   createTask,
   deleteTask,
   fetchTasks,
+  fetchTeamMembers,
   updateTask,
 } from "@/lib/api/tasksClient";
 import {
@@ -18,12 +19,14 @@ import type {
   ManagementTask,
   TaskFilter,
 } from "@/types/task";
+import type { TeamMember } from "@/types/teamMember";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import TaskFormModal from "./TaskFormModal";
 
 interface TaskBoardProps {
   userEmail?: string;
+  userDisplayName?: string;
 }
 
 const filters: { id: TaskFilter; label: string }[] = [
@@ -32,8 +35,10 @@ const filters: { id: TaskFilter; label: string }[] = [
   { id: "completed", label: "Done" },
 ];
 
-const TaskBoard = ({ userEmail }: TaskBoardProps) => {
+const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
   const [tasks, setTasks] = useState<ManagementTask[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [membersLoading, setMembersLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<TaskFilter>("all");
   const [modalOpen, setModalOpen] = useState(false);
@@ -53,9 +58,35 @@ const TaskBoard = ({ userEmail }: TaskBoardProps) => {
     }
   }, []);
 
+  const loadMembers = useCallback(async () => {
+    setMembersLoading(true);
+    try {
+      const data = await fetchTeamMembers();
+      setMembers(data);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not load team members"
+      );
+    } finally {
+      setMembersLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     loadTasks();
-  }, [loadTasks]);
+    loadMembers();
+  }, [loadTasks, loadMembers]);
+
+  const defaultAssignee = useMemo(() => {
+    if (!members.length) return userDisplayName ?? userEmail?.split("@")[0] ?? "";
+    const match = members.find(
+      (m) =>
+        m.email === userEmail ||
+        m.username === userDisplayName ||
+        m.label === userDisplayName
+    );
+    return match?.label ?? members[0]?.label ?? "";
+  }, [members, userEmail, userDisplayName]);
 
   const filtered = useMemo(() => {
     return tasks.filter((task) => {
@@ -337,7 +368,9 @@ const TaskBoard = ({ userEmail }: TaskBoardProps) => {
         }}
         onSubmit={handleCreateOrUpdate}
         initial={editing}
-        defaultAssignee={userEmail?.split("@")[0] ?? ""}
+        members={members}
+        membersLoading={membersLoading}
+        defaultAssignee={defaultAssignee}
       />
     </div>
   );

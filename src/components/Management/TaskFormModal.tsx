@@ -1,6 +1,7 @@
 "use client";
 
 import type { CreateTaskInput, ManagementTask } from "@/types/task";
+import type { TeamMember } from "@/types/teamMember";
 import { FormEvent, useEffect, useState } from "react";
 
 interface TaskFormModalProps {
@@ -8,6 +9,8 @@ interface TaskFormModalProps {
   onClose: () => void;
   onSubmit: (input: CreateTaskInput) => Promise<void>;
   initial?: ManagementTask | null;
+  members: TeamMember[];
+  membersLoading?: boolean;
   defaultAssignee?: string;
 }
 
@@ -16,6 +19,8 @@ const TaskFormModal = ({
   onClose,
   onSubmit,
   initial,
+  members,
+  membersLoading = false,
   defaultAssignee = "",
 }: TaskFormModalProps) => {
   const [title, setTitle] = useState("");
@@ -89,13 +94,29 @@ const TaskFormModal = ({
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
               <label className="block text-sm font-medium">Responsible</label>
-              <input
+              <select
                 required
                 value={assignee}
                 onChange={(e) => setAssignee(e.target.value)}
-                className="mt-1.5 w-full rounded-xl border border-nurture-sage/30 px-4 py-2.5 text-sm focus:border-nurture-sage focus:outline-none focus:ring-2 focus:ring-nurture-sage/30"
-                placeholder="Name or email"
-              />
+                disabled={membersLoading || members.length === 0}
+                className="mt-1.5 w-full rounded-xl border border-nurture-sage/30 bg-white px-4 py-2.5 text-sm focus:border-nurture-sage focus:outline-none focus:ring-2 focus:ring-nurture-sage/30 disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                <option value="">
+                  {membersLoading
+                    ? "Loading team…"
+                    : members.length === 0
+                      ? "No team members found"
+                      : "Select a team member"}
+                </option>
+                {members.map((member) => (
+                  <option key={member.id} value={member.label}>
+                    {member.label}
+                    {member.email && member.email !== member.label
+                      ? ` (${member.email})`
+                      : ""}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="block text-sm font-medium">Deadline</label>
@@ -117,7 +138,7 @@ const TaskFormModal = ({
             </button>
             <button
               type="submit"
-              disabled={saving}
+              disabled={saving || members.length === 0}
               className="rounded-full bg-nurture-sage px-6 py-2.5 text-sm font-medium text-white hover:bg-nurture-sage-dark disabled:opacity-60"
             >
               {saving ? "Saving…" : initial ? "Save changes" : "Add task"}

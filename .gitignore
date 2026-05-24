@@ -8,6 +8,7 @@ out/
 # Env
 .env*.local
 *.local
+.data/
 
 # Logs
 *.log

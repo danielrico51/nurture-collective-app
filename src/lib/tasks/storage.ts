@@ -5,6 +5,10 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import type { ManagementTask, TasksDocument } from "@/types/task";
+import {
+  readLocalTasksDocument,
+  writeLocalTasksDocument,
+} from "@/lib/tasks/localStorage";
 
 const DEFAULT_KEY = "management/tasks.json";
 
@@ -14,12 +18,20 @@ const emptyDocument = (): TasksDocument => ({
   updatedAt: new Date().toISOString(),
 });
 
-const getClient = () => {
+const useLocalStorage = () => {
+  const bucket = process.env.TASKS_S3_BUCKET?.trim();
+  if (bucket) return false;
+  return (
+    process.env.TASKS_USE_LOCAL_STORAGE === "true" ||
+    process.env.NODE_ENV === "development"
+  );
+};
+
+const getS3Client = () => {
   const region =
     process.env.AWS_REGION ??
     process.env.NEXT_PUBLIC_AWS_REGION ??
     "us-east-1";
-
   return new S3Client({ region });
 };
 
@@ -33,8 +45,11 @@ const getBucket = () => {
 
 const getObjectKey = () => process.env.TASKS_S3_KEY?.trim() || DEFAULT_KEY;
 
-export const readTasksDocument = async (): Promise<TasksDocument> => {
-  const client = getClient();
+export const getTasksStorageMode = (): "local" | "s3" =>
+  useLocalStorage() ? "local" : "s3";
+
+const readS3TasksDocument = async (): Promise<TasksDocument> => {
+  const client = getS3Client();
   const Bucket = getBucket();
   const Key = getObjectKey();
 
@@ -62,10 +77,8 @@ export const readTasksDocument = async (): Promise<TasksDocument> => {
   }
 };
 
-export const writeTasksDocument = async (
-  document: TasksDocument
-): Promise<void> => {
-  const client = getClient();
+const writeS3TasksDocument = async (document: TasksDocument): Promise<void> => {
+  const client = getS3Client();
   const Bucket = getBucket();
   const Key = getObjectKey();
 
@@ -82,6 +95,22 @@ export const writeTasksDocument = async (
       ContentType: "application/json",
     })
   );
+};
+
+export const readTasksDocument = async (): Promise<TasksDocument> => {
+  if (useLocalStorage()) {
+    return readLocalTasksDocument();
+  }
+  return readS3TasksDocument();
+};
+
+export const writeTasksDocument = async (
+  document: TasksDocument
+): Promise<void> => {
+  if (useLocalStorage()) {
+    return writeLocalTasksDocument(document);
+  }
+  return writeS3TasksDocument(document);
 };
 
 export const listTasks = async (): Promise<ManagementTask[]> => {
