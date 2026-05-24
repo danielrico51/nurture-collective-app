@@ -3,8 +3,8 @@ frontend:
   phases:
     preBuild:
       commands:
-        - nvm install 18.19.0
-        - nvm use 18.19.0
+        - nvm install 20
+        - nvm use 20
         - node -v
         - npm cache clean --force
         - npm install --legacy-peer-deps --no-audit

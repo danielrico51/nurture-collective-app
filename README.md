@@ -4,7 +4,7 @@ A Next.js marketing site and member portal for pre- and postpartum mom concierge
 
 ## Prerequisites
 
-- Node.js 18.19+
+- Node.js 20+
 - npm 9.8+
 - AWS account (for Amplify sandbox or hosting)
 
