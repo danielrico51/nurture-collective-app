@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireManagementAuth } from "@/lib/api/routeHelpers";
 import {
-  isCognitoAdminAccessError,
+  formatCognitoListError,
   listTeamMembers,
   teamMemberFromAuthUser,
 } from "@/lib/tasks/members";
@@ -22,6 +22,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Team members error:", error);
+    const formatted = formatCognitoListError(error);
     const message =
       error instanceof Error ? error.message : "Failed to load team members";
 
@@ -36,9 +37,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({
         members: [teamMemberFromAuthUser(auth.user)],
         partial: true,
-        message: isCognitoAdminAccessError(error)
-          ? "Showing your account only. Grant cognito-idp:ListUsers on the Amplify compute role for the full team list."
-          : "Showing your account only. Could not load the full team from Cognito.",
+        message: formatted.userMessage,
+        debug: {
+          errorName: formatted.name,
+          errorDetail: formatted.detail,
+          ...formatted.hint,
+        },
       });
     }
 

@@ -1,5 +1,4 @@
 import {
-  CognitoIdentityProviderClient,
   ListUsersCommand,
   ListUsersInGroupCommand,
   type AttributeType,
@@ -7,6 +6,7 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import type { TeamMember } from "@/types/teamMember";
 import type { AuthUser } from "@/lib/auth/verifyRequest";
+import { getCognitoClient } from "@/lib/tasks/cognitoClient";
 
 const ASSIGNABLE_USER_STATUSES = new Set([
   "CONFIRMED",
@@ -14,13 +14,7 @@ const ASSIGNABLE_USER_STATUSES = new Set([
   "RESET_REQUIRED",
 ]);
 
-const getClient = () => {
-  const region =
-    process.env.AWS_REGION ??
-    process.env.NEXT_PUBLIC_AWS_REGION ??
-    "us-east-1";
-  return new CognitoIdentityProviderClient({ region });
-};
+const getClient = () => getCognitoClient();
 
 const getUserPoolId = () => {
   const poolId = process.env.NEXT_PUBLIC_USER_POOL_ID?.trim();
@@ -129,6 +123,8 @@ export const teamMemberFromAuthUser = (user: AuthUser): TeamMember => {
     email: user.email,
   };
 };
+
+export { formatCognitoListError } from "@/lib/tasks/cognitoClient";
 
 export const isCognitoAdminAccessError = (error: unknown) => {
   const err = error as { name?: string; message?: string };

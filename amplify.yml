@@ -10,13 +10,16 @@ frontend:
         - npm install --legacy-peer-deps --no-audit
     build:
       commands:
-        - echo "NEXT_PUBLIC_AWS_REGION=$NEXT_PUBLIC_AWS_REGION" >> .env.production
-        - echo "NEXT_PUBLIC_USER_POOL_ID=$NEXT_PUBLIC_USER_POOL_ID" >> .env.production
-        - echo "NEXT_PUBLIC_USER_POOL_CLIENT_ID=$NEXT_PUBLIC_USER_POOL_CLIENT_ID" >> .env.production
-        - echo "TASKS_S3_BUCKET=${TASKS_S3_BUCKET:-nurture-collective-tasks}" >> .env.production
-        - echo "AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-us-east-1}" >> .env.production
-        - echo "TASKS_S3_KEY=$TASKS_S3_KEY" >> .env.production
-        - echo "MANAGEMENT_COGNITO_GROUP=$MANAGEMENT_COGNITO_GROUP" >> .env.production
+        - |
+          cat > .env.production <<EOF
+          NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-us-east-1}
+          NEXT_PUBLIC_USER_POOL_ID=${NEXT_PUBLIC_USER_POOL_ID}
+          NEXT_PUBLIC_USER_POOL_CLIENT_ID=${NEXT_PUBLIC_USER_POOL_CLIENT_ID}
+          TASKS_S3_BUCKET=${TASKS_S3_BUCKET:-nurture-collective-tasks}
+          AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-us-east-1}
+          TASKS_S3_KEY=${TASKS_S3_KEY}
+          MANAGEMENT_COGNITO_GROUP=${MANAGEMENT_COGNITO_GROUP}
+          EOF
         - npm run build
   artifacts:
     baseDirectory: .next
