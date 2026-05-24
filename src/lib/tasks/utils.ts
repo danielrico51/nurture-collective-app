@@ -1,4 +1,70 @@
 import type { ManagementTask } from "@/types/task";
+import type { TeamMember } from "@/types/teamMember";
+
+export const formatAssignees = (assignees: string[]) => {
+  if (assignees.length === 0) return "Unassigned";
+  return assignees.join(", ");
+};
+
+export const getUserAssigneeMatchers = (
+  userEmail?: string,
+  userDisplayName?: string,
+  member?: TeamMember | null
+): string[] => {
+  const matchers = new Set<string>();
+  const add = (value?: string) => {
+    if (value?.trim()) matchers.add(value.trim().toLowerCase());
+  };
+
+  add(userEmail);
+  add(userDisplayName);
+  add(userEmail?.split("@")[0]);
+
+  if (member) {
+    add(member.label);
+    add(member.username);
+    add(member.email);
+    add(member.label.split(/\s+/)[0]);
+  }
+
+  return [...matchers];
+};
+
+export const taskAssignedToUser = (
+  task: ManagementTask,
+  matchers: string[]
+): boolean => {
+  if (matchers.length === 0) return false;
+
+  return task.assignees.some((assignee) => {
+    const normalizedAssignee = assignee.trim().toLowerCase();
+    if (!normalizedAssignee) return false;
+
+    return matchers.some((matcher) => {
+      const normalizedMatcher = matcher.trim().toLowerCase();
+      if (!normalizedMatcher) return false;
+      if (normalizedAssignee === normalizedMatcher) return true;
+
+      const assigneeFirst = normalizedAssignee.split(/\s+/)[0];
+      const matcherFirst = normalizedMatcher.split(/\s+/)[0];
+
+      if (
+        assigneeFirst.length >= 2 &&
+        matcherFirst.length >= 2 &&
+        assigneeFirst === matcherFirst
+      ) {
+        return true;
+      }
+
+      return (
+        normalizedMatcher.startsWith(`${normalizedAssignee} `) ||
+        normalizedMatcher.startsWith(`${normalizedAssignee}/`) ||
+        normalizedAssignee.startsWith(`${normalizedMatcher} `) ||
+        normalizedAssignee.startsWith(`${normalizedMatcher}/`)
+      );
+    });
+  });
+};
 
 export const getInitials = (name: string) => {
   const parts = name.trim().split(/\s+/).filter(Boolean);

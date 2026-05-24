@@ -11,28 +11,38 @@ import {
   countOverdue,
   dueStatusStyles,
   formatDueDate,
+  formatAssignees,
   getDueStatus,
   getInitials,
+  getUserAssigneeMatchers,
+  taskAssignedToUser,
 } from "@/lib/tasks/utils";
 import type {
   CreateTaskInput,
   ManagementTask,
   TaskFilter,
+  TaskOwnershipFilter,
 } from "@/types/task";
 import type { TeamMember } from "@/types/teamMember";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 import TaskFormModal from "./TaskFormModal";
+import UrgentFlag from "./UrgentFlag";
 
 interface TaskBoardProps {
   userEmail?: string;
   userDisplayName?: string;
 }
 
-const filters: { id: TaskFilter; label: string }[] = [
+const statusFilters: { id: TaskFilter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "active", label: "In progress" },
   { id: "completed", label: "Done" },
+];
+
+const ownershipFilters: { id: TaskOwnershipFilter; label: string }[] = [
+  { id: "all", label: "All tasks" },
+  { id: "mine", label: "My tasks" },
 ];
 
 const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
@@ -41,6 +51,8 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
   const [membersLoading, setMembersLoading] = useState(true);
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<TaskFilter>("all");
+  const [ownershipFilter, setOwnershipFilter] =
+    useState<TaskOwnershipFilter>("all");
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ManagementTask | null>(null);
 
@@ -62,7 +74,10 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
     setMembersLoading(true);
     try {
       const data = await fetchTeamMembers();
-      setMembers(data);
+      setMembers(data.members);
+      if (data.partial && data.message) {
+        toast(data.message, { icon: "ℹ️" });
+      }
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Could not load team members"
@@ -77,31 +92,52 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
     loadMembers();
   }, [loadTasks, loadMembers]);
 
-  const defaultAssignee = useMemo(() => {
-    if (!members.length) return userDisplayName ?? userEmail?.split("@")[0] ?? "";
-    const match = members.find(
-      (m) =>
-        m.email === userEmail ||
-        m.username === userDisplayName ||
-        m.label === userDisplayName
+  const currentMember = useMemo(
+    () =>
+      members.find(
+        (member) =>
+          member.email === userEmail ||
+          member.username === userDisplayName ||
+          member.label === userDisplayName
+      ) ?? null,
+    [members, userEmail, userDisplayName]
+  );
+
+  const defaultAssignees = useMemo(() => {
+    if (currentMember) return [currentMember.label];
+    const fallback = userDisplayName ?? userEmail?.split("@")[0];
+    return fallback ? [fallback] : members[0] ? [members[0].label] : [];
+  }, [currentMember, members, userEmail, userDisplayName]);
+
+  const userAssigneeMatchers = useMemo(
+    () => getUserAssigneeMatchers(userEmail, userDisplayName, currentMember),
+    [userEmail, userDisplayName, currentMember]
+  );
+
+  const ownershipScopedTasks = useMemo(() => {
+    if (ownershipFilter === "all") return tasks;
+    return tasks.filter((task) =>
+      taskAssignedToUser(task, userAssigneeMatchers)
     );
-    return match?.label ?? members[0]?.label ?? "";
-  }, [members, userEmail, userDisplayName]);
+  }, [tasks, ownershipFilter, userAssigneeMatchers]);
 
   const filtered = useMemo(() => {
-    return tasks.filter((task) => {
+    return ownershipScopedTasks.filter((task) => {
       if (filter === "active") return !task.completed;
       if (filter === "completed") return task.completed;
       return true;
     });
-  }, [tasks, filter]);
+  }, [ownershipScopedTasks, filter]);
 
   const stats = useMemo(() => {
-    const total = tasks.length;
-    const done = tasks.filter((t) => t.completed).length;
-    const overdue = countOverdue(tasks);
-    return { total, done, active: total - done, overdue };
-  }, [tasks]);
+    const total = ownershipScopedTasks.length;
+    const done = ownershipScopedTasks.filter((task) => task.completed).length;
+    const overdue = countOverdue(ownershipScopedTasks);
+    const urgent = ownershipScopedTasks.filter(
+      (task) => task.urgent && !task.completed
+    ).length;
+    return { total, done, active: total - done, overdue, urgent };
+  }, [ownershipScopedTasks]);
 
   const handleCreateOrUpdate = async (input: CreateTaskInput) => {
     if (editing) {
@@ -142,6 +178,18 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
     }
   };
 
+  const toggleUrgent = async (task: ManagementTask) => {
+    try {
+      const updated = await updateTask(task.id, { urgent: !task.urgent });
+      setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+      toast.success(updated.urgent ? "Marked urgent" : "Urgent flag removed");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not update task"
+      );
+    }
+  };
+
   const openEdit = (task: ManagementTask) => {
     setEditing(task);
     setModalOpen(true);
@@ -178,10 +226,11 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
             + Add task
           </button>
         </div>
-        <div className="relative mt-8 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <div className="relative mt-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
           {[
             { label: "Total", value: stats.total },
             { label: "In progress", value: stats.active },
+            { label: "Urgent", value: stats.urgent },
             { label: "Completed", value: stats.done },
             { label: "Overdue", value: stats.overdue },
           ].map((stat) => (
@@ -190,7 +239,13 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
               className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur"
             >
               <p className="text-2xl font-semibold tabular-nums">{stat.value}</p>
-              <p className="text-xs uppercase tracking-wide text-white/70">
+              <p
+                className={`text-xs uppercase tracking-wide ${
+                  stat.label === "Urgent" && stat.value > 0
+                    ? "text-red-200"
+                    : "text-white/70"
+                }`}
+              >
                 {stat.label}
               </p>
             </div>
@@ -199,21 +254,39 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
       </div>
 
       <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="inline-flex rounded-full border border-nurture-sage/25 bg-white p-1 shadow-sm">
-          {filters.map((f) => (
-            <button
-              key={f.id}
-              type="button"
-              onClick={() => setFilter(f.id)}
-              className={`rounded-full px-4 py-2 text-sm font-medium transition ${
-                filter === f.id
-                  ? "bg-nurture-sage text-white shadow-sm"
-                  : "text-nurture-charcoal/70 hover:text-nurture-sage-dark"
-              }`}
-            >
-              {f.label}
-            </button>
-          ))}
+        <div className="flex flex-wrap items-center gap-3">
+          <div className="inline-flex rounded-full border border-nurture-sage/25 bg-white p-1 shadow-sm">
+            {ownershipFilters.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setOwnershipFilter(option.id)}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                  ownershipFilter === option.id
+                    ? "bg-nurture-charcoal text-white shadow-sm"
+                    : "text-nurture-charcoal/70 hover:text-nurture-sage-dark"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
+          <div className="inline-flex rounded-full border border-nurture-sage/25 bg-white p-1 shadow-sm">
+            {statusFilters.map((option) => (
+              <button
+                key={option.id}
+                type="button"
+                onClick={() => setFilter(option.id)}
+                className={`rounded-full px-4 py-2 text-sm font-medium transition ${
+                  filter === option.id
+                    ? "bg-nurture-sage text-white shadow-sm"
+                    : "text-nurture-charcoal/70 hover:text-nurture-sage-dark"
+                }`}
+              >
+                {option.label}
+              </button>
+            ))}
+          </div>
         </div>
         <button
           type="button"
@@ -231,19 +304,36 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
       ) : filtered.length === 0 ? (
         <div className="flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed border-nurture-sage/30 bg-white/80 p-8 text-center">
           <p className="font-serif text-xl text-nurture-charcoal">
-            {filter === "all" ? "No tasks yet" : "Nothing in this view"}
+            {ownershipFilter === "mine" && filter !== "all"
+              ? "No tasks match this view"
+              : ownershipFilter === "mine"
+                ? "No tasks assigned to you"
+                : filter === "all"
+                  ? "No tasks yet"
+                  : "Nothing in this view"}
           </p>
           <p className="mt-2 max-w-sm text-sm text-nurture-charcoal/60">
-            Add the first item so your team can track responsibilities and
-            deadlines together.
+            {ownershipFilter === "mine"
+              ? "Try switching to All tasks, or ask a teammate to add you as responsible on a task."
+              : "Add the first item so your team can track responsibilities and deadlines together."}
           </p>
-          <button
-            type="button"
-            onClick={openNew}
-            className="mt-6 rounded-full bg-nurture-sage px-6 py-2.5 text-sm font-medium text-white hover:bg-nurture-sage-dark"
-          >
-            Create a task
-          </button>
+          {ownershipFilter === "mine" ? (
+            <button
+              type="button"
+              onClick={() => setOwnershipFilter("all")}
+              className="mt-6 rounded-full border border-nurture-sage/30 px-6 py-2.5 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
+            >
+              View all tasks
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={openNew}
+              className="mt-6 rounded-full bg-nurture-sage px-6 py-2.5 text-sm font-medium text-white hover:bg-nurture-sage-dark"
+            >
+              Create a task
+            </button>
+          )}
         </div>
       ) : (
         <ul className="space-y-3">
@@ -257,13 +347,30 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
                 className={`group relative overflow-hidden rounded-2xl border bg-white p-5 shadow-sm transition hover:shadow-md ${
                   task.completed
                     ? "border-nurture-sage/15 opacity-80"
-                    : "border-nurture-sage/20"
+                    : task.urgent
+                      ? "border-red-200 bg-red-50/40"
+                      : "border-nurture-sage/20"
                 }`}
               >
                 <div
-                  className={`absolute left-0 top-0 h-full w-1 ${styles.dot}`}
+                  className={`absolute left-0 top-0 h-full w-1 ${
+                    task.urgent && !task.completed ? "bg-red-500" : styles.dot
+                  }`}
                 />
                 <div className="flex gap-4 pl-2">
+                  <button
+                    type="button"
+                    onClick={() => toggleUrgent(task)}
+                    aria-label={
+                      task.urgent ? "Remove urgent flag" : "Mark as urgent"
+                    }
+                    title={task.urgent ? "Remove urgent flag" : "Mark as urgent"}
+                    className={`mt-0.5 shrink-0 rounded-lg p-1 transition hover:bg-red-50 ${
+                      task.urgent ? "text-red-600" : "text-nurture-charcoal/30 hover:text-red-500"
+                    }`}
+                  >
+                    <UrgentFlag active={task.urgent} className="h-5 w-5" />
+                  </button>
                   <button
                     type="button"
                     onClick={() => toggleComplete(task)}
@@ -295,15 +402,22 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
 
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-start justify-between gap-2">
-                      <h3
-                        className={`font-medium text-nurture-charcoal ${
-                          task.completed
-                            ? "line-through decoration-nurture-sage/50"
-                            : ""
-                        }`}
-                      >
-                        {task.title}
-                      </h3>
+                      <div className="flex min-w-0 flex-1 items-start gap-2">
+                        <h3
+                          className={`font-medium text-nurture-charcoal ${
+                            task.completed
+                              ? "line-through decoration-nurture-sage/50"
+                              : ""
+                          } ${task.urgent && !task.completed ? "text-red-900" : ""}`}
+                        >
+                          {task.title}
+                        </h3>
+                        {task.urgent && !task.completed ? (
+                          <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-700">
+                            Urgent
+                          </span>
+                        ) : null}
+                      </div>
                       <div className="flex shrink-0 gap-2">
                         <button
                           type="button"
@@ -330,11 +444,27 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
 
                     <div className="mt-4 flex flex-wrap items-center gap-3">
                       <div className="flex items-center gap-2">
-                        <span className="flex h-8 w-8 items-center justify-center rounded-full bg-nurture-blush/50 text-xs font-semibold text-nurture-charcoal">
-                          {getInitials(task.assignee)}
-                        </span>
+                        <div className="flex -space-x-2">
+                          {(task.assignees.length > 0
+                            ? task.assignees
+                            : ["?"]
+                          )
+                            .slice(0, 4)
+                            .map((name) => (
+                              <span
+                                key={name}
+                                title={name}
+                                className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-white bg-nurture-blush/50 text-xs font-semibold text-nurture-charcoal"
+                              >
+                                {getInitials(name)}
+                              </span>
+                            ))}
+                        </div>
                         <span className="text-sm text-nurture-charcoal/80">
-                          {task.assignee}
+                          {formatAssignees(task.assignees)}
+                          {task.assignees.length > 4
+                            ? ` +${task.assignees.length - 4} more`
+                            : ""}
                         </span>
                       </div>
                       <span
@@ -370,7 +500,7 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
         initial={editing}
         members={members}
         membersLoading={membersLoading}
-        defaultAssignee={defaultAssignee}
+        defaultAssignees={defaultAssignees}
       />
     </div>
   );

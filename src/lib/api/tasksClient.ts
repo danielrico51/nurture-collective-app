@@ -31,13 +31,21 @@ export const fetchTasks = async (): Promise<ManagementTask[]> => {
   return data.tasks;
 };
 
-export const fetchTeamMembers = async (): Promise<TeamMember[]> => {
+export const fetchTeamMembers = async (): Promise<{
+  members: TeamMember[];
+  partial?: boolean;
+  message?: string;
+}> => {
   const response = await fetch("/api/tasks/members", {
     headers: await authHeaders(),
     cache: "no-store",
   });
-  const data = await handleResponse<{ members: TeamMember[] }>(response);
-  return data.members;
+  const data = await handleResponse<{
+    members: TeamMember[];
+    partial?: boolean;
+    message?: string;
+  }>(response);
+  return data;
 };
 
 export const createTask = async (

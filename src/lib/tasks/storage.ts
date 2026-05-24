@@ -9,6 +9,7 @@ import {
   readLocalTasksDocument,
   writeLocalTasksDocument,
 } from "@/lib/tasks/localStorage";
+import { normalizeTask } from "@/lib/tasks/normalize";
 
 const DEFAULT_KEY = "management/tasks.json";
 const DEFAULT_TASKS_BUCKET = "nurture-collective-tasks";
@@ -55,7 +56,10 @@ const readS3TasksDocument = async (): Promise<TasksDocument> => {
 
     const parsed = JSON.parse(body) as TasksDocument;
     if (!Array.isArray(parsed.tasks)) return emptyDocument();
-    return parsed;
+    return {
+      ...parsed,
+      tasks: parsed.tasks.map((task) => normalizeTask(task)),
+    };
   } catch (error) {
     if (error instanceof NoSuchKey) return emptyDocument();
     const err = error as { name?: string; $metadata?: { httpStatusCode?: number } };
@@ -108,9 +112,11 @@ export const writeTasksDocument = async (
 
 export const listTasks = async (): Promise<ManagementTask[]> => {
   const doc = await readTasksDocument();
-  return doc.tasks.sort(
+  const tasks = doc.tasks.map((task) => normalizeTask(task));
+  return tasks.sort(
     (a, b) =>
       Number(a.completed) - Number(b.completed) ||
+      Number(b.urgent) - Number(a.urgent) ||
       new Date(a.dueDate ?? "9999").getTime() -
         new Date(b.dueDate ?? "9999").getTime()
   );

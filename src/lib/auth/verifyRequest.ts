@@ -5,6 +5,10 @@ export interface AuthUser {
   sub: string;
   email: string;
   groups: string[];
+  givenName?: string;
+  familyName?: string;
+  name?: string;
+  username?: string;
 }
 
 const getVerifier = () => {
@@ -44,6 +48,14 @@ export const verifyRequest = async (
       sub: String(payload.sub ?? ""),
       email: String(payload.email ?? payload["cognito:username"] ?? ""),
       groups,
+      givenName: payload.given_name ? String(payload.given_name) : undefined,
+      familyName: payload.family_name ? String(payload.family_name) : undefined,
+      name: payload.name ? String(payload.name) : undefined,
+      username: payload["custom:username"]
+        ? String(payload["custom:username"])
+        : payload.preferred_username
+          ? String(payload.preferred_username)
+          : undefined,
     };
   } catch {
     return null;

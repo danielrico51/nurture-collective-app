@@ -2,8 +2,9 @@ export interface ManagementTask {
   id: string;
   title: string;
   description: string;
-  assignee: string;
+  assignees: string[];
   dueDate: string | null;
+  urgent: boolean;
   completed: boolean;
   completedAt: string | null;
   createdAt: string;
@@ -18,18 +19,21 @@ export interface TasksDocument {
 }
 
 export type TaskFilter = "all" | "active" | "completed";
+export type TaskOwnershipFilter = "all" | "mine";
 
 export interface CreateTaskInput {
   title: string;
   description?: string;
-  assignee: string;
+  assignees: string[];
   dueDate?: string | null;
+  urgent?: boolean;
 }
 
 export interface UpdateTaskInput {
   title?: string;
   description?: string;
-  assignee?: string;
+  assignees?: string[];
   dueDate?: string | null;
+  urgent?: boolean;
   completed?: boolean;
 }

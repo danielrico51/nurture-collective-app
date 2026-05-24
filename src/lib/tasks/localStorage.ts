@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import type { TasksDocument } from "@/types/task";
+import { normalizeTask } from "@/lib/tasks/normalize";
 
 const LOCAL_DIR = path.join(process.cwd(), ".data", "management");
 const LOCAL_FILE = path.join(LOCAL_DIR, "tasks.json");
@@ -16,7 +17,10 @@ export const readLocalTasksDocument = async (): Promise<TasksDocument> => {
     const body = await readFile(LOCAL_FILE, "utf8");
     const parsed = JSON.parse(body) as TasksDocument;
     if (!Array.isArray(parsed.tasks)) return emptyDocument();
-    return parsed;
+    return {
+      ...parsed,
+      tasks: parsed.tasks.map((task) => normalizeTask(task)),
+    };
   } catch (error) {
     const err = error as NodeJS.ErrnoException;
     if (err.code === "ENOENT") return emptyDocument();

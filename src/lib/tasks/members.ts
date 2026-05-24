@@ -6,6 +6,13 @@ import {
   type UserType,
 } from "@aws-sdk/client-cognito-identity-provider";
 import type { TeamMember } from "@/types/teamMember";
+import type { AuthUser } from "@/lib/auth/verifyRequest";
+
+const ASSIGNABLE_USER_STATUSES = new Set([
+  "CONFIRMED",
+  "FORCE_CHANGE_PASSWORD",
+  "RESET_REQUIRED",
+]);
 
 const getClient = () => {
   const region =
@@ -27,7 +34,10 @@ const attr = (attributes: AttributeType[] | undefined, name: string) =>
   attributes?.find((a) => a.Name === name)?.Value?.trim() ?? "";
 
 const toTeamMember = (user: UserType): TeamMember | null => {
-  if (user.UserStatus !== "CONFIRMED" || user.Enabled === false) {
+  if (
+    !ASSIGNABLE_USER_STATUSES.has(user.UserStatus ?? "") ||
+    user.Enabled === false
+  ) {
     return null;
   }
 
@@ -101,5 +111,31 @@ export const listTeamMembers = async (): Promise<TeamMember[]> => {
 
   return members.sort((a, b) =>
     a.label.localeCompare(b.label, undefined, { sensitivity: "base" })
+  );
+};
+
+export const teamMemberFromAuthUser = (user: AuthUser): TeamMember => {
+  const label =
+    [user.givenName, user.familyName].filter(Boolean).join(" ") ||
+    user.name ||
+    user.username ||
+    user.email.split("@")[0] ||
+    user.email;
+
+  return {
+    id: user.sub,
+    label,
+    username: user.username || user.email.split("@")[0] || user.email,
+    email: user.email,
+  };
+};
+
+export const isCognitoAdminAccessError = (error: unknown) => {
+  const err = error as { name?: string; message?: string };
+  const message = err.message ?? "";
+  return (
+    err.name === "AccessDeniedException" ||
+    err.name === "UnauthorizedException" ||
+    /not authorized|cognito-idp:ListUsers|AccessDenied/i.test(message)
   );
 };

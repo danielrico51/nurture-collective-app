@@ -4,6 +4,7 @@ import {
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
 import { listTasks, saveTasks } from "@/lib/tasks/storage";
+import { parseAssigneeList } from "@/lib/tasks/normalize";
 import type { UpdateTaskInput } from "@/types/task";
 
 export const dynamic = "force-dynamic";
@@ -14,7 +15,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const auth = await requireManagementAuth(request);
   if (auth.error) return auth.error;
 
-  let body: UpdateTaskInput;
+  let body: UpdateTaskInput & { assignee?: string };
   try {
     body = await request.json();
   } catch {
@@ -29,6 +30,18 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     }
 
     const current = tasks[index];
+    const assignees =
+      body.assignees !== undefined || body.assignee !== undefined
+        ? parseAssigneeList(body.assignees, body.assignee)
+        : current.assignees;
+
+    if (assignees.length === 0) {
+      return NextResponse.json(
+        { error: "At least one responsible person is required" },
+        { status: 400 }
+      );
+    }
+
     const now = new Date().toISOString();
     const completed =
       body.completed !== undefined ? body.completed : current.completed;
@@ -40,8 +53,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         body.description !== undefined
           ? body.description.trim()
           : current.description,
-      assignee: body.assignee?.trim() ?? current.assignee,
+      assignees,
       dueDate: body.dueDate !== undefined ? body.dueDate : current.dueDate,
+      urgent: body.urgent !== undefined ? body.urgent : current.urgent,
       completed,
       completedAt: completed
         ? body.completed === true && !current.completed

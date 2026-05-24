@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
+import { requireManagementAuth } from "@/lib/api/routeHelpers";
 import {
-  handleStorageError,
-  requireManagementAuth,
-} from "@/lib/api/routeHelpers";
-import { listTeamMembers } from "@/lib/tasks/members";
+  isCognitoAdminAccessError,
+  listTeamMembers,
+  teamMemberFromAuthUser,
+} from "@/lib/tasks/members";
 
 export const dynamic = "force-dynamic";
 
@@ -13,7 +14,12 @@ export async function GET(request: NextRequest) {
 
   try {
     const members = await listTeamMembers();
-    return NextResponse.json({ members });
+    const current = teamMemberFromAuthUser(auth.user!);
+    const hasCurrent = members.some((m) => m.id === current.id);
+
+    return NextResponse.json({
+      members: hasCurrent ? members : [current, ...members],
+    });
   } catch (error) {
     console.error("Team members error:", error);
     const message =
@@ -24,6 +30,16 @@ export async function GET(request: NextRequest) {
         { error: "Cognito user pool is not configured" },
         { status: 503 }
       );
+    }
+
+    if (auth.user) {
+      return NextResponse.json({
+        members: [teamMemberFromAuthUser(auth.user)],
+        partial: true,
+        message: isCognitoAdminAccessError(error)
+          ? "Showing your account only. Grant cognito-idp:ListUsers on the Amplify compute role for the full team list."
+          : "Showing your account only. Could not load the full team from Cognito.",
+      });
     }
 
     return NextResponse.json(

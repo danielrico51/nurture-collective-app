@@ -4,6 +4,7 @@ import {
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
 import { listTasks, saveTasks } from "@/lib/tasks/storage";
+import { parseAssigneeList } from "@/lib/tasks/normalize";
 import type { CreateTaskInput, ManagementTask } from "@/types/task";
 import { randomUUID } from "crypto";
 
@@ -25,7 +26,7 @@ export async function POST(request: NextRequest) {
   const auth = await requireManagementAuth(request);
   if (auth.error) return auth.error;
 
-  let body: CreateTaskInput;
+  let body: CreateTaskInput & { assignee?: string };
   try {
     body = await request.json();
   } catch {
@@ -33,10 +34,10 @@ export async function POST(request: NextRequest) {
   }
 
   const title = body.title?.trim();
-  const assignee = body.assignee?.trim();
-  if (!title || !assignee) {
+  const assignees = parseAssigneeList(body.assignees, body.assignee);
+  if (!title || assignees.length === 0) {
     return NextResponse.json(
-      { error: "Title and assignee are required" },
+      { error: "Title and at least one responsible person are required" },
       { status: 400 }
     );
   }
@@ -46,8 +47,9 @@ export async function POST(request: NextRequest) {
     id: randomUUID(),
     title,
     description: body.description?.trim() ?? "",
-    assignee,
+    assignees,
     dueDate: body.dueDate ?? null,
+    urgent: body.urgent ?? false,
     completed: false,
     completedAt: null,
     createdAt: now,
