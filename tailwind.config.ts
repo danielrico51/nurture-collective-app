@@ -23,7 +23,7 @@ const config: Config = {
         serif: ["var(--font-lora)", "Georgia", "serif"],
       },
       boxShadow: {
-        auth: "0 4px 24px rgba(45, 52, 54, 0.08)",
+        auth: "0 8px 40px rgba(45, 52, 54, 0.1), 0 2px 8px rgba(45, 52, 54, 0.04)",
       },
     },
   },

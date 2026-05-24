@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 
 const Footer = () => {
   return (
@@ -46,11 +47,13 @@ const Footer = () => {
                   Sign in
                 </Link>
               </li>
-              <li>
-                <Link href="/signup" className="hover:text-nurture-sage-dark">
-                  Create account
-                </Link>
-              </li>
+              {PUBLIC_SIGNUP_ENABLED ? (
+                <li>
+                  <Link href="/signup" className="hover:text-nurture-sage-dark">
+                    Create account
+                  </Link>
+                </li>
+              ) : null}
             </ul>
           </div>
         </div>

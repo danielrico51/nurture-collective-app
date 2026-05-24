@@ -2,6 +2,7 @@ import Breadcrumb from "@/components/Common/Breadcrumb";
 import SectionTitle from "@/components/Common/SectionTitle";
 import Link from "next/link";
 import type { Metadata } from "next";
+import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 
 export const metadata: Metadata = {
   title: "Services | The Nurture Collective",
@@ -79,18 +80,20 @@ export default function ServicesPage() {
               </article>
             ))}
           </div>
-          <div className="mt-16 rounded-2xl bg-nurture-blush/20 p-8 text-center">
-            <p className="text-sm text-nurture-charcoal/80">
-              Ready to be first in line? Create your account and we&apos;ll
-              reach out when your area opens.
-            </p>
-            <Link
-              href="/signup"
-              className="mt-4 inline-block rounded-full bg-nurture-sage px-6 py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
-            >
-              Join the waitlist
-            </Link>
-          </div>
+          {PUBLIC_SIGNUP_ENABLED ? (
+            <div className="mt-16 rounded-2xl bg-nurture-blush/20 p-8 text-center">
+              <p className="text-sm text-nurture-charcoal/80">
+                Ready to be first in line? Create your account and we&apos;ll
+                reach out when your area opens.
+              </p>
+              <Link
+                href="/signup"
+                className="mt-4 inline-block rounded-full bg-nurture-sage px-6 py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
+              >
+                Join the waitlist
+              </Link>
+            </div>
+          ) : null}
         </div>
       </section>
     </>

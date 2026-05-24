@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 
 const CallToAction = () => {
   return (
@@ -9,15 +10,25 @@ const CallToAction = () => {
             You don&apos;t have to do this alone
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-white/90">
-            Join mothers who are choosing calm, supported transitions into and
-            through motherhood.
+            {PUBLIC_SIGNUP_ENABLED
+              ? "Join mothers who are choosing calm, supported transitions into and through motherhood."
+              : "Our team is here to support your transition with calm, practical care."}
           </p>
-          <Link
-            href="/signup"
-            className="mt-8 inline-block rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-cream"
-          >
-            Create your free account
-          </Link>
+          {PUBLIC_SIGNUP_ENABLED ? (
+            <Link
+              href="/signup"
+              className="mt-8 inline-block rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-cream"
+            >
+              Create your free account
+            </Link>
+          ) : (
+            <Link
+              href="/contact"
+              className="mt-8 inline-block rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-cream"
+            >
+              Contact us
+            </Link>
+          )}
         </div>
       </div>
     </section>

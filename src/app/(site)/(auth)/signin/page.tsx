@@ -1,6 +1,6 @@
 "use client";
 
-import Breadcrumb from "@/components/Common/Breadcrumb";
+import { AuthPageShell } from "@/components/Auth/AuthPageShell";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { getCurrentUser } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
@@ -10,8 +10,10 @@ import { emailAliasAuthServices } from "@/utils/emailAliasAuthServices";
 import {
   sharedAuthComponents,
   sharedAuthFormFields,
+  signInAuthHeader,
 } from "@/utils/sharedAuthUi";
 import { useEffect } from "react";
+import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 
 const SigninPage = () => {
   const router = useRouter();
@@ -43,57 +45,63 @@ const SigninPage = () => {
   }, [router]);
 
   return (
-    <>
-      <Breadcrumb pageName="Sign in" />
-      <div className="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-lg rounded-xl bg-white p-2 shadow-auth">
-          <Authenticator
-            initialState="signIn"
-            hideSignUp
-            services={emailAliasAuthServices}
-            formFields={{
-              ...sharedAuthFormFields,
-              signIn: {
-                username: {
-                  label: "Username or email",
-                  placeholder: "yourname or you@example.com",
-                  isRequired: true,
-                },
-                password: {
-                  label: "Password",
-                  placeholder: "Enter your password",
-                  isRequired: true,
-                },
-              },
-            }}
-            components={{
-              ...sharedAuthComponents,
-              Header() {
-                return (
-                  <div className="mb-6 text-center">
-                    <h2 className="font-serif text-2xl font-semibold">
-                      Welcome back
-                    </h2>
-                    <p className="mt-2 text-sm text-nurture-charcoal/70">
-                      Sign in with your username or email
-                    </p>
-                  </div>
-                );
-              },
-            }}
-          />
-          <p className="pb-6 text-center text-sm text-nurture-charcoal/70">
+    <AuthPageShell
+      title="Welcome back"
+      subtitle="Sign in to your member dashboard, resources, and updates from The Nurture Collective."
+      highlights={[
+        "Secure member access",
+        "Your dashboard and resources",
+        "Stay connected with the team",
+      ]}
+      footer={
+        PUBLIC_SIGNUP_ENABLED ? (
+          <p className="mt-6 border-t border-nurture-sage/10 pt-6 text-center text-sm text-nurture-charcoal/65">
             New here?{" "}
             <Link
               href="/signup"
-              className="font-medium text-nurture-sage-dark hover:underline"
+              className="font-semibold text-nurture-sage-dark transition hover:text-nurture-charcoal hover:underline"
             >
               Join the collective
             </Link>
           </p>
-        </div>
-      </div>
-    </>
+        ) : (
+          <p className="mt-6 border-t border-nurture-sage/10 pt-6 text-center text-sm text-nurture-charcoal/55">
+            Need access?{" "}
+            <Link
+              href="/contact"
+              className="font-semibold text-nurture-sage-dark transition hover:text-nurture-charcoal hover:underline"
+            >
+              Contact us
+            </Link>
+          </p>
+        )
+      }
+    >
+      <Authenticator
+        initialState="signIn"
+        hideSignUp
+        services={emailAliasAuthServices}
+        formFields={{
+          ...sharedAuthFormFields,
+          signIn: {
+            username: {
+              label: "Username or email",
+              placeholder: "yourname or you@example.com",
+              isRequired: true,
+            },
+            password: {
+              label: "Password",
+              placeholder: "Enter your password",
+              isRequired: true,
+            },
+          },
+        }}
+        components={{
+          ...sharedAuthComponents,
+          Header: signInAuthHeader,
+        }}
+      />
+    </AuthPageShell>
   );
 };
 

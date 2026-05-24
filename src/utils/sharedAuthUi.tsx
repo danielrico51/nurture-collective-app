@@ -1,4 +1,5 @@
 import type { AuthenticatorProps } from "@aws-amplify/ui-react";
+import { AuthCardHeader } from "@/components/Auth/AuthCardHeader";
 import { ForceNewPasswordFormFields } from "@/components/Auth/ForceNewPasswordFormFields";
 
 export const sharedAuthFormFields: AuthenticatorProps["formFields"] = {
@@ -28,16 +29,29 @@ export const sharedAuthComponents: AuthenticatorProps["components"] = {
   ForceNewPassword: {
     Header() {
       return (
-        <div className="mb-4 text-center">
-          <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
-            Set a new password
-          </h2>
-          <p className="mt-2 text-sm text-nurture-charcoal/70">
-            Choose a new password for your account.
-          </p>
-        </div>
+        <AuthCardHeader
+          icon="password"
+          title="Set a new password"
+          subtitle="Choose a secure password to finish signing in."
+        />
       );
     },
     FormFields: ForceNewPasswordFormFields,
   },
 };
+
+export const signInAuthHeader = () => (
+  <AuthCardHeader
+    icon="signin"
+    title="Sign in"
+    subtitle="Use your username or email and password."
+  />
+);
+
+export const signUpAuthHeader = () => (
+  <AuthCardHeader
+    icon="signup"
+    title="Create your account"
+    subtitle="Join with a username and the email tied to your membership."
+  />
+);

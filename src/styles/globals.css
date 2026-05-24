@@ -6,8 +6,136 @@ body {
   @apply bg-nurture-cream text-nurture-charcoal antialiased;
 }
 
-[data-amplify-authenticator] {
+.nurture-authenticator {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.nurture-authenticator [data-amplify-authenticator] {
+  width: 100%;
+  max-width: 100%;
+  --amplify-components-authenticator-container-width-max: 100%;
+  --amplify-colors-brand-primary-10: #f4f8f3;
+  --amplify-colors-brand-primary-20: #e3ece2;
+  --amplify-colors-brand-primary-40: #b8ccb6;
+  --amplify-colors-brand-primary-60: #8ba888;
   --amplify-colors-brand-primary-80: #6b8f69;
-  --amplify-colors-brand-primary-90: #8ba888;
+  --amplify-colors-brand-primary-90: #5a7a58;
   --amplify-colors-brand-primary-100: #6b8f69;
+  --amplify-colors-font-primary: #2d3436;
+  --amplify-colors-font-secondary: rgba(45, 52, 54, 0.65);
+  --amplify-colors-font-tertiary: rgba(45, 52, 54, 0.45);
+  --amplify-colors-background-primary: transparent;
+  --amplify-colors-background-secondary: transparent;
+  --amplify-fonts-default-variable: var(--font-inter);
+  --amplify-fonts-default-static: var(--font-inter);
+  --amplify-radii-small: 0.625rem;
+  --amplify-radii-medium: 0.875rem;
+  --amplify-radii-large: 1rem;
+  --amplify-components-authenticator-router-background-color: transparent;
+  --amplify-components-authenticator-router-box-shadow: none;
+  --amplify-components-authenticator-router-border-width: 0;
+  --amplify-components-authenticator-form-padding: 0;
+  --amplify-components-button-primary-background-color: #6b8f69;
+  --amplify-components-button-primary-hover-background-color: #5a7a58;
+  --amplify-components-button-primary-active-background-color: #4d6a4b;
+  --amplify-components-button-primary-focus-background-color: #6b8f69;
+  --amplify-components-button-primary-focus-box-shadow: 0 0 0 3px rgba(139, 168, 136, 0.35);
+  --amplify-components-button-border-radius: 9999px;
+  --amplify-components-button-font-weight: 600;
+  --amplify-components-button-link-color: #6b8f69;
+  --amplify-components-button-link-hover-color: #5a7a58;
+  --amplify-components-button-link-hover-background-color: rgba(139, 168, 136, 0.08);
+  --amplify-components-fieldcontrol-border-color: rgba(139, 168, 136, 0.35);
+  --amplify-components-fieldcontrol-focus-border-color: #6b8f69;
+  --amplify-components-fieldcontrol-focus-box-shadow: 0 0 0 3px rgba(139, 168, 136, 0.22);
+  --amplify-components-fieldcontrol-border-radius: 0.875rem;
+  --amplify-components-field-label-color: rgba(45, 52, 54, 0.85);
+  --amplify-components-tabs-item-active-color: #6b8f69;
+  --amplify-components-tabs-item-active-border-color: #6b8f69;
+  --amplify-components-tabs-item-color: rgba(45, 52, 54, 0.55);
+  --amplify-components-tabs-item-hover-color: #6b8f69;
+}
+
+.nurture-authenticator [data-amplify-router] {
+  background: transparent;
+  box-shadow: none;
+  border: 0;
+  width: 100%;
+  max-width: 100%;
+}
+
+.nurture-authenticator [data-amplify-container] {
+  width: 100% !important;
+  max-width: 100%;
+  min-width: 0;
+}
+
+.nurture-authenticator form,
+.nurture-authenticator .amplify-flex,
+.nurture-authenticator .amplify-field,
+.nurture-authenticator .amplify-field-group,
+.nurture-authenticator .amplify-field-group__field-wrapper {
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.nurture-authenticator .amplify-tabs {
+  border-bottom: 1px solid rgba(139, 168, 136, 0.15);
+  margin-bottom: 1.25rem;
+}
+
+.nurture-authenticator .amplify-tabs-item {
+  font-size: 0.875rem;
+  font-weight: 600;
+  padding-bottom: 0.75rem;
+}
+
+.nurture-authenticator .amplify-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.nurture-authenticator .amplify-input,
+.nurture-authenticator .amplify-field-group__control {
+  font-size: 0.9375rem;
+  min-height: 2.75rem;
+  padding-inline: 1rem;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.nurture-authenticator .amplify-button[type="submit"] {
+  margin-top: 0.5rem;
+  min-height: 2.875rem;
+  letter-spacing: 0.01em;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+.nurture-authenticator .amplify-button--link {
+  font-size: 0.8125rem;
+  font-weight: 500;
+  border-radius: 0.5rem;
+}
+
+.nurture-authenticator .amplify-alert {
+  border-radius: 0.875rem;
+  font-size: 0.875rem;
+}
+
+.nurture-authenticator .amplify-alert--error {
+  background-color: rgba(232, 196, 184, 0.25);
+  border-color: rgba(232, 196, 184, 0.6);
+  color: #2d3436;
+}
+
+.nurture-authenticator .amplify-field-group__outer-end .amplify-button {
+  border-radius: 0 0.875rem 0.875rem 0;
 }

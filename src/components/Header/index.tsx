@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthenticator } from "@aws-amplify/ui-react";
+import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 
 interface HeaderProps {
   isAuthenticated: boolean;
@@ -96,16 +97,22 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
             <>
               <Link
                 href="/signin"
-                className="text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
+                className={
+                  PUBLIC_SIGNUP_ENABLED
+                    ? "text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
+                    : "rounded-full bg-nurture-sage px-4 py-2 text-sm font-medium text-white hover:bg-nurture-sage-dark"
+                }
               >
                 Sign in
               </Link>
-              <Link
-                href="/signup"
-                className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-medium text-white hover:bg-nurture-sage-dark"
-              >
-                Join the collective
-              </Link>
+              {PUBLIC_SIGNUP_ENABLED ? (
+                <Link
+                  href="/signup"
+                  className="rounded-full border border-nurture-sage px-4 py-2 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
+                >
+                  Join the collective
+                </Link>
+              ) : null}
             </>
           )}
         </div>
@@ -161,9 +168,11 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 <Link href="/signin" onClick={() => setMenuOpen(false)}>
                   Sign in
                 </Link>
-                <Link href="/signup" onClick={() => setMenuOpen(false)}>
-                  Join the collective
-                </Link>
+                {PUBLIC_SIGNUP_ENABLED ? (
+                  <Link href="/signup" onClick={() => setMenuOpen(false)}>
+                    Join the collective
+                  </Link>
+                ) : null}
               </>
             )}
           </div>

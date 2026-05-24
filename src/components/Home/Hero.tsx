@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 
 const Hero = () => {
   return (
@@ -17,12 +18,21 @@ const Hero = () => {
             care, and guidance when you need it most.
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link
-              href="/signup"
-              className="rounded-full bg-nurture-sage px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-nurture-sage-dark"
-            >
-              Join the collective
-            </Link>
+            {PUBLIC_SIGNUP_ENABLED ? (
+              <Link
+                href="/signup"
+                className="rounded-full bg-nurture-sage px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-nurture-sage-dark"
+              >
+                Join the collective
+              </Link>
+            ) : (
+              <Link
+                href="/signin"
+                className="rounded-full bg-nurture-sage px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-nurture-sage-dark"
+              >
+                Sign in
+              </Link>
+            )}
             <Link
               href="/services"
               className="rounded-full border border-nurture-sage px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
