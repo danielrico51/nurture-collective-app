@@ -18,7 +18,7 @@ const emptyDocument = (): TasksDocument => ({
   updatedAt: new Date().toISOString(),
 });
 
-const useLocalStorage = () => {
+const isLocalStorageEnabled = () => {
   const bucket = process.env.TASKS_S3_BUCKET?.trim();
   if (bucket) return false;
   return (
@@ -46,7 +46,7 @@ const getBucket = () => {
 const getObjectKey = () => process.env.TASKS_S3_KEY?.trim() || DEFAULT_KEY;
 
 export const getTasksStorageMode = (): "local" | "s3" =>
-  useLocalStorage() ? "local" : "s3";
+  isLocalStorageEnabled() ? "local" : "s3";
 
 const readS3TasksDocument = async (): Promise<TasksDocument> => {
   const client = getS3Client();
@@ -98,7 +98,7 @@ const writeS3TasksDocument = async (document: TasksDocument): Promise<void> => {
 };
 
 export const readTasksDocument = async (): Promise<TasksDocument> => {
-  if (useLocalStorage()) {
+  if (isLocalStorageEnabled()) {
     return readLocalTasksDocument();
   }
   return readS3TasksDocument();
@@ -107,7 +107,7 @@ export const readTasksDocument = async (): Promise<TasksDocument> => {
 export const writeTasksDocument = async (
   document: TasksDocument
 ): Promise<void> => {
-  if (useLocalStorage()) {
+  if (isLocalStorageEnabled()) {
     return writeLocalTasksDocument(document);
   }
   return writeS3TasksDocument(document);
