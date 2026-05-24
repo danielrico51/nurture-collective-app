@@ -13,7 +13,8 @@ frontend:
         - echo "NEXT_PUBLIC_AWS_REGION=$NEXT_PUBLIC_AWS_REGION" >> .env.production
         - echo "NEXT_PUBLIC_USER_POOL_ID=$NEXT_PUBLIC_USER_POOL_ID" >> .env.production
         - echo "NEXT_PUBLIC_USER_POOL_CLIENT_ID=$NEXT_PUBLIC_USER_POOL_CLIENT_ID" >> .env.production
-        - echo "TASKS_S3_BUCKET=$TASKS_S3_BUCKET" >> .env.production
+        - echo "TASKS_S3_BUCKET=${TASKS_S3_BUCKET:-nurture-collective-tasks}" >> .env.production
+        - echo "AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-us-east-1}" >> .env.production
         - echo "TASKS_S3_KEY=$TASKS_S3_KEY" >> .env.production
         - echo "MANAGEMENT_COGNITO_GROUP=$MANAGEMENT_COGNITO_GROUP" >> .env.production
         - npm run build

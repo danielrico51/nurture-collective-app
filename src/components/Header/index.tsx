@@ -73,6 +73,12 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 Dashboard
               </Link>
               <Link
+                href="/account/profile"
+                className="text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
+              >
+                Profile
+              </Link>
+              <Link
                 href="/management/tasks"
                 className="text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
               >
@@ -133,6 +139,12 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
               <>
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
                   Dashboard
+                </Link>
+                <Link
+                  href="/account/profile"
+                  onClick={() => setMenuOpen(false)}
+                >
+                  Profile
                 </Link>
                 <Link
                   href="/management/tasks"

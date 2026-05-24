@@ -81,14 +81,20 @@ const DashboardPage = () => {
 
           <div className="mt-10 flex flex-wrap gap-4">
             <Link
-              href="/management/tasks"
+              href="/account/profile"
               className="rounded-full bg-nurture-sage px-6 py-3 text-sm font-medium text-white hover:bg-nurture-sage-dark"
+            >
+              Edit profile
+            </Link>
+            <Link
+              href="/management/tasks"
+              className="rounded-full border border-nurture-sage px-6 py-3 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
             >
               Team task board
             </Link>
             <Link
               href="/services"
-              className="rounded-full border border-nurture-sage px-6 py-3 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
+              className="rounded-full px-6 py-3 text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark"
             >
               Explore services
             </Link>

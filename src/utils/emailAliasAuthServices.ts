@@ -18,6 +18,7 @@ import {
 } from "@/utils/signUpAttributes";
 
 const PENDING_SIGN_UP_USERNAME_KEY = "nurture_pending_sign_up_username";
+const PENDING_SIGN_IN_USERNAME_KEY = "nurture_pending_sign_in_username";
 
 const normalizeEmail = (value: string) => value.trim().toLowerCase();
 
@@ -90,8 +91,12 @@ export const emailAliasAuthServices = {
     if (!input.password) {
       throw new Error("Password is required");
     }
+    const username = normalizeSignInUsername(input.username);
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem(PENDING_SIGN_IN_USERNAME_KEY, username);
+    }
     return signIn({
-      username: normalizeSignInUsername(input.username),
+      username,
       password: input.password,
     });
   },

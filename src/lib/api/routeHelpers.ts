@@ -28,7 +28,21 @@ export const handleStorageError = (error: unknown) => {
     return NextResponse.json(
       {
         error:
-          "Task storage is not configured. Set TASKS_S3_BUCKET in .env.local (local) or Amplify environment variables (production).",
+          "Task storage is not configured. Set TASKS_S3_BUCKET in Amplify environment variables and redeploy.",
+      },
+      { status: 503 }
+    );
+  }
+
+  if (
+    message.includes("AccessDenied") ||
+    message.includes("not authorized") ||
+    message.includes("Access Denied")
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Task storage access denied. Grant the Amplify compute role s3:GetObject and s3:PutObject on the tasks bucket.",
       },
       { status: 503 }
     );

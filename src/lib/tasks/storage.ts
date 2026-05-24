@@ -11,6 +11,7 @@ import {
 } from "@/lib/tasks/localStorage";
 
 const DEFAULT_KEY = "management/tasks.json";
+const DEFAULT_TASKS_BUCKET = "nurture-collective-tasks";
 
 const emptyDocument = (): TasksDocument => ({
   version: 1,
@@ -19,12 +20,9 @@ const emptyDocument = (): TasksDocument => ({
 });
 
 const isLocalStorageEnabled = () => {
-  const bucket = process.env.TASKS_S3_BUCKET?.trim();
-  if (bucket) return false;
-  return (
-    process.env.TASKS_USE_LOCAL_STORAGE === "true" ||
-    process.env.NODE_ENV === "development"
-  );
+  if (process.env.TASKS_USE_LOCAL_STORAGE === "true") return true;
+  if (process.env.TASKS_S3_BUCKET?.trim()) return false;
+  return process.env.NODE_ENV === "development";
 };
 
 const getS3Client = () => {
@@ -35,13 +33,8 @@ const getS3Client = () => {
   return new S3Client({ region });
 };
 
-const getBucket = () => {
-  const bucket = process.env.TASKS_S3_BUCKET?.trim();
-  if (!bucket) {
-    throw new Error("TASKS_S3_BUCKET is not configured");
-  }
-  return bucket;
-};
+const getBucket = () =>
+  process.env.TASKS_S3_BUCKET?.trim() || DEFAULT_TASKS_BUCKET;
 
 const getObjectKey = () => process.env.TASKS_S3_KEY?.trim() || DEFAULT_KEY;
 

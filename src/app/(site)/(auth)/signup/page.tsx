@@ -7,6 +7,10 @@ import { Hub } from "aws-amplify/utils";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { emailAliasAuthServices } from "@/utils/emailAliasAuthServices";
+import {
+  sharedAuthComponents,
+  sharedAuthFormFields,
+} from "@/utils/sharedAuthUi";
 import { useEffect } from "react";
 
 const SignupPage = () => {
@@ -62,6 +66,7 @@ const SignupPage = () => {
               },
             }}
             components={{
+              ...sharedAuthComponents,
               Header() {
                 return (
                   <div className="mb-6 text-center">
@@ -76,6 +81,7 @@ const SignupPage = () => {
               },
             }}
             formFields={{
+              ...sharedAuthFormFields,
               signUp: {
                 "custom:username": {
                   label: "Username",
