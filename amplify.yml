@@ -1,0 +1,24 @@
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - nvm install 18.19.0
+        - nvm use 18.19.0
+        - node -v
+        - npm cache clean --force
+        - npm install --legacy-peer-deps --no-audit
+    build:
+      commands:
+        - echo "NEXT_PUBLIC_AWS_REGION=$NEXT_PUBLIC_AWS_REGION" >> .env.production
+        - echo "NEXT_PUBLIC_USER_POOL_ID=$NEXT_PUBLIC_USER_POOL_ID" >> .env.production
+        - echo "NEXT_PUBLIC_USER_POOL_CLIENT_ID=$NEXT_PUBLIC_USER_POOL_CLIENT_ID" >> .env.production
+        - npm run build
+  artifacts:
+    baseDirectory: .next
+    files:
+      - "**/*"
+  cache:
+    paths:
+      - node_modules/**/*
+      - .next/cache/**/*

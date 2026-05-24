@@ -1,0 +1,13 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  @apply bg-nurture-cream text-nurture-charcoal antialiased;
+}
+
+[data-amplify-authenticator] {
+  --amplify-colors-brand-primary-80: #6b8f69;
+  --amplify-colors-brand-primary-90: #8ba888;
+  --amplify-colors-brand-primary-100: #6b8f69;
+}
