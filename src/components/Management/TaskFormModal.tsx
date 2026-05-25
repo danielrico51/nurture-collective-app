@@ -1,6 +1,6 @@
 "use client";
 
-import type { CreateTaskInput, ManagementTask } from "@/types/task";
+import type { CreateTaskInput, ManagementTask, TaskCategory } from "@/types/task";
 import type { TeamMember } from "@/types/teamMember";
 import { FormEvent, useEffect, useState } from "react";
 import UrgentFlag from "./UrgentFlag";
@@ -31,6 +31,8 @@ const TaskFormModal = ({
   const [assignees, setAssignees] = useState<string[]>(defaultAssignees);
   const [dueDate, setDueDate] = useState("");
   const [urgent, setUrgent] = useState(false);
+  const [category, setCategory] = useState<TaskCategory>("internal");
+  const [clientEmail, setClientEmail] = useState("");
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -46,6 +48,8 @@ const TaskFormModal = ({
     );
     setDueDate(initial?.dueDate ?? defaultDueDate ?? "");
     setUrgent(initial?.urgent ?? false);
+    setCategory(initial?.category ?? "internal");
+    setClientEmail(initial?.clientEmail ?? "");
   }, [open, initial, defaultAssignees, defaultDueDate]);
 
   if (!open) return null;
@@ -68,6 +72,8 @@ const TaskFormModal = ({
         assignees,
         dueDate: dueDate || null,
         urgent,
+        category,
+        clientEmail: category === "client" ? clientEmail.trim() || null : null,
       });
       onClose();
     } finally {
@@ -110,6 +116,33 @@ const TaskFormModal = ({
               className="mt-1.5 w-full resize-none rounded-xl border border-nurture-sage/30 px-4 py-2.5 text-sm focus:border-nurture-sage focus:outline-none focus:ring-2 focus:ring-nurture-sage/30"
               placeholder="Notes, links, or context…"
             />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2">
+            <div>
+              <label className="block text-sm font-medium">Category</label>
+              <select
+                value={category}
+                onChange={(e) =>
+                  setCategory(e.target.value as TaskCategory)
+                }
+                className="mt-1.5 w-full rounded-xl border border-nurture-sage/30 px-4 py-2.5 text-sm focus:border-nurture-sage focus:outline-none focus:ring-2 focus:ring-nurture-sage/30"
+              >
+                <option value="internal">Internal</option>
+                <option value="client">Client (syncs to ClickUp)</option>
+              </select>
+            </div>
+            {category === "client" ? (
+              <div>
+                <label className="block text-sm font-medium">Client email</label>
+                <input
+                  type="email"
+                  value={clientEmail}
+                  onChange={(e) => setClientEmail(e.target.value)}
+                  className="mt-1.5 w-full rounded-xl border border-nurture-sage/30 px-4 py-2.5 text-sm focus:border-nurture-sage focus:outline-none focus:ring-2 focus:ring-nurture-sage/30"
+                  placeholder="client@example.com"
+                />
+              </div>
+            ) : null}
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="sm:col-span-2">

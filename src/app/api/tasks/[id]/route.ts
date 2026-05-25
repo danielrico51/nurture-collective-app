@@ -5,7 +5,8 @@ import {
 } from "@/lib/api/routeHelpers";
 import { listTasks, saveTasks } from "@/lib/tasks/storage";
 import { parseAssigneeList } from "@/lib/tasks/normalize";
-import type { UpdateTaskInput } from "@/types/task";
+import { syncClientTaskToN8n } from "@/lib/tasks/sync";
+import type { TaskCategory, UpdateTaskInput } from "@/types/task";
 
 export const dynamic = "force-dynamic";
 
@@ -45,6 +46,16 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     const now = new Date().toISOString();
     const completed =
       body.completed !== undefined ? body.completed : current.completed;
+    const category: TaskCategory =
+      body.category === "client" || body.category === "internal"
+        ? body.category
+        : current.category;
+    const clientEmail =
+      body.clientEmail !== undefined
+        ? body.clientEmail?.trim() || null
+        : category === "client"
+          ? current.clientEmail
+          : null;
 
     const updated = {
       ...current,
@@ -63,10 +74,17 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
           : current.completedAt ?? now
         : null,
       updatedAt: now,
+      category,
+      clientEmail: category === "client" ? clientEmail : null,
+      clickUpTaskId:
+        body.clickUpTaskId !== undefined
+          ? body.clickUpTaskId
+          : current.clickUpTaskId,
     };
 
     tasks[index] = updated;
     await saveTasks(tasks);
+    await syncClientTaskToN8n(updated, "update");
     return NextResponse.json({ task: updated });
   } catch (error) {
     return handleStorageError(error);

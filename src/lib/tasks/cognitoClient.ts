@@ -63,7 +63,7 @@ export const formatCognitoListError = (error: unknown) => {
       name,
       detail,
       userMessage:
-        "Showing your account only. Cognito user pool or group was not found. Check NEXT_PUBLIC_USER_POOL_ID and MANAGEMENT_COGNITO_GROUP in Amplify.",
+        "Showing your account only. Cognito user pool or group was not found. Check NEXT_PUBLIC_USER_POOL_ID and that the admin Cognito group exists.",
       hint,
     };
   }

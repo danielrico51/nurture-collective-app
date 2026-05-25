@@ -39,6 +39,7 @@ interface TaskBoardProps {
 const statusFilters: { id: TaskFilter; label: string }[] = [
   { id: "all", label: "All" },
   { id: "active", label: "In progress" },
+  { id: "urgent", label: "Urgent" },
   { id: "completed", label: "Done" },
 ];
 
@@ -134,6 +135,7 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
     return ownershipScopedTasks.filter((task) => {
       if (filter === "active") return !task.completed;
       if (filter === "completed") return task.completed;
+      if (filter === "urgent") return task.urgent && !task.completed;
       return true;
     });
   }, [ownershipScopedTasks, filter]);
@@ -239,28 +241,43 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
         </div>
         <div className="relative mt-8 grid grid-cols-2 gap-3 sm:grid-cols-5">
           {[
-            { label: "Total", value: stats.total },
-            { label: "In progress", value: stats.active },
-            { label: "Urgent", value: stats.urgent },
-            { label: "Completed", value: stats.done },
-            { label: "Overdue", value: stats.overdue },
-          ].map((stat) => (
-            <div
-              key={stat.label}
-              className="rounded-2xl border border-white/20 bg-white/10 px-4 py-3 backdrop-blur"
-            >
-              <p className="text-2xl font-semibold tabular-nums">{stat.value}</p>
-              <p
-                className={`text-xs uppercase tracking-wide ${
-                  stat.label === "Urgent" && stat.value > 0
-                    ? "text-red-200"
-                    : "text-white/70"
-                }`}
+            { label: "Total", value: stats.total, filterId: null },
+            { label: "In progress", value: stats.active, filterId: "active" as const },
+            { label: "Urgent", value: stats.urgent, filterId: "urgent" as const },
+            { label: "Completed", value: stats.done, filterId: "completed" as const },
+            { label: "Overdue", value: stats.overdue, filterId: null },
+          ].map((stat) => {
+            const isActiveFilter = stat.filterId !== null && filter === stat.filterId;
+            const Wrapper = stat.filterId ? "button" : "div";
+
+            return (
+              <Wrapper
+                key={stat.label}
+                type={stat.filterId ? "button" : undefined}
+                onClick={
+                  stat.filterId
+                    ? () => setFilter(stat.filterId!)
+                    : undefined
+                }
+                className={`rounded-2xl border px-4 py-3 backdrop-blur text-left transition ${
+                  isActiveFilter
+                    ? "border-white bg-white/25 ring-2 ring-white/40"
+                    : "border-white/20 bg-white/10"
+                } ${stat.filterId ? "cursor-pointer hover:bg-white/20" : ""}`}
               >
-                {stat.label}
-              </p>
-            </div>
-          ))}
+                <p className="text-2xl font-semibold tabular-nums">{stat.value}</p>
+                <p
+                  className={`text-xs uppercase tracking-wide ${
+                    stat.label === "Urgent" && stat.value > 0
+                      ? "text-red-200"
+                      : "text-white/70"
+                  }`}
+                >
+                  {stat.label}
+                </p>
+              </Wrapper>
+            );
+          })}
         </div>
       </div>
 
@@ -306,7 +323,9 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
                 onClick={() => setFilter(option.id)}
                 className={`rounded-full px-4 py-2 text-sm font-medium transition ${
                   filter === option.id
-                    ? "bg-nurture-sage text-white shadow-sm"
+                    ? option.id === "urgent"
+                      ? "bg-red-600 text-white shadow-sm"
+                      : "bg-nurture-sage text-white shadow-sm"
                     : "text-nurture-charcoal/70 hover:text-nurture-sage-dark"
                 }`}
               >
@@ -337,18 +356,22 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
       ) : filtered.length === 0 ? (
         <div className="flex min-h-[240px] flex-col items-center justify-center rounded-2xl border border-dashed border-nurture-sage/30 bg-white/80 p-8 text-center">
           <p className="font-serif text-xl text-nurture-charcoal">
-            {ownershipFilter === "mine" && filter !== "all"
-              ? "No tasks match this view"
-              : ownershipFilter === "mine"
-                ? "No tasks assigned to you"
-                : filter === "all"
-                  ? "No tasks yet"
-                  : "Nothing in this view"}
+            {filter === "urgent"
+              ? "No urgent tasks"
+              : ownershipFilter === "mine" && filter !== "all"
+                ? "No tasks match this view"
+                : ownershipFilter === "mine"
+                  ? "No tasks assigned to you"
+                  : filter === "all"
+                    ? "No tasks yet"
+                    : "Nothing in this view"}
           </p>
           <p className="mt-2 max-w-sm text-sm text-nurture-charcoal/60">
-            {ownershipFilter === "mine"
-              ? "Try switching to All tasks, or ask a teammate to add you as responsible on a task."
-              : "Add the first item so your team can track responsibilities and deadlines together."}
+            {filter === "urgent"
+              ? "Urgent tasks will appear here when flagged. Mark a task urgent from the board or when creating it."
+              : ownershipFilter === "mine"
+                ? "Try switching to All tasks, or ask a teammate to add you as responsible on a task."
+                : "Add the first item so your team can track responsibilities and deadlines together."}
           </p>
           {ownershipFilter === "mine" ? (
             <button
@@ -448,6 +471,11 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
                         {task.urgent && !task.completed ? (
                           <span className="shrink-0 rounded-full bg-red-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-red-700">
                             Urgent
+                          </span>
+                        ) : null}
+                        {task.category === "client" ? (
+                          <span className="shrink-0 rounded-full bg-nurture-sage/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-nurture-sage-dark">
+                            {task.clickUpTaskId ? "ClickUp synced" : "Client · pending sync"}
                           </span>
                         ) : null}
                       </div>

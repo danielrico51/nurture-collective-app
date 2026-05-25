@@ -168,6 +168,10 @@ const ProfileForm = () => {
           className={inputClassName}
           placeholder="+12065550100"
         />
+        <p className="mt-1.5 text-xs text-nurture-charcoal/50">
+          Required for member intake and WhatsApp or SMS contact from your
+          concierge coordinator.
+        </p>
       </div>
 
       <div className="flex flex-wrap gap-4 pt-2">

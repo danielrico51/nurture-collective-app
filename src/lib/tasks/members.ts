@@ -1,9 +1,9 @@
 import {
-  ListUsersCommand,
   ListUsersInGroupCommand,
   type AttributeType,
   type UserType,
 } from "@aws-sdk/client-cognito-identity-provider";
+import { getTasksAccessGroup } from "@/lib/auth/groups";
 import type { TeamMember } from "@/types/teamMember";
 import type { AuthUser } from "@/lib/auth/verifyRequest";
 import { getCognitoClient } from "@/lib/tasks/cognitoClient";
@@ -64,44 +64,26 @@ const toTeamMember = (user: UserType): TeamMember | null => {
 export const listTeamMembers = async (): Promise<TeamMember[]> => {
   const client = getClient();
   const UserPoolId = getUserPoolId();
-  const group = process.env.MANAGEMENT_COGNITO_GROUP?.trim();
+  const group = getTasksAccessGroup();
 
   const members: TeamMember[] = [];
+  let nextToken: string | undefined;
 
-  if (group) {
-    let nextToken: string | undefined;
-    do {
-      const response = await client.send(
-        new ListUsersInGroupCommand({
-          UserPoolId,
-          GroupName: group,
-          Limit: 60,
-          NextToken: nextToken,
-        })
-      );
-      for (const user of response.Users ?? []) {
-        const member = toTeamMember(user);
-        if (member) members.push(member);
-      }
-      nextToken = response.NextToken;
-    } while (nextToken);
-  } else {
-    let paginationToken: string | undefined;
-    do {
-      const response = await client.send(
-        new ListUsersCommand({
-          UserPoolId,
-          Limit: 60,
-          PaginationToken: paginationToken,
-        })
-      );
-      for (const user of response.Users ?? []) {
-        const member = toTeamMember(user);
-        if (member) members.push(member);
-      }
-      paginationToken = response.PaginationToken;
-    } while (paginationToken);
-  }
+  do {
+    const response = await client.send(
+      new ListUsersInGroupCommand({
+        UserPoolId,
+        GroupName: group,
+        Limit: 60,
+        NextToken: nextToken,
+      })
+    );
+    for (const user of response.Users ?? []) {
+      const member = toTeamMember(user);
+      if (member) members.push(member);
+    }
+    nextToken = response.NextToken;
+  } while (nextToken);
 
   return members.sort((a, b) =>
     a.label.localeCompare(b.label, undefined, { sensitivity: "base" })

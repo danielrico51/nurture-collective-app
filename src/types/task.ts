@@ -1,3 +1,5 @@
+export type TaskCategory = "internal" | "client";
+
 export interface ManagementTask {
   id: string;
   title: string;
@@ -10,6 +12,9 @@ export interface ManagementTask {
   createdAt: string;
   updatedAt: string;
   createdBy: string;
+  category: TaskCategory;
+  clickUpTaskId: string | null;
+  clientEmail: string | null;
 }
 
 export interface TasksDocument {
@@ -18,7 +23,7 @@ export interface TasksDocument {
   updatedAt: string;
 }
 
-export type TaskFilter = "all" | "active" | "completed";
+export type TaskFilter = "all" | "active" | "urgent" | "completed";
 export type TaskOwnershipFilter = "all" | "mine";
 export type TaskViewMode = "board" | "calendar";
 
@@ -28,6 +33,8 @@ export interface CreateTaskInput {
   assignees: string[];
   dueDate?: string | null;
   urgent?: boolean;
+  category?: TaskCategory;
+  clientEmail?: string | null;
 }
 
 export interface UpdateTaskInput {
@@ -37,4 +44,7 @@ export interface UpdateTaskInput {
   dueDate?: string | null;
   urgent?: boolean;
   completed?: boolean;
+  category?: TaskCategory;
+  clientEmail?: string | null;
+  clickUpTaskId?: string | null;
 }

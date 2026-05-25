@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
+import { useUserGroups } from "@/hooks/useUserGroups";
 
 interface HeaderProps {
   isAuthenticated: boolean;
@@ -20,6 +21,7 @@ const navLinks = [
 const Header = ({ isAuthenticated }: HeaderProps) => {
   const pathname = usePathname();
   const { signOut } = useAuthenticator((context) => [context.signOut]);
+  const { canAccessAdmin } = useUserGroups(isAuthenticated);
   const [menuOpen, setMenuOpen] = useState(false);
   const [sticky, setSticky] = useState(false);
 
@@ -79,12 +81,14 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
               >
                 Profile
               </Link>
-              <Link
-                href="/management/tasks"
-                className="text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
-              >
-                Tasks
-              </Link>
+              {canAccessAdmin ? (
+                <Link
+                  href="/admin"
+                  className="text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
+                >
+                  Admin
+                </Link>
+              ) : null}
               <button
                 type="button"
                 onClick={handleSignOut}
@@ -153,12 +157,11 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 >
                   Profile
                 </Link>
-                <Link
-                  href="/management/tasks"
-                  onClick={() => setMenuOpen(false)}
-                >
-                  Tasks
-                </Link>
+                {canAccessAdmin ? (
+                  <Link href="/admin" onClick={() => setMenuOpen(false)}>
+                    Admin
+                  </Link>
+                ) : null}
                 <button type="button" onClick={handleSignOut}>
                   Sign out
                 </button>

@@ -6,6 +6,10 @@ const schema = a.schema({
       userId: a.string().required(),
       dueDate: a.date(),
       notes: a.string(),
+      phone: a.string(),
+      preferredContact: a.string(),
+      intakeStatus: a.string(),
+      clickUpClientId: a.string(),
     })
     .authorization((allow) => [allow.owner()]),
 });

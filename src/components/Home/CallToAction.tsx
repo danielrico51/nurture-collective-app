@@ -1,3 +1,4 @@
+import ContactOptions from "@/components/Common/ContactOptions";
 import Link from "next/link";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 
@@ -29,6 +30,10 @@ const CallToAction = () => {
               Contact us
             </Link>
           )}
+        </div>
+
+        <div className="mt-12">
+          <ContactOptions formHref="/contact#contact-form" />
         </div>
       </div>
     </section>

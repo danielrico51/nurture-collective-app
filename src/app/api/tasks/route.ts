@@ -5,7 +5,8 @@ import {
 } from "@/lib/api/routeHelpers";
 import { listTasks, saveTasks } from "@/lib/tasks/storage";
 import { parseAssigneeList } from "@/lib/tasks/normalize";
-import type { CreateTaskInput, ManagementTask } from "@/types/task";
+import { syncClientTaskToN8n } from "@/lib/tasks/sync";
+import type { CreateTaskInput, ManagementTask, TaskCategory } from "@/types/task";
 import { randomUUID } from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -43,6 +44,11 @@ export async function POST(request: NextRequest) {
   }
 
   const now = new Date().toISOString();
+  const category: TaskCategory =
+    body.category === "client" ? "client" : "internal";
+  const clientEmail =
+    category === "client" ? body.clientEmail?.trim() || null : null;
+
   const task: ManagementTask = {
     id: randomUUID(),
     title,
@@ -55,12 +61,16 @@ export async function POST(request: NextRequest) {
     createdAt: now,
     updatedAt: now,
     createdBy: auth.user!.email || auth.user!.sub,
+    category,
+    clickUpTaskId: null,
+    clientEmail,
   };
 
   try {
     const tasks = await listTasks();
     tasks.unshift(task);
     await saveTasks(tasks);
+    await syncClientTaskToN8n(task, "create");
     return NextResponse.json({ task }, { status: 201 });
   } catch (error) {
     return handleStorageError(error);

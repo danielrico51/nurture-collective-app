@@ -3,21 +3,21 @@ import SectionTitle from "@/components/Common/SectionTitle";
 const steps = [
   {
     step: "01",
-    title: "Tell us your story",
+    title: "Reach out",
     description:
-      "Share where you are in your journey — expecting, recovering, or navigating new motherhood.",
+      "Send us a message, chat on WhatsApp, or book a discovery call — whatever feels easiest for you.",
   },
   {
     step: "02",
-    title: "Meet your concierge",
+    title: "We listen and plan",
     description:
-      "We match you with a coordinator who understands your needs, schedule, and preferences.",
+      "Your concierge coordinator reviews your needs and designs support around your family, schedule, and goals.",
   },
   {
     step: "03",
-    title: "Receive ongoing support",
+    title: "Ongoing support",
     description:
-      "From prenatal prep to postpartum care, we're beside you with practical and emotional help.",
+      "From prenatal prep to postpartum care, we're beside you with practical help, emotional check-ins, and warm guidance.",
   },
 ];
 

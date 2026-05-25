@@ -42,5 +42,8 @@ export const normalizeTask = (raw: RawTask): ManagementTask => {
     createdAt: raw.createdAt ?? new Date().toISOString(),
     updatedAt: raw.updatedAt ?? new Date().toISOString(),
     createdBy: raw.createdBy ?? "",
+    category: raw.category === "client" ? "client" : "internal",
+    clickUpTaskId: raw.clickUpTaskId ?? null,
+    clientEmail: raw.clientEmail ?? null,
   };
 };

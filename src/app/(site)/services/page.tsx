@@ -1,4 +1,6 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
+import CalendlyEmbed from "@/components/Common/CalendlyEmbed";
+import ContactOptions from "@/components/Common/ContactOptions";
 import SectionTitle from "@/components/Common/SectionTitle";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -12,36 +14,42 @@ export const metadata: Metadata = {
 
 const services = [
   {
+    slug: "prenatal",
     title: "Prenatal concierge",
     description:
       "Birth plan support, nursery coordination, vendor referrals, and preparing your support network before baby arrives.",
     tag: "Prepartum",
   },
   {
+    slug: "postpartum",
     title: "Postpartum recovery",
     description:
       "Hands-on help with rest, recovery routines, visitor boundaries, and easing the load in the fourth trimester.",
     tag: "Postpartum",
   },
   {
+    slug: "feeding",
     title: "Lactation & feeding support",
     description:
       "Resources, specialist referrals, and practical setup for breastfeeding, pumping, or combination feeding.",
     tag: "Feeding",
   },
   {
+    slug: "wellness",
     title: "Emotional wellness",
     description:
       "Regular check-ins, mood tracking prompts, and warm referrals when you need professional mental health care.",
     tag: "Wellness",
   },
   {
+    slug: "practical",
     title: "Household & practical help",
     description:
       "Meal coordination, errands, sibling transitions, and the everyday tasks that pile up when you're depleted.",
     tag: "Practical",
   },
   {
+    slug: "membership",
     title: "Custom care plans",
     description:
       "A concierge coordinator who learns your family and builds ongoing support around your goals.",
@@ -74,12 +82,27 @@ export default function ServicesPage() {
                 <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
                   {service.description}
                 </p>
-                <p className="mt-4 text-xs font-medium text-nurture-sage-dark">
-                  Enrollment opening soon
-                </p>
+                <Link
+                  href={`/contact?service=${service.slug}`}
+                  className="mt-6 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
+                >
+                  Get started →
+                </Link>
               </article>
             ))}
           </div>
+
+          <div className="mt-20">
+            <SectionTitle
+              title="Ready to connect?"
+              subtitle="Message us, chat on WhatsApp, or book a discovery call — whatever feels easiest."
+            />
+            <ContactOptions
+              className="mt-10"
+              formHref="/contact#contact-form"
+            />
+          </div>
+
           {PUBLIC_SIGNUP_ENABLED ? (
             <div className="mt-16 rounded-2xl bg-nurture-blush/20 p-8 text-center">
               <p className="text-sm text-nurture-charcoal/80">
@@ -96,6 +119,7 @@ export default function ServicesPage() {
           ) : null}
         </div>
       </section>
+      <CalendlyEmbed />
     </>
   );
 }

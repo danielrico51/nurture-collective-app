@@ -53,17 +53,25 @@ A Next.js marketing site and member portal for pre- and postpartum mom concierge
 | `/signup` | Create account (email verification code) |
 | `/signin` | Sign in |
 | `/dashboard` | Protected member area (requires sign-in) |
-| `/management/tasks` | Shared management task board (requires sign-in) |
+| `/admin` | Admin app hub (requires Cognito `admin` group) |
+| `/admin/tasks` | Team task board |
+| `/management/tasks` | Redirects to `/admin/tasks` |
 
 After sign-in or sign-up, you are redirected to `/dashboard`.
 
-## Management task board
+## Admin workspace
 
-Internal checklist for your team: add, edit, complete, and delete tasks. Everyone signed in sees the same list (title, assignee, deadline, status).
+Internal tools live under **`/admin`**. Only users in the Cognito **`admin`** group can access this section or its APIs.
+
+Register new admin apps in `src/config/adminApps.ts`, then add a route under `src/app/(site)/admin/`.
+
+### Task board
+
+The task board is the first admin app at **`/admin/tasks`**.
 
 Tasks are stored as JSON in **Amazon S3** (`TASKS_S3_BUCKET`). Without it, local dev falls back to `.data/management/tasks.json`.
 
-Team assignees are loaded from your **Cognito user pool** (or a Cognito group if `MANAGEMENT_COGNITO_GROUP` is set).
+Task assignees are loaded from the Cognito **`admin`** group (override with `MANAGEMENT_COGNITO_GROUP` if needed).
 
 ### Setup S3
 
@@ -72,15 +80,17 @@ Team assignees are loaded from your **Cognito user pool** (or a Cognito group if
 
    ```env
    TASKS_S3_BUCKET=your-bucket-name
+   MANAGEMENT_COGNITO_GROUP=admin
+   NEXT_PUBLIC_MANAGEMENT_COGNITO_GROUP=admin
    ```
 
 3. **Local dev:** grant your AWS profile `s3:GetObject` and `s3:PutObject` on `arn:aws:s3:::your-bucket-name/*` (or set `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` in `.env.local`).
 
 4. **Amplify Hosting:** attach an IAM policy to the app’s **Compute role** with:
    - `s3:GetObject` and `s3:PutObject` on `arn:aws:s3:::your-bucket-name/*`
-   - `cognito-idp:ListUsers` on your user pool (and `ListUsersInGroup` if using a group)
+   - `cognito-idp:ListUsersInGroup` on your user pool (for the `admin` group)
 
-5. Optional: set `MANAGEMENT_COGNITO_GROUP=management` and add users to that Cognito group to restrict access. If unset, any authenticated user can use the board.
+5. Add team members to the **`admin`** Cognito group in the AWS console. Users must **sign out and back in** after being added so their ID token includes `cognito:groups`.
 
 6. Redeploy after adding env vars in Amplify.
 

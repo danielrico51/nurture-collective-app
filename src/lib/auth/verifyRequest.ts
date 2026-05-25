@@ -1,5 +1,6 @@
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import { NextRequest } from "next/server";
+import { canAccessManagementTasks } from "@/lib/auth/groups";
 
 export interface AuthUser {
   sub: string;
@@ -62,8 +63,5 @@ export const verifyRequest = async (
   }
 };
 
-export const isManagementUser = (user: AuthUser): boolean => {
-  const requiredGroup = process.env.MANAGEMENT_COGNITO_GROUP?.trim();
-  if (!requiredGroup) return true;
-  return user.groups.includes(requiredGroup);
-};
+export const isManagementUser = (user: AuthUser): boolean =>
+  canAccessManagementTasks(user.groups);
