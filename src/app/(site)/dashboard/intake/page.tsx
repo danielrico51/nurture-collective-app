@@ -76,6 +76,7 @@ const IntakePage = () => {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           source: "member-intake",
+          audience: "mom",
           userId: user?.userId,
           name: String(data.get("name") ?? ""),
           email: String(data.get("email") ?? ""),

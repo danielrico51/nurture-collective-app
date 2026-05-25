@@ -1,61 +1,17 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import CalendlyEmbed from "@/components/Common/CalendlyEmbed";
 import ContactOptions from "@/components/Common/ContactOptions";
+import CoverageMap from "@/components/Common/CoverageMap";
 import SectionTitle from "@/components/Common/SectionTitle";
+import { brands, coreServices, futureConciergeServices } from "@/content/site";
 import Link from "next/link";
 import type { Metadata } from "next";
-import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 
 export const metadata: Metadata = {
   title: "Services | The Nurture Collective",
   description:
-    "Prepartum, postpartum, lactation, emotional wellness, and household concierge support for mothers.",
+    "Birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage — available in active coverage regions, expanding over time.",
 };
-
-const services = [
-  {
-    slug: "prenatal",
-    title: "Prenatal concierge",
-    description:
-      "Birth plan support, nursery coordination, vendor referrals, and preparing your support network before baby arrives.",
-    tag: "Prepartum",
-  },
-  {
-    slug: "postpartum",
-    title: "Postpartum recovery",
-    description:
-      "Hands-on help with rest, recovery routines, visitor boundaries, and easing the load in the fourth trimester.",
-    tag: "Postpartum",
-  },
-  {
-    slug: "feeding",
-    title: "Lactation & feeding support",
-    description:
-      "Resources, specialist referrals, and practical setup for breastfeeding, pumping, or combination feeding.",
-    tag: "Feeding",
-  },
-  {
-    slug: "wellness",
-    title: "Emotional wellness",
-    description:
-      "Regular check-ins, mood tracking prompts, and warm referrals when you need professional mental health care.",
-    tag: "Wellness",
-  },
-  {
-    slug: "practical",
-    title: "Household & practical help",
-    description:
-      "Meal coordination, errands, sibling transitions, and the everyday tasks that pile up when you're depleted.",
-    tag: "Practical",
-  },
-  {
-    slug: "membership",
-    title: "Custom care plans",
-    description:
-      "A concierge coordinator who learns your family and builds ongoing support around your goals.",
-    tag: "Membership",
-  },
-];
 
 export default function ServicesPage() {
   return (
@@ -64,13 +20,13 @@ export default function ServicesPage() {
       <section className="py-16">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <SectionTitle
-            title="Concierge care, built around you"
-            subtitle="Every family is different. We design support that fits your season — not a checklist."
+            title="Maternal wellness — available today"
+            subtitle={`Evidence-based care through the ${brands.nurtureCollective.shortName} provider network. Check coverage for availability in your area.`}
           />
           <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {services.map((service) => (
+            {coreServices.map((service) => (
               <article
-                key={service.title}
+                key={service.slug}
                 className="flex flex-col rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm"
               >
                 <span className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
@@ -83,42 +39,63 @@ export default function ServicesPage() {
                   {service.description}
                 </p>
                 <Link
-                  href={`/contact?service=${service.slug}`}
+                  href={`/contact?audience=mom&service=${service.slug}`}
                   className="mt-6 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
                 >
-                  Get started →
+                  Request this service →
                 </Link>
               </article>
             ))}
           </div>
 
+          <div className="mt-24">
+            <SectionTitle
+              title="Full mom concierge — coming soon"
+              subtitle="Every service you need, AI-coordinated in one place — rolling out in more regions over time."
+            />
+            <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {futureConciergeServices.map((service) => (
+                <article
+                  key={service.title}
+                  className="rounded-2xl border border-dashed border-nurture-sage/30 bg-nurture-cream/40 p-8"
+                >
+                  <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark/70">
+                    Coming soon
+                  </p>
+                  <h2 className="mt-3 font-serif text-xl font-semibold">
+                    {service.title}
+                  </h2>
+                  <p className="mt-3 text-sm text-nurture-charcoal/65">
+                    {service.description}
+                  </p>
+                </article>
+              ))}
+            </div>
+            <p className="mt-10 text-center text-sm text-nurture-charcoal/60">
+              Want early access to the full concierge?{" "}
+              <Link
+                href="/contact?audience=mom"
+                className="font-medium text-nurture-sage-dark hover:underline"
+              >
+                Join the waitlist
+              </Link>
+              .
+            </p>
+          </div>
+
           <div className="mt-20">
             <SectionTitle
               title="Ready to connect?"
-              subtitle="Message us, chat on WhatsApp, or book a discovery call — whatever feels easiest."
+              subtitle="Families and providers — message us, chat on WhatsApp, or book a call."
             />
             <ContactOptions
               className="mt-10"
               formHref="/contact#contact-form"
             />
           </div>
-
-          {PUBLIC_SIGNUP_ENABLED ? (
-            <div className="mt-16 rounded-2xl bg-nurture-blush/20 p-8 text-center">
-              <p className="text-sm text-nurture-charcoal/80">
-                Ready to be first in line? Create your account and we&apos;ll
-                reach out when your area opens.
-              </p>
-              <Link
-                href="/signup"
-                className="mt-4 inline-block rounded-full bg-nurture-sage px-6 py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
-              >
-                Join the waitlist
-              </Link>
-            </div>
-          ) : null}
         </div>
       </section>
+      <CoverageMap />
       <CalendlyEmbed />
     </>
   );

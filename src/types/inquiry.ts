@@ -1,13 +1,19 @@
+import type { Audience } from "@/content/site";
+
 export type PreferredContactMethod = "email" | "whatsapp" | "call";
 
+export type InquirySource = "website" | "member-intake";
+
 export interface InquiryPayload {
-  source: "website" | "member-intake";
+  source: InquirySource;
+  audience: Audience;
   name: string;
   email: string;
   phone?: string;
   message: string;
   preferredContact: PreferredContactMethod;
   serviceInterest?: string;
+  providerSpecialty?: string;
   submittedAt: string;
   userId?: string;
 }
@@ -21,11 +27,9 @@ export const PREFERRED_CONTACT_OPTIONS: {
   { value: "call", label: "Phone call" },
 ];
 
-export const SERVICE_SLUGS: Record<string, string> = {
-  prenatal: "Prenatal concierge",
-  postpartum: "Postpartum recovery",
-  feeding: "Lactation & feeding support",
-  wellness: "Emotional wellness",
-  practical: "Household & practical help",
-  membership: "Custom care plans",
-};
+export {
+  SERVICE_SLUGS,
+  PROVIDER_SPECIALTY_SLUGS,
+  audienceLabels,
+  isAudience,
+} from "@/content/site";

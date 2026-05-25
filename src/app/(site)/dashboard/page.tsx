@@ -2,6 +2,7 @@
 
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import { buildWhatsAppUrl, hasCalendly, hasWhatsApp } from "@/config/integrations";
+import { brands } from "@/content/site";
 import { useUserGroups } from "@/hooks/useUserGroups";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import Link from "next/link";
@@ -34,27 +35,28 @@ const DashboardPage = () => {
     user?.signInDetails?.loginId?.split("@")[0] ?? "there";
 
   const whatsappUrl = buildWhatsAppUrl(
-    "Hi! I'm a Nurture Collective member and would like to connect with my concierge coordinator."
+    "Hi! I'm a Nurture Collective member and would like to connect about care."
   );
 
   const cards = [
     {
       title: "Intake form",
-      description: "Tell us about your needs, due date, and preferences.",
+      description:
+        "Tell us about your needs, due date, and the support you're looking for.",
       status: "Available",
       href: "/dashboard/intake",
       action: "Start intake",
     },
     {
       title: "Care plan",
-      description: "Your personalized pre- or postpartum support plan.",
+      description: "Your personalized support plan from your concierge coordinator.",
       status: "In preparation",
       href: null,
       action: null,
     },
     {
       title: "Messages",
-      description: "Connect with your concierge coordinator via WhatsApp.",
+      description: "Connect with your care team via WhatsApp.",
       status: hasWhatsApp() ? "Available" : "Coming soon",
       href: whatsappUrl,
       action: hasWhatsApp() ? "Open WhatsApp" : null,
@@ -71,8 +73,8 @@ const DashboardPage = () => {
             Hello, {displayName}
           </h2>
           <p className="mt-3 max-w-2xl text-nurture-charcoal/80">
-            Your care journey starts here. Complete your intake, view your care
-            plan, and connect with your concierge team — all in one place.
+            Welcome to {brands.nurtureCollective.name}. Complete your intake,
+            view your care plan, and stay connected with your care team.
           </p>
 
           <div className="mt-10 grid gap-6 sm:grid-cols-3">
@@ -123,7 +125,7 @@ const DashboardPage = () => {
                 Schedule a check-in
               </h3>
               <p className="mt-2 text-sm text-nurture-charcoal/70">
-                Book time with your concierge coordinator when you&apos;re ready.
+                Book time with your care team when you&apos;re ready.
               </p>
               <Link
                 href="/services#calendly"
@@ -150,16 +152,16 @@ const DashboardPage = () => {
               </Link>
             ) : null}
             <Link
-              href="/services"
+              href="/for-moms#coverage"
               className="rounded-full px-6 py-3 text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark"
             >
-              Explore services
+              Check coverage
             </Link>
             <Link
-              href="/contact"
+              href="/contact?audience=mom"
               className="rounded-full px-6 py-3 text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark"
             >
-              Contact us
+              Contact care team
             </Link>
           </div>
         </div>

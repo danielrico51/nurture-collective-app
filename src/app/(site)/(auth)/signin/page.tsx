@@ -4,6 +4,7 @@ import { AuthPageShell } from "@/components/Auth/AuthPageShell";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { getCurrentUser } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
+import { brands } from "@/content/site";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { emailAliasAuthServices } from "@/utils/emailAliasAuthServices";
@@ -47,7 +48,7 @@ const SigninPage = () => {
   return (
     <AuthPageShell
       title="Welcome back"
-      subtitle="Sign in to your member dashboard, resources, and updates from The Nurture Collective."
+      subtitle={`Sign in to your ${brands.nurtureCollective.name} dashboard — member resources, intake, and updates from your care team.`}
       highlights={[
         "Secure member access",
         "Your dashboard and resources",
@@ -58,10 +59,17 @@ const SigninPage = () => {
           <p className="mt-6 border-t border-nurture-sage/10 pt-6 text-center text-sm text-nurture-charcoal/65">
             New here?{" "}
             <Link
-              href="/signup"
+              href="/signup/mom"
               className="font-semibold text-nurture-sage-dark transition hover:text-nurture-charcoal hover:underline"
             >
-              Join the collective
+              Create a mom account
+            </Link>
+            {" · "}
+            <Link
+              href="/for-providers"
+              className="font-semibold text-nurture-sage-dark transition hover:text-nurture-charcoal hover:underline"
+            >
+              Apply as provider
             </Link>
           </p>
         ) : (

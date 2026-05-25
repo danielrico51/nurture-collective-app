@@ -4,10 +4,15 @@ import Breadcrumb from "@/components/Common/Breadcrumb";
 import ContactOptions from "@/components/Common/ContactOptions";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { integrations } from "@/config/integrations";
+import type { Audience } from "@/content/site";
 import {
   PREFERRED_CONTACT_OPTIONS,
+  PROVIDER_SPECIALTY_SLUGS,
   SERVICE_SLUGS,
+  audienceLabels,
+  isAudience,
 } from "@/types/inquiry";
+import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
 import toast from "react-hot-toast";
@@ -17,9 +22,16 @@ const inputClassName =
 
 function ContactForm() {
   const searchParams = useSearchParams();
+  const audienceParam = searchParams.get("audience");
+  const initialAudience: Audience = isAudience(audienceParam)
+    ? audienceParam
+    : "mom";
   const serviceParam = searchParams.get("service") ?? "";
+  const specialtyParam = searchParams.get("specialty") ?? "";
   const serviceLabel = SERVICE_SLUGS[serviceParam] ?? "";
+  const specialtyLabel = PROVIDER_SPECIALTY_SLUGS[specialtyParam] ?? "";
 
+  const [audience, setAudience] = useState<Audience>(initialAudience);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
 
@@ -35,12 +47,20 @@ function ContactForm() {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
+          audience: String(data.get("audience") ?? "mom"),
           name: String(data.get("name") ?? ""),
           email: String(data.get("email") ?? ""),
           phone: String(data.get("phone") ?? "") || undefined,
           message: String(data.get("message") ?? ""),
           preferredContact: String(data.get("preferredContact") ?? "email"),
-          serviceInterest: String(data.get("serviceInterest") ?? "") || undefined,
+          serviceInterest:
+            audience === "mom"
+              ? String(data.get("serviceInterest") ?? "") || undefined
+              : undefined,
+          providerSpecialty:
+            audience === "provider"
+              ? String(data.get("providerSpecialty") ?? "") || undefined
+              : undefined,
         }),
       });
 
@@ -49,7 +69,11 @@ function ContactForm() {
         throw new Error(result.error ?? "Could not send message");
       }
 
-      toast.success("Message sent — we'll be in touch soon.");
+      toast.success(
+        audience === "provider"
+          ? "Application received — our team will review and follow up."
+          : "Message sent — we'll be in touch soon."
+      );
       setSubmitted(true);
       form.reset();
     } catch (error) {
@@ -67,12 +91,38 @@ function ContactForm() {
       onSubmit={handleSubmit}
       className="mt-10 space-y-6 rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm"
     >
-      {serviceLabel ? (
+      <div>
+        <p className="text-sm font-medium text-nurture-charcoal">I am…</p>
+        <div className="mt-3 grid grid-cols-2 gap-3">
+          {(["mom", "provider"] as const).map((value) => (
+            <button
+              key={value}
+              type="button"
+              onClick={() => setAudience(value)}
+              className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
+                audience === value
+                  ? "border-nurture-sage bg-nurture-sage/10 text-nurture-sage-dark"
+                  : "border-nurture-sage/25 text-nurture-charcoal/70 hover:border-nurture-sage/40"
+              }`}
+            >
+              {audienceLabels[value]}
+            </button>
+          ))}
+        </div>
+        <input type="hidden" name="audience" value={audience} />
+      </div>
+
+      {serviceLabel && audience === "mom" ? (
         <p className="rounded-lg bg-nurture-cream/80 px-4 py-3 text-sm text-nurture-charcoal/80">
           Interested in:{" "}
-          <span className="font-medium text-nurture-sage-dark">
-            {serviceLabel}
-          </span>
+          <span className="font-medium text-nurture-sage-dark">{serviceLabel}</span>
+        </p>
+      ) : null}
+
+      {specialtyLabel && audience === "provider" ? (
+        <p className="rounded-lg bg-nurture-cream/80 px-4 py-3 text-sm text-nurture-charcoal/80">
+          Applying as:{" "}
+          <span className="font-medium text-nurture-sage-dark">{specialtyLabel}</span>
         </p>
       ) : null}
 
@@ -86,35 +136,26 @@ function ContactForm() {
         <label htmlFor="name" className="block text-sm font-medium text-nurture-charcoal">
           Name
         </label>
-        <input
-          id="name"
-          name="name"
-          type="text"
-          required
-          className={inputClassName}
-        />
+        <input id="name" name="name" type="text" required className={inputClassName} />
       </div>
       <div>
         <label htmlFor="email" className="block text-sm font-medium text-nurture-charcoal">
           Email
         </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          className={inputClassName}
-        />
+        <input id="email" name="email" type="email" required className={inputClassName} />
       </div>
       <div>
         <label htmlFor="phone" className="block text-sm font-medium text-nurture-charcoal">
           Phone{" "}
-          <span className="font-normal text-nurture-charcoal/50">(recommended)</span>
+          <span className="font-normal text-nurture-charcoal/50">
+            ({audience === "provider" ? "required for providers" : "recommended"})
+          </span>
         </label>
         <input
           id="phone"
           name="phone"
           type="tel"
+          required={audience === "provider"}
           placeholder="+12065550100"
           className={inputClassName}
         />
@@ -136,22 +177,46 @@ function ContactForm() {
           ))}
         </select>
       </div>
-      {serviceLabel ? (
-        <input type="hidden" name="serviceInterest" value={serviceParam} />
+
+      {audience === "mom" ? (
+        serviceLabel ? (
+          <input type="hidden" name="serviceInterest" value={serviceParam} />
+        ) : (
+          <div>
+            <label htmlFor="serviceInterest" className="block text-sm font-medium text-nurture-charcoal">
+              Service interest
+            </label>
+            <select
+              id="serviceInterest"
+              name="serviceInterest"
+              defaultValue=""
+              className={inputClassName}
+            >
+              <option value="">Not sure yet</option>
+              {Object.entries(SERVICE_SLUGS).map(([slug, label]) => (
+                <option key={slug} value={slug}>
+                  {label}
+                </option>
+              ))}
+            </select>
+          </div>
+        )
+      ) : specialtyLabel ? (
+        <input type="hidden" name="providerSpecialty" value={specialtyParam} />
       ) : (
         <div>
-          <label htmlFor="serviceInterest" className="block text-sm font-medium text-nurture-charcoal">
-            Service interest{" "}
-            <span className="font-normal text-nurture-charcoal/50">(optional)</span>
+          <label htmlFor="providerSpecialty" className="block text-sm font-medium text-nurture-charcoal">
+            Your specialty
           </label>
           <select
-            id="serviceInterest"
-            name="serviceInterest"
+            id="providerSpecialty"
+            name="providerSpecialty"
             defaultValue=""
+            required
             className={inputClassName}
           >
-            <option value="">Not sure yet</option>
-            {Object.entries(SERVICE_SLUGS).map(([slug, label]) => (
+            <option value="">Select your specialty</option>
+            {Object.entries(PROVIDER_SPECIALTY_SLUGS).map(([slug, label]) => (
               <option key={slug} value={slug}>
                 {label}
               </option>
@@ -159,15 +224,21 @@ function ContactForm() {
           </select>
         </div>
       )}
+
       <div>
         <label htmlFor="message" className="block text-sm font-medium text-nurture-charcoal">
-          Message
+          {audience === "provider" ? "Tell us about your experience" : "Message"}
         </label>
         <textarea
           id="message"
           name="message"
           rows={5}
           required
+          placeholder={
+            audience === "provider"
+              ? "Credentials, years of experience, service area, and why you'd like to join…"
+              : "How can we support you?"
+          }
           className={inputClassName}
         />
       </div>
@@ -176,17 +247,32 @@ function ContactForm() {
         disabled={submitting}
         className="w-full rounded-full bg-nurture-sage py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark disabled:opacity-60"
       >
-        {submitting ? "Sending…" : "Send message"}
+        {submitting
+          ? "Sending…"
+          : audience === "provider"
+            ? "Submit application"
+            : "Send message"}
       </button>
       <p className="text-center text-xs text-nurture-charcoal/50">
-        Or email us directly at{" "}
+        Or email us at{" "}
         <a
           href={`mailto:${integrations.contactEmail}`}
           className="text-nurture-sage-dark hover:underline"
         >
           {integrations.contactEmail}
         </a>
-        . We respond within one business day.
+        .{" "}
+        {audience === "provider" ? (
+          <>
+            Prefer the full provider page?{" "}
+            <Link href="/for-providers" className="text-nurture-sage-dark hover:underline">
+              Learn more
+            </Link>
+            .
+          </>
+        ) : (
+          "We respond within one business day."
+        )}
       </p>
     </form>
   );
@@ -199,13 +285,13 @@ export default function ContactPage() {
       <section className="py-16">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <SectionTitle
-            title="We'd love to hear from you"
-            subtitle="Questions about services, partnerships, or early access? Reach out the way that works best for you."
+            title="Let's connect"
+            subtitle="Families seeking care and providers joining our network — we're here for both."
           />
           <ContactOptions className="mt-10" formAnchorId="contact-form" />
           <div className="mx-auto mt-16 max-w-xl">
             <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
-              Send us a message
+              Send a message
             </h2>
             <Suspense
               fallback={

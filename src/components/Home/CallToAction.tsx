@@ -1,6 +1,5 @@
 import ContactOptions from "@/components/Common/ContactOptions";
 import Link from "next/link";
-import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 
 const CallToAction = () => {
   return (
@@ -8,28 +7,27 @@ const CallToAction = () => {
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl bg-nurture-sage px-8 py-16 text-center text-white sm:px-16">
           <h2 className="font-serif text-3xl font-semibold sm:text-4xl">
-            You don&apos;t have to do this alone
+            Every mother deserves a team
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-white/90">
-            {PUBLIC_SIGNUP_ENABLED
-              ? "Join mothers who are choosing calm, supported transitions into and through motherhood."
-              : "Our team is here to support your transition with calm, practical care."}
+            Whether you&apos;re seeking care or offering your expertise, Nurture
+            Collective connects families with trusted support — expanding region
+            by region, powered by AI concierge.
           </p>
-          {PUBLIC_SIGNUP_ENABLED ? (
+          <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
-              href="/signup"
-              className="mt-8 inline-block rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-cream"
+              href="/for-moms"
+              className="inline-block rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-cream"
             >
-              Create your free account
+              I&apos;m a mom
             </Link>
-          ) : (
             <Link
-              href="/contact"
-              className="mt-8 inline-block rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-cream"
+              href="/for-providers"
+              className="inline-block rounded-full border border-white/40 px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/10"
             >
-              Contact us
+              I&apos;m a provider
             </Link>
-          )}
+          </div>
         </div>
 
         <div className="mt-12">

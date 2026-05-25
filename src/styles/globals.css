@@ -1,3 +1,6 @@
+@import "@fontsource-variable/inter/wght.css";
+@import "@fontsource-variable/lora/wght.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -28,8 +31,8 @@ body {
   --amplify-colors-font-tertiary: rgba(45, 52, 54, 0.45);
   --amplify-colors-background-primary: transparent;
   --amplify-colors-background-secondary: transparent;
-  --amplify-fonts-default-variable: var(--font-inter);
-  --amplify-fonts-default-static: var(--font-inter);
+  --amplify-fonts-default-variable: Inter, system-ui, sans-serif;
+  --amplify-fonts-default-static: Inter, system-ui, sans-serif;
   --amplify-radii-small: 0.625rem;
   --amplify-radii-medium: 0.875rem;
   --amplify-radii-large: 1rem;

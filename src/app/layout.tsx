@@ -7,20 +7,9 @@ import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import { Hub } from "aws-amplify/utils";
 import { getCurrentUser } from "aws-amplify/auth";
-import { Inter, Lora } from "next/font/google";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 import "@/styles/globals.css";
-
-const inter = Inter({
-  subsets: ["latin"],
-  variable: "--font-inter",
-});
-
-const lora = Lora({
-  subsets: ["latin"],
-  variable: "--font-lora",
-});
 
 export default function RootLayout({
   children,
@@ -59,7 +48,7 @@ export default function RootLayout({
   }, []);
 
   return (
-    <html lang="en" className={`${inter.variable} ${lora.variable}`}>
+    <html lang="en">
       <body className="font-sans">
         {!ready ? (
           <div className="flex min-h-screen items-center justify-center">

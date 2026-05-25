@@ -14,6 +14,7 @@ import {
 } from "@/utils/sharedAuthUi";
 import { useEffect } from "react";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
+import { brands } from "@/content/site";
 
 const SignupPage = () => {
   const router = useRouter();
@@ -44,9 +45,9 @@ const SignupPage = () => {
 
   return (
     <AuthPageShell
-      eyebrow="Join us"
-      title="Join the collective"
-      subtitle="Create your account and begin your pre- and postpartum care journey with a team that nurtures you."
+      eyebrow="For moms"
+      title="Create your member account"
+      subtitle={`Join ${brands.nurtureCollective.name} to access care through our provider network and growing mom concierge.`}
       highlights={[
         "Personalized member support",
         "Resources for every stage",

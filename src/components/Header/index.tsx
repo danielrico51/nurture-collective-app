@@ -13,6 +13,8 @@ interface HeaderProps {
 
 const navLinks = [
   { href: "/", label: "Home" },
+  { href: "/for-moms", label: "For moms" },
+  { href: "/for-providers", label: "For providers" },
   { href: "/services", label: "Services" },
   { href: "/about", label: "About" },
   { href: "/contact", label: "Contact" },
@@ -39,6 +41,9 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
     }
   };
 
+  const isActive = (href: string) =>
+    href === "/" ? pathname === "/" : pathname.startsWith(href);
+
   return (
     <header
       className={`fixed left-0 top-0 z-50 w-full transition-all ${
@@ -50,13 +55,13 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
           The Nurture Collective
         </Link>
 
-        <nav className="hidden items-center gap-8 md:flex">
+        <nav className="hidden items-center gap-6 lg:flex">
           {navLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
               className={`text-sm font-medium transition hover:text-nurture-sage-dark ${
-                pathname === link.href
+                isActive(link.href)
                   ? "text-nurture-sage-dark"
                   : "text-nurture-charcoal/80"
               }`}
@@ -101,29 +106,32 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
             <>
               <Link
                 href="/signin"
-                className={
-                  PUBLIC_SIGNUP_ENABLED
-                    ? "text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
-                    : "rounded-full bg-nurture-sage px-4 py-2 text-sm font-medium text-white hover:bg-nurture-sage-dark"
-                }
+                className="text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
               >
                 Sign in
               </Link>
               {PUBLIC_SIGNUP_ENABLED ? (
                 <Link
-                  href="/signup"
+                  href="/signup/mom"
                   className="rounded-full border border-nurture-sage px-4 py-2 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
                 >
-                  Join the collective
+                  Join
                 </Link>
-              ) : null}
+              ) : (
+                <Link
+                  href="/for-providers"
+                  className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-medium text-white hover:bg-nurture-sage-dark"
+                >
+                  Apply as provider
+                </Link>
+              )}
             </>
           )}
         </div>
 
         <button
           type="button"
-          className="md:hidden"
+          className="lg:hidden"
           aria-label="Toggle menu"
           onClick={() => setMenuOpen(!menuOpen)}
         >
@@ -134,7 +142,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
       </div>
 
       {menuOpen && (
-        <div className="border-t border-nurture-sage/20 bg-white px-4 py-4 md:hidden">
+        <div className="border-t border-nurture-sage/20 bg-white px-4 py-4 lg:hidden">
           {navLinks.map((link) => (
             <Link
               key={link.href}
@@ -151,10 +159,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
                   Dashboard
                 </Link>
-                <Link
-                  href="/account/profile"
-                  onClick={() => setMenuOpen(false)}
-                >
+                <Link href="/account/profile" onClick={() => setMenuOpen(false)}>
                   Profile
                 </Link>
                 {canAccessAdmin ? (
@@ -171,11 +176,12 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 <Link href="/signin" onClick={() => setMenuOpen(false)}>
                   Sign in
                 </Link>
-                {PUBLIC_SIGNUP_ENABLED ? (
-                  <Link href="/signup" onClick={() => setMenuOpen(false)}>
-                    Join the collective
-                  </Link>
-                ) : null}
+                <Link href="/for-moms" onClick={() => setMenuOpen(false)}>
+                  For moms
+                </Link>
+                <Link href="/for-providers" onClick={() => setMenuOpen(false)}>
+                  For providers
+                </Link>
               </>
             )}
           </div>

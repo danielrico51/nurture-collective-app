@@ -5,6 +5,8 @@ import type {
   InquiryPayload,
   PreferredContactMethod,
 } from "@/types/inquiry";
+import { isAudience } from "@/types/inquiry";
+import type { Audience } from "@/content/site";
 
 export const dynamic = "force-dynamic";
 
@@ -18,6 +20,8 @@ interface InquiryBody {
   message?: string;
   preferredContact?: string;
   serviceInterest?: string;
+  providerSpecialty?: string;
+  audience?: string;
   source?: string;
   userId?: string;
 }
@@ -38,6 +42,9 @@ export async function POST(request: NextRequest) {
     | PreferredContactMethod
     | undefined;
   const serviceInterest = body.serviceInterest?.trim() || undefined;
+  const providerSpecialty = body.providerSpecialty?.trim() || undefined;
+  const audienceRaw = body.audience?.trim() ?? null;
+  const audience: Audience = isAudience(audienceRaw) ? audienceRaw : "mom";
   const source =
     body.source === "member-intake" ? "member-intake" : "website";
 
@@ -66,21 +73,25 @@ export async function POST(request: NextRequest) {
 
   const payload: InquiryPayload = {
     source,
+    audience,
     name,
     email,
     phone,
     message,
     preferredContact: preferredContact ?? "email",
-    serviceInterest,
+    serviceInterest: audience === "mom" ? serviceInterest : undefined,
+    providerSpecialty: audience === "provider" ? providerSpecialty : undefined,
     submittedAt: new Date().toISOString(),
     ...(source === "member-intake" && userId ? { userId } : {}),
   };
 
   console.info("[inquiry] Received submission", {
     source: payload.source,
+    audience: payload.audience,
     email: payload.email,
     preferredContact: payload.preferredContact,
     serviceInterest: payload.serviceInterest,
+    providerSpecialty: payload.providerSpecialty,
   });
 
   try {

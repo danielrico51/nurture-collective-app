@@ -1,23 +1,37 @@
 import CallToAction from "@/components/Home/CallToAction";
-import Faq from "@/components/Home/Faq";
+import AudienceSplit from "@/components/Home/AudienceSplit";
+import ConciergeVision from "@/components/Home/ConciergeVision";
+import CoreServicesSection from "@/components/Home/CoreServicesSection";
+import CoverageMap from "@/components/Common/CoverageMap";
+import FaqList from "@/components/Common/FaqList";
 import Hero from "@/components/Home/Hero";
-import HowItWorks from "@/components/Home/HowItWorks";
-import ServicesPreview from "@/components/Home/ServicesPreview";
+import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
+import GoogleReviewsSection from "@/components/Reviews/GoogleReviewsSection";
+import { momFaqs, momHowItWorks } from "@/content/site";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "The Nurture Collective | Pre & Postpartum Mom Concierge",
+  title: "The Nurture Collective | Maternal Concierge & Provider Marketplace",
   description:
-    "Personalized pre- and postpartum concierge support for mothers — practical help, emotional care, and guidance through every stage.",
+    "AI-powered maternal concierge and provider marketplace — connecting moms with doulas, postpartum care, lactation support, and everyday help, region by region.",
 };
 
 export default function HomePage() {
   return (
     <>
       <Hero />
-      <ServicesPreview />
-      <HowItWorks />
-      <Faq />
+      <AudienceSplit />
+      <CoreServicesSection />
+      <CoverageMap />
+      <GoogleReviewsSection className="bg-nurture-sage/5" />
+      <HowItWorksSteps
+        title="How it works for moms"
+        subtitle="From first inquiry to ongoing support."
+        steps={momHowItWorks}
+        className="bg-nurture-sage/5 py-20"
+      />
+      <ConciergeVision />
+      <FaqList items={momFaqs} />
       <CallToAction />
     </>
   );
