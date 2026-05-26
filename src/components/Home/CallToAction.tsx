@@ -1,4 +1,5 @@
 import ContactOptions from "@/components/Common/ContactOptions";
+import { buildCareStartHref } from "@/config/carePaths";
 import Link from "next/link";
 
 const CallToAction = () => {
@@ -15,23 +16,29 @@ const CallToAction = () => {
             by region, powered by AI concierge.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-            <Link
-              href="/for-moms"
-              className="inline-block rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-cream"
-            >
-              I&apos;m a mom
-            </Link>
-            <Link
-              href="/for-providers"
-              className="inline-block rounded-full border border-white/40 px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/10"
-            >
-              I&apos;m a provider
-            </Link>
+              <Link
+                href={buildCareStartHref()}
+                className="inline-block rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-cream"
+              >
+                Request care
+              </Link>
+              <Link
+                href="/for-moms"
+                className="inline-block rounded-full border border-white/40 px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/10"
+              >
+                Explore for moms
+              </Link>
+              <Link
+                href="/for-providers"
+                className="inline-block rounded-full border border-white/40 px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/10"
+              >
+                I&apos;m a provider
+              </Link>
           </div>
         </div>
 
         <div className="mt-12">
-          <ContactOptions formHref="/contact#contact-form" />
+          <ContactOptions variant="intake" />
         </div>
       </div>
     </section>

@@ -1,13 +1,21 @@
 "use client";
 
 import Breadcrumb from "@/components/Common/Breadcrumb";
+import CareChecklist from "@/components/Dashboard/CareChecklist";
+import CareRecommendations from "@/components/Dashboard/CareRecommendations";
 import { buildWhatsAppUrl, hasCalendly, hasWhatsApp } from "@/config/integrations";
-import { brands } from "@/content/site";
+import { buildCareStartHref } from "@/config/carePaths";
+import { brands, momFaqs } from "@/content/site";
+import { MATERNAL_STAGE_LABELS } from "@/content/intake";
 import { useUserGroups } from "@/hooks/useUserGroups";
+import { fetchIntake } from "@/lib/api/intakeClient";
+import { buildCareChecklist } from "@/lib/intake/recommendations";
+import type { IntakeApiResponse, MaternalStage } from "@/types/intake";
+import { isIntakeComplete } from "@/types/intake";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 const DashboardPage = () => {
   const router = useRouter();
@@ -15,7 +23,12 @@ const DashboardPage = () => {
     context.authStatus,
     context.user,
   ]);
-  const { canAccessAdmin } = useUserGroups(authStatus === "authenticated");
+  const { canAccessAdmin, loading: groupsLoading } = useUserGroups(
+    authStatus === "authenticated"
+  );
+  const [intake, setIntake] = useState<IntakeApiResponse | null>(null);
+  const [loadingIntake, setLoadingIntake] = useState(true);
+  const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
     if (authStatus === "unauthenticated") {
@@ -23,140 +36,209 @@ const DashboardPage = () => {
     }
   }, [authStatus, router]);
 
-  if (authStatus !== "authenticated") {
+  useEffect(() => {
+    if (authStatus !== "authenticated" || groupsLoading) return;
+
+    if (canAccessAdmin) {
+      fetchIntake()
+        .then(setIntake)
+        .catch(() => setIntake({ profile: null, recommendations: [] }))
+        .finally(() => setLoadingIntake(false));
+      return;
+    }
+
+    fetchIntake()
+      .then((data) => {
+        if (!isIntakeComplete(data.profile?.intakeStatus)) {
+          setRedirecting(true);
+          router.replace("/dashboard/intake");
+          return;
+        }
+        setIntake(data);
+      })
+      .catch(() => {
+        setRedirecting(true);
+        router.replace("/dashboard/intake");
+      })
+      .finally(() => setLoadingIntake(false));
+  }, [authStatus, canAccessAdmin, groupsLoading, router]);
+
+  if (authStatus !== "authenticated" || redirecting || loadingIntake) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
-        <p className="text-nurture-charcoal/60">Loading your dashboard…</p>
+        <p className="text-nurture-charcoal/60">
+          {redirecting ? "Continuing your care journey…" : "Loading your dashboard…"}
+        </p>
       </div>
     );
   }
 
   const displayName =
-    user?.signInDetails?.loginId?.split("@")[0] ?? "there";
+    intake?.profile?.name?.split(" ")[0] ||
+    user?.signInDetails?.loginId?.split("@")[0] ||
+    "there";
+
+  const intakeComplete = isIntakeComplete(intake?.profile?.intakeStatus);
+  const intakeInReview = intake?.profile?.intakeStatus === "in-review";
+  const checklist = buildCareChecklist(
+    intake?.profile ?? null,
+    (intake?.recommendations.length ?? 0) > 0
+  );
 
   const whatsappUrl = buildWhatsAppUrl(
     "Hi! I'm a Nurture Collective member and would like to connect about care."
   );
 
-  const cards = [
-    {
-      title: "Intake form",
-      description:
-        "Tell us about your needs, due date, and the support you're looking for.",
-      status: "Available",
-      href: "/dashboard/intake",
-      action: "Start intake",
-    },
-    {
-      title: "Care plan",
-      description: "Your personalized support plan from your concierge coordinator.",
-      status: "In preparation",
-      href: null,
-      action: null,
-    },
-    {
-      title: "Messages",
-      description: "Connect with your care team via WhatsApp.",
-      status: hasWhatsApp() ? "Available" : "Coming soon",
-      href: whatsappUrl,
-      action: hasWhatsApp() ? "Open WhatsApp" : null,
-      external: true,
-    },
-  ];
+  const stageLabel = intake?.profile?.maternalStage
+    ? MATERNAL_STAGE_LABELS[intake.profile.maternalStage as MaternalStage]
+    : null;
 
   return (
     <>
       <Breadcrumb pageName="Your dashboard" />
-      <div className="mx-auto max-w-screen-xl px-4 py-16 sm:px-6 lg:px-8">
-        <div className="rounded-2xl border border-nurture-sage/20 bg-white p-8 shadow-sm md:p-12">
-          <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
-            Hello, {displayName}
-          </h2>
-          <p className="mt-3 max-w-2xl text-nurture-charcoal/80">
-            Welcome to {brands.nurtureCollective.name}. Complete your intake,
-            view your care plan, and stay connected with your care team.
-          </p>
-
-          <div className="mt-10 grid gap-6 sm:grid-cols-3">
-            {cards.map((item) => (
-              <div
-                key={item.title}
-                className="flex flex-col rounded-xl border border-nurture-blush/40 bg-nurture-cream/50 p-6"
+      <div className="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
+        <div className="rounded-3xl border border-nurture-sage/15 bg-gradient-to-br from-white via-white to-nurture-cream/60 p-8 shadow-sm md:p-12">
+          <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <p className="text-sm font-medium uppercase tracking-wide text-nurture-sage-dark">
+                {intakeInReview
+                  ? "Under review"
+                  : intakeComplete
+                    ? "Your care journey"
+                    : "Welcome"}
+              </p>
+              <h2 className="mt-1 font-serif text-3xl font-semibold text-nurture-charcoal">
+                Hello, {displayName}
+              </h2>
+              <p className="mt-3 max-w-2xl text-nurture-charcoal/75">
+                {intakeInReview
+                  ? "Your intake is with your coordinator — they'll reach out soon with next steps."
+                  : intakeComplete
+                    ? stageLabel
+                      ? `You're in the ${stageLabel.toLowerCase()} stage. Your coordinator is preparing personalized support.`
+                      : "Your intake is complete. Explore your recommendations and next steps below."
+                    : `Welcome to ${brands.nurtureCollective.name}. Start your care journey to receive personalized recommendations.`}
+              </p>
+            </div>
+            {!intakeComplete ? (
+              <Link
+                href={buildCareStartHref()}
+                className="inline-flex shrink-0 items-center justify-center rounded-full bg-nurture-sage px-8 py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
               >
-                <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
-                  {item.status}
-                </p>
-                <h3 className="mt-2 font-serif text-lg font-semibold">
-                  {item.title}
-                </h3>
-                <p className="mt-2 flex-1 text-sm text-nurture-charcoal/70">
-                  {item.description}
-                </p>
-                {item.href && item.action ? (
-                  item.external ? (
-                    <a
-                      href={item.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="mt-4 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
-                    >
-                      {item.action} →
-                    </a>
-                  ) : (
-                    <Link
-                      href={item.href}
-                      className="mt-4 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
-                    >
-                      {item.action} →
-                    </Link>
-                  )
-                ) : item.title === "Care plan" ? (
-                  <p className="mt-4 text-xs text-nurture-charcoal/50">
-                    Your coordinator will share your plan after intake.
-                  </p>
-                ) : null}
-              </div>
-            ))}
+                Start Your Care Journey
+              </Link>
+            ) : null}
           </div>
 
-          {hasCalendly() ? (
-            <div className="mt-10 rounded-xl border border-nurture-sage/15 bg-nurture-sage/5 p-6">
-              <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
-                Schedule a check-in
+          {!loadingIntake ? (
+            <div className="mt-10 grid gap-6 lg:grid-cols-2">
+              <CareRecommendations
+                recommendations={intake?.recommendations ?? []}
+              />
+              <CareChecklist items={checklist} />
+            </div>
+          ) : (
+            <p className="mt-10 text-sm text-nurture-charcoal/50">
+              Loading your care plan…
+            </p>
+          )}
+
+          <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="rounded-2xl border border-nurture-blush/40 bg-nurture-cream/50 p-6">
+              <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+                {hasCalendly() ? "Available" : "Coming soon"}
+              </p>
+              <h3 className="mt-2 font-serif text-lg font-semibold">
+                Upcoming appointments
               </h3>
               <p className="mt-2 text-sm text-nurture-charcoal/70">
-                Book time with your care team when you&apos;re ready.
+                {hasCalendly()
+                  ? "Schedule your intro call or next check-in when you're ready."
+                  : "Appointment scheduling will appear here once your coordinator sets up your first visit."}
               </p>
+              {hasCalendly() ? (
+                <Link
+                  href="/services#calendly"
+                  className="mt-4 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
+                >
+                  Schedule now →
+                </Link>
+              ) : null}
+            </div>
+
+            <div className="rounded-2xl border border-nurture-blush/40 bg-nurture-cream/50 p-6">
+              <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+                {hasWhatsApp() ? "Available" : "Coming soon"}
+              </p>
+              <h3 className="mt-2 font-serif text-lg font-semibold">
+                Connect with your team
+              </h3>
+              <p className="mt-2 text-sm text-nurture-charcoal/70">
+                Message your care coordinator for questions between visits.
+              </p>
+              {hasWhatsApp() && whatsappUrl ? (
+                <a
+                  href={whatsappUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-4 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
+                >
+                  Open WhatsApp →
+                </a>
+              ) : null}
+            </div>
+
+            <div className="rounded-2xl border border-nurture-blush/40 bg-nurture-cream/50 p-6 sm:col-span-2 lg:col-span-1">
+              <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+                Resources
+              </p>
+              <h3 className="mt-2 font-serif text-lg font-semibold">
+                Support & guidance
+              </h3>
+              <ul className="mt-3 space-y-2 text-sm text-nurture-charcoal/70">
+                {momFaqs.slice(0, 2).map((faq) => (
+                  <li key={faq.q}>
+                    <Link
+                      href="/for-moms#faq"
+                      className="hover:text-nurture-sage-dark hover:underline"
+                    >
+                      {faq.q}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
               <Link
-                href="/services#calendly"
-                className="mt-4 inline-block rounded-full bg-nurture-sage px-6 py-2.5 text-sm font-medium text-white hover:bg-nurture-sage-dark"
+                href="/for-moms"
+                className="mt-4 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
               >
-                View scheduling options
+                Explore resources →
               </Link>
             </div>
-          ) : null}
+          </div>
 
-          <div className="mt-10 flex flex-wrap gap-4">
+          <div className="mt-10 flex flex-wrap gap-4 border-t border-nurture-sage/10 pt-8">
             <Link
               href="/account/profile"
-              className="rounded-full bg-nurture-sage px-6 py-3 text-sm font-medium text-white hover:bg-nurture-sage-dark"
+              className="rounded-full border border-nurture-sage px-6 py-3 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
             >
               Edit profile
             </Link>
+            {intakeComplete ? (
+              <Link
+                href={buildCareStartHref()}
+                className="rounded-full px-6 py-3 text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark"
+              >
+                View intake
+              </Link>
+            ) : null}
             {canAccessAdmin ? (
               <Link
                 href="/admin"
-                className="rounded-full border border-nurture-sage px-6 py-3 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
+                className="rounded-full px-6 py-3 text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark"
               >
                 Admin apps
               </Link>
             ) : null}
-            <Link
-              href="/for-moms#coverage"
-              className="rounded-full px-6 py-3 text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark"
-            >
-              Check coverage
-            </Link>
             <Link
               href="/contact?audience=mom"
               className="rounded-full px-6 py-3 text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark"

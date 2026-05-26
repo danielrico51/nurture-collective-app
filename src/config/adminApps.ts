@@ -1,6 +1,6 @@
 export type AdminAppStatus = "available" | "coming_soon";
 
-export type AdminAppIcon = "tasks" | "members" | "reports" | "settings";
+export type AdminAppIcon = "tasks" | "intakes" | "members" | "reports" | "settings";
 
 export interface AdminApp {
   id: string;
@@ -20,6 +20,14 @@ export const ADMIN_APPS: AdminApp[] = [
     href: "/admin/tasks",
     status: "available",
     icon: "tasks",
+  },
+  {
+    id: "intakes",
+    title: "Intake queue",
+    description: "Review member onboarding submissions and care journey drafts.",
+    href: "/admin/intakes",
+    status: "available",
+    icon: "intakes",
   },
 ];
 

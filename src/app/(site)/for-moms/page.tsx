@@ -6,6 +6,7 @@ import FaqList from "@/components/Common/FaqList";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
 import GoogleReviewsSection from "@/components/Reviews/GoogleReviewsSection";
 import SectionTitle from "@/components/Common/SectionTitle";
+import { buildCareStartHref } from "@/config/carePaths";
 import { brands, coreServices, momFaqs, momHowItWorks } from "@/content/site";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -37,7 +38,7 @@ export default function ForMomsPage() {
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
-                href="/contact?audience=mom"
+                href={buildCareStartHref()}
                 className="rounded-full bg-nurture-sage px-8 py-3.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
               >
                 Request care
@@ -72,7 +73,7 @@ export default function ForMomsPage() {
                     {service.description}
                   </p>
                   <Link
-                    href={`/contact?audience=mom&service=${service.slug}`}
+                    href={buildCareStartHref(service.slug)}
                     className="mt-6 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
                   >
                     Get started →
@@ -83,9 +84,14 @@ export default function ForMomsPage() {
           </div>
 
           <div className="mt-20">
+            <SectionTitle
+              title="Ready to get started?"
+              subtitle="Begin with our guided intake — we'll personalize recommendations for your journey."
+            />
             <ContactOptions
-              formHref="/contact?audience=mom#contact-form"
+              variant="intake"
               whatsappMessage="Hi! I'm interested in maternal care through The Nurture Collective."
+              className="mt-10"
             />
           </div>
         </div>

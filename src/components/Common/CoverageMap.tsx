@@ -1,5 +1,6 @@
 import Link from "next/link";
 import SectionTitle from "@/components/Common/SectionTitle";
+import { buildCareStartHref } from "@/config/carePaths";
 import {
   coverageIntro,
   coverageRegions,
@@ -59,7 +60,7 @@ const CoverageMap = ({
           {showCta ? (
             <>
               <Link
-                href="/contact?audience=mom"
+                href={buildCareStartHref()}
                 className="font-medium text-nurture-sage-dark hover:underline"
               >
                 Request care in your area

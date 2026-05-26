@@ -1,6 +1,7 @@
 "use client";
 
 import SignupPage from "@/app/(site)/(auth)/signup/page";
+import { buildCareStartHref } from "@/config/carePaths";
 import { brands } from "@/content/site";
 import Link from "next/link";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
@@ -18,7 +19,7 @@ const MomSignupPage = () => {
           open member accounts.
         </p>
         <Link
-          href="/contact?audience=mom"
+          href={buildCareStartHref()}
           className="mt-8 inline-block rounded-full bg-nurture-sage px-8 py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
         >
           Request care

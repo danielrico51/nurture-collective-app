@@ -50,3 +50,27 @@ export const handleStorageError = (error: unknown) => {
 
   return NextResponse.json({ error: "Failed to access task storage" }, { status: 500 });
 };
+
+export const handleIntakeStorageError = (error: unknown) => {
+  console.error("[intake] storage error:", error);
+  const message =
+    error instanceof Error ? error.message : "Storage operation failed";
+
+  if (
+    message.includes("AccessDenied") ||
+    message.includes("not authorized")
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Intake storage access denied. Grant the Amplify compute role s3:GetObject and s3:PutObject on the intake bucket.",
+      },
+      { status: 503 }
+    );
+  }
+
+  return NextResponse.json(
+    { error: "Failed to access intake storage" },
+    { status: 500 }
+  );
+};

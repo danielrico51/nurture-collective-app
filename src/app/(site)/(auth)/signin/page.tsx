@@ -13,8 +13,9 @@ import {
   sharedAuthFormFields,
   signInAuthHeader,
 } from "@/utils/sharedAuthUi";
-import { useEffect } from "react";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
+import { resolveMemberHomePath } from "@/lib/intake/memberNavigation";
+import { useEffect } from "react";
 
 const SigninPage = () => {
   const router = useRouter();
@@ -23,7 +24,8 @@ const SigninPage = () => {
     const redirectIfSignedIn = async () => {
       try {
         await getCurrentUser();
-        router.replace("/dashboard");
+        const path = await resolveMemberHomePath();
+        router.replace(path);
       } catch {
         // not signed in
       }
@@ -35,7 +37,8 @@ const SigninPage = () => {
       if (payload.event === "signedIn") {
         try {
           await getCurrentUser();
-          router.push("/dashboard");
+          const path = await resolveMemberHomePath();
+          router.push(path);
         } catch (error) {
           console.error("Error after sign in:", error);
         }

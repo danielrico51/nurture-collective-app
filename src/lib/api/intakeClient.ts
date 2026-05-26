@@ -1,0 +1,83 @@
+import { fetchAuthSession } from "aws-amplify/auth";
+import type {
+  CareRecommendation,
+  IntakeApiResponse,
+  IntakeDraft,
+  IntakeProfile,
+  IntakeStatus,
+} from "@/types/intake";
+
+const authHeaders = async (): Promise<HeadersInit> => {
+  const session = await fetchAuthSession();
+  const token = session.tokens?.idToken?.toString();
+  if (!token) throw new Error("Not authenticated");
+  return {
+    Authorization: `Bearer ${token}`,
+    "Content-Type": "application/json",
+  };
+};
+
+const handleResponse = async <T>(response: Response): Promise<T> => {
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(
+      typeof data.error === "string" ? data.error : "Request failed"
+    );
+  }
+  return data as T;
+};
+
+export interface AdminIntakesResponse {
+  profiles: IntakeProfile[];
+  recommendations: CareRecommendation[];
+}
+
+export const fetchIntake = async (): Promise<IntakeApiResponse> => {
+  const response = await fetch("/api/intake", {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  return handleResponse<IntakeApiResponse>(response);
+};
+
+export const saveIntakeDraft = async (
+  draft: IntakeDraft
+): Promise<IntakeApiResponse> => {
+  const response = await fetch("/api/intake", {
+    method: "PATCH",
+    headers: await authHeaders(),
+    body: JSON.stringify({ draft }),
+  });
+  return handleResponse<IntakeApiResponse>(response);
+};
+
+export const submitIntake = async (
+  draft: IntakeDraft
+): Promise<IntakeApiResponse> => {
+  const response = await fetch("/api/intake", {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({ draft }),
+  });
+  return handleResponse<IntakeApiResponse>(response);
+};
+
+export const fetchAdminIntakes = async (): Promise<AdminIntakesResponse> => {
+  const response = await fetch("/api/admin/intakes", {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  return handleResponse<AdminIntakesResponse>(response);
+};
+
+export const updateAdminIntakeStatus = async (
+  profileId: string,
+  intakeStatus: IntakeStatus
+): Promise<{ profile: IntakeProfile }> => {
+  const response = await fetch(`/api/admin/intakes/${profileId}`, {
+    method: "PATCH",
+    headers: await authHeaders(),
+    body: JSON.stringify({ intakeStatus }),
+  });
+  return handleResponse<{ profile: IntakeProfile }>(response);
+};

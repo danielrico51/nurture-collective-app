@@ -3,6 +3,7 @@ import CalendlyEmbed from "@/components/Common/CalendlyEmbed";
 import ContactOptions from "@/components/Common/ContactOptions";
 import CoverageMap from "@/components/Common/CoverageMap";
 import SectionTitle from "@/components/Common/SectionTitle";
+import { buildCareStartHref } from "@/config/carePaths";
 import { brands, coreServices, futureConciergeServices } from "@/content/site";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -39,7 +40,7 @@ export default function ServicesPage() {
                   {service.description}
                 </p>
                 <Link
-                  href={`/contact?audience=mom&service=${service.slug}`}
+                  href={buildCareStartHref(service.slug)}
                   className="mt-6 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
                 >
                   Request this service →
@@ -74,7 +75,7 @@ export default function ServicesPage() {
             <p className="mt-10 text-center text-sm text-nurture-charcoal/60">
               Want early access to the full concierge?{" "}
               <Link
-                href="/contact?audience=mom"
+                href={buildCareStartHref()}
                 className="font-medium text-nurture-sage-dark hover:underline"
               >
                 Join the waitlist
@@ -85,12 +86,12 @@ export default function ServicesPage() {
 
           <div className="mt-20">
             <SectionTitle
-              title="Ready to connect?"
-              subtitle="Families and providers — message us, chat on WhatsApp, or book a call."
+              title="Ready to get started?"
+              subtitle="Start with guided intake, or reach out another way."
             />
             <ContactOptions
               className="mt-10"
-              formHref="/contact#contact-form"
+              variant="intake"
             />
           </div>
         </div>
