@@ -166,7 +166,7 @@ const IntakeFlow = ({
       if (typeof window !== "undefined") {
         localStorage.removeItem(`${INTAKE_DRAFT_STORAGE_KEY}-${userId}`);
       }
-      toast.success("Your care journey has started — welcome!");
+      toast.success("Your support journey has started — welcome!");
       router.push("/dashboard");
     } catch (error) {
       toast.error(
@@ -217,10 +217,10 @@ const IntakeFlow = ({
           </h1>
           <p className="mt-4 text-nurture-charcoal/70">
             A few gentle questions help us understand your journey and recommend
-            the right care — at your pace, one step at a time.
+            the right support — at your pace, one step at a time.
           </p>
           <button type="button" onClick={goNext} className={`mt-10 ${primaryButtonClass}`}>
-            Start Your Care Journey
+            Start Your Support Journey
           </button>
           <p className="mt-6 text-sm text-nurture-charcoal/50">
             Already have an account?{" "}
@@ -395,7 +395,7 @@ const IntakeFlow = ({
             What&apos;s feeling hardest right now?
           </h2>
           <p className="mt-2 text-sm text-nurture-charcoal/60">
-            There&apos;s no wrong answer — this helps us prioritize your care.
+            There&apos;s no wrong answer — this helps us prioritize your support.
           </p>
           <div className="mt-6 space-y-3">
             {CHALLENGE_OPTIONS.map((challenge) => (
@@ -648,7 +648,7 @@ const IntakeFlow = ({
             How can we reach you?
           </h2>
           <p className="mt-2 text-sm text-nurture-charcoal/60">
-            Your coordinator will use this to connect you with care.
+            Your coordinator will use this to connect you with support.
           </p>
           <div className="mt-6 space-y-5">
             <div>
@@ -700,7 +700,7 @@ const IntakeFlow = ({
                 className="mt-1 h-4 w-4 rounded border-nurture-sage/40 text-nurture-sage focus:ring-nurture-sage"
               />
               <span className="text-sm text-nurture-charcoal/80">
-                I agree to receive SMS updates about my care coordination. Message
+                I agree to receive SMS updates about my support coordination. Message
                 and data rates may apply.
               </span>
             </label>

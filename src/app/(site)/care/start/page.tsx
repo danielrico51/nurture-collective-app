@@ -47,7 +47,7 @@ export default function CareStartPage() {
 
   return (
     <div className="flex min-h-[50vh] items-center justify-center bg-nurture-cream">
-      <p className="text-nurture-charcoal/60">Starting your care journey…</p>
+      <p className="text-nurture-charcoal/60">Starting your support journey…</p>
     </div>
   );
 }

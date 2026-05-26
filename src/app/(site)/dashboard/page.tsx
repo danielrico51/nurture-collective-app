@@ -7,10 +7,10 @@ import { buildWhatsAppUrl, hasCalendly, hasWhatsApp } from "@/config/integration
 import { buildIntakeHref } from "@/config/carePaths";
 import { brands, momFaqs } from "@/content/site";
 import { MATERNAL_STAGE_LABELS } from "@/content/intake";
+import { useMemberIntake } from "@/hooks/useMemberIntake";
 import { useUserGroups } from "@/hooks/useUserGroups";
-import { fetchIntake } from "@/lib/api/intakeClient";
 import { buildCareChecklist } from "@/lib/intake/recommendations";
-import type { IntakeApiResponse, MaternalStage } from "@/types/intake";
+import type { MaternalStage } from "@/types/intake";
 import { isIntakeComplete } from "@/types/intake";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import Link from "next/link";
@@ -26,8 +26,10 @@ const DashboardPage = () => {
   const { canAccessAdmin, loading: groupsLoading } = useUserGroups(
     authStatus === "authenticated"
   );
-  const [intake, setIntake] = useState<IntakeApiResponse | null>(null);
-  const [loadingIntake, setLoadingIntake] = useState(true);
+  const memberIntakeEnabled =
+    authStatus === "authenticated" && !groupsLoading;
+  const { intake, loading: loadingIntake, reload: reloadIntake } =
+    useMemberIntake(memberIntakeEnabled);
   const [redirecting, setRedirecting] = useState(false);
 
   useEffect(() => {
@@ -37,37 +39,25 @@ const DashboardPage = () => {
   }, [authStatus, router]);
 
   useEffect(() => {
-    if (authStatus !== "authenticated" || groupsLoading) return;
+    if (!memberIntakeEnabled || loadingIntake || canAccessAdmin) return;
 
-    if (canAccessAdmin) {
-      fetchIntake()
-        .then(setIntake)
-        .catch(() => setIntake({ profile: null, recommendations: [] }))
-        .finally(() => setLoadingIntake(false));
-      return;
+    if (!isIntakeComplete(intake?.profile?.intakeStatus)) {
+      setRedirecting(true);
+      router.replace("/dashboard/intake");
     }
-
-    fetchIntake()
-      .then((data) => {
-        if (!isIntakeComplete(data.profile?.intakeStatus)) {
-          setRedirecting(true);
-          router.replace("/dashboard/intake");
-          return;
-        }
-        setIntake(data);
-      })
-      .catch(() => {
-        setRedirecting(true);
-        router.replace("/dashboard/intake");
-      })
-      .finally(() => setLoadingIntake(false));
-  }, [authStatus, canAccessAdmin, groupsLoading, router]);
+  }, [
+    canAccessAdmin,
+    intake?.profile?.intakeStatus,
+    loadingIntake,
+    memberIntakeEnabled,
+    router,
+  ]);
 
   if (authStatus !== "authenticated" || redirecting || loadingIntake) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <p className="text-nurture-charcoal/60">
-          {redirecting ? "Continuing your care journey…" : "Loading your dashboard…"}
+          {redirecting ? "Continuing your support journey…" : "Loading your dashboard…"}
         </p>
       </div>
     );
@@ -86,7 +76,7 @@ const DashboardPage = () => {
   );
 
   const whatsappUrl = buildWhatsAppUrl(
-    "Hi! I'm a Nurture Collective member and would like to connect about care."
+    "Hi! I'm a Nurture Collective member and would like to connect about support."
   );
 
   const stageLabel = intake?.profile?.maternalStage
@@ -104,7 +94,7 @@ const DashboardPage = () => {
                 {intakeInReview
                   ? "Under review"
                   : intakeComplete
-                    ? "Your care journey"
+                    ? "Your support journey"
                     : "Welcome"}
               </p>
               <h2 className="mt-1 font-serif text-3xl font-semibold text-nurture-charcoal">
@@ -117,7 +107,7 @@ const DashboardPage = () => {
                     ? stageLabel
                       ? `You're in the ${stageLabel.toLowerCase()} stage. Your coordinator is preparing personalized support.`
                       : "Your intake is complete. Explore your recommendations and next steps below."
-                    : `Welcome to ${brands.nurtureCollective.name}. Start your care journey to receive personalized recommendations.`}
+                    : `Welcome to ${brands.nurtureCollective.name}. Start your support journey to receive personalized recommendations.`}
               </p>
             </div>
             {!intakeComplete ? (
@@ -125,9 +115,17 @@ const DashboardPage = () => {
                 href={buildIntakeHref()}
                 className="inline-flex shrink-0 items-center justify-center rounded-full bg-nurture-sage px-8 py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
               >
-                Start Your Care Journey
+                Start Your Support Journey
               </Link>
-            ) : null}
+            ) : (
+              <button
+                type="button"
+                onClick={() => reloadIntake()}
+                className="inline-flex shrink-0 items-center justify-center rounded-full border border-nurture-sage/30 px-5 py-2.5 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
+              >
+                Refresh status
+              </button>
+            )}
           </div>
 
           {!loadingIntake ? (
@@ -139,7 +137,7 @@ const DashboardPage = () => {
             </div>
           ) : (
             <p className="mt-10 text-sm text-nurture-charcoal/50">
-              Loading your care plan…
+              Loading your support plan…
             </p>
           )}
 
@@ -174,7 +172,7 @@ const DashboardPage = () => {
                 Connect with your team
               </h3>
               <p className="mt-2 text-sm text-nurture-charcoal/70">
-                Message your care coordinator for questions between visits.
+                Message your support coordinator for questions between visits.
               </p>
               {hasWhatsApp() && whatsappUrl ? (
                 <a
@@ -243,7 +241,7 @@ const DashboardPage = () => {
               href="/contact?audience=mom"
               className="rounded-full px-6 py-3 text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark"
             >
-              Contact care team
+              Contact support team
             </Link>
           </div>
         </div>

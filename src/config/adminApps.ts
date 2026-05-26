@@ -24,7 +24,7 @@ export const ADMIN_APPS: AdminApp[] = [
   {
     id: "intakes",
     title: "Intake queue",
-    description: "Review member onboarding submissions and care journey drafts.",
+    description: "Review member onboarding submissions from all intake partitions.",
     href: "/admin/intakes",
     status: "available",
     icon: "intakes",

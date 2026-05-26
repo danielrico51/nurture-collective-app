@@ -20,7 +20,7 @@ interface ContactOptionsProps {
   /** Prefilled WhatsApp message. */
   whatsappMessage?: string;
   className?: string;
-  /** Intake mode leads with the guided care journey; contact mode uses the legacy form. */
+  /** Intake mode leads with the guided support journey; contact mode uses the legacy form. */
   variant?: "contact" | "intake";
   /** Override intake entry URL (defaults to /care/start). */
   intakeHref?: string;
@@ -46,14 +46,14 @@ const ContactOptions = ({
     <div className={className}>
       <div
         className="grid gap-6 md:grid-cols-3"
-        aria-label={isIntake ? "Ways to start care" : "Contact options"}
+        aria-label={isIntake ? "Ways to start support" : "Contact options"}
       >
         <article className={cardClassName}>
           <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
             {isIntake ? "Guided intake" : "Email"}
           </p>
           <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
-            {isIntake ? "Start your care journey" : "Send a message"}
+            {isIntake ? "Start your support journey" : "Send a message"}
           </h3>
           <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
             {isIntake
@@ -64,7 +64,7 @@ const ContactOptions = ({
             href={isIntake ? intakeHref : (formHref ?? `#${formAnchorId}`)}
             className="mt-6 inline-block rounded-full bg-nurture-sage px-6 py-2.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
           >
-            {isIntake ? "Request care" : "Use contact form"}
+            {isIntake ? "Request support" : "Use contact form"}
           </Link>
         </article>
 
@@ -119,7 +119,7 @@ const ContactOptions = ({
               href={isIntake ? buildCareStartHref() : "/contact"}
               className="mt-6 inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
             >
-              {isIntake ? "Request care" : "Request a call"}
+              {isIntake ? "Request support" : "Request a call"}
             </Link>
           )}
         </article>

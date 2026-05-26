@@ -84,10 +84,8 @@ const IntakeQueue = ({ userEmail }: IntakeQueueProps) => {
   ) => {
     setStatusSavingId(profileId);
     try {
-      const { profile } = await updateAdminIntakeStatus(profileId, intakeStatus);
-      setProfiles((current) =>
-        current.map((item) => (item.id === profileId ? profile : item))
-      );
+      await updateAdminIntakeStatus(profileId, intakeStatus);
+      await load();
       toast.success(`Status updated to ${STATUS_LABELS[intakeStatus]}`);
     } catch (err) {
       toast.error(

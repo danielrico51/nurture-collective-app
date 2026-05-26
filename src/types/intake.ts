@@ -91,11 +91,14 @@ export interface CareRecommendation {
   createdAt: string;
 }
 
-export interface IntakeDocument {
+/** Single-user intake record stored in a partitioned S3/local object. */
+export interface PartitionedIntakeRecord {
   version: 1;
-  profiles: IntakeProfile[];
+  profile: IntakeProfile;
   recommendations: CareRecommendation[];
   updatedAt: string;
+  /** S3 object key when loaded from partitioned storage. */
+  storageKey?: string;
 }
 
 /** Client-side draft — partial fields allowed during onboarding */

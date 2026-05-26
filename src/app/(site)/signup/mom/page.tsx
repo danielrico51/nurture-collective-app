@@ -15,14 +15,14 @@ const MomSignupPage = () => {
           Member signup coming soon
         </h1>
         <p className="mt-4 text-nurture-charcoal/70">
-          Request care through {brands.nurtureCollective.shortName} while we
+          Request support through {brands.nurtureCollective.shortName} while we
           open member accounts.
         </p>
         <Link
           href={buildCareStartHref()}
           className="mt-8 inline-block rounded-full bg-nurture-sage px-8 py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
         >
-          Request care
+          Request support
         </Link>
       </div>
     );

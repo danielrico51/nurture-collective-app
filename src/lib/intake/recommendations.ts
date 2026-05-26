@@ -156,7 +156,7 @@ export const generateRecommendations = (
       recommendationType: "general-support",
       priorityLevel: 2,
       recommendationReason:
-        "Based on your intake, your coordinator will personalize a care plan for your journey.",
+        "Based on your intake, your coordinator will personalize a support plan for your journey.",
       createdAt: now,
     });
   }
@@ -173,7 +173,7 @@ export const buildCareChecklist = (
   return [
     {
       id: "intake",
-      label: "Complete your care intake",
+      label: "Complete your support intake",
       completed: submitted,
     },
     {

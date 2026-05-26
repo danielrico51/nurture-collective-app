@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
   if (error || !user) return error;
 
   try {
-    const data = await getIntakeForUser(user.sub);
+    const data = await getIntakeForUser(user.sub, user.email);
     return NextResponse.json(data);
   } catch (err) {
     return handleStorageError(err);
@@ -63,8 +63,9 @@ export async function PATCH(request: NextRequest) {
   }
 
   try {
-    const profile = await upsertProfileDraft(user.sub, draft);
-    const recommendations = (await getIntakeForUser(user.sub)).recommendations;
+    const profile = await upsertProfileDraft(user.sub, draft, user.email);
+    const recommendations = (await getIntakeForUser(user.sub, user.email))
+      .recommendations;
     return NextResponse.json({ profile, recommendations });
   } catch (err) {
     return handleStorageError(err);
@@ -106,7 +107,11 @@ export async function POST(request: NextRequest) {
   draft.email = draft.email?.trim() || user.email;
 
   try {
-    const { profile, recommendations } = await submitProfile(user.sub, draft);
+    const { profile, recommendations } = await submitProfile(
+      user.sub,
+      draft,
+      user.email
+    );
 
     try {
       await forwardToN8n(

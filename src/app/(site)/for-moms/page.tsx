@@ -14,7 +14,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "For Moms | The Nurture Collective",
   description:
-    "Birth doula support, postpartum care, lactation, and newborn care through the Nurture Collective provider network — plus the AI-powered mom concierge we're building.",
+    "Birth doula support, postpartum support, lactation, and newborn support through the Nurture Collective provider network — plus the AI-powered mom concierge we're building.",
 };
 
 export default function ForMomsPage() {
@@ -28,20 +28,20 @@ export default function ForMomsPage() {
               For families
             </p>
             <h1 className="mt-4 font-serif text-4xl font-semibold text-nurture-charcoal sm:text-5xl">
-              Care that meets you where you are
+              Support that meets you where you are
             </h1>
             <p className="mt-6 text-lg text-nurture-charcoal/80">
               Start with evidence-based support from vetted providers in your
               region. As {brands.nurtureCollective.shortName} grows, your
-              concierge will coordinate every service you need — from doula care
-              to cleaning, childcare, and beyond.
+              concierge will coordinate every service you need — from doula
+              support to cleaning, childcare, and beyond.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
                 href={buildCareStartHref()}
                 className="rounded-full bg-nurture-sage px-8 py-3.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
               >
-                Request care
+                Request support
               </Link>
               <Link
                 href="/services"
@@ -90,7 +90,7 @@ export default function ForMomsPage() {
             />
             <ContactOptions
               variant="intake"
-              whatsappMessage="Hi! I'm interested in maternal care through The Nurture Collective."
+              whatsappMessage="Hi! I'm interested in maternal support through The Nurture Collective."
               className="mt-10"
             />
           </div>
@@ -100,7 +100,7 @@ export default function ForMomsPage() {
       <CoverageMap />
       <GoogleReviewsSection />
       <HowItWorksSteps
-        title="Your care journey"
+        title="Your support journey"
         steps={momHowItWorks}
         className="bg-nurture-sage/5 py-20"
       />

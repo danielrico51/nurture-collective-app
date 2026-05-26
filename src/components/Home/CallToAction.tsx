@@ -11,7 +11,7 @@ const CallToAction = () => {
             Every mother deserves a team
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-white/90">
-            Whether you&apos;re seeking care or offering your expertise, Nurture
+            Whether you&apos;re seeking support or offering your expertise, Nurture
             Collective connects families with trusted support — expanding region
             by region, powered by AI concierge.
           </p>
@@ -20,7 +20,7 @@ const CallToAction = () => {
                 href={buildCareStartHref()}
                 className="inline-block rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-cream"
               >
-                Request care
+                Request support
               </Link>
               <Link
                 href="/for-moms"

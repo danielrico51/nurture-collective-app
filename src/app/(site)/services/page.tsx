@@ -11,7 +11,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Services | The Nurture Collective",
   description:
-    "Birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage — available in active coverage regions, expanding over time.",
+    "Birth doula support, overnight newborn support, postpartum support, lactation support, and prenatal massage — available in active coverage regions, expanding over time.",
 };
 
 export default function ServicesPage() {
@@ -22,7 +22,7 @@ export default function ServicesPage() {
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <SectionTitle
             title="Maternal wellness — available today"
-            subtitle={`Evidence-based care through the ${brands.nurtureCollective.shortName} provider network. Check coverage for availability in your area.`}
+            subtitle={`Evidence-based support through the ${brands.nurtureCollective.shortName} provider network. Check coverage for availability in your area.`}
           />
           <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {coreServices.map((service) => (

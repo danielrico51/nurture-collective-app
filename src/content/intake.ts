@@ -27,7 +27,7 @@ export const MATERNAL_STAGES: {
   },
   {
     value: "infant-care",
-    label: "Infant care",
+    label: "Infant support",
     description: "Navigating life with a baby",
   },
   {
@@ -38,7 +38,7 @@ export const MATERNAL_STAGES: {
   {
     value: "multiple-children",
     label: "Multiple children",
-    description: "Balancing care across your family",
+    description: "Balancing support across your family",
   },
 ];
 
@@ -153,7 +153,7 @@ export const BUDGET_OPTIONS: {
   },
   {
     value: "premium",
-    label: "Premium care",
+    label: "Premium support",
     description: "Prioritizing the best available support",
   },
 ];

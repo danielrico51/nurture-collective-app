@@ -11,7 +11,7 @@ interface CareChecklistProps {
 const CareChecklist = ({ items }: CareChecklistProps) => (
   <div className="rounded-2xl border border-nurture-sage/15 bg-white p-6 shadow-sm">
     <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
-      Your care checklist
+      Your support checklist
     </h3>
     <ul className="mt-5 space-y-3">
       {items.map((item) => (

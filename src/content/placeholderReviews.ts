@@ -19,7 +19,7 @@ export const placeholderGoogleReviews: GoogleReviewsPayload = {
       authorName: "Jessica L.",
       rating: 5,
       relativeTime: "1 month ago",
-      text: "Overnight newborn care was a lifesaver in those first weeks. I finally slept knowing our baby was in experienced hands.",
+      text: "Overnight newborn support was a lifesaver in those first weeks. I finally slept knowing our baby was in experienced hands.",
     },
     {
       id: "placeholder-3",
@@ -33,7 +33,7 @@ export const placeholderGoogleReviews: GoogleReviewsPayload = {
       authorName: "Priya K.",
       rating: 4,
       relativeTime: "2 months ago",
-      text: "Postpartum care helped us set boundaries with visitors and build a recovery routine. Warm, professional, and responsive.",
+      text: "Postpartum support helped us set boundaries with visitors and build a recovery routine. Warm, professional, and responsive.",
     },
   ],
 };

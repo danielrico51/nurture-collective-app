@@ -10,7 +10,7 @@ const Hero = () => {
             {brands.nurtureCollective.tagline}
           </p>
           <h1 className="mt-4 font-serif text-4xl font-semibold leading-tight text-nurture-charcoal sm:text-5xl lg:text-6xl">
-            Maternal care, coordinated for every stage of motherhood
+            Maternal support, coordinated for every stage of motherhood
           </h1>
           <p className="mt-6 text-lg text-nurture-charcoal/80 sm:text-xl">
             {brands.nurtureCollective.description}

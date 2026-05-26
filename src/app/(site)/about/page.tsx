@@ -37,7 +37,7 @@ export default function AboutPage() {
                 is an AI-powered mom concierge and provider marketplace. We
                 connect families with vetted maternal wellness professionals —
                 birth doulas, postpartum support, lactation consultants, newborn
-                care specialists, and more — and we&apos;re expanding into
+                support specialists, and more — and we&apos;re expanding into
                 everyday help: cleaning, childcare, fitness, errands, and full
                 concierge coordination across every stage of motherhood.
               </p>
@@ -60,14 +60,14 @@ export default function AboutPage() {
               <div className="rounded-2xl border border-nurture-sage/20 bg-white p-8">
                 <h3 className="font-serif text-xl font-semibold">For moms</h3>
                 <p className="mt-3 text-sm text-nurture-charcoal/70">
-                  Request care in your area, explore available services, and get
+                  Request support in your area, explore available services, and get
                   on the list for full concierge as we expand.
                 </p>
                 <Link
                   href="/for-moms"
                   className="mt-4 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
                 >
-                  Explore care for moms →
+                  Explore support for moms →
                 </Link>
               </div>
               <div className="rounded-2xl border border-nurture-sage/20 bg-white p-8">
@@ -90,7 +90,7 @@ export default function AboutPage() {
                 <li>Expecting and new parents in our active coverage regions</li>
                 <li>
                   Families seeking doula, postpartum, lactation, and newborn
-                  care through our vetted network
+                  support through our vetted network
                 </li>
                 <li>
                   Moms preparing for the full concierge experience — support

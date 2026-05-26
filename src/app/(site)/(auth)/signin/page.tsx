@@ -51,7 +51,7 @@ const SigninPage = () => {
   return (
     <AuthPageShell
       title="Welcome back"
-      subtitle={`Sign in to your ${brands.nurtureCollective.name} dashboard — member resources, intake, and updates from your care team.`}
+      subtitle={`Sign in to your ${brands.nurtureCollective.name} dashboard — member resources, intake, and updates from your support team.`}
       highlights={[
         "Secure member access",
         "Your dashboard and resources",

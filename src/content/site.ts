@@ -15,7 +15,7 @@ export const brands = {
     shortName: "Nurture Collective",
     tagline: "AI-powered maternal concierge & provider marketplace",
     description:
-      "Building the concierge platform that connects moms with trusted care — from doulas and postpartum support to everyday household help, coordinated in one place.",
+      "Building the concierge platform that connects moms with trusted support — from doulas and postpartum support to everyday household help, coordinated in one place.",
   },
   // The Nesting Place — uncomment when acquisition is complete
   // nestingPlace: {
@@ -34,14 +34,14 @@ export const coverageRegions: CoverageRegion[] = [
     name: "Northern New Jersey",
     status: "active",
     services:
-      "Birth doula, postpartum care, overnight newborn care, lactation support, prenatal massage",
+      "Birth doula, postpartum support, overnight newborn support, lactation support, prenatal massage",
   },
   {
     id: "your-area",
     name: "Your area",
     status: "expanding",
     services:
-      "Request care where you live — we’re opening new regions and building our provider network market by market.",
+      "Request support where you live — we’re opening new regions and building our provider network market by market.",
   },
 ];
 
@@ -52,7 +52,7 @@ export const coverageStatusLabels: Record<CoverageStatus, string> = {
 };
 
 export const coverageIntro =
-  "Service availability depends on your location. We’re building a national concierge — these are the regions where care is available today.";
+  "Service availability depends on your location. We’re building a national concierge — these are the regions where support is available today.";
 
 /** Core maternal wellness services offered through the network (not tied to a single brand). */
 export const coreServices = [
@@ -60,19 +60,19 @@ export const coreServices = [
     slug: "birth-doula",
     title: "Birth doula support",
     description:
-      "Experienced, evidence-based doula care for labor, birth planning, and continuous support through your birthing experience.",
-    tag: "Doula care",
+      "Experienced, evidence-based doula support for labor, birth planning, and continuous support through your birthing experience.",
+    tag: "Doula support",
   },
   {
     slug: "overnight-newborn",
-    title: "Overnight newborn care",
+    title: "Overnight newborn support",
     description:
-      "Skilled overnight support so you can rest and recover while your newborn is cared for by experienced postpartum professionals.",
-    tag: "Newborn care",
+      "Skilled overnight support so you can rest and recover while experienced postpartum professionals support your newborn.",
+    tag: "Newborn support",
   },
   {
     slug: "postpartum-care",
-    title: "Postpartum care",
+    title: "Postpartum support",
     description:
       "Hands-on recovery support, feeding guidance, and practical help through the fourth trimester and beyond.",
     tag: "Postpartum",
@@ -141,7 +141,7 @@ export const momHowItWorks = [
   },
   {
     step: "02",
-    title: "Get matched with care",
+    title: "Get matched with support",
     description:
       "We connect you with vetted providers in your area through our growing concierge network.",
   },
@@ -149,7 +149,7 @@ export const momHowItWorks = [
     step: "03",
     title: "Receive ongoing support",
     description:
-      "From doula care to everyday help, your coordinator keeps support organized and personalized.",
+      "From doula support to everyday help, your coordinator keeps support organized and personalized.",
   },
 ] as const;
 
@@ -181,14 +181,14 @@ export const momFaqs = [
   },
   {
     q: "What services are available today?",
-    a: "In active regions we offer birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage through our vetted provider network.",
+    a: "In active regions we offer birth doula support, overnight newborn support, postpartum support, lactation support, and prenatal massage through our vetted provider network.",
   },
   {
     q: "What is coming next?",
     a: "We're building a full mom concierge — matching you with cleaning, childcare, fitness, errands, and everyday support powered by AI, all coordinated in one place, in more locations over time.",
   },
   {
-    q: "Is this medical care?",
+    q: "Is this medical support?",
     a: "We provide wellness and support services. We do not replace care from your OB, midwife, or pediatrician. Always consult your healthcare provider for clinical concerns.",
   },
   // The Nesting Place — uncomment when acquisition is complete

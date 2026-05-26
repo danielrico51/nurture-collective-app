@@ -13,7 +13,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "The Nurture Collective | Maternal Concierge & Provider Marketplace",
   description:
-    "AI-powered maternal concierge and provider marketplace — connecting moms with doulas, postpartum care, lactation support, and everyday help, region by region.",
+    "AI-powered maternal concierge and provider marketplace — connecting moms with doulas, postpartum support, lactation support, and everyday help, region by region.",
 };
 
 export default function HomePage() {

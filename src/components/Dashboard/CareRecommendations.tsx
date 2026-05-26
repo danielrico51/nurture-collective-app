@@ -21,7 +21,7 @@ const CareRecommendations = ({ recommendations }: CareRecommendationsProps) => {
           Recommended services
         </h3>
         <p className="mt-2 text-sm text-nurture-charcoal/70">
-          Complete your intake to receive personalized care recommendations.
+          Complete your intake to receive personalized support recommendations.
         </p>
         <Link
           href={buildIntakeHref()}

@@ -63,12 +63,12 @@ const CoverageMap = ({
                 href={buildCareStartHref()}
                 className="font-medium text-nurture-sage-dark hover:underline"
               >
-                Request care in your area
+                Request support in your area
               </Link>{" "}
               — we use demand to plan expansion.
             </>
           ) : (
-            <>Request care in your area — we use demand to plan expansion.</>
+            <>Request support in your area — we use demand to plan expansion.</>
           )}
         </div>
       </div>

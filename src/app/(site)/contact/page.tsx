@@ -286,7 +286,7 @@ export default function ContactPage() {
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <SectionTitle
             title="Let's connect"
-            subtitle="Families seeking care and providers joining our network — we're here for both."
+            subtitle="Families seeking support and providers joining our network — we're here for both."
           />
           <ContactOptions className="mt-10" formAnchorId="contact-form" />
           <div className="mx-auto mt-16 max-w-xl">

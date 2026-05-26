@@ -12,7 +12,7 @@ const AudienceSplit = () => {
             How can we help you today?
           </h2>
           <p className="mt-3 text-nurture-charcoal/70">
-            Whether you&apos;re a mom seeking care or a provider ready to join
+            Whether you&apos;re a mom seeking support or a provider ready to join
             our network, start here.
           </p>
         </div>
