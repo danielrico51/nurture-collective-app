@@ -4,7 +4,13 @@ import {
   MATERNAL_STAGE_LABELS,
   SUPPORT_INTEREST_LABELS,
 } from "@/content/intake";
-import { fetchAdminIntakes, updateAdminIntakeStatus } from "@/lib/api/intakeClient";
+import {
+  fetchAdminConversations,
+  fetchAdminIntakes,
+  reopenAdminConversation,
+  updateAdminIntakeStatus,
+  type AdminConversationSummary,
+} from "@/lib/api/intakeClient";
 import type {
   CareRecommendation,
   IntakeProfile,
@@ -59,6 +65,13 @@ const IntakeQueue = ({ userEmail }: IntakeQueueProps) => {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [statusSavingId, setStatusSavingId] = useState<string | null>(null);
+  const [conversationsByUser, setConversationsByUser] = useState<
+    Record<string, AdminConversationSummary[]>
+  >({});
+  const [conversationsLoadingId, setConversationsLoadingId] = useState<
+    string | null
+  >(null);
+  const [reopeningKey, setReopeningKey] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -93,6 +106,58 @@ const IntakeQueue = ({ userEmail }: IntakeQueueProps) => {
       );
     } finally {
       setStatusSavingId(null);
+    }
+  };
+
+  const loadConversations = useCallback(async (profile: IntakeProfile) => {
+    setConversationsLoadingId(profile.userId);
+    try {
+      const data = await fetchAdminConversations(profile.userId, profile.email);
+      setConversationsByUser((current) => ({
+        ...current,
+        [profile.userId]: data.sessions,
+      }));
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not load conversations"
+      );
+    } finally {
+      setConversationsLoadingId(null);
+    }
+  }, []);
+
+  const handleExpand = (profile: IntakeProfile) => {
+    const nextExpanded = expandedId === profile.id ? null : profile.id;
+    setExpandedId(nextExpanded);
+    if (nextExpanded && !conversationsByUser[profile.userId]) {
+      loadConversations(profile);
+    }
+  };
+
+  const handleReopenConversation = async (
+    profile: IntakeProfile,
+    sessionId?: string
+  ) => {
+    const key = `${profile.userId}:${sessionId ?? "latest"}`;
+    setReopeningKey(key);
+    try {
+      const result = await reopenAdminConversation({
+        userId: profile.userId,
+        email: profile.email,
+        sessionId,
+        resetIntakeToDraft: true,
+      });
+      await load();
+      await loadConversations(profile);
+      toast.success(
+        `Conversation reopened (${result.session.id.slice(0, 8)}…). Member can continue at /dashboard/intake.`
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not reopen conversation"
+      );
+    } finally {
+      setReopeningKey(null);
     }
   };
 
@@ -228,9 +293,7 @@ const IntakeQueue = ({ userEmail }: IntakeQueueProps) => {
               >
                 <button
                   type="button"
-                  onClick={() =>
-                    setExpandedId(expanded ? null : profile.id)
-                  }
+                  onClick={() => handleExpand(profile)}
                   className="flex w-full flex-col gap-3 p-4 text-left sm:flex-row sm:items-center sm:justify-between sm:p-5"
                 >
                   <div className="min-w-0 flex-1">
@@ -392,6 +455,17 @@ const IntakeQueue = ({ userEmail }: IntakeQueueProps) => {
                       </div>
                     ) : null}
 
+                    <ConversationAdminPanel
+                      profile={profile}
+                      sessions={conversationsByUser[profile.userId] ?? []}
+                      loading={conversationsLoadingId === profile.userId}
+                      reopeningKey={reopeningKey}
+                      onRefresh={() => loadConversations(profile)}
+                      onReopen={(sessionId) =>
+                        handleReopenConversation(profile, sessionId)
+                      }
+                    />
+
                     {profile.email === userEmail ? (
                       <p className="mt-4 text-xs text-nurture-charcoal/45">
                         This is your account.
@@ -420,6 +494,105 @@ const DetailItem = ({
       {label}
     </dt>
     <dd className="mt-1 text-sm text-nurture-charcoal/80">{value}</dd>
+  </div>
+);
+
+const conversationStatusClass = (status: AdminConversationSummary["status"]) =>
+  status === "active"
+    ? "bg-emerald-100 text-emerald-800"
+    : "bg-nurture-charcoal/10 text-nurture-charcoal/70";
+
+const ConversationAdminPanel = ({
+  profile,
+  sessions,
+  loading,
+  reopeningKey,
+  onRefresh,
+  onReopen,
+}: {
+  profile: IntakeProfile;
+  sessions: AdminConversationSummary[];
+  loading: boolean;
+  reopeningKey: string | null;
+  onRefresh: () => void;
+  onReopen: (sessionId?: string) => void;
+}) => (
+  <div className="mt-4 rounded-xl border border-nurture-sage/15 bg-white p-4">
+    <div className="flex flex-wrap items-center justify-between gap-2">
+      <p className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+        Concierge conversations
+      </p>
+      <button
+        type="button"
+        onClick={onRefresh}
+        disabled={loading}
+        className="text-xs font-medium text-nurture-sage-dark underline disabled:opacity-50"
+      >
+        Refresh
+      </button>
+    </div>
+
+    {loading ? (
+      <p className="mt-3 text-sm text-nurture-charcoal/55">Loading sessions…</p>
+    ) : sessions.length === 0 ? (
+      <div className="mt-3">
+        <p className="text-sm text-nurture-charcoal/60">
+          No saved conversations for this member yet.
+        </p>
+      </div>
+    ) : (
+      <ul className="mt-3 space-y-2">
+        {sessions.map((session) => {
+          const reopenKey = `${profile.userId}:${session.id}`;
+          const isReopening = reopeningKey === reopenKey;
+          return (
+            <li
+              key={session.id}
+              className="flex flex-col gap-3 rounded-xl border border-nurture-sage/10 bg-nurture-cream/40 p-3 sm:flex-row sm:items-center sm:justify-between"
+            >
+              <div className="min-w-0 text-sm">
+                <div className="flex flex-wrap items-center gap-2">
+                  <span className="font-mono text-xs text-nurture-charcoal/70">
+                    {session.id.slice(0, 8)}…
+                  </span>
+                  <span
+                    className={`rounded-full px-2 py-0.5 text-xs font-semibold ${conversationStatusClass(session.status)}`}
+                  >
+                    {session.status}
+                  </span>
+                  <span className="text-xs text-nurture-charcoal/50">
+                    {session.messageCount} messages · {session.completionScore}%
+                  </span>
+                </div>
+                <p className="mt-1 text-xs text-nurture-charcoal/55">
+                  Updated {formatDate(session.updatedAt)}
+                </p>
+              </div>
+              {session.status === "completed" ? (
+                <button
+                  type="button"
+                  disabled={Boolean(reopeningKey)}
+                  onClick={() => onReopen(session.id)}
+                  className="shrink-0 rounded-full border border-nurture-sage/30 px-4 py-2 text-xs font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10 disabled:opacity-50"
+                >
+                  {isReopening ? "Reopening…" : "Reopen conversation"}
+                </button>
+              ) : (
+                <span className="text-xs font-medium text-emerald-700">
+                  Active — member can continue chatting
+                </span>
+              )}
+            </li>
+          );
+        })}
+      </ul>
+    )}
+
+    <p className="mt-3 text-xs text-nurture-charcoal/45">
+      Reopening sets the session back to active and resets intake to draft so
+      testing can continue at{" "}
+      <span className="font-mono">/dashboard/intake</span>.
+    </p>
   </div>
 );
 

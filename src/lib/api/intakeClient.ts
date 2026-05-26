@@ -81,3 +81,42 @@ export const updateAdminIntakeStatus = async (
   });
   return handleResponse<{ profile: IntakeProfile }>(response);
 };
+
+export interface AdminConversationSummary {
+  id: string;
+  status: "active" | "completed";
+  messageCount: number;
+  completionScore: number;
+  readyToComplete: boolean;
+  updatedAt: string;
+  createdAt: string;
+}
+
+export const fetchAdminConversations = async (
+  userId: string,
+  email?: string
+): Promise<{ sessions: AdminConversationSummary[] }> => {
+  const params = email ? `?email=${encodeURIComponent(email)}` : "";
+  const response = await fetch(`/api/admin/conversations/${userId}${params}`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  return handleResponse<{ sessions: AdminConversationSummary[] }>(response);
+};
+
+export const reopenAdminConversation = async (payload: {
+  userId: string;
+  email?: string;
+  sessionId?: string;
+  resetIntakeToDraft?: boolean;
+}): Promise<{
+  session: { id: string; status: string; updatedAt: string };
+  profile: IntakeProfile | null;
+}> => {
+  const response = await fetch("/api/admin/conversations/reopen", {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(response);
+};

@@ -102,7 +102,9 @@ export const deleteS3Objects = async (keys: string[]): Promise<void> => {
   );
 };
 
-export const listS3PartitionKeys = async (): Promise<string[]> => {
+export const listS3ObjectKeysWithPrefix = async (
+  prefix: string
+): Promise<string[]> => {
   const client = getS3Client();
   const Bucket = getIntakeBucket();
   const keys: string[] = [];
@@ -112,14 +114,12 @@ export const listS3PartitionKeys = async (): Promise<string[]> => {
     const response = await client.send(
       new ListObjectsV2Command({
         Bucket,
-        Prefix: INTAKE_PARTITION_LIST_PREFIX,
+        Prefix: prefix,
         ContinuationToken: continuationToken,
       })
     );
     for (const item of response.Contents ?? []) {
-      if (item.Key && parseIntakePartitionKey(item.Key)) {
-        keys.push(item.Key);
-      }
+      if (item.Key) keys.push(item.Key);
     }
     continuationToken = response.IsTruncated
       ? response.NextContinuationToken
@@ -127,6 +127,11 @@ export const listS3PartitionKeys = async (): Promise<string[]> => {
   } while (continuationToken);
 
   return keys;
+};
+
+export const listS3PartitionKeys = async (): Promise<string[]> => {
+  const keys = await listS3ObjectKeysWithPrefix(INTAKE_PARTITION_LIST_PREFIX);
+  return keys.filter((key) => parseIntakePartitionKey(key));
 };
 
 export const readS3PartitionRecord = async (
