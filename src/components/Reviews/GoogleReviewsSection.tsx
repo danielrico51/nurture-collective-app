@@ -6,7 +6,9 @@ import {
   isGoogleReviewsEnabled,
 } from "@/config/googleReviews";
 import { useUserGroups } from "@/hooks/useUserGroups";
-import { useAuthenticator } from "@aws-amplify/ui-react";
+import { getCurrentUser } from "aws-amplify/auth";
+import { Hub } from "aws-amplify/utils";
+import { useEffect, useState } from "react";
 
 interface GoogleReviewsSectionProps {
   className?: string;
@@ -17,16 +19,48 @@ interface GoogleReviewsSectionProps {
  * - visibility=admin: signed-in admin users only (team preview)
  * - visibility=public: everyone
  * - visibility=off: hidden
+ *
+ * Uses getCurrentUser (same as the site header) — not useAuthenticator, which
+ * does not reliably reflect existing Cognito sessions on marketing pages.
  */
 const GoogleReviewsSection = ({ className }: GoogleReviewsSectionProps) => {
-  const { authStatus } = useAuthenticator((context) => [context.authStatus]);
-  const isAuthenticated = authStatus === "authenticated";
-  const { canAccessAdmin, loading } = useUserGroups(isAuthenticated);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [authReady, setAuthReady] = useState(false);
+  const { canAccessAdmin, loading: groupsLoading } =
+    useUserGroups(isAuthenticated);
+
+  useEffect(() => {
+    const syncAuth = async () => {
+      try {
+        await getCurrentUser();
+        setIsAuthenticated(true);
+      } catch {
+        setIsAuthenticated(false);
+      } finally {
+        setAuthReady(true);
+      }
+    };
+
+    syncAuth();
+
+    const unsubscribe = Hub.listen("auth", ({ payload }) => {
+      if (payload.event === "signedIn") {
+        setIsAuthenticated(true);
+        setAuthReady(true);
+      }
+      if (payload.event === "signedOut") {
+        setIsAuthenticated(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   if (!isGoogleReviewsEnabled()) return null;
 
   if (googleReviewsVisibility === "admin") {
-    if (!isAuthenticated || loading || !canAccessAdmin) return null;
+    if (!authReady || groupsLoading) return null;
+    if (!isAuthenticated || !canAccessAdmin) return null;
   }
 
   return <GoogleReviews className={className} />;
