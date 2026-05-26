@@ -4,7 +4,7 @@ import Breadcrumb from "@/components/Common/Breadcrumb";
 import CareChecklist from "@/components/Dashboard/CareChecklist";
 import CareRecommendations from "@/components/Dashboard/CareRecommendations";
 import { buildWhatsAppUrl, hasCalendly, hasWhatsApp } from "@/config/integrations";
-import { buildCareStartHref } from "@/config/carePaths";
+import { buildIntakeHref } from "@/config/carePaths";
 import { brands, momFaqs } from "@/content/site";
 import { MATERNAL_STAGE_LABELS } from "@/content/intake";
 import { useUserGroups } from "@/hooks/useUserGroups";
@@ -122,7 +122,7 @@ const DashboardPage = () => {
             </div>
             {!intakeComplete ? (
               <Link
-                href={buildCareStartHref()}
+                href={buildIntakeHref()}
                 className="inline-flex shrink-0 items-center justify-center rounded-full bg-nurture-sage px-8 py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
               >
                 Start Your Care Journey
@@ -225,7 +225,7 @@ const DashboardPage = () => {
             </Link>
             {intakeComplete ? (
               <Link
-                href={buildCareStartHref()}
+                href={buildIntakeHref()}
                 className="rounded-full px-6 py-3 text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark"
               >
                 View intake

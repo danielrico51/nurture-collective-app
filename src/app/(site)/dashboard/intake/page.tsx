@@ -2,39 +2,45 @@
 
 import IntakeFlow from "@/components/Intake/IntakeFlow";
 import {
-  buildCareStartHref,
   getSupportInterestFromServiceSlug,
   readCareServiceContext,
 } from "@/config/carePaths";
 import { INTAKE_DRAFT_STORAGE_KEY } from "@/content/intake";
+import { useSessionAuth } from "@/hooks/useSessionAuth";
 import { fetchIntake } from "@/lib/api/intakeClient";
 import { attributesToProfileForm } from "@/lib/auth/profileAttributes";
 import type { IntakeDraft, SupportInterest } from "@/types/intake";
 import { isIntakeComplete } from "@/types/intake";
-import { useAuthenticator } from "@aws-amplify/ui-react";
-import { fetchUserAttributes } from "aws-amplify/auth";
+import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const IntakePage = () => {
   const router = useRouter();
-  const { authStatus, user } = useAuthenticator((context) => [
-    context.authStatus,
-    context.user,
-  ]);
+  const { authStatus, ready } = useSessionAuth();
   const [loading, setLoading] = useState(true);
+  const [userId, setUserId] = useState<string | null>(null);
   const [initialDraft, setInitialDraft] = useState<IntakeDraft>({});
   const [alreadySubmitted, setAlreadySubmitted] = useState(false);
 
   useEffect(() => {
+    if (!ready) return;
+
     if (authStatus === "unauthenticated") {
-      router.push(buildCareStartHref());
+      router.push("/signin");
       return;
     }
-    if (authStatus !== "authenticated" || !user?.userId) return;
 
     const load = async () => {
       try {
+        const session = await fetchAuthSession();
+        const sub = session.userSub;
+        if (!sub) {
+          router.push("/signin");
+          return;
+        }
+        setUserId(sub);
+
         const [attributes, intake] = await Promise.all([
           fetchUserAttributes(),
           fetchIntake().catch(() => ({ profile: null, recommendations: [] })),
@@ -42,7 +48,8 @@ const IntakePage = () => {
 
         const form = attributesToProfileForm(attributes);
         const name = [form.givenName, form.familyName].filter(Boolean).join(" ");
-        const email = form.email || user.signInDetails?.loginId || "";
+        const email =
+          form.email || session.tokens?.idToken?.payload?.email?.toString() || "";
 
         let draft: IntakeDraft = {
           name,
@@ -63,7 +70,7 @@ const IntakePage = () => {
 
         const localRaw =
           typeof window !== "undefined"
-            ? localStorage.getItem(`${INTAKE_DRAFT_STORAGE_KEY}-${user.userId}`)
+            ? localStorage.getItem(`${INTAKE_DRAFT_STORAGE_KEY}-${sub}`)
             : null;
         if (localRaw) {
           try {
@@ -74,7 +81,7 @@ const IntakePage = () => {
         }
 
         if (intake.profile) {
-          const { id, userId, createdAt, updatedAt, ...rest } = intake.profile;
+          const { id, userId: _uid, createdAt, updatedAt, ...rest } = intake.profile;
           draft = { ...draft, ...rest };
           if (isIntakeComplete(intake.profile.intakeStatus)) {
             setAlreadySubmitted(true);
@@ -99,9 +106,9 @@ const IntakePage = () => {
     };
 
     load();
-  }, [authStatus, router, user]);
+  }, [authStatus, ready, router]);
 
-  if (authStatus !== "authenticated" || loading || !user?.userId) {
+  if (!ready || authStatus !== "authenticated" || loading || !userId) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-gradient-to-b from-nurture-cream to-white">
         <p className="text-nurture-charcoal/60">Preparing your care journey…</p>
@@ -112,7 +119,7 @@ const IntakePage = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-nurture-cream via-white to-nurture-cream/50">
       <IntakeFlow
-        userId={user.userId}
+        userId={userId}
         initialDraft={initialDraft}
         alreadySubmitted={alreadySubmitted}
       />

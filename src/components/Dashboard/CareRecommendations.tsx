@@ -1,4 +1,4 @@
-import { buildCareStartHref } from "@/config/carePaths";
+import { buildIntakeHref } from "@/config/carePaths";
 import { SUPPORT_INTEREST_LABELS } from "@/content/intake";
 import type { CareRecommendation, SupportInterest } from "@/types/intake";
 import Link from "next/link";
@@ -24,7 +24,7 @@ const CareRecommendations = ({ recommendations }: CareRecommendationsProps) => {
           Complete your intake to receive personalized care recommendations.
         </p>
         <Link
-          href={buildCareStartHref()}
+          href={buildIntakeHref()}
           className="mt-4 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
         >
           Start intake →

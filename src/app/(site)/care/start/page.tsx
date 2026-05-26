@@ -4,17 +4,18 @@ import {
   CARE_SERVICE_STORAGE_KEY,
   buildIntakeHref,
 } from "@/config/carePaths";
-import { resolveMemberHomePath } from "@/lib/intake/memberNavigation";
-import { useAuthenticator } from "@aws-amplify/ui-react";
+import { fetchIntake } from "@/lib/api/intakeClient";
+import { useSessionAuth } from "@/hooks/useSessionAuth";
+import { isIntakeComplete } from "@/types/intake";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export default function CareStartPage() {
   const router = useRouter();
-  const { authStatus } = useAuthenticator((context) => [context.authStatus]);
+  const { authStatus, ready } = useSessionAuth();
 
   useEffect(() => {
-    if (authStatus === "configuring") return;
+    if (!ready || authStatus === "configuring") return;
 
     let service: string | undefined;
     if (typeof window !== "undefined") {
@@ -31,16 +32,18 @@ export default function CareStartPage() {
       return;
     }
 
-    if (authStatus === "authenticated") {
-      resolveMemberHomePath().then((path) => {
-        if (path === "/dashboard/intake") {
-          router.replace(buildIntakeHref(service));
+    fetchIntake()
+      .then((data) => {
+        if (isIntakeComplete(data.profile?.intakeStatus)) {
+          router.replace("/dashboard");
           return;
         }
-        router.replace(path);
+        router.replace(buildIntakeHref(service));
+      })
+      .catch(() => {
+        router.replace(buildIntakeHref(service));
       });
-    }
-  }, [authStatus, router]);
+  }, [authStatus, ready, router]);
 
   return (
     <div className="flex min-h-[50vh] items-center justify-center bg-nurture-cream">
