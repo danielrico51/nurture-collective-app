@@ -26,7 +26,17 @@ const GoogleReviewsSection = ({ className }: GoogleReviewsSectionProps) => {
   if (!isGoogleReviewsEnabled()) return null;
 
   if (googleReviewsVisibility === "admin") {
-    if (!ready || groupsLoading) return null;
+    if (!ready || groupsLoading) {
+      return (
+        <section className={`py-16 ${className ?? ""}`}>
+          <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+            <p className="text-center text-sm text-nurture-charcoal/60">
+              Loading reviews…
+            </p>
+          </div>
+        </section>
+      );
+    }
     if (!isAuthenticated || !canAccessAdmin) return null;
   }
 

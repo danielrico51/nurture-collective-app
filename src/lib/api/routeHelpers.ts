@@ -58,12 +58,13 @@ export const handleIntakeStorageError = (error: unknown) => {
 
   if (
     message.includes("AccessDenied") ||
-    message.includes("not authorized")
+    message.includes("not authorized") ||
+    message.includes("Access Denied")
   ) {
     return NextResponse.json(
       {
         error:
-          "Intake storage access denied. Grant the Amplify compute role s3:GetObject and s3:PutObject on the intake bucket.",
+          "Intake storage access denied. Grant the Amplify compute role s3:ListBucket (prefix management/process=intake/), s3:GetObject, s3:PutObject, and s3:DeleteObject on the intake bucket.",
       },
       { status: 503 }
     );

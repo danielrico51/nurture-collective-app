@@ -60,7 +60,15 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
   }
 
   if (error || !data) {
-    return null;
+    return (
+      <section className={`py-16 ${className}`}>
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <p className="text-center text-sm text-red-700/90">
+            {error ?? "Could not load reviews"}
+          </p>
+        </div>
+      </section>
+    );
   }
 
   return (
