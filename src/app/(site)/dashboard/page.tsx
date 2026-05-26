@@ -3,7 +3,13 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import CareChecklist from "@/components/Dashboard/CareChecklist";
 import CareRecommendations from "@/components/Dashboard/CareRecommendations";
-import { buildWhatsAppUrl, hasCalendly, hasWhatsApp } from "@/config/integrations";
+import {
+  buildBookingPageHref,
+  buildBookingUrlWithPrefill,
+  getBookingProviderLabel,
+  hasBooking,
+} from "@/config/bookings";
+import { buildWhatsAppUrl, hasWhatsApp } from "@/config/integrations";
 import { buildIntakeHref } from "@/config/carePaths";
 import { brands, momFaqs } from "@/content/site";
 import { MATERNAL_STAGE_LABELS } from "@/content/intake";
@@ -79,6 +85,12 @@ const DashboardPage = () => {
     "Hi! I'm a Nurture Collective member and would like to connect about support."
   );
 
+  const bookingUrl = buildBookingUrlWithPrefill({
+    name: intake?.profile?.name,
+    email: intake?.profile?.email,
+  });
+  const bookingLabel = getBookingProviderLabel();
+
   const stageLabel = intake?.profile?.maternalStage
     ? MATERNAL_STAGE_LABELS[intake.profile.maternalStage as MaternalStage]
     : null;
@@ -144,22 +156,32 @@ const DashboardPage = () => {
           <div className="mt-10 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             <div className="rounded-2xl border border-nurture-blush/40 bg-nurture-cream/50 p-6">
               <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
-                {hasCalendly() ? "Available" : "Coming soon"}
+                {hasBooking() ? "Available" : "Coming soon"}
               </p>
               <h3 className="mt-2 font-serif text-lg font-semibold">
                 Upcoming appointments
               </h3>
               <p className="mt-2 text-sm text-nurture-charcoal/70">
-                {hasCalendly()
-                  ? "Schedule your intro call or next check-in when you're ready."
+                {hasBooking()
+                  ? `Schedule your intro call or next check-in via ${bookingLabel}.`
                   : "Appointment scheduling will appear here once your coordinator sets up your first visit."}
               </p>
-              {hasCalendly() ? (
-                <Link
-                  href="/services#calendly"
+              {hasBooking() && bookingUrl ? (
+                <a
+                  href={bookingUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
                   className="mt-4 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
                 >
                   Schedule now →
+                </a>
+              ) : null}
+              {hasBooking() ? (
+                <Link
+                  href={buildBookingPageHref("/services")}
+                  className="mt-2 block text-xs text-nurture-charcoal/55 hover:underline"
+                >
+                  Or book on our services page
                 </Link>
               ) : null}
             </div>

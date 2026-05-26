@@ -5,10 +5,13 @@ import {
   CARE_START_PATH,
 } from "@/config/carePaths";
 import {
+  buildBookingUrlWithPrefill,
+  getBookingProviderLabel,
+  hasBooking,
+} from "@/config/bookings";
+import {
   buildWhatsAppUrl,
-  hasCalendly,
   hasWhatsApp,
-  integrations,
 } from "@/config/integrations";
 import Link from "next/link";
 
@@ -39,7 +42,9 @@ const ContactOptions = ({
 }: ContactOptionsProps) => {
   const whatsappUrl = buildWhatsAppUrl(whatsappMessage);
   const showWhatsApp = hasWhatsApp() && whatsappUrl;
-  const showCalendly = hasCalendly();
+  const showBooking = hasBooking();
+  const bookingUrl = buildBookingUrlWithPrefill();
+  const bookingLabel = getBookingProviderLabel();
   const isIntake = variant === "intake";
 
   return (
@@ -97,7 +102,7 @@ const ContactOptions = ({
 
         <article className={cardClassName}>
           <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
-            Calendly
+            {bookingLabel}
           </p>
           <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
             Book a call
@@ -105,9 +110,9 @@ const ContactOptions = ({
           <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
             Schedule a free discovery call at a time that works for you.
           </p>
-          {showCalendly ? (
+          {showBooking && bookingUrl ? (
             <a
-              href={integrations.calendlyUrl}
+              href={bookingUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-6 inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"

@@ -1,5 +1,6 @@
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
+import { serverBookingConfig } from "@/config/bookings";
 import { serverIntegrations } from "@/config/integrations";
 import { forwardToN8n } from "@/lib/webhooks/n8n";
 
@@ -39,7 +40,7 @@ const verifyCalendlySignature = (
 export async function POST(request: NextRequest) {
   const rawBody = await request.text();
 
-  const signingKey = serverIntegrations.calendlySigningKey;
+  const signingKey = serverBookingConfig.calendlySigningKey;
   const signatureHeader = request.headers.get("Calendly-Webhook-Signature");
 
   if (signingKey) {
@@ -68,8 +69,9 @@ export async function POST(request: NextRequest) {
 
   try {
     const result = await forwardToN8n(
-      serverIntegrations.n8nCalendlyWebhookUrl ||
-        serverIntegrations.n8nInquiryWebhookUrl,
+      serverBookingConfig.n8nCalendlyWebhookUrl ||
+        process.env.N8N_INQUIRY_WEBHOOK_URL?.trim() ||
+        "",
       serverIntegrations.n8nWebhookSecret,
       forwardPayload
     );
