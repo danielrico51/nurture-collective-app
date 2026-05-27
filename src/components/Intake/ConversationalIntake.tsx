@@ -1,9 +1,19 @@
 "use client";
 
+import GuestSaveProgressPrompt from "@/components/Intake/GuestSaveProgressPrompt";
 import ChatMessageBubble from "@/components/Intake/chat/ChatMessageBubble";
 import ProfileProgressBar from "@/components/Intake/chat/ProfileProgressBar";
 import QuickReplyChips from "@/components/Intake/chat/QuickReplyChips";
 import TypingIndicator from "@/components/Intake/chat/TypingIndicator";
+import {
+  buildGuestAccountSignupHref,
+  PUBLIC_INTAKE_PATH,
+} from "@/config/intakeAccess";
+import {
+  buildBookingPageHref,
+  buildBookingUrlWithPrefill,
+  hasBooking,
+} from "@/config/bookings";
 import {
   fetchConversation,
   sendConversationMessage,
@@ -18,6 +28,7 @@ import toast from "react-hot-toast";
 interface ConversationalIntakeProps {
   userId: string;
   defaults?: { name?: string; email?: string; phone?: string };
+  guestMode?: boolean;
 }
 
 const SESSION_STORAGE_KEY = "nurture-intake-session-id";
@@ -25,7 +36,11 @@ const SESSION_STORAGE_KEY = "nurture-intake-session-id";
 const hasUserMessages = (items: ConversationMessage[]) =>
   items.some((message) => message.role === "user");
 
-const ConversationalIntake = ({ userId, defaults }: ConversationalIntakeProps) => {
+const ConversationalIntake = ({
+  userId,
+  defaults,
+  guestMode = false,
+}: ConversationalIntakeProps) => {
   const router = useRouter();
   const [session, setSession] = useState<ConversationSession | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
@@ -125,17 +140,27 @@ const ConversationalIntake = ({ userId, defaults }: ConversationalIntakeProps) =
       window.sessionStorage.setItem(SESSION_STORAGE_KEY, nextSession.id);
 
       if (intakeSubmitted) {
-        toast.success("Your care profile is ready — welcome!");
-        router.push("/dashboard");
+        toast.success(
+          guestMode
+            ? "Your care profile is saved — create a free account to keep it, or book a follow-up call."
+            : "Your care profile is ready — welcome!"
+        );
+        if (!guestMode) {
+          router.push("/dashboard");
+        }
         return;
       }
 
       if (nextSession.status === "completed") {
         setSessionClosed(true);
-        toast("This conversation was marked complete. You can review it below or continue on your dashboard.");
+        toast(
+          guestMode
+            ? "This conversation is complete. Create a free account to save your plan, or book a call below."
+            : "This conversation was marked complete. You can review it below or continue on your dashboard."
+        );
       }
     },
-    [router]
+    [guestMode, router]
   );
 
   const sendMessage = async (text: string) => {
@@ -216,6 +241,8 @@ const ConversationalIntake = ({ userId, defaults }: ConversationalIntakeProps) =
 
   const showWelcomeIntro =
     !sessionClosed && messages.length === 1 && messages[0]?.role === "assistant";
+  const showGuestSaveHint =
+    guestMode && !sessionClosed && hasUserMessages(messages);
 
   if (loading) {
     return (
@@ -233,15 +260,26 @@ const ConversationalIntake = ({ userId, defaults }: ConversationalIntakeProps) =
         <div className="mx-4 mt-4 shrink-0 rounded-2xl border border-nurture-sage/20 bg-white/80 px-4 py-3 text-sm text-nurture-charcoal/80">
           <p className="font-medium text-nurture-charcoal">This intake conversation is closed.</p>
           <p className="mt-1">
-            Your messages are saved. If your profile was submitted, head to your dashboard for next steps.
+            {guestMode
+              ? "Create a free account to save this conversation and your care profile for next time."
+              : "Your messages are saved. If your profile was submitted, head to your dashboard for next steps."}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
-            <Link
-              href="/dashboard"
-              className="rounded-full bg-nurture-sage px-4 py-2 text-xs font-semibold text-white hover:bg-nurture-sage-dark"
-            >
-              Go to dashboard
-            </Link>
+            {guestMode ? (
+              <Link
+                href={buildGuestAccountSignupHref(PUBLIC_INTAKE_PATH)}
+                className="rounded-full bg-nurture-sage px-4 py-2 text-xs font-semibold text-white hover:bg-nurture-sage-dark"
+              >
+                Create free account
+              </Link>
+            ) : (
+              <Link
+                href="/dashboard"
+                className="rounded-full bg-nurture-sage px-4 py-2 text-xs font-semibold text-white hover:bg-nurture-sage-dark"
+              >
+                Go to dashboard
+              </Link>
+            )}
             <button
               type="button"
               onClick={startFreshSession}
@@ -269,6 +307,9 @@ const ConversationalIntake = ({ userId, defaults }: ConversationalIntakeProps) =
               A calm, private space to share where you are — we&apos;ll build your
               personalized care profile together.
             </p>
+            {guestMode ? (
+              <GuestSaveProgressPrompt variant="card" className="mx-auto mt-5 max-w-md" />
+            ) : null}
           </div>
         ) : null}
 
@@ -292,6 +333,9 @@ const ConversationalIntake = ({ userId, defaults }: ConversationalIntakeProps) =
       </div>
 
       <div className="shrink-0 border-t border-nurture-sage/10 bg-gradient-to-t from-nurture-cream via-nurture-cream/95 to-nurture-cream/80 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3">
+        {showGuestSaveHint ? (
+          <GuestSaveProgressPrompt variant="compact" className="mb-2" />
+        ) : null}
         <QuickReplyChips
           options={quickReplies}
           disabled={sending || sessionClosed}
@@ -340,6 +384,25 @@ const ConversationalIntake = ({ userId, defaults }: ConversationalIntakeProps) =
           >
             Complete my care profile
           </button>
+        ) : null}
+
+        {guestMode && hasBooking() ? (
+          <div className="mt-3 rounded-2xl border border-nurture-sage/20 bg-white/90 p-4 text-center">
+            <p className="text-sm font-medium text-nurture-charcoal">
+              Ready for a human touch?
+            </p>
+            <p className="mt-1 text-xs text-nurture-charcoal/60">
+              Book a follow-up call with our client coordinator.
+            </p>
+            <a
+              href={buildBookingUrlWithPrefill() ?? buildBookingPageHref()}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-3 inline-block rounded-full bg-nurture-sage px-5 py-2.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
+            >
+              Book a call
+            </a>
+          </div>
         ) : null}
       </div>
     </div>

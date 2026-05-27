@@ -5,7 +5,7 @@ import { Authenticator } from "@aws-amplify/ui-react";
 import type { ValidatorResult } from "@aws-amplify/ui";
 import { Hub } from "aws-amplify/utils";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { emailAliasAuthServices } from "@/utils/emailAliasAuthServices";
 import {
   sharedAuthComponents,
@@ -13,14 +13,17 @@ import {
   signUpAuthHeader,
 } from "@/utils/sharedAuthUi";
 import { useEffect } from "react";
-import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
+import { canCreateMemberAccount } from "@/config/publicAccess";
+import { resolvePostAuthPath } from "@/lib/auth/postAuthNavigation";
 import { brands } from "@/content/site";
 
 const SignupPage = () => {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const returnTo = searchParams.get("returnTo");
 
   useEffect(() => {
-    if (!PUBLIC_SIGNUP_ENABLED) {
+    if (!canCreateMemberAccount()) {
       router.replace("/signin");
     }
   }, [router]);
@@ -28,14 +31,14 @@ const SignupPage = () => {
   useEffect(() => {
     const unsubscribe = Hub.listen("auth", ({ payload }) => {
       if (payload.event === "signedIn") {
-        router.push("/dashboard");
+        void resolvePostAuthPath(returnTo).then((path) => router.push(path));
       }
     });
 
     return () => unsubscribe();
-  }, [router]);
+  }, [returnTo, router]);
 
-  if (!PUBLIC_SIGNUP_ENABLED) {
+  if (!canCreateMemberAccount()) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <p className="text-nurture-charcoal/60">Redirecting…</p>

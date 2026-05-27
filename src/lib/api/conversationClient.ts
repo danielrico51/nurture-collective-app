@@ -1,15 +1,5 @@
-import { fetchAuthSession } from "aws-amplify/auth";
 import type { ConversationSession } from "@/types/conversation";
-
-const authHeaders = async (): Promise<HeadersInit> => {
-  const session = await fetchAuthSession();
-  const token = session.tokens?.idToken?.toString();
-  if (!token) throw new Error("Not authenticated");
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  };
-};
+import { intakeRequestHeaders } from "@/lib/api/intakeRequestHeaders";
 
 export const startConversation = async (
   defaults?: {
@@ -24,7 +14,7 @@ export const startConversation = async (
 }> => {
   const response = await fetch("/api/conversation/start", {
     method: "POST",
-    headers: await authHeaders(),
+    headers: await intakeRequestHeaders(),
     body: JSON.stringify({ ...(defaults ?? {}), forceNew: options?.forceNew === true }),
   });
   const data = await response.json();
@@ -48,7 +38,7 @@ export const sendConversationMessage = async (
 ): Promise<void> => {
   const response = await fetch("/api/conversation/message", {
     method: "POST",
-    headers: await authHeaders(),
+    headers: await intakeRequestHeaders(),
     body: JSON.stringify({ sessionId, message }),
   });
 
@@ -103,7 +93,7 @@ export const fetchConversation = async (
   sessionId: string
 ): Promise<ConversationSession> => {
   const response = await fetch(`/api/conversation/${sessionId}`, {
-    headers: await authHeaders(),
+    headers: await intakeRequestHeaders(),
     cache: "no-store",
   });
   const data = await response.json();

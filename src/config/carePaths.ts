@@ -1,9 +1,10 @@
 /** Smart entry point — auth-aware redirect to intake or sign-in. */
+import { resolveIntakePath } from "@/config/intakeAccess";
 import type { SupportInterest } from "@/types/intake";
 
 export const CARE_START_PATH = "/care/start";
 
-export const INTAKE_PATH = "/dashboard/intake";
+export const INTAKE_PATH = resolveIntakePath();
 
 export const CARE_SERVICE_STORAGE_KEY = "nurture-care-service";
 

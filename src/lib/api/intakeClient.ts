@@ -1,4 +1,4 @@
-import { fetchAuthSession } from "aws-amplify/auth";
+import { intakeRequestHeaders } from "@/lib/api/intakeRequestHeaders";
 import type {
   CareRecommendation,
   IntakeApiResponse,
@@ -6,16 +6,6 @@ import type {
   IntakeProfile,
   IntakeStatus,
 } from "@/types/intake";
-
-const authHeaders = async (): Promise<HeadersInit> => {
-  const session = await fetchAuthSession();
-  const token = session.tokens?.idToken?.toString();
-  if (!token) throw new Error("Not authenticated");
-  return {
-    Authorization: `Bearer ${token}`,
-    "Content-Type": "application/json",
-  };
-};
 
 const handleResponse = async <T>(response: Response): Promise<T> => {
   const data = await response.json().catch(() => ({}));
@@ -34,7 +24,7 @@ export interface AdminIntakesResponse {
 
 export const fetchIntake = async (): Promise<IntakeApiResponse> => {
   const response = await fetch("/api/intake", {
-    headers: await authHeaders(),
+    headers: await intakeRequestHeaders(),
     cache: "no-store",
   });
   return handleResponse<IntakeApiResponse>(response);
@@ -45,7 +35,7 @@ export const saveIntakeDraft = async (
 ): Promise<IntakeApiResponse> => {
   const response = await fetch("/api/intake", {
     method: "PATCH",
-    headers: await authHeaders(),
+    headers: await intakeRequestHeaders(),
     body: JSON.stringify({ draft }),
   });
   return handleResponse<IntakeApiResponse>(response);
@@ -56,7 +46,7 @@ export const submitIntake = async (
 ): Promise<IntakeApiResponse> => {
   const response = await fetch("/api/intake", {
     method: "POST",
-    headers: await authHeaders(),
+    headers: await intakeRequestHeaders(),
     body: JSON.stringify({ draft }),
   });
   return handleResponse<IntakeApiResponse>(response);
@@ -64,7 +54,7 @@ export const submitIntake = async (
 
 export const fetchAdminIntakes = async (): Promise<AdminIntakesResponse> => {
   const response = await fetch("/api/admin/intakes", {
-    headers: await authHeaders(),
+    headers: await intakeRequestHeaders(),
     cache: "no-store",
   });
   return handleResponse<AdminIntakesResponse>(response);
@@ -76,7 +66,7 @@ export const updateAdminIntakeStatus = async (
 ): Promise<{ profile: IntakeProfile }> => {
   const response = await fetch(`/api/admin/intakes/${profileId}`, {
     method: "PATCH",
-    headers: await authHeaders(),
+    headers: await intakeRequestHeaders(),
     body: JSON.stringify({ intakeStatus }),
   });
   return handleResponse<{ profile: IntakeProfile }>(response);
@@ -98,7 +88,7 @@ export const fetchAdminConversations = async (
 ): Promise<{ sessions: AdminConversationSummary[] }> => {
   const params = email ? `?email=${encodeURIComponent(email)}` : "";
   const response = await fetch(`/api/admin/conversations/${userId}${params}`, {
-    headers: await authHeaders(),
+    headers: await intakeRequestHeaders(),
     cache: "no-store",
   });
   return handleResponse<{ sessions: AdminConversationSummary[] }>(response);
@@ -115,7 +105,7 @@ export const reopenAdminConversation = async (payload: {
 }> => {
   const response = await fetch("/api/admin/conversations/reopen", {
     method: "POST",
-    headers: await authHeaders(),
+    headers: await intakeRequestHeaders(),
     body: JSON.stringify(payload),
   });
   return handleResponse(response);

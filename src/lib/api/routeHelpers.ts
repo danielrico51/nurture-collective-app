@@ -75,3 +75,35 @@ export const handleIntakeStorageError = (error: unknown) => {
     { status: 500 }
   );
 };
+
+export const handleLeadsStorageError = (error: unknown) => {
+  console.error("[leads] storage error:", error);
+  const message =
+    error instanceof Error ? error.message : "Storage operation failed";
+
+  if (message.includes("NURTURE_LEADS_BUCKET")) {
+    return NextResponse.json(
+      {
+        error:
+          "Lead CRM storage is not configured. Set NURTURE_LEADS_BUCKET in environment variables.",
+      },
+      { status: 503 }
+    );
+  }
+
+  if (
+    message.includes("AccessDenied") ||
+    message.includes("not authorized") ||
+    message.includes("Access Denied")
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Lead storage access denied. Grant s3:ListBucket, s3:GetObject, and s3:PutObject on the nurture-leads bucket.",
+      },
+      { status: 503 }
+    );
+  }
+
+  return NextResponse.json({ error: "Failed to access lead storage" }, { status: 500 });
+};

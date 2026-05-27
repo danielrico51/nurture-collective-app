@@ -118,7 +118,7 @@ export const createEmptyExtractedProfile = (
     "challenges",
     "locationZip",
     "name",
-    "phone",
+    "contactInfo",
   ],
   readyToComplete: false,
   ...defaults,

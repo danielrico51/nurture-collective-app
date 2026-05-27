@@ -51,9 +51,14 @@ export const computeMissingFields = (
     missing.push("challenges");
   }
   if (!profile.name.trim()) missing.push("name");
-  if (!profile.phone.trim()) missing.push("phone");
+  if (!profile.phone.trim() && !profile.email.trim()) {
+    missing.push("contactInfo");
+  }
   return missing;
 };
+
+export const hasContactInfo = (profile: ExtractedMaternalProfile): boolean =>
+  Boolean(profile.phone.trim() || profile.email.trim());
 
 export const computeCompletionScore = (
   profile: ExtractedMaternalProfile
@@ -64,7 +69,7 @@ export const computeCompletionScore = (
     profile.challenges.length || profile.challengesFreeText ? 15 : 0,
     profile.locationZip ? 10 : 0,
     profile.name ? 15 : 0,
-    profile.phone ? 15 : 0,
+    profile.phone || profile.email ? 15 : 0,
     profile.emotionalState ? 5 : 0,
   ];
   return Math.min(100, weights.reduce((sum, value) => sum + value, 0));
@@ -93,7 +98,7 @@ export const mergeExtractedProfile = (
       Boolean(merged.maternalStage) &&
       merged.supportInterests.length > 0 &&
       Boolean(merged.name) &&
-      Boolean(merged.phone));
+      hasContactInfo(merged));
   return merged;
 };
 
@@ -150,8 +155,15 @@ export const parseQuickReplyToPatch = (
   const zipMatch = reply.match(/\b\d{5}\b/);
   if (zipMatch) patch.locationZip = zipMatch[0];
 
-  const phoneMatch = reply.match(/\+?\d[\d\s()-]{8,}/);
+  const phoneMatch = reply.match(
+    /(?:\+?1[-.\s]?)?(?:\(?\d{3}\)?[-.\s]?)\d{3}[-.\s]?\d{4}|\+?\d[\d\s()-]{8,}/
+  );
   if (phoneMatch) patch.phone = phoneMatch[0].replace(/\s/g, "");
+
+  const emailMatch = reply.match(
+    /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/
+  );
+  if (emailMatch) patch.email = emailMatch[0];
 
   return patch;
 };

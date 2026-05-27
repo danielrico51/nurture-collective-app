@@ -4,11 +4,11 @@ import SignupPage from "@/app/(site)/(auth)/signup/page";
 import { buildCareStartHref } from "@/config/carePaths";
 import { brands } from "@/content/site";
 import Link from "next/link";
-import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
+import { canCreateMemberAccount } from "@/config/publicAccess";
 
 /** Mom-focused signup entry — reuses shared signup when enabled. */
 const MomSignupPage = () => {
-  if (!PUBLIC_SIGNUP_ENABLED) {
+  if (!canCreateMemberAccount()) {
     return (
       <div className="mx-auto max-w-lg px-4 py-24 text-center">
         <h1 className="font-serif text-3xl font-semibold text-nurture-charcoal">

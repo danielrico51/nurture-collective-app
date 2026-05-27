@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { serverIntegrations } from "@/config/integrations";
+import { isPublicIntakeEnabled } from "@/config/intakeAccess";
+import { requireAuthUserOrGuest } from "@/lib/api/authHelpers";
+import { isGuestSessionId } from "@/lib/auth/guestSession";
 import { handleIntakeStorageError } from "@/lib/api/routeHelpers";
 import { verifyRequest } from "@/lib/auth/verifyRequest";
 import {
@@ -22,14 +25,21 @@ const VALID_STAGES: MaternalStage[] = [
 ];
 
 const requireUser = async (request: NextRequest) => {
+  if (isPublicIntakeEnabled()) {
+    const { user, error, isGuest } = await requireAuthUserOrGuest(request);
+    if (error || !user) return { error, user: null, isGuest: false };
+    return { error: null, user, isGuest };
+  }
+
   const user = await verifyRequest(request);
   if (!user?.sub) {
     return {
       error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
       user: null,
+      isGuest: false,
     };
   }
-  return { error: null, user };
+  return { error: null, user, isGuest: false };
 };
 
 const handleStorageError = handleIntakeStorageError;

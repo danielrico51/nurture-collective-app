@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuthUser } from "@/lib/api/authHelpers";
+import { requireAuthUserOrGuest } from "@/lib/api/authHelpers";
 import { handleIntakeStorageError } from "@/lib/api/routeHelpers";
 import { resumeOrCreateSession } from "@/lib/conversation/engine";
 import { getConversationSession } from "@/lib/conversation/storage";
@@ -8,7 +8,7 @@ import { createEmptyExtractedProfile } from "@/types/conversation";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const { user, error } = await requireAuthUser(request);
+  const { user, error } = await requireAuthUserOrGuest(request);
   if (error || !user) return error;
 
   let body: { email?: string; name?: string; phone?: string; forceNew?: boolean };
@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET(request: NextRequest) {
-  const { user, error } = await requireAuthUser(request);
+  const { user, error } = await requireAuthUserOrGuest(request);
   if (error || !user) return error;
 
   const sessionId = request.nextUrl.searchParams.get("sessionId");

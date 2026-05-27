@@ -4,6 +4,7 @@ import {
   CARE_SERVICE_STORAGE_KEY,
   buildIntakeHref,
 } from "@/config/carePaths";
+import { isPublicIntakeEnabled } from "@/config/intakeAccess";
 import { fetchIntake } from "@/lib/api/intakeClient";
 import { useSessionAuth } from "@/hooks/useSessionAuth";
 import { isIntakeComplete } from "@/types/intake";
@@ -13,6 +14,7 @@ import { useEffect } from "react";
 export default function CareStartPage() {
   const router = useRouter();
   const { authStatus, ready } = useSessionAuth();
+  const publicIntake = isPublicIntakeEnabled();
 
   useEffect(() => {
     if (!ready || authStatus === "configuring") return;
@@ -25,6 +27,11 @@ export default function CareStartPage() {
       if (service) {
         sessionStorage.setItem(CARE_SERVICE_STORAGE_KEY, service);
       }
+    }
+
+    if (publicIntake) {
+      router.replace(buildIntakeHref(service));
+      return;
     }
 
     if (authStatus === "unauthenticated") {
@@ -43,7 +50,7 @@ export default function CareStartPage() {
       .catch(() => {
         router.replace(buildIntakeHref(service));
       });
-  }, [authStatus, ready, router]);
+  }, [authStatus, publicIntake, ready, router]);
 
   return (
     <div className="flex min-h-[50vh] items-center justify-center bg-nurture-cream">

@@ -1,0 +1,332 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >
+  Nurture Collective operational platform S3 buckets — leads, clients, events,
+  contracts, proposals, notifications, analytics. Versioning, encryption, logging.
+
+Parameters:
+  Environment:
+    Type: String
+    Default: dev
+    AllowedValues: [dev, staging, prod]
+  EnableAccessLogging:
+    Type: String
+    Default: "true"
+    AllowedValues: ["true", "false"]
+
+Conditions:
+  UseAccessLogging: !Equals [!Ref EnableAccessLogging, "true"]
+
+Resources:
+  AccessLogsBucket:
+    Type: AWS::S3::Bucket
+    Condition: UseAccessLogging
+    Properties:
+      BucketName: !Sub "nurture-platform-access-logs-${Environment}-${AWS::AccountId}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: ExpireOldLogs
+            Status: Enabled
+            ExpirationInDays: 365
+
+  LeadsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "nurture-leads-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LifecycleConfiguration:
+        Rules:
+          - Id: TransitionToIA
+            Status: Enabled
+            Transitions:
+              - StorageClass: STANDARD_IA
+                TransitionInDays: 90
+      LoggingConfiguration: !If
+        - UseAccessLogging
+        - DestinationBucketName: !Ref AccessLogsBucket
+          LogFilePrefix: leads/
+        - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: nurture-collective
+        - Key: DataClass
+          Value: leads
+
+  ClientsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "nurture-clients-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration: !If
+        - UseAccessLogging
+        - DestinationBucketName: !Ref AccessLogsBucket
+          LogFilePrefix: clients/
+        - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: nurture-collective
+        - Key: DataClass
+          Value: clients
+
+  EventsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "nurture-events-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      LoggingConfiguration: !If
+        - UseAccessLogging
+        - DestinationBucketName: !Ref AccessLogsBucket
+          LogFilePrefix: events/
+        - !Ref AWS::NoValue
+      Tags:
+        - Key: Project
+          Value: nurture-collective
+        - Key: DataClass
+          Value: events
+
+  ContractsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "nurture-contracts-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      ObjectLockEnabled: false
+      Tags:
+        - Key: Project
+          Value: nurture-collective
+        - Key: DataClass
+          Value: contracts
+
+  ProposalsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "nurture-proposals-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: nurture-collective
+
+  NotificationsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "nurture-notifications-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: nurture-collective
+
+  AnalyticsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "nurture-analytics-${Environment}-${AWS::AccountId}"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: nurture-collective
+        - Key: DataClass
+          Value: analytics
+
+  # --- IAM roles ---
+
+  BackendApiRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub "NurturePlatformBackend-${Environment}"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+                - ec2.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - !Ref BackendPlatformPolicy
+
+  AmplifyComputePlatformPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "NurtureAmplifyPlatformS3-${Environment}"
+      Description: S3 read/write for Next.js SSR on leads (intake phase) and legacy tasks bucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: LeadsReadWrite
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+              - s3:ListBucket
+            Resource:
+              - !GetAtt LeadsBucket.Arn
+              - !Sub "${LeadsBucket.Arn}/*"
+          - Sid: EventsAppend
+            Effect: Allow
+            Action:
+              - s3:PutObject
+              - s3:GetObject
+              - s3:ListBucket
+            Resource:
+              - !GetAtt EventsBucket.Arn
+              - !Sub "${EventsBucket.Arn}/*"
+          - Sid: LegacyTasksBucket
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+              - s3:ListBucket
+            Resource:
+              - !Sub "arn:aws:s3:::nurture-collective-tasks"
+              - !Sub "arn:aws:s3:::nurture-collective-tasks/*"
+
+  BackendPlatformPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub "NurtureBackendPlatform-${Environment}"
+      Description: Full operational S3 access for Django action engine
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: PlatformBuckets
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:PutObject
+              - s3:DeleteObject
+              - s3:ListBucket
+              - s3:GetObjectVersion
+            Resource:
+              - !GetAtt LeadsBucket.Arn
+              - !Sub "${LeadsBucket.Arn}/*"
+              - !GetAtt ClientsBucket.Arn
+              - !Sub "${ClientsBucket.Arn}/*"
+              - !GetAtt EventsBucket.Arn
+              - !Sub "${EventsBucket.Arn}/*"
+              - !GetAtt ContractsBucket.Arn
+              - !Sub "${ContractsBucket.Arn}/*"
+              - !GetAtt ProposalsBucket.Arn
+              - !Sub "${ProposalsBucket.Arn}/*"
+              - !GetAtt NotificationsBucket.Arn
+              - !Sub "${NotificationsBucket.Arn}/*"
+              - !GetAtt AnalyticsBucket.Arn
+              - !Sub "${AnalyticsBucket.Arn}/*"
+          - Sid: CognitoRead
+            Effect: Allow
+            Action:
+              - cognito-idp:AdminGetUser
+              - cognito-idp:AdminCreateUser
+              - cognito-idp:AdminAddUserToGroup
+              - cognito-idp:ListUsersInGroup
+            Resource: "*"
+          - Sid: SESSend
+            Effect: Allow
+            Action:
+              - ses:SendEmail
+              - ses:SendRawEmail
+            Resource: "*"
+
+Outputs:
+  LeadsBucketName:
+    Value: !Ref LeadsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-LeadsBucket"
+  ClientsBucketName:
+    Value: !Ref ClientsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-ClientsBucket"
+  EventsBucketName:
+    Value: !Ref EventsBucket
+    Export:
+      Name: !Sub "${AWS::StackName}-EventsBucket"
+  ContractsBucketName:
+    Value: !Ref ContractsBucket
+  ProposalsBucketName:
+    Value: !Ref ProposalsBucket
+  NotificationsBucketName:
+    Value: !Ref NotificationsBucket
+  AnalyticsBucketName:
+    Value: !Ref AnalyticsBucket
+  BackendApiRoleArn:
+    Value: !GetAtt BackendApiRole.Arn
+  AmplifyPlatformPolicyArn:
+    Value: !Ref AmplifyComputePlatformPolicy

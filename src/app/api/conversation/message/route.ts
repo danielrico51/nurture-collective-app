@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { requireAuthUser } from "@/lib/api/authHelpers";
+import { requireAuthUserOrGuest } from "@/lib/api/authHelpers";
 import { handleIntakeStorageError } from "@/lib/api/routeHelpers";
 import { processConversationMessageStream } from "@/lib/conversation/engine";
 import { getConversationSession } from "@/lib/conversation/storage";
@@ -7,7 +7,7 @@ import { getConversationSession } from "@/lib/conversation/storage";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const { user, error } = await requireAuthUser(request);
+  const { user, error } = await requireAuthUserOrGuest(request);
   if (error || !user) return error;
 
   let body: { sessionId?: string; message?: string };
