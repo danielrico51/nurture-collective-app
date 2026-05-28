@@ -6,6 +6,7 @@ import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
 import SectionTitle from "@/components/Common/SectionTitle";
 import {
   brands,
+  careCoordinator,
   providerFaqs,
   providerHowItWorks,
   providerSpecialties,
@@ -14,9 +15,9 @@ import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "For Service Providers | The Nurture Collective",
+  title: "For Service Providers | The Nesting Place",
   description:
-    "Join the Nurture Collective provider network. We're recruiting doulas, lactation consultants, newborn care specialists, and more as we expand region by region.",
+    "Join The Nesting Place provider network. We're recruiting doulas, lactation consultants, newborn care specialists, and more as we expand region by region.",
 };
 
 export default function ForProvidersPage() {
@@ -33,10 +34,10 @@ export default function ForProvidersPage() {
               Grow your practice with a team that puts moms first
             </h1>
             <p className="mt-6 text-lg text-nurture-charcoal/80">
-              {brands.nurtureCollective.shortName} is building the AI-powered
-              marketplace that matches exceptional providers with families who
-              need them. Provider recruitment is essential to our success — join
-              us as we expand market by market.
+              {brands.nestingPlace.name} is building a provider
+              network with personal care coordinators who match exceptional
+              providers with families who need them. Provider recruitment is
+              essential to our success — join us as we expand market by market.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
@@ -92,7 +93,7 @@ export default function ForProvidersPage() {
                 {
                   title: "Join early",
                   description:
-                    "Shape standards, onboarding, and the AI matching experience as we build the full concierge platform.",
+                    "Shape standards, onboarding, and the matching experience as we build the full personal care coordination platform.",
                 },
                 {
                   title: "Expand with us",
@@ -102,7 +103,7 @@ export default function ForProvidersPage() {
                 {
                   title: "Get matched with families",
                   description:
-                    "As Nurture Collective scales, our platform connects your expertise with moms who need exactly what you offer.",
+                    "As we scale, our platform connects your expertise with moms who need exactly what you offer.",
                 },
               ].map((item) => (
                 <div
@@ -123,7 +124,7 @@ export default function ForProvidersPage() {
           <div className="mt-20">
             <ContactOptions
               formHref="/contact?audience=provider#contact-form"
-              whatsappMessage="Hi! I'm interested in joining The Nurture Collective as a service provider."
+              whatsappMessage="Hi! I'm interested in joining The Nesting Place provider network."
             />
           </div>
         </div>

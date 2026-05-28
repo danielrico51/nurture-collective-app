@@ -8,7 +8,7 @@ const CoreServicesSection = () => {
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
         <SectionTitle
           title="Maternal wellness services"
-          subtitle={`Evidence-based support through the ${brands.nurtureCollective.shortName} provider network — availability varies by region.`}
+          subtitle={`Evidence-based support through ${brands.nestingPlace.name} — availability varies by region.`}
         />
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {coreServices.slice(0, 3).map((service) => (

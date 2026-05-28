@@ -82,7 +82,7 @@ const DashboardPage = () => {
   );
 
   const whatsappUrl = buildWhatsAppUrl(
-    "Hi! I'm a Nurture Collective member and would like to connect about support."
+    "Hi! I'm a Nesting Place member and would like to connect about support."
   );
 
   const bookingUrl = buildBookingUrlWithPrefill({
@@ -119,7 +119,7 @@ const DashboardPage = () => {
                     ? stageLabel
                       ? `You're in the ${stageLabel.toLowerCase()} stage. Your coordinator is preparing personalized support.`
                       : "Your intake is complete. Explore your recommendations and next steps below."
-                    : `Welcome to ${brands.nurtureCollective.name}. Start your support journey to receive personalized recommendations.`}
+                    : `Welcome to ${brands.nestingPlace.name}. Start your support journey to receive personalized recommendations.`}
               </p>
             </div>
             {!intakeComplete ? (

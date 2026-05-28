@@ -37,7 +37,7 @@ const BookingEmbed = ({
         <div className="mx-auto mt-10 max-w-4xl overflow-hidden rounded-2xl border border-nurture-sage/15 bg-white shadow-sm">
           <iframe
             src={embedUrl}
-            title="Schedule a call with The Nurture Collective"
+            title="Schedule a call with The Nesting Place"
             className="h-[700px] w-full border-0"
             loading="lazy"
           />

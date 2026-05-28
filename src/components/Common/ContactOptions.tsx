@@ -35,7 +35,7 @@ const cardClassName =
 const ContactOptions = ({
   formAnchorId = "contact-form",
   formHref,
-  whatsappMessage = "Hi! I'd like to learn more about The Nurture Collective.",
+  whatsappMessage = "Hi! I'd like to learn more about The Nesting Place.",
   className = "",
   variant = "contact",
   intakeHref = CARE_START_PATH,

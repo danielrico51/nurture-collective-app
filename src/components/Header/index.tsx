@@ -1,25 +1,17 @@
 "use client";
 
-import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
+import { brands } from "@/content/site";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { useAuthenticator } from "@aws-amplify/ui-react";
+import { primaryNavLinks, providerNavLink } from "@/config/navigation";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 import { useUserGroups } from "@/hooks/useUserGroups";
 
 interface HeaderProps {
   isAuthenticated: boolean;
 }
-
-const navLinks = [
-  { href: "/", label: "Home" },
-  { href: "/for-moms", label: "For moms" },
-  { href: "/for-providers", label: "For providers" },
-  { href: "/services", label: "Services" },
-  { href: "/about", label: "About" },
-  { href: "/contact", label: "Contact" },
-];
 
 const Header = ({ isAuthenticated }: HeaderProps) => {
   const pathname = usePathname();
@@ -52,15 +44,17 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
       }`}
     >
       <div className="mx-auto flex max-w-screen-xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <NestingPlaceLogo
-          variant="header"
-          priority
-          compact
-          nameClassName="text-sm sm:text-base lg:text-lg"
-        />
+        <Link href="/" className="group leading-tight transition hover:opacity-90">
+          <span className="block font-serif text-base font-semibold text-nurture-sage-dark sm:text-lg">
+            {brands.nestingPlace.name}
+          </span>
+          <span className="hidden text-[10px] font-medium tracking-wide text-nurture-charcoal/55 sm:block">
+            {brands.nestingPlace.byline}
+          </span>
+        </Link>
 
-        <nav className="hidden items-center gap-6 lg:flex">
-          {navLinks.map((link) => (
+        <nav className="hidden items-center gap-4 xl:flex">
+          {primaryNavLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
@@ -109,10 +103,22 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
           ) : (
             <>
               <Link
+                href={providerNavLink.href}
+                className="hidden text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark lg:inline"
+              >
+                {providerNavLink.label}
+              </Link>
+              <Link
                 href="/signin"
                 className="text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
               >
                 Sign in
+              </Link>
+              <Link
+                href="/care/start"
+                className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-medium text-white hover:bg-nurture-sage-dark"
+              >
+                Request support
               </Link>
               {PUBLIC_SIGNUP_ENABLED ? (
                 <Link
@@ -121,21 +127,14 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 >
                   Join
                 </Link>
-              ) : (
-                <Link
-                  href="/for-providers"
-                  className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-medium text-white hover:bg-nurture-sage-dark"
-                >
-                  Apply as provider
-                </Link>
-              )}
+              ) : null}
             </>
           )}
         </div>
 
         <button
           type="button"
-          className="lg:hidden"
+          className="xl:hidden"
           aria-label="Toggle menu"
           onClick={() => setMenuOpen(!menuOpen)}
         >
@@ -146,12 +145,14 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
       </div>
 
       {menuOpen && (
-        <div className="border-t border-nurture-sage/20 bg-white px-4 py-4 lg:hidden">
-          {navLinks.map((link) => (
+        <div className="max-h-[85vh] overflow-y-auto border-t border-nurture-sage/20 bg-white px-4 py-4 xl:hidden">
+          {primaryNavLinks.map((link) => (
             <Link
               key={link.href}
               href={link.href}
-              className="block py-2 text-sm font-medium"
+              className={`block py-2 text-sm font-medium ${
+                isActive(link.href) ? "text-nurture-sage-dark" : ""
+              }`}
               onClick={() => setMenuOpen(false)}
             >
               {link.label}
@@ -177,14 +178,18 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
               </>
             ) : (
               <>
+                <Link href="/care/start" onClick={() => setMenuOpen(false)}>
+                  Request support
+                </Link>
                 <Link href="/signin" onClick={() => setMenuOpen(false)}>
                   Sign in
                 </Link>
-                <Link href="/for-moms" onClick={() => setMenuOpen(false)}>
-                  For moms
-                </Link>
-                <Link href="/for-providers" onClick={() => setMenuOpen(false)}>
-                  For providers
+                <Link
+                  href={providerNavLink.href}
+                  onClick={() => setMenuOpen(false)}
+                  className="text-nurture-charcoal/70"
+                >
+                  {providerNavLink.label}
                 </Link>
               </>
             )}

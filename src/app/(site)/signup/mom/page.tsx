@@ -15,7 +15,7 @@ const MomSignupPage = () => {
           Member signup coming soon
         </h1>
         <p className="mt-4 text-nurture-charcoal/70">
-          Request support through {brands.nurtureCollective.shortName} while we
+          Request support through {brands.nestingPlace.name} while we
           open member accounts.
         </p>
         <Link

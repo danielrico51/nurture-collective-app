@@ -107,3 +107,47 @@ export const handleLeadsStorageError = (error: unknown) => {
 
   return NextResponse.json({ error: "Failed to access lead storage" }, { status: 500 });
 };
+
+export const handleBlogStorageError = (error: unknown) => {
+  console.error("[blog] storage error:", error);
+  const message =
+    error instanceof Error ? error.message : "Storage operation failed";
+
+  if (
+    message.includes("AccessDenied") ||
+    message.includes("not authorized") ||
+    message.includes("Access Denied")
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Blog storage access denied. Grant s3:GetObject and s3:PutObject on management/blog/* in the tasks bucket.",
+      },
+      { status: 503 }
+    );
+  }
+
+  return NextResponse.json({ error: "Failed to access blog storage" }, { status: 500 });
+};
+
+export const handleEventsStorageError = (error: unknown) => {
+  console.error("[events] storage error:", error);
+  const message =
+    error instanceof Error ? error.message : "Storage operation failed";
+
+  if (
+    message.includes("AccessDenied") ||
+    message.includes("not authorized") ||
+    message.includes("Access Denied")
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Events storage access denied. Grant s3:GetObject and s3:PutObject on management/events/* in the tasks bucket.",
+      },
+      { status: 503 }
+    );
+  }
+
+  return NextResponse.json({ error: "Failed to access events storage" }, { status: 500 });
+};

@@ -1,5 +1,6 @@
 /** Smart entry point — auth-aware redirect to intake or sign-in. */
 import { resolveIntakePath } from "@/config/intakeAccess";
+import { SERVICE_SLUGS } from "@/content/site";
 import type { SupportInterest } from "@/types/intake";
 
 export const CARE_START_PATH = "/care/start";
@@ -21,15 +22,27 @@ export const buildIntakeHref = (service?: string) =>
 /** Maps marketing service slugs to intake support interests. */
 const SERVICE_SLUG_TO_INTEREST: Record<string, SupportInterest> = {
   "birth-doula": "birth-doula",
-  "overnight-newborn": "postpartum-doula",
+  "overnight-newborn": "overnight-newborn-care",
   "postpartum-care": "postpartum-doula",
   lactation: "lactation",
-  "prenatal-massage": "general-support",
+  "prenatal-massage": "prenatal-massage",
+  "postpartum-massage": "prenatal-massage",
+  "birth-photography": "general-support",
+  "childbirth-education": "childbirth-education",
 };
 
 export const getSupportInterestFromServiceSlug = (
   slug: string
 ): SupportInterest | null => SERVICE_SLUG_TO_INTEREST[slug] ?? null;
+
+export const getServiceTitleFromSlug = (slug: string): string =>
+  SERVICE_SLUGS[slug] ?? slug.replace(/-/g, " ");
+
+export interface CareServiceContext {
+  slug: string;
+  supportInterest: SupportInterest;
+  title: string;
+}
 
 export const readCareServiceContext = (): string | null => {
   if (typeof window === "undefined") return null;
@@ -40,4 +53,16 @@ export const readCareServiceContext = (): string | null => {
     sessionStorage.removeItem(CARE_SERVICE_STORAGE_KEY);
   }
   return fromUrl || fromStorage || null;
+};
+
+export const resolveCareServiceContext = (): CareServiceContext | null => {
+  const slug = readCareServiceContext();
+  if (!slug) return null;
+  const supportInterest = getSupportInterestFromServiceSlug(slug);
+  if (!supportInterest) return null;
+  return {
+    slug,
+    supportInterest,
+    title: getServiceTitleFromSlug(slug),
+  };
 };

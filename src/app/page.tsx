@@ -11,9 +11,9 @@ import { momFaqs, momHowItWorks } from "@/content/site";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "The Nurture Collective | Maternal Concierge & Provider Marketplace",
+  title: "The Nesting Place | Maternal Wellness & Postpartum Care",
   description:
-    "AI-powered maternal concierge and provider marketplace — connecting moms with doulas, postpartum support, lactation support, and everyday help, region by region.",
+    "The Nesting Place — evidence-based birth doula, postpartum, lactation, and newborn support in Northern New Jersey, by Nurture Collective LLC.",
 };
 
 export default function HomePage() {

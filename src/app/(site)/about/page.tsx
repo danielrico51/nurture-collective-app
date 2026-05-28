@@ -2,14 +2,16 @@ import Breadcrumb from "@/components/Common/Breadcrumb";
 import CoverageMap from "@/components/Common/CoverageMap";
 import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
 import SectionTitle from "@/components/Common/SectionTitle";
-import { brands } from "@/content/site";
+import { brands, careCoordinator, humanTouchMessage } from "@/content/site";
+import { teamMembers } from "@/content/team";
+import { TeamSection } from "@/components/Common/TeamSection";
 import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "About | The Nurture Collective",
+  title: "About | The Nesting Place",
   description:
-    "The Nurture Collective is building an AI-powered maternal concierge and provider marketplace — expanding region by region.",
+    "The Nesting Place connects families with trusted maternal wellness providers and personal care coordinators — operated by Nurture Collective LLC.",
 };
 
 export default function AboutPage() {
@@ -26,7 +28,7 @@ export default function AboutPage() {
             />
             <SectionTitle
               title="Support every mother, in every region we reach"
-              subtitle={`${brands.nurtureCollective.name} is building the platform — one market at a time.`}
+              subtitle={`${brands.nestingPlace.name} — ${brands.nestingPlace.byline} — growing one market at a time.`}
               centered={false}
             />
             <div className="mt-10 space-y-6 text-nurture-charcoal/80">
@@ -38,14 +40,17 @@ export default function AboutPage() {
               </p>
               <p>
                 <span className="font-medium text-nurture-charcoal">
-                  {brands.nurtureCollective.name}
+                  {brands.nestingPlace.name}
                 </span>{" "}
-                is an AI-powered mom concierge and provider marketplace. We
+                ({brands.nestingPlace.byline}) is a maternal wellness practice and
+                provider network. We
                 connect families with vetted maternal wellness professionals —
                 birth doulas, postpartum support, lactation consultants, newborn
-                support specialists, and more — and we&apos;re expanding into
-                everyday help: cleaning, childcare, fitness, errands, and full
-                concierge coordination across every stage of motherhood.
+                support specialists, and more — with a dedicated{" "}
+                {careCoordinator.short.toLowerCase()} keeping everything
+                organized. We&apos;re expanding into everyday help: cleaning,
+                childcare, fitness, errands, and full personal care coordination
+                across every stage of motherhood.
               </p>
               <p>
                 We launch region by region rather than pretending to be
@@ -54,12 +59,10 @@ export default function AboutPage() {
                 central to the model — the network is the product.
               </p>
               <p>
-                We own and operate{" "}
-                <span className="font-medium text-nurture-charcoal">
-                  {brands.nestingPlace.name}
-                </span>
-                , our maternal wellness practice in Northern New Jersey, as the
-                foundation for clinical-adjacent care in our first active region.
+                Our hands-on practice in Northern New Jersey is the foundation
+                for clinical-adjacent care in our first active region — with{" "}
+                {brands.nurtureCollective.shortName} building the platform behind
+                it.
               </p>
             </div>
 
@@ -68,7 +71,7 @@ export default function AboutPage() {
                 <h3 className="font-serif text-xl font-semibold">For moms</h3>
                 <p className="mt-3 text-sm text-nurture-charcoal/70">
                   Request support in your area, explore available services, and get
-                  on the list for full concierge as we expand.
+                  on the list for a dedicated {careCoordinator.short.toLowerCase()} as we expand.
                 </p>
                 <Link
                   href="/for-moms"
@@ -80,7 +83,7 @@ export default function AboutPage() {
               <div className="rounded-2xl border border-nurture-sage/20 bg-white p-8">
                 <h3 className="font-serif text-xl font-semibold">For providers</h3>
                 <p className="mt-3 text-sm text-nurture-charcoal/70">
-                  {brands.nurtureCollective.description}
+                  {brands.nestingPlace.description}
                 </p>
                 <Link
                   href="/for-providers"
@@ -89,6 +92,12 @@ export default function AboutPage() {
                   Join as a provider →
                 </Link>
               </div>
+            </div>
+
+            <div className="mt-12 rounded-2xl border border-nurture-sage/20 bg-nurture-blush/20 p-8">
+              <p className="text-sm leading-relaxed text-nurture-charcoal/80">
+                {humanTouchMessage}
+              </p>
             </div>
 
             <div className="mt-12 rounded-2xl border border-nurture-sage/20 bg-nurture-cream/40 p-8">
@@ -100,8 +109,8 @@ export default function AboutPage() {
                   support through our vetted network
                 </li>
                 <li>
-                  Moms preparing for the full concierge experience — support
-                  beyond pre- and postpartum
+                  Moms preparing for full {careCoordinator.platform} — support
+                  beyond pre- and postpartum, with a real person guiding you
                 </li>
                 <li>
                   Doulas, lactation consultants, and maternal wellness providers
@@ -127,6 +136,7 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
+      <TeamSection members={teamMembers} className="bg-nurture-sage/5" />
       <CoverageMap />
     </>
   );

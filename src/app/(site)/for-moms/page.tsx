@@ -7,14 +7,14 @@ import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
 import GoogleReviewsSection from "@/components/Reviews/GoogleReviewsSection";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { buildCareStartHref } from "@/config/carePaths";
-import { brands, coreServices, momFaqs, momHowItWorks } from "@/content/site";
+import { brands, careCoordinator, coreServices, momFaqs, momHowItWorks } from "@/content/site";
 import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "For Moms | The Nurture Collective",
+  title: "For Moms | The Nesting Place",
   description:
-    "Birth doula support, postpartum support, lactation, and newborn support through the Nurture Collective provider network — plus the AI-powered mom concierge we're building.",
+    "Birth doula support, postpartum support, lactation, and newborn support through The Nesting Place — by Nurture Collective LLC.",
 };
 
 export default function ForMomsPage() {
@@ -32,9 +32,9 @@ export default function ForMomsPage() {
             </h1>
             <p className="mt-6 text-lg text-nurture-charcoal/80">
               Start with evidence-based support from vetted providers in your
-              region. As {brands.nurtureCollective.shortName} grows, your
-              concierge will coordinate every service you need — from doula
-              support to cleaning, childcare, and beyond.
+              region. As {brands.nestingPlace.name} grows,{" "}
+              {careCoordinator.possessive} will coordinate every service you
+              need — from doula support to cleaning, childcare, and beyond.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
@@ -90,7 +90,7 @@ export default function ForMomsPage() {
             />
             <ContactOptions
               variant="intake"
-              whatsappMessage="Hi! I'm interested in maternal support through The Nurture Collective."
+              whatsappMessage="Hi! I'm interested in maternal support through The Nesting Place."
               className="mt-10"
             />
           </div>

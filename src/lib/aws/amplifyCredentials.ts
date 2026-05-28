@@ -4,12 +4,16 @@ import { defaultProvider } from "@aws-sdk/credential-provider-node";
 const readServerAccessKeyId = () =>
   process.env.SERVER_AWS_ACCESS_KEY_ID?.trim() ||
   process.env.AMPLIFY_AWS_ACCESS_KEY_ID?.trim() ||
+  process.env.AWS_ACCESS_KEY_ID?.trim() ||
   "";
 
 const readServerSecretAccessKey = () =>
   process.env.SERVER_AWS_SECRET_ACCESS_KEY?.trim() ||
   process.env.AMPLIFY_AWS_SECRET_ACCESS_KEY?.trim() ||
+  process.env.AWS_SECRET_ACCESS_KEY?.trim() ||
   "";
+
+const readServerSessionToken = () => process.env.AWS_SESSION_TOKEN?.trim() || "";
 
 export const getServerCredentialHint = () => ({
   hasServerAccessKey: Boolean(readServerAccessKeyId()),
@@ -21,9 +25,13 @@ export const getServerCredentialHint = () => ({
 export const getServerCredentials = (): AwsCredentialIdentityProvider => {
   const accessKeyId = readServerAccessKeyId();
   const secretAccessKey = readServerSecretAccessKey();
+  const sessionToken = readServerSessionToken();
 
   if (accessKeyId && secretAccessKey) {
-    return async () => ({ accessKeyId, secretAccessKey });
+    return async () =>
+      sessionToken
+        ? { accessKeyId, secretAccessKey, sessionToken }
+        : { accessKeyId, secretAccessKey };
   }
 
   return defaultProvider();

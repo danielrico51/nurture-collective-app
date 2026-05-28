@@ -1,4 +1,4 @@
-import { futureConciergeServices } from "@/content/site";
+import { careCoordinator, futureConciergeServices } from "@/content/site";
 import SectionTitle from "@/components/Common/SectionTitle";
 import Link from "next/link";
 
@@ -7,8 +7,8 @@ const ConciergeVision = () => {
     <section className="py-20">
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
         <SectionTitle
-          title="The concierge platform we're building"
-          subtitle="Nurture Collective is becoming the AI-powered marketplace that coordinates every service a mom needs — not just pre- and postpartum, in every region we expand to."
+          title={`The ${careCoordinator.platform} we're building`}
+          subtitle={`${careCoordinator.full}s who know you by name — coordinating every service a mom needs, not just pre- and postpartum, in every region we expand to.`}
         />
         <div className="mt-12 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
           {futureConciergeServices.map((service) => (
@@ -33,7 +33,8 @@ const ConciergeVision = () => {
           <Link href="/for-moms#coverage" className="font-medium text-nurture-sage-dark hover:underline">
             our active regions
           </Link>
-          . Tomorrow, one concierge for everything motherhood requires — nationwide.
+          . Tomorrow, one {careCoordinator.short.toLowerCase()} for everything motherhood
+          requires — with a real person guiding you every step of the way.
         </p>
       </div>
     </section>

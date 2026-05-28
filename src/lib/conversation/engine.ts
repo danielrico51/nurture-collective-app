@@ -25,16 +25,18 @@ import type {
   ConversationSession,
   ExtractedMaternalProfile,
 } from "@/types/conversation";
+import type { SupportInterest } from "@/types/intake";
 import { createEmptyExtractedProfile } from "@/types/conversation";
 
 const WELCOME_MESSAGE =
-  "Hi — I'm your concierge for The Nesting Place. I'm here to understand where you are in your journey and help connect you with the right support — birth doula care, postpartum help, lactation, overnight newborn care, or prenatal massage. There's no rush. To start, how far along are you in your motherhood journey?";
+  "Hi — I'm your care coordinator for The Nesting Place. I'm here to understand where you are in your journey and help connect you with the right support — birth doula care, postpartum help, lactation, overnight newborn care, or prenatal massage. There's no rush. To start, how far along are you in your motherhood journey?";
 
-const GUEST_WELCOME_SUFFIX =
-  " You're welcome to chat without an account — create a free member account anytime if you'd like to save this conversation and continue later.";
-
-const buildWelcomeMessage = (userId: string) =>
-  isGuestLead(userId) ? `${WELCOME_MESSAGE}${GUEST_WELCOME_SUFFIX}` : WELCOME_MESSAGE;
+const buildWelcomeMessage = (userId: string, preselectedServiceTitle?: string) => {
+  const base = preselectedServiceTitle
+    ? `Hi — I'm your care coordinator for The Nesting Place. I see you're interested in ${preselectedServiceTitle.toLowerCase()} — I'll help connect you with the right support. To start, how far along are you in your motherhood journey?`
+    : WELCOME_MESSAGE;
+  return isGuestLead(userId) ? `${base}${GUEST_WELCOME_SUFFIX}` : base;
+};
 
 const DEFAULT_QUICK_REPLIES = [
   "Pregnant",
@@ -56,17 +58,37 @@ const FALLBACK_REPLIES: Record<string, string[]> = {
   contact: ["Yes, SMS updates are OK", "Email only please"],
 };
 
+const GUEST_WELCOME_SUFFIX =
+  " You're welcome to chat without an account — create a free member account anytime if you'd like to save this conversation and continue later.";
+
+export interface PreselectedService {
+  title: string;
+  supportInterest: SupportInterest;
+}
+
 export const createConversationSession = async (
   userId: string,
-  defaults: Partial<ExtractedMaternalProfile> = {}
+  defaults: Partial<ExtractedMaternalProfile> = {},
+  preselectedService?: PreselectedService
 ): Promise<ConversationSession> => {
   const now = new Date().toISOString();
+  const initialInterests =
+    defaults.supportInterests?.length
+      ? defaults.supportInterests
+      : preselectedService
+        ? [preselectedService.supportInterest]
+        : [];
+
+  const extractedProfile = mergeExtractedProfile(createEmptyExtractedProfile(defaults), {
+    ...(initialInterests.length ? { supportInterests: initialInterests } : {}),
+  });
+
   const session: ConversationSession = {
     id: crypto.randomUUID(),
     userId,
     status: "active",
     messages: [],
-    extractedProfile: createEmptyExtractedProfile(defaults),
+    extractedProfile,
     quickReplies: DEFAULT_QUICK_REPLIES,
     safetyEscalation: false,
     createdAt: now,
@@ -76,7 +98,7 @@ export const createConversationSession = async (
   const welcome: ConversationMessage = {
     id: crypto.randomUUID(),
     role: "assistant",
-    content: buildWelcomeMessage(userId),
+    content: buildWelcomeMessage(userId, preselectedService?.title),
     timestamp: now,
   };
   session.messages.push(welcome);
@@ -111,11 +133,19 @@ const buildChatMessages = async (session: ConversationSession) => {
     });
   }
 
+  if (profile.supportInterests.length > 0) {
+    messages.push({
+      role: "system",
+      content:
+        "The user already selected a service before starting this chat. Do not ask them to pick a service type again — focus on maternal stage, location, challenges, and contact details.",
+    });
+  }
+
   if (isGuestLead(session.userId)) {
     messages.push({
       role: "system",
       content:
-        "This visitor is chatting without an account. After their first reply, mention once that a free Nurture Collective account saves their conversation so they can continue anytime — keep it brief; the UI also shows save prompts.",
+        "This visitor is chatting without an account. After their first reply, mention once that a free member account saves their conversation so they can continue anytime — keep it brief; the UI also shows save prompts.",
     });
   }
 
@@ -188,7 +218,7 @@ const fallbackAssistantReply = (
   }
   return {
     content:
-      "Thank you. Is there anything else you'd like your concierge to know before we wrap up?",
+      "Thank you. Is there anything else you'd like your care coordinator to know before we wrap up?",
     quickReplies: ["That's everything", "Add one more thing"],
   };
 };
@@ -357,27 +387,48 @@ export async function* processConversationMessageStream(
 export const resumeOrCreateSession = async (
   userId: string,
   defaults: Partial<ExtractedMaternalProfile> = {},
-  options: { forceNew?: boolean } = {}
+  options: { forceNew?: boolean; preselectedService?: PreselectedService } = {}
 ) => {
   const { abandonActiveConversations, getActiveConversationForUser } =
     await import("@/lib/conversation/storage");
 
   if (options.forceNew) {
     await abandonActiveConversations(userId, defaults.email);
-    return createConversationSession(userId, defaults);
+    return createConversationSession(userId, defaults, options.preselectedService);
   }
 
   const existing = await getActiveConversationForUser(userId, defaults.email);
   if (existing) {
+    let extractedProfile = mergeExtractedProfile(existing.extractedProfile, {
+      name: existing.extractedProfile.name || defaults.name || "",
+      email: existing.extractedProfile.email || defaults.email || "",
+      phone: existing.extractedProfile.phone || defaults.phone || "",
+    });
+
+    if (options.preselectedService) {
+      extractedProfile = mergeExtractedProfile(extractedProfile, {
+        supportInterests: Array.from(
+          new Set([
+            ...extractedProfile.supportInterests,
+            options.preselectedService.supportInterest,
+          ])
+        ),
+      });
+    } else if (defaults.supportInterests?.length) {
+      extractedProfile = mergeExtractedProfile(extractedProfile, {
+        supportInterests: Array.from(
+          new Set([
+            ...extractedProfile.supportInterests,
+            ...defaults.supportInterests,
+          ])
+        ),
+      });
+    }
+
     return {
       ...existing,
-      extractedProfile: {
-        ...existing.extractedProfile,
-        name: existing.extractedProfile.name || defaults.name || "",
-        email: existing.extractedProfile.email || defaults.email || "",
-        phone: existing.extractedProfile.phone || defaults.phone || "",
-      },
+      extractedProfile,
     };
   }
-  return createConversationSession(userId, defaults);
+  return createConversationSession(userId, defaults, options.preselectedService);
 };

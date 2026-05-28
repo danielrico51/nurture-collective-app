@@ -50,7 +50,7 @@ const SignupPage = () => {
     <AuthPageShell
       eyebrow="For moms"
       title="Create your member account"
-      subtitle={`Join ${brands.nurtureCollective.name} to access support through our provider network and growing mom concierge.`}
+      subtitle={`Join ${brands.nestingPlace.name} to access support through our provider network and personal care coordination.`}
       highlights={[
         "Personalized member support",
         "Resources for every stage",

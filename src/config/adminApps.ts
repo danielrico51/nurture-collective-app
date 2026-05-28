@@ -1,6 +1,15 @@
 export type AdminAppStatus = "available" | "coming_soon";
 
-export type AdminAppIcon = "tasks" | "intakes" | "leads" | "coverage" | "members" | "reports" | "settings";
+export type AdminAppIcon =
+  | "tasks"
+  | "intakes"
+  | "leads"
+  | "coverage"
+  | "blog"
+  | "events"
+  | "members"
+  | "reports"
+  | "settings";
 
 export interface AdminApp {
   id: string;
@@ -37,6 +46,22 @@ export const ADMIN_APPS: AdminApp[] = [
     href: "/admin/tasks",
     status: "available",
     icon: "tasks",
+  },
+  {
+    id: "blog",
+    title: "Blog",
+    description: "Create, edit, and publish articles stored in S3.",
+    href: "/admin/blog",
+    status: "available",
+    icon: "blog",
+  },
+  {
+    id: "events",
+    title: "Events & classes",
+    description: "Manage workshops, classes, and community event listings in S3.",
+    href: "/admin/events",
+    status: "available",
+    icon: "events",
   },
 ];
 

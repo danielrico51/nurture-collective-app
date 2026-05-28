@@ -11,9 +11,9 @@ const config: Config = {
     extend: {
       colors: {
         nurture: {
-          sage: "#8BA888",
-          "sage-dark": "#6B8F69",
-          blush: "#E8C4B8",
+          sage: "#B8A9C9",
+          "sage-dark": "#8B7BA8",
+          blush: "#E8D8F0",
           cream: "#FAF7F2",
           charcoal: "#2D3436",
         },

@@ -9,6 +9,7 @@ import {
   buildGuestAccountSignupHref,
   PUBLIC_INTAKE_PATH,
 } from "@/config/intakeAccess";
+import type { CareServiceContext } from "@/config/carePaths";
 import {
   buildBookingPageHref,
   buildBookingUrlWithPrefill,
@@ -29,6 +30,7 @@ interface ConversationalIntakeProps {
   userId: string;
   defaults?: { name?: string; email?: string; phone?: string };
   guestMode?: boolean;
+  initialService?: CareServiceContext | null;
 }
 
 const SESSION_STORAGE_KEY = "nurture-intake-session-id";
@@ -40,6 +42,7 @@ const ConversationalIntake = ({
   userId,
   defaults,
   guestMode = false,
+  initialService = null,
 }: ConversationalIntakeProps) => {
   const router = useRouter();
   const [session, setSession] = useState<ConversationSession | null>(null);
@@ -91,7 +94,7 @@ const ConversationalIntake = ({
             ? window.sessionStorage.getItem(SESSION_STORAGE_KEY)
             : null;
 
-        if (storedSessionId) {
+        if (storedSessionId && !initialService) {
           try {
             const stored = await fetchConversation(storedSessionId);
             followLatestRef.current = hasUserMessages(stored.messages);
@@ -112,10 +115,18 @@ const ConversationalIntake = ({
           } catch {
             window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
           }
+        } else if (initialService) {
+          window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
         }
 
         const { session: nextSession, quickReplies: replies } =
-          await startConversation(defaults);
+          await startConversation(
+            {
+              ...defaults,
+              serviceSlug: initialService?.slug,
+            },
+            { forceNew: Boolean(initialService) }
+          );
         followLatestRef.current = false;
         window.sessionStorage.setItem(SESSION_STORAGE_KEY, nextSession.id);
         setSession(nextSession);
@@ -129,7 +140,7 @@ const ConversationalIntake = ({
     };
 
     bootstrap();
-  }, [defaults, userId]);
+  }, [defaults, initialService, userId]);
 
   const handleComplete = useCallback(
     (nextSession: ConversationSession, intakeSubmitted?: boolean) => {
@@ -247,7 +258,7 @@ const ConversationalIntake = ({
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-nurture-charcoal/60">Connecting with your concierge…</p>
+        <p className="text-nurture-charcoal/60">Connecting with your care coordinator…</p>
       </div>
     );
   }
@@ -301,7 +312,7 @@ const ConversationalIntake = ({
               ✦
             </div>
             <h1 className="mt-4 font-serif text-2xl font-semibold text-nurture-charcoal">
-              Your care concierge
+              Your care coordinator
             </h1>
             <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-nurture-charcoal/65">
               A calm, private space to share where you are — we&apos;ll build your
@@ -343,11 +354,11 @@ const ConversationalIntake = ({
         />
 
         <form onSubmit={handleSubmit} className="mt-2 flex gap-2">
-          <label htmlFor="concierge-input" className="sr-only">
-            Message your concierge
+          <label htmlFor="care-coordinator-input" className="sr-only">
+            Message your care coordinator
           </label>
           <textarea
-            id="concierge-input"
+            id="care-coordinator-input"
             ref={inputRef}
             rows={1}
             value={input}

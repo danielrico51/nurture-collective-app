@@ -25,8 +25,8 @@ const AudienceSplit = () => {
               I&apos;m a mom
             </h3>
             <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
-              Access doulas, postpartum support, lactation, and our growing
-              concierge — everyday help for every stage of motherhood, wherever
+              Access doulas, postpartum support, lactation, and a personal care
+              coordinator — everyday help for every stage of motherhood, wherever
               we&apos;re live in your region.
             </p>
             <Link
@@ -45,7 +45,7 @@ const AudienceSplit = () => {
               I&apos;m a service provider
             </h3>
             <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
-              Join the Nurture Collective provider network. We&apos;re recruiting
+              Join The Nesting Place provider network. We&apos;re recruiting
               doulas, lactation consultants, newborn care specialists, and more
               as we expand market by market.
             </p>

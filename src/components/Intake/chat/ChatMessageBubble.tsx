@@ -22,7 +22,7 @@ const ChatMessageBubble = ({
       >
         {!isUser ? (
           <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-nurture-sage-dark">
-            Your concierge
+            Your care coordinator
           </p>
         ) : null}
         <p className="whitespace-pre-wrap">{content}</p>

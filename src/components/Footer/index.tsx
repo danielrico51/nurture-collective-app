@@ -13,17 +13,14 @@ const Footer = () => {
               <NestingPlaceLogo variant="footer" linked={false} className="max-h-[88px]" />
               <div>
                 <p className="font-serif text-lg font-semibold text-nurture-sage-dark">
-                  {brands.nurtureCollective.name}
-                </p>
-                <p className="mt-1 text-sm font-medium text-nurture-charcoal/75">
                   {brands.nestingPlace.name}
+                </p>
+                <p className="mt-1 text-sm font-medium text-nurture-charcoal/65">
+                  {brands.nestingPlace.byline}
                 </p>
               </div>
             </div>
             <p className="mt-4 text-sm text-nurture-charcoal/70">
-              {brands.nurtureCollective.description}
-            </p>
-            <p className="mt-2 text-xs text-nurture-charcoal/55">
               {brands.nestingPlace.description}
             </p>
             <p className="mt-2 text-xs text-nurture-charcoal/55">
@@ -102,10 +99,9 @@ const Footer = () => {
           </div>
         </div>
         <p className="mt-10 border-t border-nurture-sage/10 pt-6 text-center text-xs text-nurture-charcoal/50">
-          {brands.nurtureCollective.shortName} provides wellness and support
-          services — not medical advice. Always consult your healthcare provider
-          for clinical concerns. © {new Date().getFullYear()}{" "}
-          {brands.nurtureCollective.name}.
+          {brands.nestingPlace.name} provides wellness and support services — not
+          medical advice. Always consult your healthcare provider for clinical
+          concerns. © {new Date().getFullYear()} {brands.nurtureCollective.name}.
         </p>
       </div>
     </footer>

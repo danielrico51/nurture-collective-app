@@ -17,6 +17,9 @@ import {
   getUserAssigneeMatchers,
   taskAssignedToUser,
 } from "@/lib/tasks/utils";
+import { buildOpenTaskReport } from "@/lib/tasks/reportData";
+import { exportOpenTasksToExcel } from "@/lib/tasks/exportExcel";
+import { exportOpenTasksToPdf } from "@/lib/tasks/exportPdf";
 import type {
   CreateTaskInput,
   ManagementTask,
@@ -65,6 +68,10 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
   const [modalOpen, setModalOpen] = useState(false);
   const [editing, setEditing] = useState<ManagementTask | null>(null);
   const [defaultDueDate, setDefaultDueDate] = useState<string | null>(null);
+  const [exporting, setExporting] = useState<"excel" | "pdf" | null>(null);
+
+  const reportScopeLabel =
+    ownershipFilter === "mine" ? "My open tasks" : "All open tasks";
 
   const loadTasks = useCallback(async () => {
     setLoading(true);
@@ -201,6 +208,44 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
     }
   };
 
+  const openTaskCount = useMemo(
+    () => ownershipScopedTasks.filter((task) => !task.completed).length,
+    [ownershipScopedTasks]
+  );
+
+  const handleExport = async (format: "excel" | "pdf") => {
+    const report = buildOpenTaskReport(ownershipScopedTasks, reportScopeLabel);
+    if (report.openCount === 0) {
+      toast.error("No open tasks to export");
+      return;
+    }
+
+    setExporting(format);
+    try {
+      if (format === "excel") {
+        exportOpenTasksToExcel(report, reportScopeLabel);
+        toast.success("Excel report downloaded");
+      } else {
+        const method = await exportOpenTasksToPdf(report, reportScopeLabel);
+        if (method === "preview-tab") {
+          toast.success("Report opened — use Print / Save as PDF in the new tab");
+        } else if (method === "iframe-print") {
+          toast.success("Print dialog opened — choose Save as PDF to export");
+        } else {
+          toast.success(
+            "Report downloaded as HTML — open it and use Print / Save as PDF"
+          );
+        }
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not export report"
+      );
+    } finally {
+      setExporting(null);
+    }
+  };
+
   const openEdit = (task: ManagementTask) => {
     setEditing(task);
     setDefaultDueDate(null);
@@ -334,14 +379,42 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
             ))}
           </div>
         </div>
-        <button
-          type="button"
-          onClick={loadTasks}
-          className="text-sm font-medium text-nurture-sage-dark hover:underline"
-        >
-          Refresh
-        </button>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+          <div className="inline-flex rounded-full border border-nurture-sage/25 bg-white p-1 shadow-sm">
+            <button
+              type="button"
+              onClick={() => void handleExport("excel")}
+              disabled={loading || exporting !== null || openTaskCount === 0}
+              className="rounded-full px-4 py-2 text-sm font-medium text-nurture-charcoal/75 transition hover:bg-nurture-sage/10 hover:text-nurture-sage-dark disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {exporting === "excel" ? "Exporting…" : "Export Excel"}
+            </button>
+            <button
+              type="button"
+              onClick={() => void handleExport("pdf")}
+              disabled={loading || exporting !== null || openTaskCount === 0}
+              className="rounded-full px-4 py-2 text-sm font-medium text-nurture-charcoal/75 transition hover:bg-nurture-sage/10 hover:text-nurture-sage-dark disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {exporting === "pdf" ? "Opening…" : "Export PDF"}
+            </button>
+          </div>
+          <button
+            type="button"
+            onClick={loadTasks}
+            className="text-sm font-medium text-nurture-sage-dark hover:underline"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
+
+      {!loading && openTaskCount > 0 ? (
+        <p className="text-xs text-nurture-charcoal/55">
+          Export includes {openTaskCount} open task{openTaskCount === 1 ? "" : "s"}{" "}
+          ({reportScopeLabel.toLowerCase()}) with branding and confidentiality
+          notices for printed reports.
+        </p>
+      ) : null}
 
       {loading ? (
         <div className="flex min-h-[240px] items-center justify-center rounded-2xl border border-dashed border-nurture-sage/30 bg-white/60">
@@ -483,14 +556,14 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
                         <button
                           type="button"
                           onClick={() => openEdit(task)}
-                          className="rounded-lg px-2 py-1 text-xs font-medium text-nurture-sage-dark opacity-0 transition group-hover:opacity-100 hover:bg-nurture-sage/10"
+                          className="rounded-lg px-2 py-1 text-xs font-medium text-nurture-sage-dark opacity-100 transition hover:bg-nurture-sage/10 sm:opacity-0 sm:group-hover:opacity-100"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(task)}
-                          className="rounded-lg px-2 py-1 text-xs font-medium text-red-600/80 opacity-0 transition group-hover:opacity-100 hover:bg-red-50"
+                          className="rounded-lg px-2 py-1 text-xs font-medium text-red-600/80 opacity-100 transition hover:bg-red-50 sm:opacity-0 sm:group-hover:opacity-100"
                         >
                           Delete
                         </button>

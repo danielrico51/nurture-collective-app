@@ -3,8 +3,8 @@
 import ConversationalIntake from "@/components/Intake/ConversationalIntake";
 import GuestSaveProgressPrompt from "@/components/Intake/GuestSaveProgressPrompt";
 import {
-  getSupportInterestFromServiceSlug,
-  readCareServiceContext,
+  resolveCareServiceContext,
+  type CareServiceContext,
 } from "@/config/carePaths";
 import { isPublicIntakeEnabled } from "@/config/intakeAccess";
 import { getOrCreateGuestSessionId } from "@/lib/auth/guestSession";
@@ -38,6 +38,10 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
     email?: string;
     phone?: string;
   }>({});
+  const [initialService] = useState<CareServiceContext | null>(() => {
+    if (typeof window === "undefined") return null;
+    return resolveCareServiceContext();
+  });
   const redirectedRef = useRef(false);
 
   useEffect(() => {
@@ -53,10 +57,6 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
 
   useEffect(() => {
     if (publicMode) {
-      const serviceSlug = readCareServiceContext();
-      if (serviceSlug) {
-        getSupportInterestFromServiceSlug(serviceSlug);
-      }
       setUserId(getOrCreateGuestSessionId());
       setAuthReady(true);
       setBootstrapped(true);
@@ -86,11 +86,6 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
         const email =
           form.email || session.tokens?.idToken?.payload?.email?.toString() || "";
 
-        const serviceSlug = readCareServiceContext();
-        if (serviceSlug) {
-          getSupportInterestFromServiceSlug(serviceSlug);
-        }
-
         setDefaults({
           name,
           email,
@@ -107,7 +102,7 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
   if (!ready || !authReady || !bootstrapped || !userId) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-gradient-to-b from-nurture-cream to-white">
-        <p className="text-nurture-charcoal/60">Preparing your concierge…</p>
+        <p className="text-nurture-charcoal/60">Preparing your care coordinator…</p>
       </div>
     );
   }
@@ -115,7 +110,7 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
   if (!publicMode && authStatus !== "authenticated") {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-gradient-to-b from-nurture-cream to-white">
-        <p className="text-nurture-charcoal/60">Preparing your concierge…</p>
+        <p className="text-nurture-charcoal/60">Preparing your care coordinator…</p>
       </div>
     );
   }
@@ -127,6 +122,7 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
         userId={userId}
         defaults={defaults}
         guestMode={publicMode}
+        initialService={initialService}
       />
     </div>
   );

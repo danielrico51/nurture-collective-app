@@ -2,7 +2,7 @@
 
 import type { CreateTaskInput, ManagementTask, TaskCategory } from "@/types/task";
 import type { TeamMember } from "@/types/teamMember";
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import UrgentFlag from "./UrgentFlag";
 
 interface TaskFormModalProps {
@@ -34,6 +34,40 @@ const TaskFormModal = ({
   const [category, setCategory] = useState<TaskCategory>("internal");
   const [clientEmail, setClientEmail] = useState("");
   const [saving, setSaving] = useState(false);
+  const historyPushedRef = useRef(false);
+
+  useEffect(() => {
+    if (!open) return;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    historyPushedRef.current = true;
+    window.history.pushState({ taskFormModal: true }, "");
+
+    const onPopState = () => {
+      historyPushedRef.current = false;
+      onClose();
+    };
+
+    window.addEventListener("popstate", onPopState);
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("popstate", onPopState);
+      if (historyPushedRef.current) {
+        historyPushedRef.current = false;
+        window.history.back();
+      }
+    };
+  }, [open, onClose]);
+
+  const requestClose = useCallback(() => {
+    if (historyPushedRef.current) {
+      window.history.back();
+      return;
+    }
+    onClose();
+  }, [onClose]);
 
   useEffect(() => {
     if (!open) return;
@@ -82,21 +116,58 @@ const TaskFormModal = ({
   };
 
   return (
-    <div className="fixed inset-0 z-[100] flex items-end justify-center p-4 sm:items-center">
+    <div className="fixed inset-0 z-[100] flex items-end justify-center sm:items-center sm:p-4">
       <button
         type="button"
         className="absolute inset-0 bg-nurture-charcoal/40 backdrop-blur-sm"
         aria-label="Close dialog"
-        onClick={onClose}
+        onClick={requestClose}
       />
-      <div className="relative max-h-[90vh] w-full max-w-lg overflow-y-auto rounded-2xl border border-nurture-sage/20 bg-white p-6 shadow-2xl sm:rounded-3xl sm:p-8">
-        <h3 className="font-serif text-2xl font-semibold text-nurture-charcoal">
-          {initial ? "Edit task" : "New task"}
-        </h3>
-        <p className="mt-1 text-sm text-nurture-charcoal/60">
-          Visible to everyone on the management team.
-        </p>
-        <form onSubmit={handleSubmit} className="mt-6 space-y-4">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="task-form-title"
+        className="relative flex max-h-[92dvh] w-full max-w-lg flex-col overflow-hidden rounded-t-3xl border border-nurture-sage/20 bg-white shadow-2xl sm:max-h-[90vh] sm:rounded-3xl"
+      >
+        <div className="sticky top-0 z-10 flex items-start justify-between gap-4 border-b border-nurture-sage/10 bg-white px-6 pb-4 pt-5 sm:px-8 sm:pt-8">
+          <div className="min-w-0 pr-2">
+            <h3
+              id="task-form-title"
+              className="font-serif text-2xl font-semibold text-nurture-charcoal"
+            >
+              {initial ? "Edit task" : "New task"}
+            </h3>
+            <p className="mt-1 text-sm text-nurture-charcoal/60">
+              Visible to everyone on the management team.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={requestClose}
+            aria-label="Close"
+            className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full text-nurture-charcoal/60 transition hover:bg-nurture-cream hover:text-nurture-charcoal"
+          >
+            <svg
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+              strokeWidth={2}
+              aria-hidden
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                d="M6 18L18 6M6 6l12 12"
+              />
+            </svg>
+          </button>
+        </div>
+
+        <form
+          onSubmit={handleSubmit}
+          className="flex-1 space-y-4 overflow-y-auto px-6 py-5 sm:px-8 sm:pb-8"
+        >
           <div>
             <label className="block text-sm font-medium">Task</label>
             <input
@@ -234,10 +305,10 @@ const TaskFormModal = ({
               />
             </button>
           </div>
-          <div className="flex justify-end gap-3 pt-2">
+          <div className="sticky bottom-0 flex justify-end gap-3 border-t border-nurture-sage/10 bg-white pt-4">
             <button
               type="button"
-              onClick={onClose}
+              onClick={requestClose}
               className="rounded-full px-5 py-2.5 text-sm font-medium text-nurture-charcoal/70 hover:bg-nurture-cream"
             >
               Cancel

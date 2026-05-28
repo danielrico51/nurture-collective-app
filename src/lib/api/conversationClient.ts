@@ -6,6 +6,7 @@ export const startConversation = async (
     email?: string;
     name?: string;
     phone?: string;
+    serviceSlug?: string;
   },
   options?: { forceNew?: boolean }
 ): Promise<{
@@ -15,7 +16,10 @@ export const startConversation = async (
   const response = await fetch("/api/conversation/start", {
     method: "POST",
     headers: await intakeRequestHeaders(),
-    body: JSON.stringify({ ...(defaults ?? {}), forceNew: options?.forceNew === true }),
+    body: JSON.stringify({
+      ...(defaults ?? {}),
+      forceNew: options?.forceNew === true,
+    }),
   });
   const data = await response.json();
   if (!response.ok) {

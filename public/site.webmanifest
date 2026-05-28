@@ -1,0 +1,20 @@
+{
+  "name": "The Nesting Place",
+  "short_name": "Nesting Place",
+  "description": "Maternal wellness and postpartum care by Nurture Collective LLC",
+  "icons": [
+    {
+      "src": "/favicons/favicon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "/favicons/favicon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ],
+  "theme_color": "#8B7BA8",
+  "background_color": "#FAF8F5",
+  "display": "standalone"
+}

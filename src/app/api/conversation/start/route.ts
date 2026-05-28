@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthUserOrGuest } from "@/lib/api/authHelpers";
 import { handleIntakeStorageError } from "@/lib/api/routeHelpers";
+import {
+  getServiceTitleFromSlug,
+  getSupportInterestFromServiceSlug,
+} from "@/config/carePaths";
 import { resumeOrCreateSession } from "@/lib/conversation/engine";
 import { getConversationSession } from "@/lib/conversation/storage";
 import { createEmptyExtractedProfile } from "@/types/conversation";
@@ -11,7 +15,13 @@ export async function POST(request: NextRequest) {
   const { user, error } = await requireAuthUserOrGuest(request);
   if (error || !user) return error;
 
-  let body: { email?: string; name?: string; phone?: string; forceNew?: boolean };
+  let body: {
+    email?: string;
+    name?: string;
+    phone?: string;
+    forceNew?: boolean;
+    serviceSlug?: string;
+  };
   try {
     body = await request.json();
   } catch {
@@ -19,12 +29,32 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const session = await resumeOrCreateSession(user.sub, {
-      ...createEmptyExtractedProfile(),
-      email: body.email ?? user.email,
-      name: body.name ?? user.name ?? "",
-      phone: body.phone ?? "",
-    }, { forceNew: body.forceNew === true });
+    const serviceSlug = body.serviceSlug?.trim();
+    const supportInterest = serviceSlug
+      ? getSupportInterestFromServiceSlug(serviceSlug)
+      : null;
+    const preselectedService =
+      serviceSlug && supportInterest
+        ? {
+            title: getServiceTitleFromSlug(serviceSlug),
+            supportInterest,
+          }
+        : undefined;
+
+    const session = await resumeOrCreateSession(
+      user.sub,
+      {
+        ...createEmptyExtractedProfile(),
+        email: body.email ?? user.email,
+        name: body.name ?? user.name ?? "",
+        phone: body.phone ?? "",
+        ...(supportInterest ? { supportInterests: [supportInterest] } : {}),
+      },
+      {
+        forceNew: body.forceNew === true || Boolean(preselectedService),
+        preselectedService,
+      }
+    );
 
     const welcome = session.messages.find((message) => message.role === "assistant");
     return NextResponse.json({

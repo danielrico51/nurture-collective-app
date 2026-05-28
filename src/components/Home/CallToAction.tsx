@@ -13,7 +13,7 @@ const CallToAction = () => {
           <p className="mx-auto mt-4 max-w-xl text-white/90">
             Whether you&apos;re seeking support or offering your expertise, Nurture
             Collective connects families with trusted support — expanding region
-            by region, powered by AI concierge.
+            by region, with a personal care coordinator by your side.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link

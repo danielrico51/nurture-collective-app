@@ -4,12 +4,12 @@ import ContactOptions from "@/components/Common/ContactOptions";
 import CoverageMap from "@/components/Common/CoverageMap";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { buildCareStartHref } from "@/config/carePaths";
-import { brands, coreServices, futureConciergeServices } from "@/content/site";
+import { brands, careCoordinator, coreServices, futureConciergeServices } from "@/content/site";
 import Link from "next/link";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "Services | The Nurture Collective",
+  title: "Services | The Nesting Place",
   description:
     "Birth doula support, overnight newborn support, postpartum support, lactation support, and prenatal massage — available in active coverage regions, expanding over time.",
 };
@@ -22,7 +22,7 @@ export default function ServicesPage() {
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <SectionTitle
             title="Maternal wellness — available today"
-            subtitle={`Evidence-based support through the ${brands.nurtureCollective.shortName} provider network. Check coverage for availability in your area.`}
+            subtitle={`Evidence-based support through ${brands.nestingPlace.name}. Check coverage for availability in your area.`}
           />
           <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {coreServices.map((service) => (
@@ -51,8 +51,8 @@ export default function ServicesPage() {
 
           <div className="mt-24">
             <SectionTitle
-              title="Full mom concierge — coming soon"
-              subtitle="Every service you need, AI-coordinated in one place — rolling out in more regions over time."
+              title={`Full ${careCoordinator.platform} — coming soon`}
+              subtitle={`Every service you need, personally coordinated in one place — rolling out in more regions over time.`}
             />
             <div className="mt-12 grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {futureConciergeServices.map((service) => (
@@ -73,7 +73,7 @@ export default function ServicesPage() {
               ))}
             </div>
             <p className="mt-10 text-center text-sm text-nurture-charcoal/60">
-              Want early access to the full concierge?{" "}
+              Want early access to a dedicated {careCoordinator.short.toLowerCase()}?{" "}
               <Link
                 href={buildCareStartHref()}
                 className="font-medium text-nurture-sage-dark hover:underline"

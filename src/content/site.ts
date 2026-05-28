@@ -9,23 +9,57 @@ export interface CoverageRegion {
   services: string;
 }
 
+export type ServiceSlug =
+  | "birth-doula"
+  | "overnight-newborn"
+  | "postpartum-care"
+  | "lactation"
+  | "prenatal-massage"
+  | "postpartum-massage"
+  | "birth-photography"
+  | "childbirth-education";
+
+export interface CoreService {
+  slug: ServiceSlug;
+  title: string;
+  description: string;
+  tag: string;
+  benefit: string;
+  availabilityNote?: string;
+  status?: "available" | "coming-soon";
+}
+
+/** Public-facing name for the concierge experience — emphasizes real people, not AI. */
+export const careCoordinator = {
+  short: "Care coordinator",
+  full: "Personal care coordinator",
+  possessive: "your care coordinator",
+  team: "your care team",
+  platform: "personal care coordination",
+} as const;
+
 export const brands = {
-  nurtureCollective: {
-    name: "The Nurture Collective",
-    shortName: "Nurture Collective",
-    tagline: "AI-powered maternal concierge & provider marketplace",
-    description:
-      "Building the concierge platform that connects moms with trusted support — from doulas and postpartum support to everyday household help, coordinated in one place.",
-  },
+  /** Primary public-facing brand (site, marketing, care delivery). */
   nestingPlace: {
     name: "The Nesting Place",
     shortName: "Nesting Place",
     tagline: "Where happy families begin",
+    byline: "by Nurture Collective LLC",
     logoSrc: "/branding/nesting-place-logo.png",
     markSrc: "/branding/nesting-place-mark.png",
     serviceArea: "Bergen County, Northern New Jersey, and surrounding areas",
     description:
-      "An evidence-based maternal wellness and postpartum care practice offering experienced birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage.",
+      "An evidence-based maternal wellness and postpartum care practice offering experienced birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of care.",
+    phone: "201-623-3629",
+    email: "info@thenestingplacenj.com",
+  },
+  /** Legal entity operating The Nesting Place and the provider platform. */
+  nurtureCollective: {
+    name: "Nurture Collective LLC",
+    shortName: "Nurture Collective",
+    tagline: "Personal maternal support, every step of the way",
+    description:
+      "Nurture Collective LLC connects families with trusted birth doulas, postpartum support, lactation consultants, and wellness professionals through The Nesting Place and our growing provider network.",
   },
 } as const;
 
@@ -36,14 +70,14 @@ export const coverageRegions: CoverageRegion[] = [
     name: "Northern New Jersey",
     status: "active",
     services:
-      "Birth doula, postpartum support, overnight newborn support, lactation support, prenatal massage",
+      "Birth doula, postpartum support, overnight newborn support, lactation support, prenatal massage, childbirth education",
   },
   {
     id: "your-area",
     name: "Your area",
     status: "expanding",
     services:
-      "Request support where you live — we’re opening new regions and building our provider network market by market.",
+      "Request support where you live — we're opening new regions and building our provider network market by market.",
   },
 ];
 
@@ -54,16 +88,18 @@ export const coverageStatusLabels: Record<CoverageStatus, string> = {
 };
 
 export const coverageIntro =
-  "Service availability depends on your location. We’re building a national concierge — these are the regions where support is available today.";
+  "Service availability depends on your location. These are the regions where our team and provider network support families today.";
 
-/** Core maternal wellness services offered through the network (not tied to a single brand). */
-export const coreServices = [
+/** Core maternal wellness services offered through the network. */
+export const coreServices: CoreService[] = [
   {
     slug: "birth-doula",
     title: "Birth doula support",
     description:
       "Experienced, evidence-based doula support for labor, birth planning, and continuous support through your birthing experience.",
     tag: "Doula support",
+    benefit:
+      "Feel calm and confident with a steady, compassionate presence from early labor through your baby's first moments.",
   },
   {
     slug: "overnight-newborn",
@@ -71,6 +107,8 @@ export const coreServices = [
     description:
       "Skilled overnight support so you can rest and recover while experienced postpartum professionals support your newborn.",
     tag: "Newborn support",
+    benefit:
+      "Sleep and recover knowing your baby is in experienced, nurturing hands through the night.",
   },
   {
     slug: "postpartum-care",
@@ -78,6 +116,8 @@ export const coreServices = [
     description:
       "Hands-on recovery support, feeding guidance, and practical help through the fourth trimester and beyond.",
     tag: "Postpartum",
+    benefit:
+      "Navigate the early weeks with emotional support, newborn care guidance, and practical help tailored to your family.",
   },
   {
     slug: "lactation",
@@ -85,6 +125,8 @@ export const coreServices = [
     description:
       "Specialized lactation guidance for breastfeeding, pumping, and combination feeding — tailored to your goals.",
     tag: "Lactation",
+    benefit:
+      "Get expert, judgment-free feeding support from certified lactation consultants who meet you where you are.",
   },
   {
     slug: "prenatal-massage",
@@ -92,12 +134,45 @@ export const coreServices = [
     description:
       "Therapeutic prenatal massage to ease discomfort, reduce stress, and support your body through pregnancy.",
     tag: "Wellness",
+    benefit:
+      "Relieve pregnancy discomfort and reconnect with your changing body in a calm, nurturing environment.",
+    availabilityNote: "Available in Ridgewood and select Northern NJ locations.",
   },
-] as const;
+  {
+    slug: "postpartum-massage",
+    title: "Postpartum massage",
+    description:
+      "Therapeutic massage to support recovery, ease tension, and nurture your body after birth.",
+    tag: "Wellness",
+    benefit:
+      "Give yourself permission to rest and heal with bodywork designed for the postpartum period.",
+    availabilityNote: "Currently available in Ridgewood only.",
+  },
+  {
+    slug: "birth-photography",
+    title: "Birth photography",
+    description:
+      "Capture the raw beauty of your birth story with a trusted photographer partner — preserving moments you'll treasure forever.",
+    tag: "Photography",
+    benefit:
+      "Hold onto the first moments of meeting your baby with artful, respectful birth photography.",
+    status: "coming-soon",
+  },
+  {
+    slug: "childbirth-education",
+    title: "Childbirth & newborn education",
+    description:
+      "Evidence-based classes to prepare you for labor, birth, and life with your newborn — so you feel informed and ready.",
+    tag: "Education",
+    benefit:
+      "Walk into birth and early parenthood with knowledge, confidence, and a plan that reflects your values.",
+  },
+];
 
 /** @deprecated Use coreServices — kept for any stale imports during refactor */
 export const nestingPlaceServices = coreServices;
 
+/** Expanded services coordinated through the personal care coordinator — rolling out over time. */
 export const futureConciergeServices = [
   {
     title: "Household & cleaning",
@@ -116,9 +191,9 @@ export const futureConciergeServices = [
     description: "Personal trainers and wellness providers who understand the postpartum body.",
   },
   {
-    title: "Full mom concierge",
+    title: "Full personal care coordination",
     description:
-      "One coordinator, every service — AI-matched support from pregnancy through every stage of motherhood.",
+      "One dedicated coordinator, every service — personally matched support from pregnancy through every stage of motherhood.",
   },
 ] as const;
 
@@ -128,6 +203,7 @@ export const providerSpecialties = [
   { slug: "overnight-newborn", label: "Overnight newborn care specialist" },
   { slug: "lactation", label: "Lactation consultant (IBCLC or candidate)" },
   { slug: "massage", label: "Prenatal / postpartum massage therapist" },
+  { slug: "photography", label: "Birth photographer" },
   { slug: "childcare", label: "Nanny or childcare provider" },
   { slug: "household", label: "Household / cleaning services" },
   { slug: "fitness", label: "Personal trainer or wellness coach" },
@@ -137,21 +213,21 @@ export const providerSpecialties = [
 export const momHowItWorks = [
   {
     step: "01",
-    title: "Tell us what you need",
+    title: "Reach out — a real person answers",
     description:
-      "Share where you are in your journey — pregnancy, newborn days, or navigating life with growing kids.",
+      "Call, text, or send a message. Alison, Barb, or a member of our team will personally guide you through what you need.",
   },
   {
     step: "02",
-    title: "Get matched with support",
+    title: "We listen and match you with care",
     description:
-      "We connect you with vetted providers in your area through our growing concierge network.",
+      "We take time to understand your journey and connect you with the right doula, lactation consultant, or support professional for your family.",
   },
   {
     step: "03",
-    title: "Receive ongoing support",
+    title: "We're with you every step",
     description:
-      "From doula support to everyday help, your coordinator keeps support organized and personalized.",
+      "From pregnancy through postpartum, our team stays in direct contact — coordinating support so you never feel alone.",
   },
 ] as const;
 
@@ -166,48 +242,55 @@ export const providerHowItWorks = [
     step: "02",
     title: "Onboard with our team",
     description:
-      "We review your background, align on standards, and welcome you to the Nurture Collective provider network.",
+      "We review your background, align on standards, and welcome you to The Nesting Place provider network.",
   },
   {
     step: "03",
     title: "Get matched with families",
     description:
-      "As our concierge platform grows, AI-powered matching connects you with moms who need your expertise.",
+      "Our team personally connects you with families who need your expertise — building lasting relationships, not automated lists.",
   },
 ] as const;
 
 export const momFaqs = [
   {
-    q: "Where is Nurture Collective available?",
+    q: "Where is The Nesting Place available?",
     a: "We launch region by region. Check our coverage map for active areas. If your location is listed as expanding, submit a request — we use demand to prioritize new markets.",
   },
   {
     q: "What services are available today?",
-    a: "In active regions we offer birth doula support, overnight newborn support, postpartum support, lactation support, and prenatal massage through our vetted provider network.",
+    a: "In active regions we offer birth doula support, overnight newborn support, postpartum support, lactation support, prenatal massage, postpartum massage (Ridgewood), and childbirth education through our vetted provider network.",
   },
   {
-    q: "What is coming next?",
-    a: "We're building a full mom concierge — matching you with cleaning, childcare, fitness, errands, and everyday support powered by AI, all coordinated in one place, in more locations over time.",
+    q: "Will I talk to a real person?",
+    a: "Yes — always. Alison, Barb, and our care team are in direct contact with every family. We use tools to stay organized, but you'll never feel like you're talking to a bot.",
+  },
+  {
+    q: "Do you accept employer benefits like Carrot, Maven, or Progyny?",
+    a: "Many of our clients use employer-sponsored family benefits. While we are not directly affiliated with these programs, our services may be eligible for reimbursement. Visit our Benefits page or contact us — we're happy to guide you.",
+  },
+  {
+    q: "What is personal care coordination?",
+    a: "As we grow, dedicated care coordinators help organize every service you need — from doula support to everyday help — with a real person guiding you every step of the way.",
   },
   {
     q: "Is this medical support?",
     a: "We provide wellness and support services. We do not replace care from your OB, midwife, or pediatrician. Always consult your healthcare provider for clinical concerns.",
   },
-  // The Nesting Place
   {
-    q: "What is the relationship between Nurture Collective and The Nesting Place?",
-    a: "The Nurture Collective owns and operates The Nesting Place — our maternal wellness practice in Northern New Jersey and the foundation for hands-on care in our first active region.",
+    q: "What is the relationship between The Nesting Place and Nurture Collective LLC?",
+    a: "The Nesting Place is our maternal wellness practice in Northern New Jersey — operated by Nurture Collective LLC, which also builds the provider network and care coordination platform as we expand region by region.",
   },
 ] as const;
 
 export const providerFaqs = [
   {
     q: "Who should apply?",
-    a: "We are actively recruiting experienced birth doulas, postpartum doulas, lactation consultants, newborn care specialists, massage therapists, and other maternal wellness providers. As the platform grows, we will onboard household, childcare, and lifestyle providers too.",
+    a: "We are actively recruiting experienced birth doulas, postpartum doulas, lactation consultants, newborn care specialists, massage therapists, birth photographers, and other maternal wellness providers.",
   },
   {
-    q: "Why join Nurture Collective?",
-    a: "Partner with a growing marketplace from day one. We're building the AI-powered concierge that will match you with families long term — starting in our active regions and expanding nationally.",
+    q: "Why join The Nesting Place network?",
+    a: "Partner with a growing practice that values personal relationships and dedicated care coordinators. Our team personally matches you with families — starting in our active regions and expanding nationally.",
   },
   {
     q: "What is the application process?",
@@ -215,7 +298,7 @@ export const providerFaqs = [
   },
   {
     q: "Where do you operate?",
-    a: "We onboard providers in our active coverage regions first, then expand based on family demand. Remote or hybrid providers may qualify for platform roles as we scale.",
+    a: "We onboard providers in our active coverage regions first, then expand based on family demand.",
   },
 ] as const;
 
@@ -233,3 +316,6 @@ export const audienceLabels: Record<Audience, string> = {
 
 export const isAudience = (value: string | null): value is Audience =>
   value === "mom" || value === "provider";
+
+export const humanTouchMessage =
+  "In a market full of options, what sets us apart is the personal touch. Alison, Barb, and our team are in direct contact with every family — guiding you, answering questions, and making sure you feel supported from your first call through every stage of care.";

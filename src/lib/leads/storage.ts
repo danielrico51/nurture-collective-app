@@ -36,7 +36,11 @@ import type {
 
 export const getLeadsStorageMode = (): "local" | "s3" => {
   if (process.env.LEADS_USE_LOCAL_STORAGE === "true") return "local";
-  if (getLeadsBucket()) return "s3";
+  if (process.env.LEADS_USE_S3 === "true" && getLeadsBucket()) return "s3";
+  if (!getLeadsBucket()) {
+    return process.env.NODE_ENV === "development" ? "local" : "s3";
+  }
+  // Bucket configured: default to local in dev (matches intake storage), S3 in prod.
   return process.env.NODE_ENV === "development" ? "local" : "s3";
 };
 

@@ -15,10 +15,10 @@ const ProviderSignupInfoPage = () => {
     <AuthPageShell
       eyebrow="For providers"
       title="Join our provider network"
-      subtitle={`Apply to join the ${brands.nurtureCollective.name} provider network — doulas, lactation consultants, newborn care specialists, and more.`}
+      subtitle={`Apply to join The Nesting Place provider network — doulas, lactation consultants, newborn care specialists, and more.`}
       highlights={[
         "Partner with a trusted NJ practice",
-        "Shape our AI-powered marketplace",
+        "Shape our growing provider network",
         "Get matched with families who need you",
       ]}
       footer={
