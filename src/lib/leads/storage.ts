@@ -1,3 +1,9 @@
+import { buildCoordinatorPrepFromSession } from "@/lib/leads/coordinatorPrep";
+import {
+  getConversationSession,
+  getLatestConversationForUser,
+} from "@/lib/conversation/storage";
+import { getIntakeForUser, listAllIntakes } from "@/lib/intake/storage";
 import {
   appendLocalCoordinatorNote,
   appendLocalLeadProfile,
@@ -13,6 +19,7 @@ import {
   listS3LeadIds,
   listS3NotesForLead,
 } from "@/lib/leads/platformS3";
+import { notifyLeadPipelineEvent } from "@/lib/integrations/slack/pipeline";
 import { buildLeadFromSources, canTransitionLeadStatus } from "@/lib/leads/workflow";
 import type { ExtractedMaternalProfile } from "@/types/conversation";
 import type { IntakeProfile } from "@/types/intake";
@@ -20,6 +27,8 @@ import type {
   CoordinatorNote,
   CoordinatorNoteType,
   CreateCoordinatorNoteInput,
+  LeadConversationPrep,
+  LeadDetailResponse,
   LeadRecord,
   LeadStatus,
   UpdateLeadInput,
@@ -55,7 +64,17 @@ export const syncLeadFromIntake = async (input: {
     existing,
     hasSubmittedIntake: input.hasSubmittedIntake,
   });
-  return saveLeadProfile(lead);
+  const saved = await saveLeadProfile(lead);
+
+  void notifyLeadPipelineEvent({
+    previous: existing,
+    current: saved,
+    hasSubmittedIntake: input.hasSubmittedIntake,
+  }).catch((error) => {
+    console.error("[leads] Slack notification failed:", error);
+  });
+
+  return saved;
 };
 
 export const listAllLeads = async (): Promise<LeadRecord[]> => {
@@ -73,21 +92,122 @@ export const listAllLeads = async (): Promise<LeadRecord[]> => {
   );
 };
 
+/** Merge stored leads with member intakes that may not have a lead snapshot yet. */
+export const listCrmLeads = async (): Promise<LeadRecord[]> => {
+  const [leads, { profiles }] = await Promise.all([
+    listAllLeads(),
+    listAllIntakes(),
+  ]);
+
+  const byId = new Map(leads.map((lead) => [lead.leadId, lead]));
+
+  for (const profile of profiles) {
+    if (!byId.has(profile.userId)) {
+      byId.set(
+        profile.userId,
+        buildLeadFromSources({ userId: profile.userId, intake: profile })
+      );
+    }
+  }
+
+  return Array.from(byId.values()).sort(
+    (a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime()
+  );
+};
+
 export const getLeadById = async (leadId: string): Promise<LeadRecord | null> =>
   getLeadsStorageMode() === "local"
     ? getLatestLocalLeadProfile(leadId)
     : getLatestS3LeadProfile(leadId);
 
+/** Resolve a stored lead or build one from intake when the CRM list merged in a member profile. */
+const materializeLead = async (leadId: string): Promise<LeadRecord | null> => {
+  const existing = await getLeadById(leadId);
+  if (existing) return existing;
+
+  const { profiles } = await listAllIntakes();
+  const profile = profiles.find((item) => item.userId === leadId);
+  if (profile) {
+    return buildLeadFromSources({ userId: leadId, intake: profile });
+  }
+
+  return null;
+};
+
+const ensureLeadRecord = async (leadId: string): Promise<LeadRecord> => {
+  const lead = await materializeLead(leadId);
+  if (!lead) throw new Error("Lead not found");
+  return lead;
+};
+
+export const archiveLead = async (leadId: string): Promise<LeadRecord> => {
+  const existing = await ensureLeadRecord(leadId);
+
+  const updated: LeadRecord = {
+    ...existing,
+    archivedAt: new Date().toISOString(),
+    updatedAt: new Date().toISOString(),
+  };
+
+  return saveLeadProfile(updated);
+};
+
+export const restoreLead = async (leadId: string): Promise<LeadRecord> => {
+  const existing = await ensureLeadRecord(leadId);
+
+  const updated: LeadRecord = {
+    ...existing,
+    archivedAt: null,
+    updatedAt: new Date().toISOString(),
+  };
+
+  return saveLeadProfile(updated);
+};
+
+const loadConversationForLead = async (lead: LeadRecord) => {
+  if (lead.conversationSessionId) {
+    const session = await getConversationSession(
+      lead.userId,
+      lead.conversationSessionId,
+      lead.email
+    );
+    if (session) return session;
+  }
+  return getLatestConversationForUser(lead.userId, lead.email);
+};
+
 export const getLeadDetail = async (
   leadId: string
-): Promise<{ lead: LeadRecord; notes: CoordinatorNote[] } | null> => {
-  const lead = await getLeadById(leadId);
+): Promise<LeadDetailResponse | null> => {
+  const lead = await materializeLead(leadId);
   if (!lead) return null;
   const notes =
     getLeadsStorageMode() === "local"
       ? await listLocalNotesForLead(leadId)
       : await listS3NotesForLead(leadId);
-  return { lead, notes };
+
+  let conversationPrep: LeadConversationPrep | null = null;
+  let intakeProfile = null;
+  let recommendations: LeadDetailResponse["recommendations"] = [];
+
+  try {
+    const session = await loadConversationForLead(lead);
+    conversationPrep = buildCoordinatorPrepFromSession(lead, session);
+  } catch (error) {
+    console.error("[leads] conversation prep failed:", error);
+  }
+
+  if (!lead.isGuest) {
+    try {
+      const intake = await getIntakeForUser(lead.userId, lead.email);
+      intakeProfile = intake.profile;
+      recommendations = intake.recommendations;
+    } catch (error) {
+      console.error("[leads] intake profile load failed:", error);
+    }
+  }
+
+  return { lead, notes, conversationPrep, intakeProfile, recommendations };
 };
 
 export const addCoordinatorNote = async (
@@ -95,8 +215,7 @@ export const addCoordinatorNote = async (
   author: { id: string; email?: string },
   input: CreateCoordinatorNoteInput
 ): Promise<CoordinatorNote> => {
-  const lead = await getLeadById(leadId);
-  if (!lead) throw new Error("Lead not found");
+  await ensureLeadRecord(leadId);
 
   const note: CoordinatorNote = {
     id: crypto.randomUUID(),
@@ -120,8 +239,7 @@ export const updateLead = async (
   leadId: string,
   input: UpdateLeadInput
 ): Promise<LeadRecord> => {
-  const existing = await getLeadById(leadId);
-  if (!existing) throw new Error("Lead not found");
+  const existing = await ensureLeadRecord(leadId);
 
   if (input.status && !canTransitionLeadStatus(existing.status, input.status)) {
     throw new Error(`Cannot transition from ${existing.status} to ${input.status}`);
@@ -132,10 +250,21 @@ export const updateLead = async (
     status: input.status ?? existing.status,
     coordinatorId: input.coordinatorId ?? existing.coordinatorId,
     coordinatorEmail: input.coordinatorEmail ?? existing.coordinatorEmail,
+    archivedAt:
+      input.archivedAt !== undefined ? input.archivedAt : existing.archivedAt,
     updatedAt: new Date().toISOString(),
   };
 
-  return saveLeadProfile(updated);
+  const saved = await saveLeadProfile(updated);
+
+  void notifyLeadPipelineEvent({
+    previous: existing,
+    current: saved,
+  }).catch((error) => {
+    console.error("[leads] Slack status notification failed:", error);
+  });
+
+  return saved;
 };
 
 export const assignLeadToCoordinator = async (

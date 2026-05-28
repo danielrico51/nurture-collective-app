@@ -1,0 +1,197 @@
+{
+  "type": "FeatureCollection",
+  "features": [
+    {
+      "type": "Feature",
+      "properties": { "name": "Bergen County, NJ" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-74.18, 40.78],
+            [-73.88, 40.78],
+            [-73.88, 41.1],
+            [-74.18, 41.1],
+            [-74.18, 40.78]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Hudson County, NJ" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-74.12, 40.68],
+            [-73.98, 40.68],
+            [-73.98, 40.79],
+            [-74.12, 40.79],
+            [-74.12, 40.68]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Essex County, NJ" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-74.35, 40.68],
+            [-74.12, 40.68],
+            [-74.12, 40.88],
+            [-74.35, 40.88],
+            [-74.35, 40.68]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Passaic County, NJ" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-74.45, 40.78],
+            [-74.18, 40.78],
+            [-74.18, 41.18],
+            [-74.45, 41.18],
+            [-74.45, 40.78]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Morris County, NJ" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-74.75, 40.68],
+            [-74.35, 40.68],
+            [-74.35, 41.05],
+            [-74.75, 41.05],
+            [-74.75, 40.68]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Union County, NJ" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-74.45, 40.58],
+            [-74.18, 40.58],
+            [-74.18, 40.72],
+            [-74.45, 40.72],
+            [-74.45, 40.58]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Somerset County, NJ" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-74.85, 40.45],
+            [-74.45, 40.45],
+            [-74.45, 40.68],
+            [-74.85, 40.68],
+            [-74.85, 40.45]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Middlesex County, NJ" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-74.62, 40.35],
+            [-74.18, 40.35],
+            [-74.18, 40.58],
+            [-74.62, 40.58],
+            [-74.62, 40.35]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Manhattan, NY" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-74.02, 40.7],
+            [-73.91, 40.7],
+            [-73.91, 40.88],
+            [-74.02, 40.88],
+            [-74.02, 40.7]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Brooklyn, NY" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-74.05, 40.55],
+            [-73.83, 40.55],
+            [-73.83, 40.74],
+            [-74.05, 40.74],
+            [-74.05, 40.55]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Queens, NY" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-73.96, 40.54],
+            [-73.7, 40.54],
+            [-73.7, 40.8],
+            [-73.96, 40.8],
+            [-73.96, 40.54]
+          ]
+        ]
+      }
+    },
+    {
+      "type": "Feature",
+      "properties": { "name": "Bronx, NY" },
+      "geometry": {
+        "type": "Polygon",
+        "coordinates": [
+          [
+            [-73.93, 40.78],
+            [-73.75, 40.78],
+            [-73.75, 40.92],
+            [-73.93, 40.92],
+            [-73.93, 40.78]
+          ]
+        ]
+      }
+    }
+  ]
+}

@@ -10,8 +10,10 @@ export type Trimester = "first" | "second" | "third";
 
 export type SupportInterest =
   | "birth-doula"
+  | "overnight-newborn-care"
   | "postpartum-doula"
   | "lactation"
+  | "prenatal-massage"
   | "sleep-consulting"
   | "pelvic-floor"
   | "mental-wellness"

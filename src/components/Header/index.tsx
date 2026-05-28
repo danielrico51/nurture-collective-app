@@ -1,5 +1,6 @@
 "use client";
 
+import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -51,9 +52,12 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
       }`}
     >
       <div className="mx-auto flex max-w-screen-xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="font-serif text-xl font-semibold text-nurture-sage-dark">
-          The Nurture Collective
-        </Link>
+        <NestingPlaceLogo
+          variant="header"
+          priority
+          compact
+          nameClassName="text-sm sm:text-base lg:text-lg"
+        />
 
         <nav className="hidden items-center gap-6 lg:flex">
           {navLinks.map((link) => (

@@ -25,8 +25,11 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
   return data as T;
 };
 
-export const fetchAdminLeads = async (): Promise<AdminLeadsResponse> => {
-  const response = await fetch("/api/admin/leads", {
+export const fetchAdminLeads = async (
+  includeArchived = false
+): Promise<AdminLeadsResponse> => {
+  const params = includeArchived ? "?includeArchived=true" : "";
+  const response = await fetch(`/api/admin/leads${params}`, {
     headers: await authHeaders(),
     cache: "no-store",
   });
@@ -61,7 +64,12 @@ export const addAdminLeadNote = async (
 
 export const updateAdminLead = async (
   leadId: string,
-  payload: { status?: LeadStatus; assignToMe?: boolean }
+  payload: {
+    status?: LeadStatus;
+    assignToMe?: boolean;
+    archive?: boolean;
+    restore?: boolean;
+  }
 ): Promise<{ lead: LeadRecord }> => {
   const response = await fetch(`/api/admin/leads/${encodeURIComponent(leadId)}`, {
     method: "PATCH",

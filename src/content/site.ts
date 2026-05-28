@@ -17,14 +17,16 @@ export const brands = {
     description:
       "Building the concierge platform that connects moms with trusted support — from doulas and postpartum support to everyday household help, coordinated in one place.",
   },
-  // The Nesting Place — uncomment when acquisition is complete
-  // nestingPlace: {
-  //   name: "The Nesting Place",
-  //   tagline: "Maternal wellness & postpartum care",
-  //   serviceArea: "Bergen County, Northern New Jersey, and surrounding areas",
-  //   description:
-  //     "An evidence-based maternal wellness and postpartum care practice offering experienced birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage.",
-  // },
+  nestingPlace: {
+    name: "The Nesting Place",
+    shortName: "Nesting Place",
+    tagline: "Where happy families begin",
+    logoSrc: "/branding/nesting-place-logo.png",
+    markSrc: "/branding/nesting-place-mark.png",
+    serviceArea: "Bergen County, Northern New Jersey, and surrounding areas",
+    description:
+      "An evidence-based maternal wellness and postpartum care practice offering experienced birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage.",
+  },
 } as const;
 
 /** Regions where in-person or local provider matching is live today. Add rows as you expand. */
@@ -191,11 +193,11 @@ export const momFaqs = [
     q: "Is this medical support?",
     a: "We provide wellness and support services. We do not replace care from your OB, midwife, or pediatrician. Always consult your healthcare provider for clinical concerns.",
   },
-  // The Nesting Place — uncomment when acquisition is complete
-  // {
-  //   q: "What is the relationship between Nurture Collective and The Nesting Place?",
-  //   a: "The Nurture Collective owns and operates The Nesting Place...",
-  // },
+  // The Nesting Place
+  {
+    q: "What is the relationship between Nurture Collective and The Nesting Place?",
+    a: "The Nurture Collective owns and operates The Nesting Place — our maternal wellness practice in Northern New Jersey and the foundation for hands-on care in our first active region.",
+  },
 ] as const;
 
 export const providerFaqs = [

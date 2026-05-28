@@ -2,6 +2,10 @@ import { createHmac, timingSafeEqual } from "crypto";
 import { NextRequest, NextResponse } from "next/server";
 import { serverBookingConfig } from "@/config/bookings";
 import { serverIntegrations } from "@/config/integrations";
+import {
+  notifyConsultBooked,
+  parseCalendlyConsultBooked,
+} from "@/lib/integrations/slack";
 import { forwardToN8n } from "@/lib/webhooks/n8n";
 
 export const dynamic = "force-dynamic";
@@ -66,6 +70,13 @@ export async function POST(request: NextRequest) {
   };
 
   console.info("[calendly] Webhook received");
+
+  const consultDetails = parseCalendlyConsultBooked(payload);
+  if (consultDetails) {
+    void notifyConsultBooked(consultDetails).catch((error) => {
+      console.error("[calendly] Slack notification failed:", error);
+    });
+  }
 
   try {
     const result = await forwardToN8n(

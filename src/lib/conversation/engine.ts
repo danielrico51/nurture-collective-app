@@ -6,6 +6,9 @@ import {
   extractedProfileToIntakeDraft,
   mergeExtractedProfile,
 } from "@/lib/conversation/profileMapper";
+import { NESTING_PLACE_CONCIERGE_QUICK_REPLIES } from "@/content/nestingPlaceServices";
+import { formatCoverageForConcierge } from "@/lib/coverage/concierge";
+import { getCoverageConfig } from "@/lib/coverage/storage";
 import { CONCIERGE_SYSTEM_PROMPT } from "@/lib/conversation/prompts";
 import {
   detectSafetyEscalation,
@@ -25,7 +28,7 @@ import type {
 import { createEmptyExtractedProfile } from "@/types/conversation";
 
 const WELCOME_MESSAGE =
-  "Hi — I'm your Nurture Collective concierge. I'm here to understand where you are in your journey and help personalize your care. There's no rush. To start, how far along are you in your motherhood journey?";
+  "Hi — I'm your concierge for The Nesting Place. I'm here to understand where you are in your journey and help connect you with the right support — birth doula care, postpartum help, lactation, overnight newborn care, or prenatal massage. There's no rush. To start, how far along are you in your motherhood journey?";
 
 const GUEST_WELCOME_SUFFIX =
   " You're welcome to chat without an account — create a free member account anytime if you'd like to save this conversation and continue later.";
@@ -43,18 +46,13 @@ const DEFAULT_QUICK_REPLIES = [
 const FALLBACK_REPLIES: Record<string, string[]> = {
   start: DEFAULT_QUICK_REPLIES,
   maternalStage: [
-    "Birth doula",
-    "Postpartum support",
-    "Lactation help",
-    "General guidance",
+    "Pregnant",
+    "Newly postpartum",
+    "Trying to conceive",
+    "Infant care",
   ],
-  supportInterests: [
-    "Sleep deprivation",
-    "Anxiety or overwhelm",
-    "Breastfeeding",
-    "Recovery",
-  ],
-  challenges: ["Morning", "Afternoon", "Evening", "Virtual is fine"],
+  supportInterests: NESTING_PLACE_CONCIERGE_QUICK_REPLIES,
+  challenges: ["Sleep deprivation", "Anxiety or overwhelm", "Breastfeeding", "Recovery"],
   contact: ["Yes, SMS updates are OK", "Email only please"],
 };
 
@@ -85,13 +83,20 @@ export const createConversationSession = async (
   return saveConversationSession(session);
 };
 
-const buildChatMessages = (session: ConversationSession) => {
+const buildChatMessages = async (session: ConversationSession) => {
   const profile = session.extractedProfile;
   const needsContact =
     !profile.name.trim() || (!profile.phone.trim() && !profile.email.trim());
 
+  const coverageConfig = await getCoverageConfig();
+  const coveragePrompt = formatCoverageForConcierge(
+    coverageConfig,
+    profile.locationZip
+  );
+
   const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
     { role: "system", content: CONCIERGE_SYSTEM_PROMPT },
+    { role: "system", content: coveragePrompt },
     {
       role: "system",
       content: `Current extracted profile (background): ${JSON.stringify(profile)}`,
@@ -133,15 +138,22 @@ const fallbackAssistantReply = (
   if (!profile.maternalStage) {
     return {
       content:
-        "Thank you for sharing. That helps me understand where you are. What kind of support feels most important right now?",
+        "Thank you for sharing. That helps me understand where you are. What ZIP code are you in? That helps me confirm what Nesting Place support we can offer near you.",
       quickReplies: FALLBACK_REPLIES.maternalStage,
+    };
+  }
+  if (!profile.locationZip?.trim()) {
+    return {
+      content:
+        "Got it. What's your ZIP code? I'll check our current coverage in your area.",
+      quickReplies: [],
     };
   }
   if (!profile.supportInterests.length) {
     return {
       content:
-        "Got it — I'll keep that in mind. What feels hardest for you right now?",
-      quickReplies: FALLBACK_REPLIES.supportInterests,
+        "Thank you for sharing. Which type of support from The Nesting Place feels most important right now — birth doula, postpartum care, overnight newborn care, lactation, or prenatal massage?",
+      quickReplies: NESTING_PLACE_CONCIERGE_QUICK_REPLIES,
     };
   }
   if (!profile.challenges.length && !profile.challengesFreeText) {
@@ -194,7 +206,7 @@ async function* generateAssistantStream(
   }
 
   let full = "";
-  for await (const token of streamChatCompletion(buildChatMessages(session))) {
+  for await (const token of streamChatCompletion(await buildChatMessages(session))) {
     full += token;
     yield token;
   }

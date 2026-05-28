@@ -4,6 +4,7 @@ import {
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
 import { updateProfileStatus } from "@/lib/intake/storage";
+import { syncLeadFromIntake } from "@/lib/leads/storage";
 import { INTAKE_STATUSES, type IntakeStatus } from "@/types/intake";
 
 export const dynamic = "force-dynamic";
@@ -31,6 +32,10 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
   try {
     const profile = await updateProfileStatus(params.id, intakeStatus);
+    await syncLeadFromIntake({
+      userId: profile.userId,
+      intake: profile,
+    });
     return NextResponse.json({ profile });
   } catch (error) {
     const message =

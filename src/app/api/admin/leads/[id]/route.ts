@@ -5,7 +5,9 @@ import {
 } from "@/lib/api/routeHelpers";
 import {
   assignLeadToCoordinator,
+  archiveLead,
   getLeadDetail,
+  restoreLead,
   updateLeadStatus,
 } from "@/lib/leads/storage";
 import type { LeadStatus } from "@/types/lead";
@@ -37,6 +39,8 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   let body: {
     status?: LeadStatus;
     assignToMe?: boolean;
+    archive?: boolean;
+    restore?: boolean;
   };
   try {
     body = await request.json();
@@ -50,6 +54,16 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         id: auth.user.sub,
         email: auth.user.email,
       });
+      return NextResponse.json({ lead });
+    }
+
+    if (body.archive) {
+      const lead = await archiveLead(params.id);
+      return NextResponse.json({ lead });
+    }
+
+    if (body.restore) {
+      const lead = await restoreLead(params.id);
       return NextResponse.json({ lead });
     }
 

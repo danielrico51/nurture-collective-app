@@ -1,3 +1,4 @@
+import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
 import Link from "next/link";
 import { brands } from "@/content/site";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
@@ -8,11 +9,25 @@ const Footer = () => {
       <div className="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-8 md:grid-cols-4">
           <div className="md:col-span-2">
-            <p className="font-serif text-lg font-semibold text-nurture-sage-dark">
-              {brands.nurtureCollective.name}
-            </p>
-            <p className="mt-2 text-sm text-nurture-charcoal/70">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
+              <NestingPlaceLogo variant="footer" linked={false} className="max-h-[88px]" />
+              <div>
+                <p className="font-serif text-lg font-semibold text-nurture-sage-dark">
+                  {brands.nurtureCollective.name}
+                </p>
+                <p className="mt-1 text-sm font-medium text-nurture-charcoal/75">
+                  {brands.nestingPlace.name}
+                </p>
+              </div>
+            </div>
+            <p className="mt-4 text-sm text-nurture-charcoal/70">
               {brands.nurtureCollective.description}
+            </p>
+            <p className="mt-2 text-xs text-nurture-charcoal/55">
+              {brands.nestingPlace.description}
+            </p>
+            <p className="mt-2 text-xs text-nurture-charcoal/55">
+              {brands.nestingPlace.serviceArea}
             </p>
             <p className="mt-3 text-xs text-nurture-charcoal/50">
               Expanding region by region ·{" "}

@@ -1,12 +1,12 @@
+"use client";
+
 import Link from "next/link";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { buildCareStartHref } from "@/config/carePaths";
-import {
-  coverageIntro,
-  coverageRegions,
-  coverageStatusLabels,
-  type CoverageStatus,
-} from "@/content/site";
+import { coverageStatusLabels } from "@/content/site";
+import { fetchPublicCoverage } from "@/lib/api/coverageClient";
+import type { CoverageStatus } from "@/types/coverage";
+import { useEffect, useState } from "react";
 
 const statusStyles: Record<CoverageStatus, string> = {
   active: "bg-nurture-sage/15 text-nurture-sage-dark",
@@ -23,17 +23,41 @@ interface CoverageMapProps {
 
 const CoverageMap = ({
   title = "Current coverage",
-  subtitle = coverageIntro,
+  subtitle,
   showCta = true,
   className = "",
 }: CoverageMapProps) => {
+  const [intro, setIntro] = useState(subtitle ?? "");
+  const [regions, setRegions] = useState<
+    Array<{
+      id: string;
+      name: string;
+      status: CoverageStatus;
+      services: string;
+      coverageRatio: number;
+    }>
+  >([]);
+
+  useEffect(() => {
+    fetchPublicCoverage()
+      .then((config) => {
+        setIntro(subtitle ?? config.intro);
+        setRegions(
+          config.regions.filter((region) => region.id !== "national-waitlist")
+        );
+      })
+      .catch(() => {
+        /* keep empty — static fallback optional */
+      });
+  }, [subtitle]);
+
   return (
     <section id="coverage" className={`py-16 ${className}`}>
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle title={title} subtitle={subtitle} />
+        <SectionTitle title={title} subtitle={intro} />
 
         <div className="mt-10 grid gap-4 sm:grid-cols-2">
-          {coverageRegions.map((region) => (
+          {regions.map((region) => (
             <article
               key={region.id}
               className="rounded-2xl border border-nurture-sage/15 bg-white p-6 shadow-sm"
@@ -51,6 +75,11 @@ const CoverageMap = ({
               <p className="mt-3 text-sm text-nurture-charcoal/70">
                 {region.services}
               </p>
+              {region.status === "expanding" && region.coverageRatio < 100 ? (
+                <p className="mt-2 text-xs text-nurture-charcoal/50">
+                  Expanding — {region.coverageRatio}% capacity in this region
+                </p>
+              ) : null}
             </article>
           ))}
         </div>

@@ -1,0 +1,40 @@
+# Nurture Collective — Slack app manifest (dev)
+#
+# How to use:
+# 1. https://api.slack.com/apps → Create New App → From manifest
+# 2. Pick your free workspace → paste this file (or slack-app-manifest.json)
+# 3. Create → Install to Workspace
+# 4. Still required after install (not in manifest):
+#    - Features → Incoming Webhooks → ON → Add webhook per channel
+#    - Copy Bot User OAuth Token if using SLACK_BOT_TOKEN
+# 5. See slack-setup.md for .env.local
+
+display_information:
+  name: Nurture Collective Dev
+  description: Intake & conversion notifications for The Nesting Place / Nurture Collective (dev)
+  background_color: "#6B5B95"
+  long_description: |
+    Posts lead, intake, and booking notifications from the Nurture Collective
+    platform to your dev Slack channels. Maps to the Client Intake & Conversion
+    Process Flow (new leads, intake completed, consult booked, CRM status updates).
+
+    Dev-only — use separate app + channels for production.
+
+features:
+  bot_user:
+    display_name: Nurture Collective Dev
+    always_online: false
+
+oauth_config:
+  scopes:
+    bot:
+      - chat:write
+      - chat:write.public
+
+settings:
+  org_deploy_enabled: false
+  socket_mode_enabled: false
+  is_hosted: false
+  token_rotation_enabled: false
+  interactivity:
+    is_enabled: false

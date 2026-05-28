@@ -1,0 +1,28 @@
+{
+  "display_information": {
+    "name": "Nurture Collective Dev",
+    "description": "Intake & conversion notifications for The Nesting Place / Nurture Collective (dev)",
+    "background_color": "#6B5B95",
+    "long_description": "Posts lead, intake, and booking notifications from the Nurture Collective platform to your dev Slack channels. Maps to the Client Intake & Conversion Process Flow (new leads, intake completed, consult booked, CRM status updates).\n\nDev-only — use separate app + channels for production."
+  },
+  "features": {
+    "bot_user": {
+      "display_name": "Nurture Collective Dev",
+      "always_online": false
+    }
+  },
+  "oauth_config": {
+    "scopes": {
+      "bot": ["chat:write", "chat:write.public"]
+    }
+  },
+  "settings": {
+    "org_deploy_enabled": false,
+    "socket_mode_enabled": false,
+    "is_hosted": false,
+    "token_rotation_enabled": false,
+    "interactivity": {
+      "is_enabled": false
+    }
+  }
+}

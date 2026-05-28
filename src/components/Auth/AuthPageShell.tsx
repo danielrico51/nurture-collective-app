@@ -1,4 +1,5 @@
-import Link from "next/link";
+import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
+import { brands } from "@/content/site";
 import type { ReactNode } from "react";
 
 interface AuthPageShellProps {
@@ -42,12 +43,10 @@ export function AuthPageShell({
       <div className="relative mx-auto max-w-6xl">
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-14 xl:gap-20">
           <div className="hidden lg:block">
-            <Link
-              href="/"
-              className="inline-block font-serif text-lg font-semibold text-nurture-sage-dark transition hover:text-nurture-charcoal"
-            >
-              The Nurture Collective
-            </Link>
+            <NestingPlaceLogo variant="auth" className="max-h-14" />
+            <p className="mt-3 font-serif text-lg font-semibold text-nurture-sage-dark">
+              {brands.nurtureCollective.name}
+            </p>
             <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-nurture-sage-dark">
               {eyebrow}
             </p>
@@ -87,12 +86,10 @@ export function AuthPageShell({
 
           <div className="mx-auto min-w-0 w-full max-w-md lg:max-w-none">
             <div className="mb-6 text-center lg:hidden">
-              <Link
-                href="/"
-                className="font-serif text-lg font-semibold text-nurture-sage-dark"
-              >
-                The Nurture Collective
-              </Link>
+              <NestingPlaceLogo variant="auth" className="mx-auto max-h-14" />
+              <p className="mt-3 font-serif text-lg font-semibold text-nurture-sage-dark">
+                {brands.nurtureCollective.name}
+              </p>
               <h1 className="mt-4 font-serif text-3xl font-semibold text-nurture-charcoal">
                 {title}
               </h1>

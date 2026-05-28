@@ -9,6 +9,18 @@ export const resolveLeadId = (userId: string): string => userId.trim();
 export const isGuestLead = (userId: string): boolean =>
   userId.startsWith(GUEST_PREFIX);
 
+const PRESERVED_STATUSES: LeadStatus[] = [
+  "converted",
+  "converted_to_member",
+  "under_contract",
+  "lost",
+];
+
+const LOCKED_STATUSES: LeadStatus[] = ["converted", "converted_to_member", "lost"];
+
+const isPreservedStatus = (status?: LeadStatus): boolean =>
+  Boolean(status && PRESERVED_STATUSES.includes(status));
+
 /** Map intake + conversation progress to CRM lead status. */
 export const deriveLeadStatus = (input: {
   intakeStatus?: string | null;
@@ -16,8 +28,8 @@ export const deriveLeadStatus = (input: {
   hasSubmittedIntake?: boolean;
   currentStatus?: LeadStatus;
 }): LeadStatus => {
-  if (input.currentStatus === "converted" || input.currentStatus === "lost") {
-    return input.currentStatus;
+  if (isPreservedStatus(input.currentStatus)) {
+    return input.currentStatus!;
   }
   if (input.currentStatus === "consult_scheduled") return "consult_scheduled";
   if (input.currentStatus === "consult_completed") return "consult_completed";
@@ -79,6 +91,12 @@ export const buildLeadFromSources = (input: {
     input.existing?.challengesSummary ||
     "";
 
+  const locationZip =
+    intake?.locationZip ||
+    extracted?.locationZip ||
+    input.existing?.locationZip ||
+    null;
+
   return {
     leadId,
     userId: input.userId,
@@ -95,6 +113,8 @@ export const buildLeadFromSources = (input: {
     completionScore,
     supportInterests,
     challengesSummary,
+    locationZip: locationZip?.trim() || null,
+    archivedAt: input.existing?.archivedAt ?? null,
     conversationSessionId:
       input.conversationSessionId ?? input.existing?.conversationSessionId ?? null,
     createdAt: input.existing?.createdAt ?? now,
@@ -107,7 +127,7 @@ export const canTransitionLeadStatus = (
   to: LeadStatus
 ): boolean => {
   if (from === to) return true;
-  if (from === "converted" || from === "lost") return false;
+  if (LOCKED_STATUSES.includes(from)) return false;
 
   const allowed: Record<LeadStatus, LeadStatus[]> = {
     new: ["intake_in_progress", "lost", "stale"],
@@ -115,11 +135,28 @@ export const canTransitionLeadStatus = (
     intake_completed: ["consult_scheduled", "qualified", "lost", "stale"],
     consult_scheduled: ["consult_completed", "intake_completed", "lost", "stale"],
     consult_completed: ["proposal_sent", "qualified", "lost", "stale"],
-    proposal_sent: ["qualified", "converted", "lost", "stale"],
-    qualified: ["consult_scheduled", "proposal_sent", "converted", "lost", "stale"],
+    proposal_sent: [
+      "qualified",
+      "converted",
+      "converted_to_member",
+      "under_contract",
+      "lost",
+      "stale",
+    ],
+    qualified: [
+      "consult_scheduled",
+      "proposal_sent",
+      "converted",
+      "converted_to_member",
+      "under_contract",
+      "lost",
+      "stale",
+    ],
     lost: [],
     stale: ["intake_in_progress", "intake_completed", "qualified", "lost"],
     converted: [],
+    converted_to_member: [],
+    under_contract: ["lost", "stale"],
   };
 
   return allowed[from]?.includes(to) ?? false;

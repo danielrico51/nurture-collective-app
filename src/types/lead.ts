@@ -1,3 +1,5 @@
+import type { CareRecommendation, IntakeProfile } from "@/types/intake";
+
 export type LeadStatus =
   | "new"
   | "intake_in_progress"
@@ -8,7 +10,10 @@ export type LeadStatus =
   | "qualified"
   | "lost"
   | "stale"
-  | "converted";
+  /** @deprecated Prefer converted_to_member or under_contract */
+  | "converted"
+  | "converted_to_member"
+  | "under_contract";
 
 export const LEAD_STATUSES: LeadStatus[] = [
   "new",
@@ -21,6 +26,8 @@ export const LEAD_STATUSES: LeadStatus[] = [
   "lost",
   "stale",
   "converted",
+  "converted_to_member",
+  "under_contract",
 ];
 
 export type CoordinatorNoteType =
@@ -45,6 +52,10 @@ export interface LeadRecord {
   completionScore: number;
   supportInterests: string[];
   challengesSummary: string;
+  /** US ZIP from intake / concierge (used for coverage + expansion alerts) */
+  locationZip: string | null;
+  /** When set, lead is hidden from the default CRM queue */
+  archivedAt: string | null;
   conversationSessionId: string | null;
   createdAt: string;
   updatedAt: string;
@@ -62,9 +73,28 @@ export interface CoordinatorNote {
   storageKey?: string;
 }
 
+export interface LeadConversationPrep {
+  sessionId: string | null;
+  sessionStatus: string | null;
+  messageCount: number;
+  updatedAt: string | null;
+  narrativeSummary: string;
+  summaryBullets: string[];
+  emotionalState: string | null;
+  recentMessages: Array<{
+    role: "user" | "assistant";
+    content: string;
+    timestamp: string;
+  }>;
+}
+
 export interface LeadDetailResponse {
   lead: LeadRecord;
   notes: CoordinatorNote[];
+  conversationPrep: LeadConversationPrep | null;
+  /** Full member intake profile when the person created an account */
+  intakeProfile: IntakeProfile | null;
+  recommendations: CareRecommendation[];
 }
 
 export interface AdminLeadsResponse {
@@ -80,4 +110,5 @@ export interface UpdateLeadInput {
   status?: LeadStatus;
   coordinatorId?: string;
   coordinatorEmail?: string;
+  archivedAt?: string | null;
 }

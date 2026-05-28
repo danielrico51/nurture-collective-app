@@ -1,5 +1,6 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import CoverageMap from "@/components/Common/CoverageMap";
+import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { brands } from "@/content/site";
 import Link from "next/link";
@@ -18,6 +19,11 @@ export default function AboutPage() {
       <section className="py-16">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
+            <NestingPlaceLogo
+              variant="about"
+              linked={false}
+              className="mx-auto max-h-32"
+            />
             <SectionTitle
               title="Support every mother, in every region we reach"
               subtitle={`${brands.nurtureCollective.name} is building the platform — one market at a time.`}
@@ -47,13 +53,14 @@ export default function AboutPage() {
                 sustainably. Recruiting exceptional service providers is
                 central to the model — the network is the product.
               </p>
-              {/* The Nesting Place — uncomment when acquisition is complete
               <p>
-                We own and operate The Nesting Place, our maternal wellness
-                practice in Northern New Jersey, as the foundation for clinical-
-                adjacent care in our first active region.
+                We own and operate{" "}
+                <span className="font-medium text-nurture-charcoal">
+                  {brands.nestingPlace.name}
+                </span>
+                , our maternal wellness practice in Northern New Jersey, as the
+                foundation for clinical-adjacent care in our first active region.
               </p>
-              */}
             </div>
 
             <div className="mt-12 grid gap-6 md:grid-cols-2">

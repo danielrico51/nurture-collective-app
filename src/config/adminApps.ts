@@ -1,6 +1,6 @@
 export type AdminAppStatus = "available" | "coming_soon";
 
-export type AdminAppIcon = "tasks" | "intakes" | "leads" | "members" | "reports" | "settings";
+export type AdminAppIcon = "tasks" | "intakes" | "leads" | "coverage" | "members" | "reports" | "settings";
 
 export interface AdminApp {
   id: string;
@@ -16,10 +16,19 @@ export const ADMIN_APPS: AdminApp[] = [
   {
     id: "leads",
     title: "Lead CRM",
-    description: "Track new leads from AI intake, notes, and coordinator pipeline.",
+    description:
+      "Guest leads and member intakes — pipeline, recommendations, concierge, and notes in one queue.",
     href: "/admin/leads",
     status: "available",
     icon: "leads",
+  },
+  {
+    id: "coverage",
+    title: "Coverage map",
+    description: "Manage service regions, ZIP coverage, and expansion ratio for the concierge.",
+    href: "/admin/coverage",
+    status: "available",
+    icon: "coverage",
   },
   {
     id: "tasks",
@@ -28,14 +37,6 @@ export const ADMIN_APPS: AdminApp[] = [
     href: "/admin/tasks",
     status: "available",
     icon: "tasks",
-  },
-  {
-    id: "intakes",
-    title: "Intake queue",
-    description: "Review member onboarding submissions from all intake partitions.",
-    href: "/admin/intakes",
-    status: "available",
-    icon: "intakes",
   },
 ];
 

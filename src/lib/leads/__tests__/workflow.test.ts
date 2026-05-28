@@ -34,8 +34,14 @@ describe("lead workflow", () => {
       })
     ).toBe("consult_scheduled");
     expect(
-      deriveLeadStatus({ currentStatus: "converted", completionScore: 0 })
-    ).toBe("converted");
+      deriveLeadStatus({ currentStatus: "under_contract", completionScore: 0 })
+    ).toBe("under_contract");
+    expect(
+      deriveLeadStatus({
+        currentStatus: "converted_to_member",
+        completionScore: 100,
+      })
+    ).toBe("converted_to_member");
   });
 
   it("builds a lead record from intake and extracted profile", () => {
@@ -86,6 +92,12 @@ describe("lead workflow", () => {
       true
     );
     expect(canTransitionLeadStatus("proposal_sent", "converted")).toBe(true);
+    expect(canTransitionLeadStatus("proposal_sent", "converted_to_member")).toBe(
+      true
+    );
+    expect(canTransitionLeadStatus("proposal_sent", "under_contract")).toBe(true);
+    expect(canTransitionLeadStatus("converted_to_member", "qualified")).toBe(false);
+    expect(canTransitionLeadStatus("under_contract", "lost")).toBe(true);
     expect(canTransitionLeadStatus("converted", "qualified")).toBe(false);
     expect(canTransitionLeadStatus("lost", "qualified")).toBe(false);
   });

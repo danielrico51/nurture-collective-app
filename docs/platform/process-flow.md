@@ -67,6 +67,8 @@ Leads and clients are **never merged in storage**. Conversion creates a new `cli
 - Slack `#new-leads` — name, stage, score, link to admin queue
 - Optional SES — “Thanks for sharing — book your coordinator call”
 
+See [slack-setup.md](./slack-setup.md) for dev workspace configuration.
+
 **Points of contact:** AI chat only (no human yet).
 
 ---

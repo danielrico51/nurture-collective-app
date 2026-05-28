@@ -49,18 +49,28 @@ export const SUPPORT_INTERESTS: {
 }[] = [
   {
     value: "birth-doula",
-    label: "Birth doula",
-    description: "Labor and birth support",
+    label: "Birth doula support",
+    description: "Experienced, evidence-based labor and birth support",
+  },
+  {
+    value: "overnight-newborn-care",
+    label: "Overnight newborn care",
+    description: "Nighttime newborn care so parents can rest and recover",
   },
   {
     value: "postpartum-doula",
-    label: "Postpartum doula",
-    description: "Hands-on recovery and newborn help",
+    label: "Postpartum care",
+    description: "Hands-on recovery and newborn support in the early weeks at home",
   },
   {
     value: "lactation",
     label: "Lactation support",
     description: "Breastfeeding and feeding guidance",
+  },
+  {
+    value: "prenatal-massage",
+    label: "Prenatal massage",
+    description: "Therapeutic massage during pregnancy",
   },
   {
     value: "sleep-consulting",

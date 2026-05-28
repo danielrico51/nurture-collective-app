@@ -1,11 +1,6 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import IntakeQueue from "@/components/Admin/IntakeQueue";
-import { useRequireAdmin } from "@/hooks/useRequireAdmin";
-
+/** Intake queue merged into Lead CRM — keep old URL working. */
 export default function AdminIntakesPage() {
-  const { user } = useRequireAdmin();
-  const userEmail = user?.signInDetails?.loginId ?? "";
-
-  return <IntakeQueue userEmail={userEmail} />;
+  redirect("/admin/leads");
 }
