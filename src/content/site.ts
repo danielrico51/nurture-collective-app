@@ -36,6 +36,15 @@ export const careCoordinator = {
   possessive: "your care coordinator",
   team: "your care team",
   platform: "personal care coordination",
+  /** Guided intake / concierge chat UI */
+  intake: {
+    title: "Your support coordinator",
+    messageLabel: "Your support coordinator",
+    connecting: "Connecting with your support coordinator…",
+    preparing: "Preparing your support coordinator…",
+    inputLabel: "Message your support coordinator",
+    typing: "Support coordinator is typing",
+  },
 } as const;
 
 export const brands = {
@@ -45,8 +54,10 @@ export const brands = {
     shortName: "Nesting Place",
     tagline: "Where happy families begin",
     byline: "by Nurture Collective LLC",
-    logoSrc: "/branding/nesting-place-logo.png",
-    markSrc: "/branding/nesting-place-mark.png",
+    logoSrc: "/branding/nesting-place-wordmark.png",
+    wordmarkSrc: "/branding/nesting-place-wordmark.png",
+    wordmarkCreamSrc: "/branding/nesting-place-wordmark-cream.png",
+    markSrc: "/branding/nesting-place-baby-mark.png",
     serviceArea: "Bergen County, Northern New Jersey, and surrounding areas",
     description:
       "An evidence-based maternal wellness and postpartum care practice offering experienced birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of care.",
@@ -215,16 +226,22 @@ export const momHowItWorks = [
     step: "01",
     title: "Reach out — a real person answers",
     description:
-      "Call, text, or send a message. Alison, Barb, or a member of our team will personally guide you through what you need.",
+      "Call, text, or send a message. Barb or a member of our team will personally guide you through what you need.",
   },
   {
     step: "02",
-    title: "We listen and match you with care",
+    title: "Complete your guided intake",
     description:
-      "We take time to understand your journey and connect you with the right doula, lactation consultant, or support professional for your family.",
+      "Share where you are in your journey at your own pace — we'll learn about your preferences, timeline, and the support you're looking for.",
   },
   {
     step: "03",
+    title: "Design your custom care plan with Barb",
+    description:
+      "After intake, we'll schedule a follow-up call with Barb to walk through your needs together and design a personalized care plan for your family.",
+  },
+  {
+    step: "04",
     title: "We're with you every step",
     description:
       "From pregnancy through postpartum, our team stays in direct contact — coordinating support so you never feel alone.",
@@ -263,7 +280,7 @@ export const momFaqs = [
   },
   {
     q: "Will I talk to a real person?",
-    a: "Yes — always. Alison, Barb, and our care team are in direct contact with every family. We use tools to stay organized, but you'll never feel like you're talking to a bot.",
+    a: "Yes — always. Barb and our care team are in direct contact with every family. We use tools to stay organized, but you'll never feel like you're talking to a bot.",
   },
   {
     q: "Do you accept employer benefits like Carrot, Maven, or Progyny?",
@@ -318,4 +335,4 @@ export const isAudience = (value: string | null): value is Audience =>
   value === "mom" || value === "provider";
 
 export const humanTouchMessage =
-  "In a market full of options, what sets us apart is the personal touch. Alison, Barb, and our team are in direct contact with every family — guiding you, answering questions, and making sure you feel supported from your first call through every stage of care.";
+  "In a market full of options, what sets us apart is the personal touch. Barb and our team are in direct contact with every family — guiding you, answering questions, and making sure you feel supported from your first call through every stage of care.";

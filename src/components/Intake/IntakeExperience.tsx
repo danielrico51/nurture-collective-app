@@ -6,6 +6,7 @@ import {
   resolveCareServiceContext,
   type CareServiceContext,
 } from "@/config/carePaths";
+import { careCoordinator } from "@/content/site";
 import { isPublicIntakeEnabled } from "@/config/intakeAccess";
 import { getOrCreateGuestSessionId } from "@/lib/auth/guestSession";
 import { useMemberIntake } from "@/hooks/useMemberIntake";
@@ -102,7 +103,7 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
   if (!ready || !authReady || !bootstrapped || !userId) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-gradient-to-b from-nurture-cream to-white">
-        <p className="text-nurture-charcoal/60">Preparing your care coordinator…</p>
+        <p className="text-nurture-charcoal/60">{careCoordinator.intake.preparing}</p>
       </div>
     );
   }
@@ -110,7 +111,7 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
   if (!publicMode && authStatus !== "authenticated") {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-gradient-to-b from-nurture-cream to-white">
-        <p className="text-nurture-charcoal/60">Preparing your care coordinator…</p>
+        <p className="text-nurture-charcoal/60">{careCoordinator.intake.preparing}</p>
       </div>
     );
   }

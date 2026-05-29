@@ -11,29 +11,23 @@ const CallToAction = () => {
             Every mother deserves a team
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-white/90">
-            Whether you&apos;re seeking support or offering your expertise, Nurture
-            Collective connects families with trusted support — expanding region
-            by region, with a personal care coordinator by your side.
+            Nurture Collective connects families with trusted maternal wellness
+            support — expanding region by region, with a personal care coordinator
+            by your side.
           </p>
           <div className="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link
-                href={buildCareStartHref()}
-                className="inline-block rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-cream"
-              >
-                Request support
-              </Link>
-              <Link
-                href="/for-moms"
-                className="inline-block rounded-full border border-white/40 px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/10"
-              >
-                Explore for moms
-              </Link>
-              <Link
-                href="/for-providers"
-                className="inline-block rounded-full border border-white/40 px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/10"
-              >
-                I&apos;m a provider
-              </Link>
+            <Link
+              href={buildCareStartHref()}
+              className="inline-block rounded-full bg-white px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-cream"
+            >
+              Request support
+            </Link>
+            <Link
+              href="/for-moms"
+              className="inline-block rounded-full border border-white/40 px-8 py-3.5 text-sm font-semibold text-white hover:bg-white/10"
+            >
+              Explore for moms
+            </Link>
           </div>
         </div>
 

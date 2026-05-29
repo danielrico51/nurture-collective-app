@@ -1,0 +1,42 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "LeadsReadWrite",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::nurture-leads-ENV-ACCOUNT_ID",
+        "arn:aws:s3:::nurture-leads-ENV-ACCOUNT_ID/*"
+      ]
+    },
+    {
+      "Sid": "EventsAppend",
+      "Effect": "Allow",
+      "Action": ["s3:PutObject", "s3:GetObject", "s3:ListBucket"],
+      "Resource": [
+        "arn:aws:s3:::nurture-events-ENV-ACCOUNT_ID",
+        "arn:aws:s3:::nurture-events-ENV-ACCOUNT_ID/*"
+      ]
+    },
+    {
+      "Sid": "LegacyTasksBucket",
+      "Effect": "Allow",
+      "Action": [
+        "s3:GetObject",
+        "s3:PutObject",
+        "s3:DeleteObject",
+        "s3:ListBucket"
+      ],
+      "Resource": [
+        "arn:aws:s3:::nurture-collective-tasks",
+        "arn:aws:s3:::nurture-collective-tasks/*"
+      ]
+    }
+  ]
+}

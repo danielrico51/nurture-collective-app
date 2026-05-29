@@ -1,5 +1,6 @@
 import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
 import Link from "next/link";
+import { buildCareStartHref } from "@/config/carePaths";
 import { brands } from "@/content/site";
 
 const Hero = () => {
@@ -27,16 +28,16 @@ const Hero = () => {
           </p>
           <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
-              href="/for-moms"
+              href={buildCareStartHref()}
               className="rounded-full bg-nurture-sage px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-nurture-sage-dark"
             >
-              I&apos;m a mom
+              Request support
             </Link>
             <Link
-              href="/for-providers"
+              href="/services"
               className="rounded-full border border-nurture-sage px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
             >
-              I&apos;m a service provider
+              View services
             </Link>
           </div>
         </div>

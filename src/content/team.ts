@@ -26,7 +26,7 @@ export const teamMembers: TeamMemberProfile[] = [
     id: "alex",
     name: "Alex",
     role: "Care Coordinator",
-    bio: "Alex works closely with Alison and Barb to connect families with the right support at the right time. From your first call through every step of your care plan, Alex is a real person on the other end — listening, answering questions, and making sure you never feel alone in the process.",
+    bio: "Alex works closely with Barb and our care team to connect families with the right support at the right time. From your first call through every step of your care plan, Alex is a real person on the other end — listening, answering questions, and making sure you never feel alone in the process.",
     initials: "A",
   },
 ];

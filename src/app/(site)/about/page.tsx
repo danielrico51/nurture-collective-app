@@ -22,9 +22,9 @@ export default function AboutPage() {
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl">
             <NestingPlaceLogo
-              variant="about"
+              variant="hero"
               linked={false}
-              className="mx-auto max-h-32"
+              className="mx-auto"
             />
             <SectionTitle
               title="Support every mother, in every region we reach"

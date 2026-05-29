@@ -1,13 +1,13 @@
 "use client";
 
-import { brands } from "@/content/site";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
-import { useAuthenticator } from "@aws-amplify/ui-react";
+import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
 import { primaryNavLinks, providerNavLink } from "@/config/navigation";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 import { useUserGroups } from "@/hooks/useUserGroups";
+import { useAuthenticator } from "@aws-amplify/ui-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { useEffect, useState } from "react";
 
 interface HeaderProps {
   isAuthenticated: boolean;
@@ -40,18 +40,18 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
   return (
     <header
       className={`fixed left-0 top-0 z-50 w-full transition-all ${
-        sticky ? "bg-white/95 shadow-sm backdrop-blur" : "bg-transparent"
+        sticky
+          ? "border-b border-nurture-sage/10 bg-nurture-cream/95 shadow-sm backdrop-blur"
+          : "bg-transparent"
       }`}
     >
       <div className="mx-auto flex max-w-screen-xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
-        <Link href="/" className="group leading-tight transition hover:opacity-90">
-          <span className="block font-serif text-base font-semibold text-nurture-sage-dark sm:text-lg">
-            {brands.nestingPlace.name}
-          </span>
-          <span className="hidden text-[10px] font-medium tracking-wide text-nurture-charcoal/55 sm:block">
-            {brands.nestingPlace.byline}
-          </span>
-        </Link>
+        <span className="sm:hidden">
+          <NestingPlaceLogo variant="wordmark" compact priority />
+        </span>
+        <span className="hidden min-w-0 sm:inline-flex">
+          <NestingPlaceLogo variant="wordmark" priority />
+        </span>
 
         <nav className="hidden items-center gap-4 xl:flex">
           {primaryNavLinks.map((link) => (
@@ -145,7 +145,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
       </div>
 
       {menuOpen && (
-        <div className="max-h-[85vh] overflow-y-auto border-t border-nurture-sage/20 bg-white px-4 py-4 xl:hidden">
+        <div className="max-h-[85vh] overflow-y-auto border-t border-nurture-sage/20 bg-nurture-cream px-4 py-4 xl:hidden">
           {primaryNavLinks.map((link) => (
             <Link
               key={link.href}

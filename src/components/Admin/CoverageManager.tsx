@@ -6,6 +6,7 @@ import {
   reverseGeocodeCoveragePoint,
   saveAdminCoverage,
 } from "@/lib/api/coverageClient";
+import { DEFAULT_COVERAGE_CONFIG } from "@/lib/coverage/defaults";
 import type {
   CoverageConfig,
   CoverageRegionConfig,
@@ -42,6 +43,8 @@ const CoverageManager = () => {
   const [config, setConfig] = useState<CoverageConfig | null>(null);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [usingDefaults, setUsingDefaults] = useState(false);
   const [saving, setSaving] = useState(false);
   const [clickMarker, setClickMarker] = useState<{ lat: number; lng: number } | null>(
     null
@@ -55,12 +58,20 @@ const CoverageManager = () => {
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const data = await fetchAdminCoverage();
       setConfig(data);
       setSelectedId(data.regions[0]?.id ?? null);
+      setUsingDefaults(false);
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Could not load coverage");
+      const message =
+        error instanceof Error ? error.message : "Could not load coverage";
+      setLoadError(message);
+      setConfig({ ...DEFAULT_COVERAGE_CONFIG });
+      setSelectedId(DEFAULT_COVERAGE_CONFIG.regions[0]?.id ?? null);
+      setUsingDefaults(true);
+      toast.error(`${message} — showing default regions until storage is fixed`);
     } finally {
       setLoading(false);
     }
@@ -123,6 +134,8 @@ const CoverageManager = () => {
     try {
       const saved = await saveAdminCoverage(config);
       setConfig(saved);
+      setLoadError(null);
+      setUsingDefaults(false);
       toast.success("Coverage map saved — concierge will use this immediately");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Save failed");
@@ -150,12 +163,37 @@ const CoverageManager = () => {
     }
   };
 
-  if (loading || !config) {
+  if (loading) {
     return <p className="text-sm text-nurture-charcoal/60">Loading coverage map…</p>;
+  }
+
+  if (!config) {
+    return (
+      <div className="rounded-2xl border border-red-200 bg-red-50 px-4 py-5 text-sm text-red-900">
+        <p className="font-medium">{loadError ?? "Could not load coverage map"}</p>
+        <button
+          type="button"
+          onClick={load}
+          className="mt-3 rounded-full border border-red-300 px-4 py-2 text-sm font-medium hover:bg-red-100"
+        >
+          Try again
+        </button>
+      </div>
+    );
   }
 
   return (
     <div>
+      {loadError ? (
+        <div className="mb-4 rounded-2xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+          <p className="font-medium">
+            {usingDefaults
+              ? "Using default regions — saved coverage could not be loaded from storage."
+              : "Coverage loaded with warnings."}
+          </p>
+          <p className="mt-1 text-amber-900/80">{loadError}</p>
+        </div>
+      ) : null}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">

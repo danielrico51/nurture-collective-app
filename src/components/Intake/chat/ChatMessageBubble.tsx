@@ -1,3 +1,5 @@
+import { careCoordinator } from "@/content/site";
+
 interface ChatMessageBubbleProps {
   role: "user" | "assistant";
   content: string;
@@ -22,7 +24,7 @@ const ChatMessageBubble = ({
       >
         {!isUser ? (
           <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-nurture-sage-dark">
-            Your care coordinator
+            {careCoordinator.intake.messageLabel}
           </p>
         ) : null}
         <p className="whitespace-pre-wrap">{content}</p>

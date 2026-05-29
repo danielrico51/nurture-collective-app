@@ -3,16 +3,24 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import { brands } from "@/content/site";
 
-/** Intrinsic dimensions of nesting-place-logo.png (includes transparent padding). */
-const LOGO_WIDTH = 760;
-const LOGO_HEIGHT = 630;
+/** Horizontal wordmark (baby + The Nesting Place). */
+const WORDMARK_WIDTH = 1024;
+const WORDMARK_HEIGHT = 433;
+
+/** Legacy stacked logo with tagline block. */
+const LEGACY_LOGO_WIDTH = 760;
+const LEGACY_LOGO_HEIGHT = 630;
 
 const VARIANT_MAX_CLASS = {
-  header: "max-h-11 w-auto sm:max-h-12",
-  hero: "max-h-36 w-auto sm:max-h-40 md:max-h-44",
-  footer: "max-h-[88px] w-auto",
-  auth: "max-h-28 w-auto sm:max-h-32",
+  header: "max-h-10 w-auto sm:max-h-11",
+  /** Header banner wordmark — scales with viewport, capped for nav balance */
+  wordmark:
+    "h-[clamp(2.75rem,4.5vw+1.25rem,4rem)] w-auto max-h-16 max-w-[min(52vw,26rem)] object-contain",
+  hero: "h-[clamp(5rem,12vw,9rem)] w-auto max-w-[min(100%,36rem)] object-contain",
+  footer: "max-h-14 w-auto sm:max-h-16 md:max-h-[4.5rem]",
+  auth: "max-h-16 w-auto sm:max-h-[4.5rem]",
   about: "max-h-32 w-auto",
+  legacy: "max-h-36 w-auto sm:max-h-40 md:max-h-44",
 } as const;
 
 export type NestingPlaceLogoVariant = keyof typeof VARIANT_MAX_CLASS;
@@ -40,17 +48,19 @@ const NestingPlaceLogo = ({
   nameVariant = "nestingPlace",
   nameClassName = "",
 }: NestingPlaceLogoProps) => {
-  const markBox = variant === "header" ? 44 : 52;
+  const useWordmark =
+    variant === "header" ||
+    variant === "wordmark" ||
+    variant === "hero" ||
+    variant === "footer" ||
+    variant === "auth";
 
   let content: ReactNode;
 
   if (compact) {
     content = (
-      <span className="inline-flex items-center gap-3">
-        <span
-          className="flex shrink-0 items-center justify-center rounded-md p-1"
-          style={{ width: markBox, height: markBox }}
-        >
+      <span className="inline-flex items-center gap-2.5 sm:gap-3">
+        <span className="flex h-11 w-11 shrink-0 items-center justify-center sm:h-12 sm:w-12">
           <Image
             src={brands.nestingPlace.markSrc}
             alt=""
@@ -63,15 +73,44 @@ const NestingPlaceLogo = ({
         </span>
         <span className="min-w-0 leading-tight">
           <span
-            className={`block font-serif font-semibold text-nurture-sage-dark ${nameClassName}`.trim()}
+            className={`block font-serif text-sm font-semibold text-nurture-charcoal sm:text-base ${nameClassName}`.trim()}
           >
-            {brands.nestingPlace.name}
+            <span className="text-nurture-charcoal">The </span>
+            <span className="text-nurture-sage-dark">Nesting</span>
+            <span className="text-nurture-charcoal"> Place</span>
           </span>
-          <span className="mt-0.5 block text-xs font-medium text-nurture-charcoal/65">
+          <span className="mt-0.5 block text-[10px] font-medium text-nurture-charcoal/55 sm:text-xs">
             {brands.nestingPlace.byline}
           </span>
         </span>
       </span>
+    );
+  } else if (useWordmark) {
+    const image = (
+      <Image
+        src={brands.nestingPlace.wordmarkSrc}
+        alt={`${brands.nestingPlace.name} — ${brands.nestingPlace.tagline}`}
+        width={WORDMARK_WIDTH}
+        height={WORDMARK_HEIGHT}
+        priority={priority}
+        className={`object-contain ${VARIANT_MAX_CLASS[variant === "header" ? "wordmark" : variant]} ${className}`.trim()}
+      />
+    );
+
+    content = showName ? (
+      <span className="inline-flex items-center gap-3">
+        {image}
+        <span
+          className={`font-serif font-semibold leading-tight text-nurture-sage-dark ${nameClassName}`.trim()}
+        >
+          {(nameVariant === "nurtureCollective"
+            ? brands.nurtureCollective
+            : brands.nestingPlace
+          ).name}
+        </span>
+      </span>
+    ) : (
+      image
     );
   } else {
     const brand =
@@ -81,12 +120,12 @@ const NestingPlaceLogo = ({
 
     const image = (
       <Image
-        src={brands.nestingPlace.logoSrc}
+        src="/branding/nesting-place-logo.png"
         alt={`${brands.nestingPlace.name} — ${brands.nestingPlace.tagline}`}
-        width={LOGO_WIDTH}
-        height={LOGO_HEIGHT}
+        width={LEGACY_LOGO_WIDTH}
+        height={LEGACY_LOGO_HEIGHT}
         priority={priority}
-        className={`h-auto w-auto max-w-none object-contain ${VARIANT_MAX_CLASS[variant]} ${className}`.trim()}
+        className={`h-auto w-auto max-w-none object-contain ${VARIANT_MAX_CLASS.legacy} ${className}`.trim()}
       />
     );
 
@@ -106,7 +145,7 @@ const NestingPlaceLogo = ({
 
   if (linked) {
     return (
-      <Link href="/" className="inline-flex shrink-0 items-center">
+      <Link href="/" className="inline-flex shrink-0 items-center transition hover:opacity-90">
         {content}
       </Link>
     );

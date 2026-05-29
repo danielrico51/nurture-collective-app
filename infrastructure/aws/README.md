@@ -29,7 +29,26 @@ This creates:
 
 ## Attach policies to existing roles
 
-### Amplify SSR (Next.js intake)
+### Amplify SSR (Next.js — CRM, intake, tasks)
+
+The CRM app reads leads from `NURTURE_LEADS_BUCKET`. Access denied means the **Amplify compute role** (or `SERVER_AWS_*` IAM user, if set) is missing S3 permissions — not an app bug.
+
+**Option A — attach after stack deploy (recommended)**
+
+```bash
+chmod +x infrastructure/aws/scripts/attach-amplify-s3-policy.sh
+./infrastructure/aws/scripts/attach-amplify-s3-policy.sh dev NurtureCollectiveAmplifyComputeRole
+```
+
+Replace the role name with your app’s compute role from **Amplify Console → Hosting → Compute role**.
+
+**Option B — attach automatically on stack update**
+
+```bash
+./infrastructure/aws/scripts/provision-platform.sh dev NurtureCollectiveAmplifyComputeRole
+```
+
+**Option C — manual**
 
 After deploy, note `AmplifyPlatformPolicyArn` from stack outputs.
 
@@ -39,7 +58,33 @@ aws iam attach-role-policy \
   --policy-arn <AmplifyPlatformPolicyArn>
 ```
 
-Or merge statements from `policies/amplify-compute-s3.json` into the existing compute role policy.
+Or merge statements from `policies/amplify-compute-s3.json` (replace `ENV` and `ACCOUNT_ID`).
+
+### If `SERVER_AWS_ACCESS_KEY_ID` is set in Amplify
+
+Amplify uses those static keys **instead of** the compute role (`amplifyCredentials.ts` prefers `SERVER_AWS_*` over the role).
+
+The IAM user behind those keys (default: `nurture-collective-amplify-server`) must have the same S3 access as the compute role. Attach the platform policy to that user:
+
+```bash
+chmod +x infrastructure/aws/scripts/attach-amplify-server-user-policy.sh
+./infrastructure/aws/scripts/attach-amplify-server-user-policy.sh dev
+```
+
+**Alternative:** remove `SERVER_AWS_ACCESS_KEY_ID` and `SERVER_AWS_SECRET_ACCESS_KEY` from Amplify env vars so SSR uses `NurtureCollectiveAmplifyComputeRole` only (must have `NurtureAmplifyPlatformS3-dev` attached).
+
+### Amplify env vars (dev branch)
+
+After IAM is fixed, confirm in **Amplify → Environment variables** and redeploy:
+
+```env
+NURTURE_LEADS_BUCKET=nurture-leads-dev-<your-account-id>
+TASKS_S3_BUCKET=nurture-collective-tasks
+INTAKE_S3_BUCKET=nurture-collective-tasks
+AWS_REGION=us-east-1
+```
+
+Bucket name must match the CloudFormation `LeadsBucketName` output exactly.
 
 ### Django backend API
 

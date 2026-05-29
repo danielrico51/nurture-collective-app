@@ -12,9 +12,17 @@ Parameters:
     Type: String
     Default: "true"
     AllowedValues: ["true", "false"]
+  AmplifyComputeRoleName:
+    Type: String
+    Default: ""
+    Description: >
+      Optional IAM role name for Amplify Hosting SSR compute
+      (e.g. NurtureCollectiveAmplifyComputeRole). When set, the leads/events/tasks
+      S3 policy is attached automatically.
 
 Conditions:
   UseAccessLogging: !Equals [!Ref EnableAccessLogging, "true"]
+  AttachAmplifyPolicy: !Not [!Equals [!Ref AmplifyComputeRoleName, ""]]
 
 Resources:
   AccessLogsBucket:
@@ -304,6 +312,13 @@ Resources:
               - ses:SendEmail
               - ses:SendRawEmail
             Resource: "*"
+
+  AmplifyComputeRolePolicyAttachment:
+    Type: AWS::IAM::RolePolicyAttachment
+    Condition: AttachAmplifyPolicy
+    Properties:
+      RoleName: !Ref AmplifyComputeRoleName
+      PolicyArn: !Ref AmplifyComputePlatformPolicy
 
 Outputs:
   LeadsBucketName:

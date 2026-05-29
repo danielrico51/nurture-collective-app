@@ -1,5 +1,10 @@
+import { careCoordinator } from "@/content/site";
+
 const TypingIndicator = () => (
-  <div className="flex items-center gap-1.5 px-4 py-3" aria-label="Care coordinator is typing">
+  <div
+    className="flex items-center gap-1.5 px-4 py-3"
+    aria-label={careCoordinator.intake.typing}
+  >
     {[0, 1, 2].map((index) => (
       <span
         key={index}

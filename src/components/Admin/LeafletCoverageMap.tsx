@@ -4,7 +4,7 @@ import njMetroCounties from "@/data/nj-metro-counties.geojson";
 import type { CoverageRegionConfig, CoverageStatus } from "@/types/coverage";
 import type { GeoJsonObject } from "geojson";
 import type { LatLngExpression, PathOptions } from "leaflet";
-import { useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import {
   Circle,
   CircleMarker,
@@ -64,10 +64,24 @@ const LeafletCoverageMap = ({
   clickMarker = null,
   showCounties = true,
 }: LeafletCoverageMapProps) => {
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
+
   const visibleRegions = useMemo(
     () => regions.filter((region) => region.id !== "national-waitlist"),
     [regions]
   );
+
+  if (!mounted) {
+    return (
+      <div className="flex h-[520px] items-center justify-center rounded-2xl border border-nurture-sage/20 bg-nurture-cream/40 text-sm text-nurture-charcoal/60">
+        Loading interactive map…
+      </div>
+    );
+  }
 
   return (
     <div className="overflow-hidden rounded-2xl border border-nurture-sage/20 bg-white">

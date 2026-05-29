@@ -10,6 +10,7 @@ import {
   PUBLIC_INTAKE_PATH,
 } from "@/config/intakeAccess";
 import type { CareServiceContext } from "@/config/carePaths";
+import { careCoordinator } from "@/content/site";
 import {
   buildBookingPageHref,
   buildBookingUrlWithPrefill,
@@ -258,7 +259,7 @@ const ConversationalIntake = ({
   if (loading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <p className="text-nurture-charcoal/60">Connecting with your care coordinator…</p>
+        <p className="text-nurture-charcoal/60">{careCoordinator.intake.connecting}</p>
       </div>
     );
   }
@@ -312,7 +313,7 @@ const ConversationalIntake = ({
               ✦
             </div>
             <h1 className="mt-4 font-serif text-2xl font-semibold text-nurture-charcoal">
-              Your care coordinator
+              {careCoordinator.intake.title}
             </h1>
             <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-nurture-charcoal/65">
               A calm, private space to share where you are — we&apos;ll build your
@@ -355,7 +356,7 @@ const ConversationalIntake = ({
 
         <form onSubmit={handleSubmit} className="mt-2 flex gap-2">
           <label htmlFor="care-coordinator-input" className="sr-only">
-            Message your care coordinator
+            {careCoordinator.intake.inputLabel}
           </label>
           <textarea
             id="care-coordinator-input"

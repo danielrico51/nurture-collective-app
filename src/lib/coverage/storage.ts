@@ -59,8 +59,16 @@ export const getCoverageConfig = async (): Promise<CoverageConfig> => {
   if (isLocalCoverageStorage()) {
     config = (await readLocalConfig()) ?? { ...DEFAULT_COVERAGE_CONFIG };
   } else {
-    const raw = await readS3ObjectJson<CoverageConfig>(COVERAGE_CONFIG_KEY);
-    config = normalizeConfig(raw);
+    try {
+      const raw = await readS3ObjectJson<CoverageConfig>(COVERAGE_CONFIG_KEY);
+      config = normalizeConfig(raw);
+    } catch (error) {
+      console.warn(
+        "[coverage] S3 read failed — using default regions:",
+        error instanceof Error ? error.message : error
+      );
+      config = { ...DEFAULT_COVERAGE_CONFIG };
+    }
   }
 
   memoryCache = { config, loadedAt: now };

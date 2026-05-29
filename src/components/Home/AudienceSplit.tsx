@@ -12,8 +12,8 @@ const AudienceSplit = () => {
             How can we help you today?
           </h2>
           <p className="mt-3 text-nurture-charcoal/70">
-            Whether you&apos;re a mom seeking support or a provider ready to join
-            our network, start here.
+            Start with support for your family, or learn how you can join our
+            growing team.
           </p>
         </div>
         <div className="mt-10 grid gap-6 md:grid-cols-2">
@@ -39,21 +39,21 @@ const AudienceSplit = () => {
 
           <article className={cardClassName}>
             <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
-              For professionals
+              We&apos;re growing
             </p>
             <h3 className="mt-3 font-serif text-2xl font-semibold text-nurture-charcoal">
-              I&apos;m a service provider
+              Interested in joining our team?
             </h3>
             <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
-              Join The Nesting Place provider network. We&apos;re recruiting
-              doulas, lactation consultants, newborn care specialists, and more
-              as we expand market by market.
+              We&apos;re actively building our team — recruiting doulas, lactation
+              consultants, newborn care specialists, and maternal wellness
+              professionals as we expand region by region.
             </p>
             <Link
               href="/for-providers"
               className="mt-6 inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
             >
-              Join as a provider
+              Learn about joining our team
             </Link>
           </article>
         </div>

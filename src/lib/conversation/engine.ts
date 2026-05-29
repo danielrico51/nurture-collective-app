@@ -29,11 +29,11 @@ import type { SupportInterest } from "@/types/intake";
 import { createEmptyExtractedProfile } from "@/types/conversation";
 
 const WELCOME_MESSAGE =
-  "Hi — I'm your care coordinator for The Nesting Place. I'm here to understand where you are in your journey and help connect you with the right support — birth doula care, postpartum help, lactation, overnight newborn care, or prenatal massage. There's no rush. To start, how far along are you in your motherhood journey?";
+  "Hi — I'm your support coordinator for The Nesting Place. I'm here to understand where you are in your journey and help connect you with the right support — birth doula care, postpartum help, lactation, overnight newborn care, or prenatal massage. There's no rush. To start, how far along are you in your motherhood journey?";
 
 const buildWelcomeMessage = (userId: string, preselectedServiceTitle?: string) => {
   const base = preselectedServiceTitle
-    ? `Hi — I'm your care coordinator for The Nesting Place. I see you're interested in ${preselectedServiceTitle.toLowerCase()} — I'll help connect you with the right support. To start, how far along are you in your motherhood journey?`
+    ? `Hi — I'm your support coordinator for The Nesting Place. I see you're interested in ${preselectedServiceTitle.toLowerCase()} — I'll help connect you with the right support. To start, how far along are you in your motherhood journey?`
     : WELCOME_MESSAGE;
   return isGuestLead(userId) ? `${base}${GUEST_WELCOME_SUFFIX}` : base;
 };

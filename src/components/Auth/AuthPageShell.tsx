@@ -43,7 +43,7 @@ export function AuthPageShell({
       <div className="relative mx-auto max-w-6xl">
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-14 xl:gap-20">
           <div className="hidden lg:block">
-            <NestingPlaceLogo variant="auth" className="max-h-28 w-auto sm:max-h-32" />
+            <NestingPlaceLogo variant="auth" linked={false} className="mx-auto max-h-16 w-auto sm:max-h-[4.5rem]" />
             <p className="mt-3 font-serif text-lg font-semibold text-nurture-sage-dark">
               {brands.nestingPlace.name}
             </p>
@@ -89,7 +89,7 @@ export function AuthPageShell({
 
           <div className="mx-auto min-w-0 w-full max-w-md lg:max-w-none">
             <div className="mb-6 text-center lg:hidden">
-              <NestingPlaceLogo variant="auth" className="mx-auto max-h-24 w-auto sm:max-h-28" />
+              <NestingPlaceLogo variant="auth" linked={false} className="mx-auto max-h-16 w-auto sm:max-h-[4.5rem]" />
               <p className="mt-3 font-serif text-lg font-semibold text-nurture-sage-dark">
                 {brands.nestingPlace.name}
               </p>

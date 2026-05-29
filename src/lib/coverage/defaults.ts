@@ -58,3 +58,6 @@ export const DEFAULT_COVERAGE_CONFIG: CoverageConfig = {
     },
   ],
 };
+
+export const getPublicCoverageRegions = (config: CoverageConfig = DEFAULT_COVERAGE_CONFIG) =>
+  config.regions.filter((region) => region.id !== "national-waitlist");

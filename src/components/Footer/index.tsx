@@ -10,7 +10,7 @@ const Footer = () => {
         <div className="grid gap-8 md:grid-cols-4">
           <div className="md:col-span-2">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-              <NestingPlaceLogo variant="footer" linked={false} className="max-h-[88px]" />
+              <NestingPlaceLogo variant="footer" linked={false} />
               <div>
                 <p className="font-serif text-lg font-semibold text-nurture-sage-dark">
                   {brands.nestingPlace.name}

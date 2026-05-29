@@ -5,6 +5,10 @@ import SectionTitle from "@/components/Common/SectionTitle";
 import { buildCareStartHref } from "@/config/carePaths";
 import { coverageStatusLabels } from "@/content/site";
 import { fetchPublicCoverage } from "@/lib/api/coverageClient";
+import {
+  DEFAULT_COVERAGE_CONFIG,
+  getPublicCoverageRegions,
+} from "@/lib/coverage/defaults";
 import type { CoverageStatus } from "@/types/coverage";
 import { useEffect, useState } from "react";
 
@@ -27,27 +31,37 @@ const CoverageMap = ({
   showCta = true,
   className = "",
 }: CoverageMapProps) => {
-  const [intro, setIntro] = useState(subtitle ?? "");
-  const [regions, setRegions] = useState<
-    Array<{
-      id: string;
-      name: string;
-      status: CoverageStatus;
-      services: string;
-      coverageRatio: number;
-    }>
-  >([]);
+  const [intro, setIntro] = useState(subtitle ?? DEFAULT_COVERAGE_CONFIG.intro);
+  const [regions, setRegions] = useState(
+    getPublicCoverageRegions(DEFAULT_COVERAGE_CONFIG).map(
+      ({ id, name, status, services, coverageRatio }) => ({
+        id,
+        name,
+        status,
+        services,
+        coverageRatio,
+      })
+    )
+  );
 
   useEffect(() => {
     fetchPublicCoverage()
       .then((config) => {
         setIntro(subtitle ?? config.intro);
         setRegions(
-          config.regions.filter((region) => region.id !== "national-waitlist")
+          getPublicCoverageRegions(config).map(
+            ({ id, name, status, services, coverageRatio }) => ({
+              id,
+              name,
+              status,
+              services,
+              coverageRatio,
+            })
+          )
         );
       })
       .catch(() => {
-        /* keep empty — static fallback optional */
+        /* Defaults already shown — live config unavailable */
       });
   }, [subtitle]);
 

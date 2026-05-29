@@ -96,10 +96,19 @@ export const handleLeadsStorageError = (error: unknown) => {
     message.includes("not authorized") ||
     message.includes("Access Denied")
   ) {
+    const bucket = process.env.NURTURE_LEADS_BUCKET?.trim() || "nurture-leads-*";
+    const usingStaticKeys = Boolean(
+      process.env.SERVER_AWS_ACCESS_KEY_ID?.trim() ||
+        process.env.AMPLIFY_AWS_ACCESS_KEY_ID?.trim()
+    );
     return NextResponse.json(
       {
         error:
-          "Lead storage access denied. Grant s3:ListBucket, s3:GetObject, and s3:PutObject on the nurture-leads bucket.",
+          `Lead storage access denied for bucket "${bucket}". ` +
+          (usingStaticKeys
+            ? "SERVER_AWS_ACCESS_KEY_ID is set — attach s3:ListBucket, s3:GetObject, s3:PutObject, and s3:DeleteObject on that bucket to the IAM user, or remove those keys so the Amplify compute role is used."
+            : "Attach the NurtureAmplifyPlatformS3 policy to your Amplify compute role (see infrastructure/aws/scripts/attach-amplify-s3-policy.sh).") +
+          " Confirm NURTURE_LEADS_BUCKET matches the CloudFormation LeadsBucketName output, then redeploy Amplify.",
       },
       { status: 503 }
     );
