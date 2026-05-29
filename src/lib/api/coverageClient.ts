@@ -1,4 +1,9 @@
-import type { CoverageConfig } from "@/types/coverage";
+import type { CoverageConfig, CoverageConfigWithMeta } from "@/types/coverage";
+
+const stripCoverageMeta = (payload: CoverageConfigWithMeta): CoverageConfig => {
+  const { _storage: _ignored, ...config } = payload;
+  return config;
+};
 
 const authHeaders = async (): Promise<HeadersInit> => {
   const { fetchAuthSession } = await import("aws-amplify/auth");
@@ -17,7 +22,13 @@ export const fetchPublicCoverage = async (): Promise<CoverageConfig> => {
   return response.json();
 };
 
-export const fetchAdminCoverage = async (): Promise<CoverageConfig> => {
+export type AdminCoverageResult = {
+  config: CoverageConfig;
+  storageWarning?: string;
+  usingSavedConfig: boolean;
+};
+
+export const fetchAdminCoverage = async (): Promise<AdminCoverageResult> => {
   const response = await fetch("/api/admin/coverage", {
     headers: await authHeaders(),
     cache: "no-store",
@@ -26,7 +37,15 @@ export const fetchAdminCoverage = async (): Promise<CoverageConfig> => {
     const data = await response.json().catch(() => ({}));
     throw new Error(typeof data.error === "string" ? data.error : "Could not load coverage");
   }
-  return response.json();
+  const payload = (await response.json()) as CoverageConfigWithMeta;
+  const config = stripCoverageMeta(payload);
+  const warning = payload._storage?.warning;
+  const usingSavedConfig = payload._storage?.source === "s3";
+  return {
+    config,
+    storageWarning: warning,
+    usingSavedConfig,
+  };
 };
 
 export interface ReverseGeocodeResult {
@@ -67,5 +86,5 @@ export const saveAdminCoverage = async (
     const data = await response.json().catch(() => ({}));
     throw new Error(typeof data.error === "string" ? data.error : "Could not save coverage");
   }
-  return response.json();
+  return stripCoverageMeta((await response.json()) as CoverageConfigWithMeta);
 };

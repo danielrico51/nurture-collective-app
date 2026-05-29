@@ -1,0 +1,34 @@
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "TasksAndIntakeS3Objects",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::nurture-collective-tasks/*"
+    },
+    {
+      "Sid": "PlatformCoverageS3",
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:PutObject", "s3:DeleteObject"],
+      "Resource": "arn:aws:s3:::nurture-collective-tasks/platform/coverage/*"
+    },
+    {
+      "Sid": "TasksAndIntakeS3List",
+      "Effect": "Allow",
+      "Action": "s3:ListBucket",
+      "Resource": "arn:aws:s3:::nurture-collective-tasks",
+      "Condition": {
+        "StringLike": {
+          "s3:prefix": ["management/*", "platform/*"]
+        }
+      }
+    },
+    {
+      "Sid": "CognitoListUsers",
+      "Effect": "Allow",
+      "Action": ["cognito-idp:ListUsers", "cognito-idp:ListUsersInGroup"],
+      "Resource": "arn:aws:cognito-idp:us-east-1:886436941204:userpool/us-east-1_rUfTimytf"
+    }
+  ]
+}

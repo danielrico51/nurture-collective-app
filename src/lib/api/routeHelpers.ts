@@ -139,6 +139,49 @@ export const handleBlogStorageError = (error: unknown) => {
   return NextResponse.json({ error: "Failed to access blog storage" }, { status: 500 });
 };
 
+export const handleCoverageStorageError = (error: unknown) => {
+  console.error("[coverage] storage error:", error);
+  const message =
+    error instanceof Error ? error.message : "Storage operation failed";
+  const bucket =
+    process.env.INTAKE_S3_BUCKET?.trim() ||
+    process.env.TASKS_S3_BUCKET?.trim() ||
+    "nurture-collective-tasks";
+  const usingStaticKeys = Boolean(
+    process.env.SERVER_AWS_ACCESS_KEY_ID?.trim() ||
+      process.env.AMPLIFY_AWS_ACCESS_KEY_ID?.trim()
+  );
+
+  if (
+    message.includes("AccessDenied") ||
+    message.includes("not authorized") ||
+    message.includes("Access Denied")
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          `Coverage storage access denied for s3://${bucket}/platform/coverage/*. ` +
+          (usingStaticKeys
+            ? "Attach s3:GetObject and s3:PutObject on that path to the IAM user behind SERVER_AWS_ACCESS_KEY_ID (see infrastructure/aws/policies/nurture-collective-amplify-compute-policy.json), or remove those keys to use the Amplify compute role."
+            : "Attach the Amplify compute policy with platform/coverage access (see infrastructure/aws/scripts/attach-amplify-s3-policy.sh)."),
+      },
+      { status: 503 }
+    );
+  }
+
+  if (message.includes("TASKS_S3_BUCKET") || message.includes("INTAKE_S3_BUCKET")) {
+    return NextResponse.json(
+      {
+        error:
+          "Coverage storage is not configured. Set TASKS_S3_BUCKET or INTAKE_S3_BUCKET in Amplify environment variables.",
+      },
+      { status: 503 }
+    );
+  }
+
+  return NextResponse.json({ error: "Failed to access coverage storage" }, { status: 500 });
+};
+
 export const handleEventsStorageError = (error: unknown) => {
   console.error("[events] storage error:", error);
   const message =

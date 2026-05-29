@@ -29,6 +29,18 @@ export interface CoverageConfig {
   regions: CoverageRegionConfig[];
 }
 
+export type CoverageStorageSource = "s3" | "local" | "defaults";
+
+/** Optional metadata on admin coverage API responses. */
+export interface CoverageStorageMeta {
+  source: CoverageStorageSource;
+  warning?: string;
+}
+
+export type CoverageConfigWithMeta = CoverageConfig & {
+  _storage?: CoverageStorageMeta;
+};
+
 export type CoverageLookupResult =
   | {
       match: true;

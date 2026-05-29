@@ -6,7 +6,11 @@ import {
   readS3ObjectJson,
   writeS3ObjectJson,
 } from "@/lib/intake/s3Storage";
-import type { CoverageConfig } from "@/types/coverage";
+import type {
+  CoverageConfig,
+  CoverageStorageMeta,
+  CoverageStorageSource,
+} from "@/types/coverage";
 
 const COVERAGE_CONFIG_KEY = "platform/coverage/coverage-config.json";
 const LOCAL_PATH = path.join(process.cwd(), ".data", "coverage", "coverage-config.json");
@@ -15,7 +19,11 @@ const isLocalCoverageStorage = (): boolean =>
   process.env.COVERAGE_USE_LOCAL_STORAGE === "true" ||
   (process.env.NODE_ENV === "development" && !getIntakeBucket());
 
-let memoryCache: { config: CoverageConfig; loadedAt: number } | null = null;
+let memoryCache: {
+  config: CoverageConfig;
+  meta: CoverageStorageMeta;
+  loadedAt: number;
+} | null = null;
 const CACHE_TTL_MS = 15_000;
 
 const normalizeConfig = (raw: Partial<CoverageConfig> | null): CoverageConfig => {
@@ -40,7 +48,8 @@ const readLocalConfig = async (): Promise<CoverageConfig | null> => {
   } catch (error) {
     const err = error as NodeJS.ErrnoException;
     if (err.code === "ENOENT") return null;
-    throw error;
+    console.warn("[coverage] Local config unreadable:", err.message ?? error);
+    return null;
   }
 };
 
@@ -49,29 +58,72 @@ const writeLocalConfig = async (config: CoverageConfig): Promise<void> => {
   await writeFile(LOCAL_PATH, JSON.stringify(config, null, 2), "utf8");
 };
 
-export const getCoverageConfig = async (): Promise<CoverageConfig> => {
+export type CoverageLoadResult = {
+  config: CoverageConfig;
+  meta: CoverageStorageMeta;
+};
+
+export const loadCoverageConfig = async (): Promise<CoverageLoadResult> => {
   const now = Date.now();
   if (memoryCache && now - memoryCache.loadedAt < CACHE_TTL_MS) {
-    return memoryCache.config;
+    return { config: memoryCache.config, meta: memoryCache.meta };
   }
 
+  const bucket = getIntakeBucket();
   let config: CoverageConfig;
-  if (isLocalCoverageStorage()) {
-    config = (await readLocalConfig()) ?? { ...DEFAULT_COVERAGE_CONFIG };
-  } else {
-    try {
+  let meta: CoverageStorageMeta;
+
+  try {
+    if (isLocalCoverageStorage()) {
+      const local = await readLocalConfig();
+      if (local) {
+        config = local;
+        meta = { source: "local" };
+      } else {
+        config = { ...DEFAULT_COVERAGE_CONFIG };
+        meta = {
+          source: "defaults",
+          warning: "Using default regions — no local coverage file found.",
+        };
+      }
+    } else {
       const raw = await readS3ObjectJson<CoverageConfig>(COVERAGE_CONFIG_KEY);
-      config = normalizeConfig(raw);
-    } catch (error) {
-      console.warn(
-        "[coverage] S3 read failed — using default regions:",
-        error instanceof Error ? error.message : error
-      );
-      config = { ...DEFAULT_COVERAGE_CONFIG };
+      if (raw?.regions?.length) {
+        config = normalizeConfig(raw);
+        meta = { source: "s3" };
+      } else if (raw === null) {
+        config = { ...DEFAULT_COVERAGE_CONFIG };
+        meta = {
+          source: "defaults",
+          warning: bucket
+            ? `No saved coverage at s3://${bucket}/${COVERAGE_CONFIG_KEY} — using defaults. Save once to create it.`
+            : "TASKS_S3_BUCKET / INTAKE_S3_BUCKET is not set — using default regions.",
+        };
+      } else {
+        config = normalizeConfig(raw);
+        meta = {
+          source: "defaults",
+          warning: "Saved coverage file was empty or invalid — using default regions.",
+        };
+      }
     }
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[coverage] load failed:", message);
+    config = { ...DEFAULT_COVERAGE_CONFIG };
+    meta = {
+      source: "defaults",
+      warning: `Could not read coverage from storage (${message}). Using default regions.`,
+    };
   }
 
-  memoryCache = { config, loadedAt: now };
+  memoryCache = { config, meta, loadedAt: now };
+  return { config, meta };
+};
+
+/** Back-compat helper — never throws. */
+export const getCoverageConfig = async (): Promise<CoverageConfig> => {
+  const { config } = await loadCoverageConfig();
   return config;
 };
 
@@ -92,7 +144,10 @@ export const saveCoverageConfig = async (
     await writeS3ObjectJson(COVERAGE_CONFIG_KEY, next);
   }
 
-  memoryCache = { config: next, loadedAt: Date.now() };
+  const meta: CoverageStorageMeta = {
+    source: isLocalCoverageStorage() ? "local" : "s3",
+  };
+  memoryCache = { config: next, meta, loadedAt: Date.now() };
   return next;
 };
 

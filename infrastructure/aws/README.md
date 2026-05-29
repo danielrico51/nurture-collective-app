@@ -86,6 +86,8 @@ AWS_REGION=us-east-1
 
 Bucket name must match the CloudFormation `LeadsBucketName` output exactly.
 
+Admin **coverage map** reads/writes `s3://nurture-collective-tasks/platform/coverage/coverage-config.json`. The compute policy must allow `s3:GetObject` and `s3:PutObject` on that path (see `policies/nurture-collective-amplify-compute-live.json`).
+
 ### Django backend API
 
 Use `BackendApiRoleArn` for ECS task role, EC2 instance profile, or Elastic Beanstalk.

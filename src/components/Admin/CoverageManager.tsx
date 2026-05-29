@@ -60,10 +60,14 @@ const CoverageManager = () => {
     setLoading(true);
     setLoadError(null);
     try {
-      const data = await fetchAdminCoverage();
-      setConfig(data);
-      setSelectedId(data.regions[0]?.id ?? null);
-      setUsingDefaults(false);
+      const result = await fetchAdminCoverage();
+      setConfig(result.config);
+      setSelectedId(result.config.regions[0]?.id ?? null);
+      setUsingDefaults(!result.usingSavedConfig);
+      setLoadError(result.storageWarning ?? null);
+      if (result.storageWarning) {
+        toast(result.storageWarning, { icon: "⚠️" });
+      }
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Could not load coverage";
@@ -71,7 +75,7 @@ const CoverageManager = () => {
       setConfig({ ...DEFAULT_COVERAGE_CONFIG });
       setSelectedId(DEFAULT_COVERAGE_CONFIG.regions[0]?.id ?? null);
       setUsingDefaults(true);
-      toast.error(`${message} — showing default regions until storage is fixed`);
+      toast.error(message);
     } finally {
       setLoading(false);
     }

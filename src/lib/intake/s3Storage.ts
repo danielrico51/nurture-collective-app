@@ -49,6 +49,17 @@ const isNotFound = (error: unknown) => {
   );
 };
 
+const isAccessDenied = (error: unknown) => {
+  const err = error as { name?: string; message?: string };
+  const message = err.message ?? "";
+  return (
+    err.name === "AccessDenied" ||
+    message.includes("AccessDenied") ||
+    message.includes("Access Denied") ||
+    message.includes("not authorized")
+  );
+};
+
 const normalizeRecord = (
   raw: Partial<PartitionedIntakeRecord>,
   storageKey: string
@@ -76,6 +87,10 @@ export const readS3ObjectJson = async <T>(key: string): Promise<T | null> => {
     return JSON.parse(body) as T;
   } catch (error) {
     if (isNotFound(error)) return null;
+    if (isAccessDenied(error)) {
+      console.warn(`[s3] Access denied reading s3://${Bucket}/${key}`);
+      return null;
+    }
     throw error;
   }
 };
