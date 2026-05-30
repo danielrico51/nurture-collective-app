@@ -6,6 +6,8 @@ export interface IntakeSubmitRequest {
   service_requested: string;
   message?: string;
   source?: string;
+  /** Explicit SMS opt-in for Twilio compliance (contact form checkbox). */
+  sms_consent?: boolean;
 }
 
 export interface EnrichedIntakeLead extends IntakeSubmitRequest {
@@ -21,6 +23,7 @@ export interface EnrichedIntakeLead extends IntakeSubmitRequest {
   email: string;
   service_requested: string;
   message: string;
+  sms_consent: boolean;
 }
 
 export interface IntakeSubmitSuccessResponse {

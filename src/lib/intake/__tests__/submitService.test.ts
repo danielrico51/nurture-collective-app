@@ -103,5 +103,6 @@ describe("enrichPayload", () => {
     expect(enriched.status).toBe("new");
     expect(enriched.version).toBe(1);
     expect(enriched.lead_source).toBe("website");
+    expect(enriched.sms_consent).toBe(false);
   });
 });

@@ -56,6 +56,7 @@ export const validatePayload = (raw: unknown): IntakeSubmitRequest => {
   const serviceRequested = String(body.service_requested ?? "").trim();
   const message = String(body.message ?? "").trim();
   const source = String(body.source ?? "website").trim() || "website";
+  const smsConsent = body.sms_consent === true || body.sms_consent === "true";
 
   if (!firstName) {
     throw new IntakeValidationError("first_name is required");
@@ -81,6 +82,7 @@ export const validatePayload = (raw: unknown): IntakeSubmitRequest => {
     service_requested: serviceRequested,
     message: message || undefined,
     source,
+    sms_consent: smsConsent,
   };
 };
 
@@ -94,6 +96,7 @@ export const normalizePayload = (
   service_requested: payload.service_requested.trim(),
   message: payload.message?.trim() ?? "",
   source: payload.source?.trim() || "website",
+  sms_consent: payload.sms_consent === true,
 });
 
 export const enrichPayload = (
@@ -113,6 +116,7 @@ export const enrichPayload = (
     email: payload.email ?? "",
     service_requested: payload.service_requested,
     message: payload.message ?? "",
+    sms_consent: payload.sms_consent === true,
   };
 };
 

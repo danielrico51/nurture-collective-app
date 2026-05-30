@@ -61,7 +61,7 @@ export const brands = {
     serviceArea: "Northern New Jersey and surrounding areas",
     description:
       "An experienced maternal wellness and postpartum care practice offering birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of care.",
-    phone: "201-623-3629",
+    phone: "(844) 926-2867",
     email: "info@thenestingplacenj.com",
   },
   /** Legal entity operating The Nesting Place and the provider platform. */
@@ -73,6 +73,19 @@ export const brands = {
       "Nurture Collective LLC connects families with trusted birth doulas, postpartum support, lactation consultants, and wellness professionals through The Nesting Place and our growing provider network.",
   },
 } as const;
+
+export const socialLinks = [
+  {
+    id: "instagram",
+    label: "Instagram",
+    href: "https://www.instagram.com/thenestingplacenjny",
+  },
+  {
+    id: "facebook",
+    label: "Facebook",
+    href: "https://www.facebook.com/thenestingplacenjny",
+  },
+] as const;
 
 /** Regions where in-person or local provider matching is live today. Add rows as you expand. */
 export const coverageRegions: CoverageRegion[] = [

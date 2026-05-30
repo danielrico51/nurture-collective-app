@@ -1,6 +1,6 @@
 import Image from "next/image";
 import Link from "next/link";
-import { brands } from "@/content/site";
+import { brands, socialLinks } from "@/content/site";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 
 const Footer = () => {
@@ -101,7 +101,20 @@ const Footer = () => {
             </ul>
           </div>
         </div>
-        <p className="mt-10 border-t border-nurture-sage/10 pt-6 text-center text-xs text-nurture-charcoal/50">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+          {socialLinks.map((link) => (
+            <a
+              key={link.id}
+              href={link.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark"
+            >
+              {link.label}
+            </a>
+          ))}
+        </div>
+        <p className="mt-6 border-t border-nurture-sage/10 pt-6 text-center text-xs text-nurture-charcoal/50">
           {brands.nestingPlace.name} provides wellness and support services — not
           medical advice. Always consult your healthcare provider for clinical
           concerns. © {new Date().getFullYear()} {brands.nurtureCollective.name}.

@@ -81,25 +81,75 @@ leads/lead_id={uuid}/profile/file_datetime=.../lead_profile.json
 
 ## n8n workflow
 
-**Easiest start:** import `docs/platform/n8n-website-intake-workflow-minimal.json` — webhook → normalize → email only (no S3; the website already stores leads).
+**Easiest start:** import `docs/platform/n8n-website-intake-workflow-minimal.json`:
+
+```text
+Webhook → Prepare Lead → Gmail + Twilio team SMS + Twilio mom SMS (if phone)
+```
 
 Full workflow (optional S3 backup in n8n): `docs/platform/n8n-website-intake-workflow.json`
 
-Recommended nodes (minimal):
+### Twilio SMS (Phase 1 — n8n only)
 
-1. **Webhook** — `POST /intake`, respond immediately `200`
-2. **Set** — add `received_at`, `workflow_version=1`
-3. **Email** — dev notification only (no WhatsApp in phase 1)
+Business number: **+1 (844) 926-2867** (`+18449262867`)
 
-Optional in the full workflow: S3 upload node (redundant if `NURTURE_LEADS_BUCKET` is set on Amplify).
+Twilio Phone Number SID (for Console / API reference): `PN848effb3e4edce45f501bfe2e97a1e97`
+
+| Node | Purpose |
+|------|---------|
+| **SMS Team Alert** | Texts coordinator when a lead arrives |
+| **SMS Mom Confirmation** | Auto-reply to the lead if they left a phone number |
+
+**Setup in n8n:**
+
+1. **Credentials** → **Twilio** → Account SID + Auth Token from [Twilio Console](https://console.twilio.com/)
+2. Assign credentials to both **SMS** nodes
+3. Open **Prepare Lead** (Code node) and edit the top constants if needed:
+   - `TWILIO_FROM` — `+18449262867` (already set)
+   - `COORDINATOR_SMS_TO` — mobile number that receives team alerts (default `+12626139986`, change in n8n)
+   - `APP_URL` — production site URL when you go live (concierge link in mom SMS)
+4. **Do not use `$env`** — n8n Cloud blocks it; use literals in the Code node
+5. Activate workflow; webhook path stays **`intake`**
+
+**Mom SMS copy (default):**
+
+> Hi {first name}, thanks for contacting The Nesting Place. Our care coordinator will follow up within one business day. You can also continue online: {APP_URL}/care/start
+
+**Twilio trial note:** verify recipient numbers in Twilio Console until the account is production-ready.
+
+**Mom SMS** only sends when the website payload includes `sms_consent: true` (contact form checkbox).
+
+### Twilio toll-free verification — proof of consent
+
+Twilio requires proof that customers **opt in** before you text them on **(844) 926-2867**.
+
+**What to submit in Twilio Console:**
+
+| Field | Suggested answer |
+|-------|------------------|
+| **Opt-in type** | Web form |
+| **Opt-in URL** | `https://dev.d9588bqvrp5xs.amplifyapp.com/contact` (production URL when live) |
+| **Opt-in language** | “I agree to receive text messages from The Nesting Place about my inquiry and care coordination. Message and data rates may apply. Reply STOP to opt out.” |
+| **Screenshot** | Contact form showing phone field + **unchecked-by-default** SMS checkbox (take after deploy) |
+| **Message type** | Transactional — appointment follow-up and care coordination (not marketing blasts) |
+
+**Team alert SMS** (coordinator only) is internal operations — describe separately if Twilio asks about use cases: “Staff notification when a new lead is submitted; not sent to consumers.”
+
+**Important:** Mom confirmation texts in n8n run only when `sms_consent` is `true` in the webhook payload.
+
+### Gmail
+
+1. **Gmail Notification** → OAuth as `danielrico51@gmail.com`
+2. **To:** `danielrico51@gmail.com`
+3. No `$env.FROM_EMAIL` — use Gmail OAuth only
 
 ### n8n Cloud: “access to env vars denied”
 
 n8n Cloud blocks `$env.VARIABLE` in workflow expressions by default.
 
-- Do **not** use `$env.LEADS_BUCKET` or similar in nodes — hardcode values or remove S3 nodes (the website already stores leads).
-- Prefer the **Gmail** node with OAuth for `danielrico51@gmail.com` instead of the generic **Email Send** node if SMTP/env issues persist.
-- Re-import `n8n-website-intake-workflow-minimal.json` (uses Gmail node, no `$env`).
+- Do **not** use `$env.LEADS_BUCKET` or `$env.FROM_EMAIL` in nodes
+- Use literals in the **Prepare Lead** Code node or hardcode in node fields
+- Deactivate old workflows that still use **Email Send** with `$env`
 
 ## Frontend
 
@@ -112,4 +162,4 @@ The contact page (`/contact`) submits to `/api/intake/submit` with:
 
 ## Phase 2 (not implemented)
 
-WhatsApp Business, AI intake bot, scheduling automation, and human handoff will plug into the n8n notification layer later.
+Inbound SMS to Twilio → concierge, WhatsApp Business, and two-way AI intake over text.

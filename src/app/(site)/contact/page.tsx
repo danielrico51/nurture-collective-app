@@ -5,7 +5,7 @@ import ContactOptions from "@/components/Common/ContactOptions";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { integrations } from "@/config/integrations";
 import { PREFERRED_CONTACT_OPTIONS, SERVICE_SLUGS } from "@/types/inquiry";
-import { mapContactFormToIntakeSubmit } from "@/lib/intake/mapContactForm";
+import { mapContactFormToIntakeSubmit, SMS_CONSENT_LABEL } from "@/lib/intake/mapContactForm";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
@@ -22,10 +22,22 @@ function ContactForm() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [phoneValue, setPhoneValue] = useState("");
+  const [preferredContact, setPreferredContact] = useState("email");
+  const [smsConsent, setSmsConsent] = useState(false);
+
+  const needsSmsConsent =
+    phoneValue.trim().length > 0 || preferredContact === "whatsapp";
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (submitting || submitted) return;
+
+    if (needsSmsConsent && !smsConsent) {
+      toast.error("Please agree to receive text messages, or remove your phone number.");
+      return;
+    }
+
     setSubmitting(true);
     setSubmitError(null);
 
@@ -40,6 +52,7 @@ function ContactForm() {
       message: String(data.get("message") ?? ""),
       preferredContact: String(data.get("preferredContact") ?? "email"),
       serviceSlug: String(data.get("serviceInterest") ?? serviceParam) || undefined,
+      smsConsent,
     });
 
     try {
@@ -121,6 +134,8 @@ function ContactForm() {
           name="phone"
           type="tel"
           placeholder="+12065550100"
+          value={phoneValue}
+          onChange={(event) => setPhoneValue(event.target.value)}
           className={inputClassName}
         />
       </div>
@@ -131,7 +146,8 @@ function ContactForm() {
         <select
           id="preferredContact"
           name="preferredContact"
-          defaultValue="email"
+          value={preferredContact}
+          onChange={(event) => setPreferredContact(event.target.value)}
           className={inputClassName}
         >
           {PREFERRED_CONTACT_OPTIONS.map((option) => (
@@ -178,6 +194,21 @@ function ContactForm() {
           className={inputClassName}
         />
       </div>
+
+      {needsSmsConsent ? (
+        <label className="flex items-start gap-3 rounded-xl border border-nurture-sage/20 bg-nurture-cream/40 p-4">
+          <input
+            type="checkbox"
+            name="smsConsent"
+            checked={smsConsent}
+            onChange={(event) => setSmsConsent(event.target.checked)}
+            required={needsSmsConsent}
+            className="mt-1 h-4 w-4 rounded border-nurture-sage/40 text-nurture-sage focus:ring-nurture-sage"
+          />
+          <span className="text-sm text-nurture-charcoal/80">{SMS_CONSENT_LABEL}</span>
+        </label>
+      ) : null}
+
       <button
         type="submit"
         disabled={submitting}
