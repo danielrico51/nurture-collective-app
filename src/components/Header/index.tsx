@@ -1,8 +1,7 @@
 "use client";
 
 import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
-import { primaryNavLinks, providerNavLink } from "@/config/navigation";
-import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
+import { primaryNavLinks } from "@/config/navigation";
 import { useUserGroups } from "@/hooks/useUserGroups";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import Link from "next/link";
@@ -73,10 +72,10 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
           {isAuthenticated ? (
             <>
               <Link
-                href="/dashboard"
+                href="/apps"
                 className="text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
               >
-                Dashboard
+                My apps
               </Link>
               <Link
                 href="/account/profile"
@@ -103,16 +102,16 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
           ) : (
             <>
               <Link
-                href={providerNavLink.href}
-                className="hidden text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark lg:inline"
-              >
-                {providerNavLink.label}
-              </Link>
-              <Link
                 href="/signin"
                 className="text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
               >
                 Sign in
+              </Link>
+              <Link
+                href="/signup/mom"
+                className="rounded-full border border-nurture-sage px-4 py-2 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
+              >
+                Sign up
               </Link>
               <Link
                 href="/care/start"
@@ -120,14 +119,6 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
               >
                 Request support
               </Link>
-              {PUBLIC_SIGNUP_ENABLED ? (
-                <Link
-                  href="/signup/mom"
-                  className="rounded-full border border-nurture-sage px-4 py-2 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
-                >
-                  Join
-                </Link>
-              ) : null}
             </>
           )}
         </div>
@@ -161,8 +152,8 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
           <div className="mt-4 flex flex-col gap-2 border-t border-nurture-sage/20 pt-4">
             {isAuthenticated ? (
               <>
-                <Link href="/dashboard" onClick={() => setMenuOpen(false)}>
-                  Dashboard
+                <Link href="/apps" onClick={() => setMenuOpen(false)}>
+                  My apps
                 </Link>
                 <Link href="/account/profile" onClick={() => setMenuOpen(false)}>
                   Profile
@@ -184,12 +175,8 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 <Link href="/signin" onClick={() => setMenuOpen(false)}>
                   Sign in
                 </Link>
-                <Link
-                  href={providerNavLink.href}
-                  onClick={() => setMenuOpen(false)}
-                  className="text-nurture-charcoal/70"
-                >
-                  {providerNavLink.label}
+                <Link href="/signup/mom" onClick={() => setMenuOpen(false)}>
+                  Sign up
                 </Link>
               </>
             )}

@@ -1,6 +1,7 @@
 "use client";
 
 import { AuthPageShell } from "@/components/Auth/AuthPageShell";
+import { SocialAuthButtons } from "@/components/Auth/SocialAuthButtons";
 import { Authenticator } from "@aws-amplify/ui-react";
 import type { ValidatorResult } from "@aws-amplify/ui";
 import { Hub } from "aws-amplify/utils";
@@ -48,16 +49,11 @@ const SignupPage = () => {
 
   return (
     <AuthPageShell
-      eyebrow="For moms"
-      title="Create your member account"
-      subtitle={`Join ${brands.nestingPlace.name} to access support through our provider network and personal care coordination.`}
-      highlights={[
-        "Personalized member support",
-        "Resources for every stage",
-        "A caring community behind you",
-      ]}
+      layout="centered"
+      title="Sign up"
+      subtitle={`Create your ${brands.nestingPlace.name} member account.`}
       footer={
-        <p className="mt-6 border-t border-nurture-sage/10 pt-6 text-center text-sm text-nurture-charcoal/65">
+        <p className="mt-4 border-t border-nurture-sage/10 pt-4 text-center text-sm text-nurture-charcoal/65">
           Already a member?{" "}
           <Link
             href="/signin"
@@ -68,6 +64,7 @@ const SignupPage = () => {
         </p>
       }
     >
+      <SocialAuthButtons mode="signUp" returnTo={returnTo} />
       <Authenticator
         initialState="signUp"
         services={{

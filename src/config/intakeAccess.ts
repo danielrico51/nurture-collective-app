@@ -5,7 +5,7 @@ export const isPublicIntakeEnabled = (): boolean =>
 
 export const PUBLIC_INTAKE_PATH = "/intake";
 
-const AUTHENTICATED_INTAKE_PATH = "/dashboard/intake";
+const AUTHENTICATED_INTAKE_PATH = "/apps/dashboard/intake";
 
 export const resolveIntakePath = (): string =>
   isPublicIntakeEnabled() ? PUBLIC_INTAKE_PATH : AUTHENTICATED_INTAKE_PATH;

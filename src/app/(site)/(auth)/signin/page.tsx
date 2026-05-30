@@ -1,6 +1,7 @@
 "use client";
 
 import { AuthPageShell } from "@/components/Auth/AuthPageShell";
+import { SocialAuthButtons } from "@/components/Auth/SocialAuthButtons";
 import { Authenticator } from "@aws-amplify/ui-react";
 import { getCurrentUser } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
@@ -95,6 +96,7 @@ const SigninPage = () => {
         )
       }
     >
+      <SocialAuthButtons mode="signIn" returnTo={returnTo} />
       <Authenticator
         initialState="signIn"
         hideSignUp

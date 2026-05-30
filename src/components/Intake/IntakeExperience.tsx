@@ -50,7 +50,7 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
     if (!ready || intakeLoading || redirectedRef.current) return;
     if (isIntakeComplete(intake?.profile?.intakeStatus)) {
       redirectedRef.current = true;
-      router.replace("/dashboard");
+      router.replace("/apps/dashboard");
       return;
     }
     setBootstrapped(true);

@@ -3,7 +3,7 @@ export interface NavLink {
   label: string;
 }
 
-/** Primary navigation — parent-focused; providers are linked separately in the header CTA. */
+/** Primary site navigation. Provider onboarding lives at /for-providers (footer and in-page links). */
 export const primaryNavLinks: NavLink[] = [
   { href: "/", label: "Home" },
   { href: "/services", label: "Services" },
@@ -14,8 +14,3 @@ export const primaryNavLinks: NavLink[] = [
   { href: "/gift-cards", label: "Gift Cards" },
   { href: "/contact", label: "Contact" },
 ];
-
-export const providerNavLink: NavLink = {
-  href: "/for-providers",
-  label: "For providers",
-};

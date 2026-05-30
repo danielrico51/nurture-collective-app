@@ -167,7 +167,7 @@ const IntakeFlow = ({
         localStorage.removeItem(`${INTAKE_DRAFT_STORAGE_KEY}-${userId}`);
       }
       toast.success("Your support journey has started — welcome!");
-      router.push("/dashboard");
+      router.push("/apps/dashboard");
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Could not submit intake"
@@ -191,7 +191,7 @@ const IntakeFlow = ({
             Your personalized recommendations are waiting on your dashboard.
           </p>
           <Link
-            href="/dashboard"
+            href="/apps/dashboard"
             className="mt-8 inline-block rounded-full bg-nurture-sage px-8 py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
           >
             View dashboard
@@ -224,7 +224,7 @@ const IntakeFlow = ({
           </button>
           <p className="mt-6 text-sm text-nurture-charcoal/50">
             Already have an account?{" "}
-            <Link href="/dashboard" className="font-medium text-nurture-sage-dark hover:underline">
+            <Link href="/apps/dashboard" className="font-medium text-nurture-sage-dark hover:underline">
               Go to dashboard
             </Link>
           </p>

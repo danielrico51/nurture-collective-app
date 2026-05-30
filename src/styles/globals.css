@@ -26,6 +26,30 @@ body {
   max-width: 100%;
 }
 
+/* Sign-up page: hide tab switcher only (do not hide .amplify-tabs — it wraps the form) */
+.nurture-authenticator--signup-only [role="tablist"] {
+  display: none;
+}
+
+.nurture-authenticator--compact .amplify-tabs {
+  margin-bottom: 1rem;
+}
+
+.nurture-authenticator--compact .amplify-label {
+  font-size: 0.75rem;
+}
+
+.nurture-authenticator--compact .amplify-input,
+.nurture-authenticator--compact .amplify-field-group__control {
+  font-size: 0.875rem;
+  min-height: 2.5rem;
+  padding-inline: 0.75rem;
+}
+
+.nurture-authenticator--compact .amplify-button[type="submit"] {
+  min-height: 2.625rem;
+}
+
 .nurture-authenticator [data-amplify-authenticator] {
   width: 100%;
   max-width: 100%;

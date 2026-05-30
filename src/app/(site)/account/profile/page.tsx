@@ -33,7 +33,7 @@ const ProfilePage = () => {
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-2xl">
             <p className="mb-6 text-sm text-nurture-charcoal/60">
-              <Link href="/dashboard" className="hover:text-nurture-sage-dark">
+              <Link href="/apps" className="hover:text-nurture-sage-dark">
                 ← Back to dashboard
               </Link>
             </p>

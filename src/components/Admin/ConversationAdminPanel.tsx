@@ -34,7 +34,7 @@ const ConversationAdminPanel = ({
   onRefresh,
   onReopen,
 }: ConversationAdminPanelProps) => {
-  const continuePath = lead.isGuest ? "/intake" : "/dashboard/intake";
+  const continuePath = lead.isGuest ? "/intake" : "/apps/dashboard/intake";
 
   return (
     <div className="rounded-xl border border-nurture-sage/15 bg-white p-4">
@@ -110,7 +110,7 @@ const ConversationAdminPanel = ({
         Reopening sets the session back to active
         {lead.isGuest
           ? " so the guest can continue at /intake."
-          : " and resets member intake to draft for testing at /dashboard/intake."}
+          : " and resets member intake to draft for testing at /apps/dashboard/intake."}
       </p>
     </div>
   );

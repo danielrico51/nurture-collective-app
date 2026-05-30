@@ -52,12 +52,16 @@ A Next.js marketing site and member portal for pre- and postpartum mom concierge
 |-------|-------------|
 | `/signup` | Create account (email verification code) |
 | `/signin` | Sign in |
-| `/dashboard` | Protected member area (requires sign-in) |
+| `/apps` | Member app hub (requires sign-in) |
+| `/apps/dashboard` | Support dashboard — intake, recommendations, checklist |
+| `/dashboard` | Redirects to `/apps/dashboard` |
 | `/admin` | Admin app hub (requires Cognito `admin` group) |
 | `/admin/tasks` | Team task board |
 | `/management/tasks` | Redirects to `/admin/tasks` |
 
-After sign-in or sign-up, you are redirected to `/dashboard`.
+After sign-in or sign-up, members are redirected to `/apps/dashboard` (or intake if not complete). Admins go to `/admin`.
+
+Register new member apps in `src/config/memberApps.ts`, then add a route under `src/app/(site)/apps/`.
 
 ## Admin workspace
 

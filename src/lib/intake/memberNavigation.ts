@@ -10,7 +10,7 @@ export async function resolveMemberHomePath(): Promise<string> {
     const session = await fetchAuthSession();
     const groups = extractGroupsFromSession(session);
     if (canAccessAdminApps(groups)) {
-      return "/dashboard";
+      return "/admin";
     }
   } catch {
     /* fall through to intake check */
@@ -19,13 +19,13 @@ export async function resolveMemberHomePath(): Promise<string> {
   try {
     const intake = await fetchIntake();
     if (isIntakeComplete(intake.profile?.intakeStatus)) {
-      return "/dashboard";
+      return "/apps/dashboard";
     }
   } catch {
     /* unauthenticated or storage unavailable */
   }
 
-  return "/dashboard/intake";
+  return "/apps/dashboard/intake";
 }
 
 export const hasCompletedIntake = async (): Promise<boolean> => {

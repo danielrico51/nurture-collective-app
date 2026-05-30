@@ -170,7 +170,7 @@ const ConversationalIntake = ({
             : "Your care profile is ready — welcome!"
         );
         if (!guestMode) {
-          router.push("/dashboard");
+          router.push("/apps/dashboard");
         }
         return;
       }
@@ -310,7 +310,7 @@ const ConversationalIntake = ({
               </Link>
             ) : (
               <Link
-                href="/dashboard"
+                href="/apps/dashboard"
                 className="rounded-full bg-nurture-sage px-4 py-2 text-xs font-semibold text-white hover:bg-nurture-sage-dark"
               >
                 Go to dashboard

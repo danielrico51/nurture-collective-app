@@ -71,7 +71,7 @@ export function AdminAccessDenied({
         </div>
 
         <Link
-          href="/dashboard"
+          href="/apps"
           className="mt-5 inline-block text-sm text-nurture-charcoal/55 hover:text-nurture-sage-dark"
         >
           ← Back to dashboard

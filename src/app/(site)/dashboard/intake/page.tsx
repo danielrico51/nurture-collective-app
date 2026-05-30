@@ -1,7 +1,5 @@
-"use client";
+import { redirect } from "next/navigation";
 
-import IntakeExperience from "@/components/Intake/IntakeExperience";
-
-const IntakePage = () => <IntakeExperience />;
-
-export default IntakePage;
+export default function LegacyDashboardIntakeRedirect() {
+  redirect("/apps/dashboard/intake");
+}
