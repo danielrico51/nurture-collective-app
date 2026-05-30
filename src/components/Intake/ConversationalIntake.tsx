@@ -59,12 +59,6 @@ const ConversationalIntake = ({
   const initRef = useRef(false);
   const followLatestRef = useRef(false);
 
-  const scrollMessagesToBottom = useCallback((behavior: ScrollBehavior = "smooth") => {
-    const container = messagesContainerRef.current;
-    if (!container) return;
-    container.scrollTo({ top: container.scrollHeight, behavior });
-  }, []);
-
   const scrollMessagesToTop = useCallback(() => {
     const container = messagesContainerRef.current;
     if (!container) return;
@@ -72,17 +66,40 @@ const ConversationalIntake = ({
   }, []);
 
   const syncScrollPosition = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+
     if (followLatestRef.current || hasUserMessages(messages)) {
-      scrollMessagesToBottom(streamingText || sending ? "auto" : "smooth");
+      const nearBottom =
+        container.scrollHeight -
+          container.scrollTop -
+          container.clientHeight <
+        120;
+      if (nearBottom || sending) {
+        container.scrollTop = container.scrollHeight;
+      }
       return;
     }
     scrollMessagesToTop();
-  }, [messages, scrollMessagesToBottom, scrollMessagesToTop, sending, streamingText]);
+  }, [messages, scrollMessagesToTop, sending]);
 
   useEffect(() => {
     if (loading) return;
     syncScrollPosition();
-  }, [loading, messages, streamingText, sending, syncScrollPosition]);
+  }, [loading, messages, syncScrollPosition]);
+
+  useEffect(() => {
+    if (loading || !streamingText) return;
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    if (!followLatestRef.current && !hasUserMessages(messages)) return;
+
+    const nearBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight < 120;
+    if (nearBottom) {
+      container.scrollTop = container.scrollHeight;
+    }
+  }, [loading, messages, streamingText]);
 
   useEffect(() => {
     if (initRef.current) return;
@@ -99,20 +116,14 @@ const ConversationalIntake = ({
           try {
             const stored = await fetchConversation(storedSessionId);
             followLatestRef.current = hasUserMessages(stored.messages);
-            if (stored.status === "active") {
-              setSession(stored);
-              setMessages(stored.messages);
-              setQuickReplies(stored.quickReplies);
-              return;
-            }
+            setSession(stored);
+            setMessages(stored.messages);
+            setQuickReplies(stored.quickReplies);
+            setSessionClosed(stored.status === "completed");
             if (stored.status === "completed") {
-              setSession(stored);
-              setMessages(stored.messages);
-              setQuickReplies([]);
-              setSessionClosed(true);
               followLatestRef.current = true;
-              return;
             }
+            return;
           } catch {
             window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
           }
@@ -152,6 +163,7 @@ const ConversationalIntake = ({
       window.sessionStorage.setItem(SESSION_STORAGE_KEY, nextSession.id);
 
       if (intakeSubmitted) {
+        setSessionClosed(true);
         toast.success(
           guestMode
             ? "Your care profile is saved — create a free account to keep it, or book a follow-up call."
@@ -202,18 +214,27 @@ const ConversationalIntake = ({
         },
         onError: async (error) => {
           setStreamingText("");
-          toast.error(error);
           try {
             const refreshed = await fetchConversation(session.id);
             setSession(refreshed);
             setMessages(refreshed.messages);
             setQuickReplies(refreshed.quickReplies);
             followLatestRef.current = hasUserMessages(refreshed.messages);
-            if (refreshed.status === "completed") {
-              setSessionClosed(true);
+            const reopened = refreshed.status === "active";
+            setSessionClosed(!reopened);
+            if (reopened) {
+              toast.error(
+                "Your message did not go through. The conversation is open again — please try sending once more."
+              );
+            } else {
+              toast.error(
+                error.includes("finished") || error.includes("completed")
+                  ? error
+                  : error
+              );
             }
           } catch {
-            /* keep optimistic UI */
+            toast.error(error);
           }
         },
       });
@@ -264,8 +285,11 @@ const ConversationalIntake = ({
     );
   }
 
+  const showBookCallCard =
+    guestMode && hasBooking() && hasUserMessages(messages);
+
   return (
-    <div className="mx-auto flex h-full max-w-2xl flex-col overflow-hidden">
+    <div className="mx-auto flex h-full w-full max-w-3xl flex-col overflow-hidden px-2 sm:max-w-4xl sm:px-4 lg:max-w-5xl">
       <ProfileProgressBar score={session?.extractedProfile.completionScore ?? 0} />
 
       {sessionClosed ? (
@@ -305,34 +329,46 @@ const ConversationalIntake = ({
 
       <div
         ref={messagesContainerRef}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-4 py-6"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-4 sm:px-4 sm:py-6"
       >
         {showWelcomeIntro ? (
-          <div className="mb-8 text-center">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-nurture-sage/20 to-nurture-blush/30 text-xl">
+          <div className="mb-4 text-center sm:mb-6">
+            <div className="mx-auto flex h-11 w-11 items-center justify-center rounded-full bg-gradient-to-br from-nurture-sage/20 to-nurture-blush/30 text-lg sm:h-14 sm:w-14 sm:text-xl">
               ✦
             </div>
-            <h1 className="mt-4 font-serif text-2xl font-semibold text-nurture-charcoal">
+            <h1 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal sm:mt-4 sm:text-2xl">
               {careCoordinator.intake.title}
             </h1>
-            <p className="mx-auto mt-2 max-w-sm text-sm leading-relaxed text-nurture-charcoal/65">
+            <p className="mx-auto mt-1.5 max-w-md text-sm leading-relaxed text-nurture-charcoal/65">
               A calm, private space to share where you are — we&apos;ll build your
               personalized care profile together.
             </p>
-            {guestMode ? (
-              <GuestSaveProgressPrompt variant="card" className="mx-auto mt-5 max-w-md" />
-            ) : null}
+            {guestMode ? null : (
+              <GuestSaveProgressPrompt
+                variant="card"
+                className="mx-auto mt-4 max-w-md sm:mt-5"
+              />
+            )}
           </div>
         ) : null}
 
         <div className="space-y-4">
-          {messages.map((message) => (
+          {messages.map((message, index) => {
+            if (
+              showWelcomeIntro &&
+              index === 0 &&
+              message.role === "assistant"
+            ) {
+              return null;
+            }
+            return (
             <ChatMessageBubble
               key={message.id}
               role={message.role === "user" ? "user" : "assistant"}
               content={message.content}
             />
-          ))}
+            );
+          })}
           {streamingText ? (
             <ChatMessageBubble
               role="assistant"
@@ -344,7 +380,7 @@ const ConversationalIntake = ({
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-nurture-sage/10 bg-gradient-to-t from-nurture-cream via-nurture-cream/95 to-nurture-cream/80 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3">
+      <div className="shrink-0 border-t border-nurture-sage/10 bg-gradient-to-t from-nurture-cream via-nurture-cream/95 to-nurture-cream/80 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 overscroll-contain">
         {showGuestSaveHint ? (
           <GuestSaveProgressPrompt variant="compact" className="mb-2" />
         ) : null}
@@ -398,7 +434,7 @@ const ConversationalIntake = ({
           </button>
         ) : null}
 
-        {guestMode && hasBooking() ? (
+        {showBookCallCard ? (
           <div className="mt-3 rounded-2xl border border-nurture-sage/20 bg-white/90 p-4 text-center">
             <p className="text-sm font-medium text-nurture-charcoal">
               Ready for a human touch?

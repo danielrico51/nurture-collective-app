@@ -117,14 +117,18 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
   }
 
   return (
-    <div className="h-[calc(100dvh-5rem)] overflow-hidden bg-gradient-to-b from-nurture-cream via-white to-nurture-cream/50">
-      {publicMode ? <GuestSaveProgressPrompt variant="banner" /> : null}
-      <ConversationalIntake
+    <div className="flex min-h-[calc(100dvh-4.5rem)] flex-col overflow-hidden bg-gradient-to-b from-nurture-cream via-white to-nurture-cream/50 sm:min-h-[calc(100dvh-5rem)]">
+      {publicMode ? (
+        <GuestSaveProgressPrompt variant="banner" className="shrink-0" />
+      ) : null}
+      <div className="min-h-0 flex-1">
+        <ConversationalIntake
         userId={userId}
         defaults={defaults}
         guestMode={publicMode}
         initialService={initialService}
-      />
+        />
+      </div>
     </div>
   );
 };

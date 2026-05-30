@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { requireAuthUserOrGuest } from "@/lib/api/authHelpers";
 import { handleIntakeStorageError } from "@/lib/api/routeHelpers";
 import { processConversationMessageStream } from "@/lib/conversation/engine";
+import { reactivateConversationIfIncomplete } from "@/lib/conversation/sessionLifecycle";
 import { getConversationSession } from "@/lib/conversation/storage";
 
 export const dynamic = "force-dynamic";
@@ -29,16 +30,21 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const session = await getConversationSession(user.sub, sessionId, user.email);
+    let session = await getConversationSession(user.sub, sessionId, user.email);
     if (!session) {
       return new Response(JSON.stringify({ error: "Session not found" }), {
         status: 404,
       });
     }
+    session = await reactivateConversationIfIncomplete(session);
     if (session.status === "completed") {
-      return new Response(JSON.stringify({ error: "Session already completed" }), {
-        status: 400,
-      });
+      return new Response(
+        JSON.stringify({
+          error:
+            "This conversation is finished. Start a new conversation to continue.",
+        }),
+        { status: 400 }
+      );
     }
 
     const encoder = new TextEncoder();

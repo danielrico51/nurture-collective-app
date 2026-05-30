@@ -7,8 +7,8 @@ const ProfileProgressBar = ({
   score,
   label = "Building your care profile",
 }: ProfileProgressBarProps) => (
-  <div className="border-b border-nurture-sage/10 bg-white/80 px-4 py-3 backdrop-blur-sm">
-    <div className="mx-auto flex max-w-2xl items-center gap-3">
+  <div className="border-b border-nurture-sage/10 bg-white/80 px-4 py-2 backdrop-blur-sm sm:py-3">
+    <div className="mx-auto flex w-full max-w-5xl items-center gap-3">
       <div className="min-w-0 flex-1">
         <p className="truncate text-xs font-medium text-nurture-charcoal/60">
           {label}

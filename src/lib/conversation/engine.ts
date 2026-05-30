@@ -451,6 +451,10 @@ export const resumeOrCreateSession = async (
 ) => {
   const { abandonActiveConversations, getActiveConversationForUser } =
     await import("@/lib/conversation/storage");
+  const {
+    getLatestIncompleteCompletedSession,
+    reactivateConversationIfIncomplete,
+  } = await import("@/lib/conversation/sessionLifecycle");
 
   if (options.forceNew) {
     await abandonActiveConversations(userId, defaults.email);
@@ -495,6 +499,23 @@ export const resumeOrCreateSession = async (
       extractedProfile,
     };
   }
+
+  const incompleteCompleted = await getLatestIncompleteCompletedSession(
+    userId,
+    defaults.email
+  );
+  if (incompleteCompleted) {
+    const reopened = await reactivateConversationIfIncomplete(incompleteCompleted);
+    return {
+      ...reopened,
+      extractedProfile: mergeExtractedProfile(reopened.extractedProfile, {
+        name: reopened.extractedProfile.name || defaults.name || "",
+        email: reopened.extractedProfile.email || defaults.email || "",
+        phone: reopened.extractedProfile.phone || defaults.phone || "",
+      }),
+    };
+  }
+
   return createConversationSession(
     userId,
     defaults,
