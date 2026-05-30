@@ -1,3 +1,4 @@
+import { SocialIcon } from "@/components/Common/SocialIcon";
 import Image from "next/image";
 import Link from "next/link";
 import { brands, socialLinks } from "@/content/site";
@@ -101,16 +102,18 @@ const Footer = () => {
             </ul>
           </div>
         </div>
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-6 gap-y-2">
+        <div className="mt-10 flex items-center justify-center gap-5">
           {socialLinks.map((link) => (
             <a
               key={link.id}
               href={link.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-sm font-medium text-nurture-charcoal/70 hover:text-nurture-sage-dark"
+              {...(link.id === "sms"
+                ? {}
+                : { target: "_blank", rel: "noopener noreferrer" })}
+              aria-label={link.label}
+              className="rounded-full p-2 text-nurture-charcoal/70 transition hover:bg-nurture-sage/10 hover:text-nurture-sage-dark"
             >
-              {link.label}
+              <SocialIcon network={link.id} className="h-6 w-6" />
             </a>
           ))}
         </div>

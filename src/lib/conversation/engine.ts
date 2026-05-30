@@ -69,7 +69,8 @@ export interface PreselectedService {
 export const createConversationSession = async (
   userId: string,
   defaults: Partial<ExtractedMaternalProfile> = {},
-  preselectedService?: PreselectedService
+  preselectedService?: PreselectedService,
+  skipWelcome = false
 ): Promise<ConversationSession> => {
   const now = new Date().toISOString();
   const initialInterests =
@@ -95,17 +96,26 @@ export const createConversationSession = async (
     updatedAt: now,
   };
 
-  const welcome: ConversationMessage = {
-    id: crypto.randomUUID(),
-    role: "assistant",
-    content: buildWelcomeMessage(userId, preselectedService?.title),
-    timestamp: now,
-  };
-  session.messages.push(welcome);
+  if (!skipWelcome) {
+    const welcome: ConversationMessage = {
+      id: crypto.randomUUID(),
+      role: "assistant",
+      content: buildWelcomeMessage(userId, preselectedService?.title),
+      timestamp: now,
+    };
+    session.messages.push(welcome);
+  }
   return saveConversationSession(session);
 };
 
-const buildChatMessages = async (session: ConversationSession) => {
+type ConversationChannelOptions = {
+  smsMode?: boolean;
+};
+
+const buildChatMessages = async (
+  session: ConversationSession,
+  options: ConversationChannelOptions = {}
+) => {
   const profile = session.extractedProfile;
   const needsContact =
     !profile.name.trim() || (!profile.phone.trim() && !profile.email.trim());
@@ -141,7 +151,13 @@ const buildChatMessages = async (session: ConversationSession) => {
     });
   }
 
-  if (isGuestLead(session.userId)) {
+  if (options.smsMode) {
+    messages.push({
+      role: "system",
+      content:
+        "The user is texting via SMS. Keep replies concise (under 320 characters when possible). Use plain text only — no markdown, bullets, or links unless essential. On the first reply, briefly introduce yourself as their Nesting Place support coordinator.",
+    });
+  } else if (isGuestLead(session.userId)) {
     messages.push({
       role: "system",
       content:
@@ -224,7 +240,8 @@ const fallbackAssistantReply = (
 };
 
 async function* generateAssistantStream(
-  session: ConversationSession
+  session: ConversationSession,
+  options: ConversationChannelOptions = {}
 ): AsyncGenerator<string, string, unknown> {
   if (!isOpenAiConfigured()) {
     const { content } = fallbackAssistantReply(
@@ -236,7 +253,9 @@ async function* generateAssistantStream(
   }
 
   let full = "";
-  for await (const token of streamChatCompletion(await buildChatMessages(session))) {
+  for await (const token of streamChatCompletion(
+    await buildChatMessages(session, options)
+  )) {
     full += token;
     yield token;
   }
@@ -245,7 +264,8 @@ async function* generateAssistantStream(
 
 export async function* processConversationMessageStream(
   session: ConversationSession,
-  userMessage: string
+  userMessage: string,
+  options: ConversationChannelOptions = {}
 ): AsyncGenerator<
   | { type: "token"; value: string }
   | { type: "done"; session: ConversationSession; intakeSubmitted?: boolean },
@@ -288,7 +308,7 @@ export async function* processConversationMessageStream(
 
   session.extractedProfile = profile;
   let assistantContent = "";
-  for await (const token of generateAssistantStream(session)) {
+  for await (const token of generateAssistantStream(session, options)) {
     assistantContent += token;
     yield { type: "token", value: token };
   }
@@ -384,17 +404,62 @@ export async function* processConversationMessageStream(
   yield { type: "done", session, intakeSubmitted };
 }
 
+export const processConversationMessage = async (
+  session: ConversationSession,
+  userMessage: string,
+  options: ConversationChannelOptions = {}
+): Promise<{
+  session: ConversationSession;
+  assistantReply: string;
+  intakeSubmitted?: boolean;
+}> => {
+  let assistantReply = "";
+  let resultSession = session;
+  let intakeSubmitted = false;
+
+  for await (const event of processConversationMessageStream(
+    session,
+    userMessage,
+    options
+  )) {
+    if (event.type === "token") {
+      assistantReply += event.value;
+    }
+    if (event.type === "done") {
+      resultSession = event.session;
+      intakeSubmitted = event.intakeSubmitted ?? false;
+      if (!assistantReply) {
+        const lastAssistant = event.session.messages
+          .filter((message) => message.role === "assistant")
+          .at(-1);
+        assistantReply = lastAssistant?.content ?? "";
+      }
+    }
+  }
+
+  return { session: resultSession, assistantReply, intakeSubmitted };
+};
+
 export const resumeOrCreateSession = async (
   userId: string,
   defaults: Partial<ExtractedMaternalProfile> = {},
-  options: { forceNew?: boolean; preselectedService?: PreselectedService } = {}
+  options: {
+    forceNew?: boolean;
+    preselectedService?: PreselectedService;
+    skipWelcome?: boolean;
+  } = {}
 ) => {
   const { abandonActiveConversations, getActiveConversationForUser } =
     await import("@/lib/conversation/storage");
 
   if (options.forceNew) {
     await abandonActiveConversations(userId, defaults.email);
-    return createConversationSession(userId, defaults, options.preselectedService);
+    return createConversationSession(
+      userId,
+      defaults,
+      options.preselectedService,
+      options.skipWelcome
+    );
   }
 
   const existing = await getActiveConversationForUser(userId, defaults.email);
@@ -430,5 +495,10 @@ export const resumeOrCreateSession = async (
       extractedProfile,
     };
   }
-  return createConversationSession(userId, defaults, options.preselectedService);
+  return createConversationSession(
+    userId,
+    defaults,
+    options.preselectedService,
+    options.skipWelcome
+  );
 };
