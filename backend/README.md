@@ -16,6 +16,23 @@ python manage.py runserver 8000
 
 Health: `GET http://localhost:8000/health/`
 
+Intake health: `GET http://localhost:8000/health/intake/`
+
+Website intake submit:
+
+```bash
+curl -X POST http://localhost:8000/api/v1/intake/submit \
+  -H "Content-Type: application/json" \
+  -d '{
+    "first_name": "Jane",
+    "email": "jane@example.com",
+    "service_requested": "Postpartum support",
+    "message": "Looking for overnight help"
+  }'
+```
+
+See [../docs/platform/intake-workflow.md](../docs/platform/intake-workflow.md).
+
 ## Action engine
 
 ```bash

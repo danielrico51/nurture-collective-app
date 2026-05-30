@@ -58,9 +58,9 @@ export const brands = {
     wordmarkSrc: "/branding/nesting-place-wordmark.png",
     wordmarkCreamSrc: "/branding/nesting-place-wordmark-cream.png",
     markSrc: "/branding/nesting-place-baby-mark.png",
-    serviceArea: "Bergen County, Northern New Jersey, and surrounding areas",
+    serviceArea: "Northern New Jersey and surrounding areas",
     description:
-      "An evidence-based maternal wellness and postpartum care practice offering experienced birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of care.",
+      "An experienced maternal wellness and postpartum care practice offering birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of care.",
     phone: "201-623-3629",
     email: "info@thenestingplacenj.com",
   },

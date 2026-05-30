@@ -1,7 +1,7 @@
 import CallToAction from "@/components/Home/CallToAction";
 import AudienceSplit from "@/components/Home/AudienceSplit";
 import ConciergeVision from "@/components/Home/ConciergeVision";
-import CoreServicesSection from "@/components/Home/CoreServicesSection";
+import ServiceStatsSection from "@/components/Home/ServiceStatsSection";
 import CoverageMap from "@/components/Common/CoverageMap";
 import FaqList from "@/components/Common/FaqList";
 import Hero from "@/components/Home/Hero";
@@ -13,7 +13,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "The Nesting Place | Maternal Wellness & Postpartum Care",
   description:
-    "The Nesting Place — evidence-based birth doula, postpartum, lactation, and newborn support in Northern New Jersey, by Nurture Collective LLC.",
+    "The Nesting Place — birth doula, postpartum, lactation, and newborn support in Northern New Jersey.",
 };
 
 export default function HomePage() {
@@ -21,7 +21,7 @@ export default function HomePage() {
     <>
       <Hero />
       <AudienceSplit />
-      <CoreServicesSection />
+      <ServiceStatsSection />
       <CoverageMap />
       <GoogleReviewsSection className="bg-nurture-sage/5" />
       <HowItWorksSteps

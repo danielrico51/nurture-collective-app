@@ -3,13 +3,10 @@ import { DEFAULT_COVERAGE_CONFIG } from "@/lib/coverage/defaults";
 import { resolveCoverageForZip } from "@/lib/coverage/resolve";
 
 describe("resolveCoverageForZip", () => {
-  it("matches Bergen County ZIP to active region", () => {
+  it("does not match removed Bergen County ZIP as active", () => {
     const result = resolveCoverageForZip("07631", DEFAULT_COVERAGE_CONFIG);
-    expect(result.match).toBe(true);
-    if (result.match) {
-      expect(result.status).toBe("active");
-      expect(result.region.name).toContain("Bergen");
-    }
+    expect(result.match).toBe(false);
+    expect(result.status).toBe("outside");
   });
 
   it("matches expanding NYC metro ZIP", () => {

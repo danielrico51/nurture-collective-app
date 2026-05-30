@@ -1,0 +1,110 @@
+{
+  "name": "Website Intake Pipeline",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "intake",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-intake",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "received_at",
+              "name": "received_at",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "file_datetime",
+              "name": "file_datetime",
+              "value": "={{ $now.toISO() }}",
+              "type": "string"
+            },
+            {
+              "id": "workflow_version",
+              "name": "workflow_version",
+              "value": 1,
+              "type": "number"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "id": "normalize-data",
+      "name": "Normalize Data",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const lead = $input.first().json;\nconst now = new Date();\nconst year = now.getUTCFullYear();\nconst month = String(now.getUTCMonth() + 1).padStart(2, '0');\nconst day = String(now.getUTCDate()).padStart(2, '0');\nconst stamp = now.toISOString().replace(/[:.]/g, '-');\nreturn [{\n  json: {\n    ...lead,\n    s3_key: `leads/year=${year}/month=${month}/day=${day}/lead_id=${lead.lead_id}/${stamp}.json`\n  }\n}];"
+      },
+      "id": "prepare-s3-path",
+      "name": "Prepare S3 Partition Path",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 300]
+    },
+    {
+      "parameters": {
+        "operation": "upload",
+        "bucketName": "={{$env.LEADS_BUCKET}}",
+        "fileName": "={{$json.s3_key}}",
+        "binaryData": false,
+        "fileContent": "={{ JSON.stringify($json, null, 2) }}",
+        "additionalFields": {
+          "contentType": "application/json"
+        }
+      },
+      "id": "s3-upload",
+      "name": "AWS S3 Upload",
+      "type": "n8n-nodes-base.awsS3",
+      "typeVersion": 2,
+      "position": [960, 300]
+    },
+    {
+      "parameters": {
+        "subject": "New Lead Received",
+        "text": "Name: {{ $json.first_name }} {{ $json.last_name }}\nPhone: {{ $json.phone }}\nEmail: {{ $json.email }}\nService: {{ $json.service_requested }}\nLead ID: {{ $json.lead_id }}\nMessage:\n{{ $json.message }}",
+        "options": {}
+      },
+      "id": "email-notification",
+      "name": "Email Notification",
+      "type": "n8n-nodes-base.emailSend",
+      "typeVersion": 2.1,
+      "position": [1200, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Normalize Data", "type": "main", "index": 0 }]]
+    },
+    "Normalize Data": {
+      "main": [[{ "node": "Prepare S3 Partition Path", "type": "main", "index": 0 }]]
+    },
+    "Prepare S3 Partition Path": {
+      "main": [[{ "node": "AWS S3 Upload", "type": "main", "index": 0 }]]
+    },
+    "AWS S3 Upload": {
+      "main": [[{ "node": "Email Notification", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

@@ -1,26 +1,24 @@
-import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
+import Image from "next/image";
 import Link from "next/link";
 import { brands } from "@/content/site";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 
 const Footer = () => {
   return (
-    <footer className="border-t border-nurture-sage/20 bg-white">
+    <footer className="border-t border-nurture-sage/20 bg-nurture-cream">
       <div className="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
         <div className="grid gap-8 md:grid-cols-4">
           <div className="md:col-span-2">
-            <div className="flex flex-col gap-4 sm:flex-row sm:items-start">
-              <NestingPlaceLogo variant="footer" linked={false} />
-              <div>
-                <p className="font-serif text-lg font-semibold text-nurture-sage-dark">
-                  {brands.nestingPlace.name}
-                </p>
-                <p className="mt-1 text-sm font-medium text-nurture-charcoal/65">
-                  {brands.nestingPlace.byline}
-                </p>
-              </div>
-            </div>
-            <p className="mt-4 text-sm text-nurture-charcoal/70">
+            <Link href="/" className="inline-flex transition hover:opacity-90">
+              <Image
+                src={brands.nestingPlace.markSrc}
+                alt={brands.nestingPlace.name}
+                width={128}
+                height={128}
+                className="h-[6.3rem] w-[6.3rem] object-contain sm:h-28 sm:w-28"
+              />
+            </Link>
+            <p className="mt-5 max-w-lg text-sm text-nurture-charcoal/70">
               {brands.nestingPlace.description}
             </p>
             <p className="mt-2 text-xs text-nurture-charcoal/55">
@@ -61,6 +59,11 @@ const Footer = () => {
               <li>
                 <Link href="/contact" className="hover:text-nurture-sage-dark">
                   Contact
+                </Link>
+              </li>
+              <li>
+                <Link href="/sources" className="hover:text-nurture-sage-dark">
+                  Sources
                 </Link>
               </li>
             </ul>

@@ -1,0 +1,56 @@
+{
+  "name": "Website Intake Pipeline (Minimal)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "intake",
+        "responseMode": "onReceived",
+        "options": {}
+      },
+      "id": "webhook-intake",
+      "name": "Webhook Trigger",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json;\n\n// Webhook POST JSON may be at root or nested under body\nconst lead =\n  raw.body && typeof raw.body === 'object' && !Array.isArray(raw.body)\n    ? raw.body\n    : raw;\n\nconst fullName = String(lead.name || '').trim();\nconst nameParts = fullName.split(/\\s+/).filter(Boolean);\nconst firstName = String(lead.first_name || nameParts[0] || 'Unknown').trim();\nconst lastName = String(\n  lead.last_name || nameParts.slice(1).join(' ') || ''\n).trim();\n\nconst emailBody = [\n  `Name: ${firstName}${lastName ? ` ${lastName}` : ''}`,\n  `Phone: ${lead.phone || ''}`,\n  `Email: ${lead.email || ''}`,\n  `Service: ${lead.service_requested || lead.serviceInterest || ''}`,\n  `Lead ID: ${lead.lead_id || 'website-inquiry'}`,\n  '',\n  'Message:',\n  String(lead.message || ''),\n].join('\\n');\n\nreturn [\n  {\n    json: {\n      ...lead,\n      first_name: firstName,\n      last_name: lastName,\n      email_subject: 'New Lead Received',\n      email_body: emailBody,\n      send_to: 'danielrico51@gmail.com',\n    },\n  },\n];"
+      },
+      "id": "prepare-lead",
+      "name": "Prepare Lead Email",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [480, 300]
+    },
+    {
+      "parameters": {
+        "sendTo": "danielrico51@gmail.com",
+        "subject": "={{ $json.email_subject }}",
+        "emailType": "text",
+        "message": "={{ $json.email_body }}",
+        "options": {}
+      },
+      "id": "gmail-notification",
+      "name": "Gmail Notification",
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [720, 300]
+    }
+  ],
+  "connections": {
+    "Webhook Trigger": {
+      "main": [[{ "node": "Prepare Lead Email", "type": "main", "index": 0 }]]
+    },
+    "Prepare Lead Email": {
+      "main": [[{ "node": "Gmail Notification", "type": "main", "index": 0 }]]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false
+  }
+}

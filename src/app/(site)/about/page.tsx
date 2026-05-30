@@ -81,15 +81,22 @@ export default function AboutPage() {
                 </Link>
               </div>
               <div className="rounded-2xl border border-nurture-sage/20 bg-white p-8">
-                <h3 className="font-serif text-xl font-semibold">For providers</h3>
+                <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+                  We&apos;re growing
+                </p>
+                <h3 className="mt-2 font-serif text-xl font-semibold">
+                  Interested in joining our team?
+                </h3>
                 <p className="mt-3 text-sm text-nurture-charcoal/70">
-                  {brands.nestingPlace.description}
+                  We&apos;re actively building our team — recruiting doulas, lactation
+                  consultants, newborn care specialists, and maternal wellness
+                  professionals as we expand region by region.
                 </p>
                 <Link
                   href="/for-providers"
                   className="mt-4 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
                 >
-                  Join as a provider →
+                  Learn about joining our team →
                 </Link>
               </div>
             </div>
@@ -130,7 +137,7 @@ export default function AboutPage() {
                 href="/for-providers"
                 className="rounded-full border border-nurture-sage px-6 py-3 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
               >
-                I&apos;m a provider
+                Join our team
               </Link>
             </div>
           </div>

@@ -13,9 +13,9 @@ const LEGACY_LOGO_HEIGHT = 630;
 
 const VARIANT_MAX_CLASS = {
   header: "max-h-10 w-auto sm:max-h-11",
-  /** Header banner wordmark — scales with viewport, capped for nav balance */
+  /** Header banner wordmark — scales with viewport (+50% vs prior sizing) */
   wordmark:
-    "h-[clamp(2.75rem,4.5vw+1.25rem,4rem)] w-auto max-h-16 max-w-[min(52vw,26rem)] object-contain",
+    "h-[clamp(4.125rem,6.75vw+1.875rem,6rem)] w-auto max-h-24 max-w-[min(58vw,30rem)] object-contain",
   hero: "h-[clamp(5rem,12vw,9rem)] w-auto max-w-[min(100%,36rem)] object-contain",
   footer: "max-h-14 w-auto sm:max-h-16 md:max-h-[4.5rem]",
   auth: "max-h-16 w-auto sm:max-h-[4.5rem]",
@@ -60,7 +60,7 @@ const NestingPlaceLogo = ({
   if (compact) {
     content = (
       <span className="inline-flex items-center gap-2.5 sm:gap-3">
-        <span className="flex h-11 w-11 shrink-0 items-center justify-center sm:h-12 sm:w-12">
+        <span className="flex h-12 w-12 shrink-0 items-center justify-center sm:h-14 sm:w-14">
           <Image
             src={brands.nestingPlace.markSrc}
             alt=""
@@ -78,9 +78,6 @@ const NestingPlaceLogo = ({
             <span className="text-nurture-charcoal">The </span>
             <span className="text-nurture-sage-dark">Nesting</span>
             <span className="text-nurture-charcoal"> Place</span>
-          </span>
-          <span className="mt-0.5 block text-[10px] font-medium text-nurture-charcoal/55 sm:text-xs">
-            {brands.nestingPlace.byline}
           </span>
         </span>
       </span>

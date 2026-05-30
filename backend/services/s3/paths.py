@@ -39,3 +39,20 @@ def event_key(event_type: str, dt: datetime | None = None) -> str:
         f"year={value.year}/month={value.month:02d}/day={value.day:02d}/"
         f"event_type={sanitize_segment(event_type)}/{file_datetime_partition(value)}/event.json"
     )
+
+
+def historical_intake_key(lead_id: str, dt: datetime | None = None) -> str:
+    """Immutable website intake history — leads/year=.../month=.../day=.../lead_id=.../{timestamp}.json"""
+    value = dt or datetime.now(timezone.utc)
+    stamp = value.strftime("%Y-%m-%dT%H-%M-%S-%fZ")
+    return (
+        f"leads/year={value.year}/month={value.month:02d}/day={value.day:02d}/"
+        f"lead_id={sanitize_segment(lead_id)}/{stamp}.json"
+    )
+
+
+def dead_letter_intake_key(lead_id: str, reason: str, dt: datetime | None = None) -> str:
+    value = dt or datetime.now(timezone.utc)
+    stamp = value.strftime("%Y-%m-%dT%H-%M-%S-%fZ")
+    safe_reason = sanitize_segment(reason)
+    return f"leads/dead-letter/lead_id={sanitize_segment(lead_id)}/{stamp}_{safe_reason}.json"

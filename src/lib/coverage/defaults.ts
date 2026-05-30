@@ -8,19 +8,6 @@ export const DEFAULT_COVERAGE_CONFIG: CoverageConfig = {
   intro: coverageIntro,
   regions: [
     {
-      id: "bergen-nj",
-      name: "Bergen County, NJ",
-      status: "active",
-      services:
-        "Birth doula, postpartum care, overnight newborn care, lactation support, prenatal massage",
-      zipPrefixes: ["076"],
-      center: { lat: 40.959, lng: -74.074 },
-      radiusMiles: 18,
-      coverageRatio: 100,
-      conciergeNote:
-        "Full in-person Nesting Place services are available throughout Bergen County.",
-    },
-    {
       id: "northern-nj",
       name: "Northern New Jersey",
       status: "active",
@@ -60,4 +47,6 @@ export const DEFAULT_COVERAGE_CONFIG: CoverageConfig = {
 };
 
 export const getPublicCoverageRegions = (config: CoverageConfig = DEFAULT_COVERAGE_CONFIG) =>
-  config.regions.filter((region) => region.id !== "national-waitlist");
+  config.regions.filter(
+    (region) => region.id !== "national-waitlist" && region.id !== "bergen-nj"
+  );

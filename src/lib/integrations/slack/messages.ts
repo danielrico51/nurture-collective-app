@@ -19,6 +19,15 @@ const STATUS_LABELS: Record<LeadStatus, string> = {
 
 const adminLeadsUrl = () => `${serverSlackConfig.adminBaseUrl}/admin/leads`;
 
+const sourceLabel = (lead: LeadRecord): string => {
+  if (lead.source === "website") return "Website contact form";
+  if (lead.isGuest) return "Public intake (guest)";
+  return "Member intake";
+};
+
+const newLeadHeader = (lead: LeadRecord): string =>
+  lead.source === "website" ? "New lead — website inquiry" : "New lead — AI intake";
+
 const contactLine = (lead: LeadRecord): string => {
   const parts = [lead.email, lead.phone].filter(Boolean);
   return parts.length ? parts.join(" · ") : "No contact yet";
@@ -38,7 +47,7 @@ const leadFields = (lead: LeadRecord): SlackBlock["fields"] => [
   },
   {
     type: "mrkdwn",
-    text: `*Source:*\n${lead.isGuest ? "Public intake (guest)" : "Member intake"}`,
+    text: `*Source:*\n${sourceLabel(lead)}`,
   },
   {
     type: "mrkdwn",
@@ -51,17 +60,39 @@ export const buildNewLeadMessage = (lead: LeadRecord) => {
   const blocks: SlackBlock[] = [
     {
       type: "header",
-      text: { type: "plain_text", text: "New lead — AI intake", emoji: true },
+      text: { type: "plain_text", text: newLeadHeader(lead), emoji: true },
     },
     { type: "section", fields: leadFields(lead) },
-    {
+  ];
+
+  if (lead.supportInterests.length > 0) {
+    blocks.push({
       type: "section",
       text: {
         type: "mrkdwn",
-        text: `<${adminLeadsUrl()}|Open Lead CRM>`,
+        text: `*Service requested:*\n${lead.supportInterests.join(", ")}`,
       },
+    });
+  }
+
+  if (lead.challengesSummary.trim()) {
+    blocks.push({
+      type: "section",
+      text: {
+        type: "mrkdwn",
+        text: `*Message:*\n${lead.challengesSummary.trim()}`,
+      },
+    });
+  }
+
+  blocks.push({
+    type: "section",
+    text: {
+      type: "mrkdwn",
+      text: `<${adminLeadsUrl()}|Open Lead CRM>`,
     },
-  ];
+  });
+
   return { text, blocks };
 };
 

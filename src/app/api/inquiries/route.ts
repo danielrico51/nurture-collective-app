@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
-import { serverIntegrations } from "@/config/integrations";
-import { forwardToN8n } from "@/lib/webhooks/n8n";
+import { mapContactFormToIntakeSubmit } from "@/lib/intake/mapContactForm";
+import {
+  IntakePipelineError,
+  IntakeValidationError,
+  submitIntakeWorkflow,
+} from "@/lib/intake/submitService";
+import { checkRateLimit } from "@/lib/security/rateLimit";
+import { intakeSubmitConfig } from "@/config/intakeSubmit";
 import type {
   InquiryPayload,
   PreferredContactMethod,
@@ -26,7 +32,25 @@ interface InquiryBody {
   userId?: string;
 }
 
+const getClientKey = (request: NextRequest): string => {
+  const forwarded = request.headers.get("x-forwarded-for");
+  if (forwarded) return forwarded.split(",")[0]?.trim() ?? "unknown";
+  return request.headers.get("x-real-ip") ?? "unknown";
+};
+
 export async function POST(request: NextRequest) {
+  const rateLimit = checkRateLimit(
+    getClientKey(request),
+    intakeSubmitConfig.rateLimitMaxRequests,
+    intakeSubmitConfig.rateLimitWindowMs
+  );
+  if (!rateLimit.allowed) {
+    return NextResponse.json(
+      { error: "Too many submissions. Please wait and try again." },
+      { status: 429 }
+    );
+  }
+
   let body: InquiryBody;
   try {
     body = await request.json();
@@ -95,18 +119,32 @@ export async function POST(request: NextRequest) {
   });
 
   try {
-    const result = await forwardToN8n(
-      serverIntegrations.n8nInquiryWebhookUrl,
-      serverIntegrations.n8nWebhookSecret,
-      payload
-    );
+    const intakePayload = mapContactFormToIntakeSubmit({
+      audience,
+      name,
+      email,
+      phone,
+      message,
+      preferredContact: preferredContact ?? "email",
+      serviceSlug: serviceInterest,
+      specialtySlug: providerSpecialty,
+    });
+    intakePayload.source = source;
 
+    const result = await submitIntakeWorkflow(intakePayload);
     return NextResponse.json({
       ok: true,
       forwarded: result.forwarded,
+      lead_id: result.lead_id,
     });
   } catch (error) {
-    console.error("[inquiry] n8n forward failed:", error);
+    if (error instanceof IntakeValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error instanceof IntakePipelineError) {
+      return NextResponse.json({ error: error.message }, { status: 502 });
+    }
+    console.error("[inquiry] intake pipeline failed:", error);
     return NextResponse.json(
       { error: "Could not submit inquiry. Please try again later." },
       { status: 502 }

@@ -4,14 +4,8 @@ import Breadcrumb from "@/components/Common/Breadcrumb";
 import ContactOptions from "@/components/Common/ContactOptions";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { integrations } from "@/config/integrations";
-import type { Audience } from "@/content/site";
-import {
-  PREFERRED_CONTACT_OPTIONS,
-  PROVIDER_SPECIALTY_SLUGS,
-  SERVICE_SLUGS,
-  audienceLabels,
-  isAudience,
-} from "@/types/inquiry";
+import { PREFERRED_CONTACT_OPTIONS, SERVICE_SLUGS } from "@/types/inquiry";
+import { mapContactFormToIntakeSubmit } from "@/lib/intake/mapContactForm";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
@@ -22,64 +16,52 @@ const inputClassName =
 
 function ContactForm() {
   const searchParams = useSearchParams();
-  const audienceParam = searchParams.get("audience");
-  const initialAudience: Audience = isAudience(audienceParam)
-    ? audienceParam
-    : "mom";
   const serviceParam = searchParams.get("service") ?? "";
-  const specialtyParam = searchParams.get("specialty") ?? "";
   const serviceLabel = SERVICE_SLUGS[serviceParam] ?? "";
-  const specialtyLabel = PROVIDER_SPECIALTY_SLUGS[specialtyParam] ?? "";
 
-  const [audience, setAudience] = useState<Audience>(initialAudience);
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (submitting || submitted) return;
     setSubmitting(true);
+    setSubmitError(null);
 
     const form = e.currentTarget;
     const data = new FormData(form);
 
+    const payload = mapContactFormToIntakeSubmit({
+      audience: "mom",
+      name: String(data.get("name") ?? ""),
+      email: String(data.get("email") ?? ""),
+      phone: String(data.get("phone") ?? "") || undefined,
+      message: String(data.get("message") ?? ""),
+      preferredContact: String(data.get("preferredContact") ?? "email"),
+      serviceSlug: String(data.get("serviceInterest") ?? serviceParam) || undefined,
+    });
+
     try {
-      const response = await fetch("/api/inquiries", {
+      const response = await fetch("/api/intake/submit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          audience: String(data.get("audience") ?? "mom"),
-          name: String(data.get("name") ?? ""),
-          email: String(data.get("email") ?? ""),
-          phone: String(data.get("phone") ?? "") || undefined,
-          message: String(data.get("message") ?? ""),
-          preferredContact: String(data.get("preferredContact") ?? "email"),
-          serviceInterest:
-            audience === "mom"
-              ? String(data.get("serviceInterest") ?? "") || undefined
-              : undefined,
-          providerSpecialty:
-            audience === "provider"
-              ? String(data.get("providerSpecialty") ?? "") || undefined
-              : undefined,
-        }),
+        body: JSON.stringify(payload),
       });
 
       const result = await response.json();
-      if (!response.ok) {
+      if (!response.ok || !result.success) {
         throw new Error(result.error ?? "Could not send message");
       }
 
-      toast.success(
-        audience === "provider"
-          ? "Application received — our team will review and follow up."
-          : "Message sent — we'll be in touch soon."
-      );
+      toast.success("Message sent — we'll be in touch soon.");
       setSubmitted(true);
       form.reset();
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not send message"
-      );
+      const message =
+        error instanceof Error ? error.message : "Could not send message";
+      setSubmitError(message);
+      toast.error(message);
     } finally {
       setSubmitting(false);
     }
@@ -91,38 +73,10 @@ function ContactForm() {
       onSubmit={handleSubmit}
       className="mt-10 space-y-6 rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm"
     >
-      <div>
-        <p className="text-sm font-medium text-nurture-charcoal">I am…</p>
-        <div className="mt-3 grid grid-cols-2 gap-3">
-          {(["mom", "provider"] as const).map((value) => (
-            <button
-              key={value}
-              type="button"
-              onClick={() => setAudience(value)}
-              className={`rounded-xl border px-4 py-3 text-sm font-medium transition ${
-                audience === value
-                  ? "border-nurture-sage bg-nurture-sage/10 text-nurture-sage-dark"
-                  : "border-nurture-sage/25 text-nurture-charcoal/70 hover:border-nurture-sage/40"
-              }`}
-            >
-              {audienceLabels[value]}
-            </button>
-          ))}
-        </div>
-        <input type="hidden" name="audience" value={audience} />
-      </div>
-
-      {serviceLabel && audience === "mom" ? (
+      {serviceLabel ? (
         <p className="rounded-lg bg-nurture-cream/80 px-4 py-3 text-sm text-nurture-charcoal/80">
           Interested in:{" "}
           <span className="font-medium text-nurture-sage-dark">{serviceLabel}</span>
-        </p>
-      ) : null}
-
-      {specialtyLabel && audience === "provider" ? (
-        <p className="rounded-lg bg-nurture-cream/80 px-4 py-3 text-sm text-nurture-charcoal/80">
-          Applying as:{" "}
-          <span className="font-medium text-nurture-sage-dark">{specialtyLabel}</span>
         </p>
       ) : null}
 
@@ -130,6 +84,19 @@ function ContactForm() {
         <p className="rounded-lg bg-nurture-sage/10 px-4 py-3 text-sm text-nurture-sage-dark">
           Thank you! We typically respond within one business day.
         </p>
+      ) : null}
+
+      {submitError ? (
+        <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
+          <p>{submitError}</p>
+          <button
+            type="button"
+            onClick={() => setSubmitError(null)}
+            className="mt-2 font-semibold underline"
+          >
+            Try again
+          </button>
+        </div>
       ) : null}
 
       <div>
@@ -147,15 +114,12 @@ function ContactForm() {
       <div>
         <label htmlFor="phone" className="block text-sm font-medium text-nurture-charcoal">
           Phone{" "}
-          <span className="font-normal text-nurture-charcoal/50">
-            ({audience === "provider" ? "required for providers" : "recommended"})
-          </span>
+          <span className="font-normal text-nurture-charcoal/50">(recommended)</span>
         </label>
         <input
           id="phone"
           name="phone"
           type="tel"
-          required={audience === "provider"}
           placeholder="+12065550100"
           className={inputClassName}
         />
@@ -178,45 +142,21 @@ function ContactForm() {
         </select>
       </div>
 
-      {audience === "mom" ? (
-        serviceLabel ? (
-          <input type="hidden" name="serviceInterest" value={serviceParam} />
-        ) : (
-          <div>
-            <label htmlFor="serviceInterest" className="block text-sm font-medium text-nurture-charcoal">
-              Service interest
-            </label>
-            <select
-              id="serviceInterest"
-              name="serviceInterest"
-              defaultValue=""
-              className={inputClassName}
-            >
-              <option value="">Not sure yet</option>
-              {Object.entries(SERVICE_SLUGS).map(([slug, label]) => (
-                <option key={slug} value={slug}>
-                  {label}
-                </option>
-              ))}
-            </select>
-          </div>
-        )
-      ) : specialtyLabel ? (
-        <input type="hidden" name="providerSpecialty" value={specialtyParam} />
+      {serviceLabel ? (
+        <input type="hidden" name="serviceInterest" value={serviceParam} />
       ) : (
         <div>
-          <label htmlFor="providerSpecialty" className="block text-sm font-medium text-nurture-charcoal">
-            Your specialty
+          <label htmlFor="serviceInterest" className="block text-sm font-medium text-nurture-charcoal">
+            Service interest
           </label>
           <select
-            id="providerSpecialty"
-            name="providerSpecialty"
+            id="serviceInterest"
+            name="serviceInterest"
             defaultValue=""
-            required
             className={inputClassName}
           >
-            <option value="">Select your specialty</option>
-            {Object.entries(PROVIDER_SPECIALTY_SLUGS).map(([slug, label]) => (
+            <option value="">Not sure yet</option>
+            {Object.entries(SERVICE_SLUGS).map(([slug, label]) => (
               <option key={slug} value={slug}>
                 {label}
               </option>
@@ -227,18 +167,14 @@ function ContactForm() {
 
       <div>
         <label htmlFor="message" className="block text-sm font-medium text-nurture-charcoal">
-          {audience === "provider" ? "Tell us about your experience" : "Message"}
+          Message
         </label>
         <textarea
           id="message"
           name="message"
           rows={5}
           required
-          placeholder={
-            audience === "provider"
-              ? "Credentials, years of experience, service area, and why you'd like to join…"
-              : "How can we support you?"
-          }
+          placeholder="How can we support you?"
           className={inputClassName}
         />
       </div>
@@ -247,11 +183,7 @@ function ContactForm() {
         disabled={submitting}
         className="w-full rounded-full bg-nurture-sage py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark disabled:opacity-60"
       >
-        {submitting
-          ? "Sending…"
-          : audience === "provider"
-            ? "Submit application"
-            : "Send message"}
+        {submitting ? "Sending…" : "Send message"}
       </button>
       <p className="text-center text-xs text-nurture-charcoal/50">
         Or email us at{" "}
@@ -261,18 +193,10 @@ function ContactForm() {
         >
           {integrations.contactEmail}
         </a>
-        .{" "}
-        {audience === "provider" ? (
-          <>
-            Prefer the full provider page?{" "}
-            <Link href="/for-providers" className="text-nurture-sage-dark hover:underline">
-              Learn more
-            </Link>
-            .
-          </>
-        ) : (
-          "We respond within one business day."
-        )}
+        . We respond within one business day.{" "}
+        <Link href="/for-providers" className="text-nurture-sage-dark hover:underline">
+          Interested in joining our team?
+        </Link>
       </p>
     </form>
   );
@@ -286,7 +210,7 @@ export default function ContactPage() {
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <SectionTitle
             title="Let's connect"
-            subtitle="Families seeking support and providers joining our network — we're here for both."
+            subtitle="Tell us how we can support you — we'll respond within one business day."
           />
           <ContactOptions className="mt-10" formAnchorId="contact-form" />
           <div className="mx-auto mt-16 max-w-xl">

@@ -45,7 +45,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
           : "bg-transparent"
       }`}
     >
-      <div className="mx-auto flex max-w-screen-xl items-center justify-between px-4 py-4 sm:px-6 lg:px-8">
+      <div className="mx-auto flex max-w-screen-xl items-center justify-between px-4 py-3 sm:px-6 sm:py-4 lg:px-8">
         <span className="sm:hidden">
           <NestingPlaceLogo variant="wordmark" compact priority />
         </span>
