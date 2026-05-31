@@ -1,0 +1,11 @@
+from django.http import JsonResponse
+
+
+def health_check(_request):
+    return JsonResponse(
+        {
+            "status": "ok",
+            "service": "community-service",
+            "version": "0.1.0",
+        }
+    )
