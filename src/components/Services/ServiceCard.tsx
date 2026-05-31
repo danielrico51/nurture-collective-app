@@ -1,5 +1,4 @@
 import ServiceIcon from "@/components/Services/ServiceIcon";
-import { buildCareStartHref } from "@/config/carePaths";
 import type { CoreService } from "@/content/site";
 import Link from "next/link";
 
@@ -63,21 +62,14 @@ const ServiceCard = ({
         </p>
       ) : null}
 
-      {!isComingSoon ? (
-        <Link
-          href={buildCareStartHref(service.slug)}
-          className="mt-6 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
-        >
-          Request this service →
-        </Link>
-      ) : (
+      {isComingSoon ? (
         <Link
           href="/contact"
           className="mt-6 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
         >
-          Join the waitlist →
+          Contact us →
         </Link>
-      )}
+      ) : null}
     </article>
   );
 };

@@ -1,0 +1,233 @@
+# QuickBooks Billing & Payment Workflow
+
+This document describes how website purchases, payments, and QuickBooks Online (QBO) invoices fit together in the Nurture Collective platform — including n8n automation hooks.
+
+**Related code:**
+- Config: `src/config/quickbooks.ts`, `src/config/billing.ts`
+- Integration: `src/lib/integrations/quickbooks/`
+- Billing service: `src/lib/billing/`
+- API routes: `src/app/api/billing/`, `src/app/api/integrations/quickbooks/`, `src/app/api/webhooks/quickbooks/`
+
+---
+
+## Recommended architecture
+
+Use a **hybrid payment + accounting** model:
+
+| Layer | System | Responsibility |
+|-------|--------|----------------|
+| Checkout | Next.js + Stripe | Collect card/Apple Pay on the website |
+| Order state | S3 (`billing/orders/...`) | Canonical purchase record |
+| Accounting | QuickBooks Online | Customers, invoices, sales receipts, tax reporting |
+| Orchestration | n8n | Invoice email, Slack alerts, retries, custom logic |
+
+Stripe handles **payment capture**. QuickBooks handles **books, invoices, and tax**. n8n connects the two without hard-coding every workflow in the app.
+
+---
+
+## Payment workflows
+
+### Flow A — E-commerce (gift cards, add-ons, one-time purchases)
+
+Best for immediate purchases on the website.
+
+```
+Customer → POST /api/billing/checkout
+         → S3 order (pending_payment)
+         → n8n: billing.order.created
+         → Stripe Checkout
+         → Customer pays
+         → Stripe webhook → mark order paid
+         → n8n: billing.payment.succeeded
+         → n8n creates QBO Customer + Sales Receipt (or paid Invoice)
+         → QBO webhook → billing.quickbooks.webhook → update order
+```
+
+**Why Sales Receipt vs Invoice?** If payment is already collected via Stripe, create a **Sales Receipt** in QBO (money already received). Use an **Invoice** only when the customer will pay later.
+
+### Flow B — Service contract (post-intake, post-sign)
+
+Best for care packages after contract signing (matches `process-flow.md` Stage 10).
+
+```
+Contract signed → client record in nurture-clients
+                → POST /api/billing/checkout (invoiceOnly: true)
+                → S3 order (invoice_pending)
+                → n8n: billing.invoice.requested
+                → n8n creates QBO Invoice + sends payment link
+                → Customer pays via QBO Payments or follow-up Stripe link
+                → QBO Payment webhook → order status invoice_paid
+                → Member portal shows paid status
+```
+
+### Flow C — Gift cards (existing)
+
+Gift cards already use `POST /api/gift-cards/checkout` with `GIFT_CARD_ORDER_WEBHOOK_URL`. When enabling Stripe, point the same n8n workflow (or a dedicated branch) to create QBO entries after payment.
+
+---
+
+## Sync modes
+
+Set `BILLING_SYNC_MODE` in environment:
+
+| Mode | App behavior | When to use |
+|------|--------------|-------------|
+| `n8n` (default) | App emits events only; n8n calls QBO | **Recommended** — matches intake/gift-card pattern |
+| `direct` | App calls QBO API directly | Small volume, no n8n |
+| `hybrid` | App syncs to QBO, also emits n8n events | App-owned sync + n8n for notifications |
+
+---
+
+## n8n event catalog
+
+All events POST to `N8N_BILLING_WEBHOOK_URL` with optional `Authorization: Bearer ${N8N_BILLING_WEBHOOK_SECRET}`.
+
+| Event | Trigger | Suggested n8n actions |
+|-------|---------|----------------------|
+| `billing.order.created` | Checkout started | Log order, notify Slack ops |
+| `billing.payment.succeeded` | Stripe payment confirmed | Create QBO customer, sales receipt, send receipt email |
+| `billing.payment.failed` | Payment failed | Alert ops, send recovery email |
+| `billing.invoice.requested` | `invoiceOnly` checkout | Create QBO invoice, email payment link |
+| `billing.invoice.synced` | Direct/hybrid QBO sync | Update CRM, notify coordinator |
+| `billing.quickbooks.webhook` | QBO entity changed | Sync invoice/payment status back to S3 order |
+| `billing.refund.processed` | Refund issued | Create QBO credit memo |
+
+Example payload:
+
+```json
+{
+  "type": "billing.payment.succeeded",
+  "receivedAt": "2026-05-31T12:00:00.000Z",
+  "order": {
+    "id": "uuid",
+    "status": "paid",
+    "customerEmail": "member@example.com",
+    "amountCents": 25000,
+    "lineItems": [{ "sku": "care-addon", "name": "Lactation consult", "quantity": 1, "unitAmountCents": 25000 }]
+  },
+  "payment": {
+    "provider": "stripe",
+    "reference": "pi_xxx",
+    "amountCents": 25000
+  }
+}
+```
+
+---
+
+## QuickBooks setup checklist
+
+### 1. Intuit Developer app
+
+1. Create an app at [developer.intuit.com](https://developer.intuit.com).
+2. Add scopes: `com.intuit.quickbooks.accounting`, `openid`, `profile`, `email`.
+3. Set redirect URI: `https://<your-domain>/api/integrations/quickbooks/oauth/callback`
+4. Copy **Client ID** and **Client Secret**.
+
+### 2. Connect OAuth (admin)
+
+1. Sign in as admin on the site.
+2. Visit `/api/integrations/quickbooks/oauth/authorize` — redirects to Intuit.
+3. Authorize the company; callback stores tokens in S3 (`management/integrations/quickbooks/oauth.json`).
+4. Verify: `GET /api/integrations/quickbooks/status` (admin auth required).
+
+Alternatively, set `QBO_REFRESH_TOKEN` and `QBO_REALM_ID` manually in Amplify env vars.
+
+### 3. Webhooks
+
+1. In Intuit Developer portal → Webhooks, set endpoint: `https://<your-domain>/api/webhooks/quickbooks`
+2. Copy verifier token → `QBO_WEBHOOK_VERIFIER`
+3. Subscribe to: `Invoice`, `Payment`, `Customer`
+
+### 4. Default product/service item
+
+Create a service item in QBO (e.g. "Care Services") and set `QBO_DEFAULT_ITEM_ID` so invoice line items map correctly.
+
+### 5. Environment variables
+
+```env
+BILLING_SYNC_MODE=n8n
+BILLING_PAYMENT_PROVIDER=stripe
+N8N_BILLING_WEBHOOK_URL=https://n8n.example.com/webhook/billing
+N8N_BILLING_WEBHOOK_SECRET=
+QBO_ENVIRONMENT=sandbox
+QBO_CLIENT_ID=
+QBO_CLIENT_SECRET=
+QBO_REALM_ID=
+QBO_REDIRECT_URI=
+QBO_WEBHOOK_VERIFIER=
+QBO_DEFAULT_ITEM_ID=
+BILLING_S3_BUCKET=nurture-clients-dev-ACCOUNT_ID
+```
+
+---
+
+## API reference (scaffold)
+
+| Method | Path | Auth | Purpose |
+|--------|------|------|---------|
+| POST | `/api/billing/checkout` | Public | Start purchase or request invoice |
+| GET | `/api/billing/orders/[orderId]` | Member (owner) | Order status |
+| GET | `/api/integrations/quickbooks/oauth/authorize` | Admin | Start OAuth |
+| GET | `/api/integrations/quickbooks/oauth/callback` | Intuit redirect | Complete OAuth |
+| GET | `/api/integrations/quickbooks/status` | Admin | Connection health |
+| POST | `/api/webhooks/quickbooks` | Intuit signature | Inbound QBO events |
+
+### Checkout example
+
+```bash
+curl -X POST https://localhost:3000/api/billing/checkout \
+  -H "Content-Type: application/json" \
+  -d '{
+    "customerEmail": "member@example.com",
+    "customerName": "Jane Doe",
+    "lineItems": [{
+      "sku": "lactation-60",
+      "name": "Lactation consult (60 min)",
+      "quantity": 1,
+      "unitAmountCents": 15000
+    }],
+    "successUrl": "https://example.com/apps/purchases/success",
+    "cancelUrl": "https://example.com/apps/purchases"
+  }'
+```
+
+For invoice-only (no immediate payment):
+
+```json
+{ "invoiceOnly": true, ... }
+```
+
+---
+
+## S3 artifacts
+
+```
+s3://<BILLING_S3_BUCKET>/billing/orders/order_id=<uuid>/order.json
+s3://<BILLING_S3_BUCKET>/management/integrations/quickbooks/oauth.json
+```
+
+Order JSON includes `quickbooks.customerId`, `quickbooks.invoiceId`, and sync status for portal display.
+
+---
+
+## Next steps
+
+1. **Stripe webhook** — Add `POST /api/webhooks/stripe` to call `markPurchaseOrderPaid()` on `checkout.session.completed`.
+2. **Member purchases UI** — Wire `src/app/(site)/apps/purchases/page.tsx` to `/api/billing/checkout`.
+3. **n8n workflow** — Build the billing webhook workflow with QBO nodes (Create Customer → Create Invoice/Sales Receipt → Send Email).
+4. **QBO sandbox testing** — Run end-to-end in sandbox before switching `QBO_ENVIRONMENT=production`.
+
+---
+
+## Decision guide: when to use what
+
+| Scenario | Payment | QBO document |
+|----------|---------|--------------|
+| Gift card purchase | Stripe Checkout | Sales Receipt |
+| Member add-on (paid upfront) | Stripe Checkout | Sales Receipt |
+| Care package after contract | Invoice link (QBO or Stripe) | Invoice |
+| Employer billing / NET-30 | Manual / ACH | Invoice |
+| Refund | Stripe refund | Credit Memo (via n8n) |
+
+This keeps the website fast for self-serve purchases while QBO remains the source of truth for accounting and tax.

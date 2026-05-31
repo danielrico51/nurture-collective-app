@@ -1,0 +1,86 @@
+export interface QuickBooksTokenSet {
+  accessToken: string;
+  refreshToken: string;
+  expiresAt: string;
+  realmId: string;
+  updatedAt: string;
+}
+
+export interface QuickBooksRef {
+  value: string;
+  name?: string;
+}
+
+export interface QuickBooksInvoiceLine {
+  Amount: number;
+  DetailType: "SalesItemLineDetail";
+  Description?: string;
+  SalesItemLineDetail: {
+    ItemRef?: QuickBooksRef;
+    Qty?: number;
+    UnitPrice?: number;
+  };
+}
+
+export interface QuickBooksCreateInvoiceInput {
+  customerId: string;
+  lineItems: Array<{
+    amount: number;
+    description: string;
+    quantity?: number;
+    unitPrice?: number;
+    itemId?: string;
+  }>;
+  dueDate?: string;
+  docNumber?: string;
+  privateNote?: string;
+  customerMemo?: string;
+}
+
+export interface QuickBooksInvoice {
+  Id: string;
+  DocNumber?: string;
+  TotalAmt?: number;
+  Balance?: number;
+  DueDate?: string;
+  CustomerRef?: QuickBooksRef;
+  SyncToken?: string;
+}
+
+export interface QuickBooksCustomer {
+  Id: string;
+  DisplayName: string;
+  PrimaryEmailAddr?: { Address: string };
+  SyncToken?: string;
+}
+
+export interface QuickBooksCreateCustomerInput {
+  displayName: string;
+  email: string;
+  givenName?: string;
+  familyName?: string;
+}
+
+export interface QuickBooksWebhookPayload {
+  eventNotifications?: Array<{
+    realmId: string;
+    dataChangeEvent?: {
+      entities?: Array<{
+        name: string;
+        id: string;
+        operation: string;
+        lastUpdated: string;
+      }>;
+    };
+  }>;
+}
+
+export interface QuickBooksApiError {
+  Fault?: {
+    Error?: Array<{
+      Message?: string;
+      Detail?: string;
+      code?: string;
+    }>;
+  };
+}

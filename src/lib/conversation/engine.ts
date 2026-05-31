@@ -29,28 +29,37 @@ import type { SupportInterest } from "@/types/intake";
 import { createEmptyExtractedProfile } from "@/types/conversation";
 
 const WELCOME_MESSAGE =
-  "Hi — I'm your support coordinator for The Nesting Place. I'm here to understand where you are in your journey and help connect you with the right support — birth doula care, postpartum help, lactation, overnight newborn care, or prenatal massage. There's no rush. To start, how far along are you in your motherhood journey?";
+  "Hi — I'm your support coordinator for The Nesting Place. I'm here to help connect you with the right support — birth doula, postpartum help, lactation, overnight newborn care, or prenatal massage. There's no rush. How far along are you in your motherhood journey?";
 
-const buildWelcomeMessage = (userId: string, preselectedServiceTitle?: string) => {
-  const base = preselectedServiceTitle
-    ? `Hi — I'm your support coordinator for The Nesting Place. I see you're interested in ${preselectedServiceTitle.toLowerCase()} — I'll help connect you with the right support. To start, how far along are you in your motherhood journey?`
-    : WELCOME_MESSAGE;
+const BIRTH_DOULA_WELCOME =
+  "Hi — I'm your support coordinator for The Nesting Place. I see you're interested in birth doula support. What ZIP code are you in? That helps me confirm what we can offer near you — or you can say you prefer not to share.";
+
+const buildWelcomeMessage = (
+  userId: string,
+  preselectedService?: PreselectedService
+) => {
+  const base =
+    preselectedService?.supportInterest === "birth-doula"
+      ? BIRTH_DOULA_WELCOME
+      : preselectedService
+        ? `Hi — I'm your support coordinator for The Nesting Place. I see you're interested in ${preselectedService.title.toLowerCase()} — I'll help connect you with the right support. How far along are you in your motherhood journey?`
+        : WELCOME_MESSAGE;
   return isGuestLead(userId) ? `${base}${GUEST_WELCOME_SUFFIX}` : base;
 };
 
 const DEFAULT_QUICK_REPLIES = [
   "Pregnant",
   "Newly postpartum",
-  "Trying to conceive",
   "Infant care",
 ];
+
+const BIRTH_DOULA_QUICK_REPLIES = ["Pregnant", "Newly postpartum", "Prefer not to share ZIP"];
 
 const FALLBACK_REPLIES: Record<string, string[]> = {
   start: DEFAULT_QUICK_REPLIES,
   maternalStage: [
     "Pregnant",
     "Newly postpartum",
-    "Trying to conceive",
     "Infant care",
   ],
   supportInterests: NESTING_PLACE_CONCIERGE_QUICK_REPLIES,
@@ -90,7 +99,10 @@ export const createConversationSession = async (
     status: "active",
     messages: [],
     extractedProfile,
-    quickReplies: DEFAULT_QUICK_REPLIES,
+    quickReplies:
+      preselectedService?.supportInterest === "birth-doula"
+        ? BIRTH_DOULA_QUICK_REPLIES
+        : DEFAULT_QUICK_REPLIES,
     safetyEscalation: false,
     createdAt: now,
     updatedAt: now,
@@ -100,7 +112,7 @@ export const createConversationSession = async (
     const welcome: ConversationMessage = {
       id: crypto.randomUUID(),
       role: "assistant",
-      content: buildWelcomeMessage(userId, preselectedService?.title),
+      content: buildWelcomeMessage(userId, preselectedService),
       timestamp: now,
     };
     session.messages.push(welcome);
@@ -189,10 +201,19 @@ const fallbackAssistantReply = (
     };
   }
   if (!profile.locationZip?.trim()) {
+    const declinedZip =
+      /prefer not|don't want to share|rather not|skip.*zip/i.test(userMessage);
+    if (declinedZip) {
+      return {
+        content:
+          "No problem — we can still answer your questions. What would be most helpful to know about our support?",
+        quickReplies: [],
+      };
+    }
     return {
       content:
-        "Got it. What's your ZIP code? I'll check our current coverage in your area.",
-      quickReplies: [],
+        "What's your ZIP code? I'll check our current coverage in your area. You can also say you prefer not to share.",
+      quickReplies: ["Prefer not to share ZIP"],
     };
   }
   if (!profile.supportInterests.length) {

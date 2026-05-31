@@ -79,17 +79,14 @@ export function MemberShell({
                 const active =
                   pathname === app.href || pathname.startsWith(`${app.href}/`);
                 const isAvailable = app.status === "available";
+                const navClass = `flex shrink-0 items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition lg:px-4 ${
+                  active
+                    ? "bg-nurture-sage text-white shadow-sm"
+                    : "text-nurture-charcoal/75 hover:bg-nurture-sage/10 hover:text-nurture-sage-dark"
+                } ${!isAvailable ? "cursor-default opacity-80" : ""}`;
 
-                return (
-                  <Link
-                    key={app.id}
-                    href={app.href}
-                    className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition lg:px-4 ${
-                      active
-                        ? "bg-nurture-sage text-white shadow-sm"
-                        : "text-nurture-charcoal/75 hover:bg-nurture-sage/10 hover:text-nurture-sage-dark"
-                    } ${!isAvailable ? "opacity-80" : ""}`}
-                  >
+                const label = (
+                  <>
                     <MemberAppIcon icon={app.icon} className="h-4 w-4" />
                     <span className="truncate">{app.title}</span>
                     {!isAvailable ? (
@@ -97,6 +94,20 @@ export function MemberShell({
                         Soon
                       </span>
                     ) : null}
+                  </>
+                );
+
+                if (!isAvailable) {
+                  return (
+                    <span key={app.id} className={navClass}>
+                      {label}
+                    </span>
+                  );
+                }
+
+                return (
+                  <Link key={app.id} href={app.href} className={navClass}>
+                    {label}
                   </Link>
                 );
               })}

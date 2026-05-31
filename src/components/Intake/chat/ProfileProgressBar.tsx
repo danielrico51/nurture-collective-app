@@ -5,7 +5,7 @@ interface ProfileProgressBarProps {
 
 const ProfileProgressBar = ({
   score,
-  label = "Building your care profile",
+  label = "Your support profile",
 }: ProfileProgressBarProps) => (
   <div className="border-b border-nurture-sage/10 bg-white/80 px-4 py-2 backdrop-blur-sm sm:py-3">
     <div className="mx-auto flex w-full max-w-5xl items-center gap-3">

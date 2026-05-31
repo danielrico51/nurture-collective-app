@@ -65,15 +65,10 @@ export const MEMBER_APPS: MemberApp[] = [
     id: "community",
     title: "Community",
     description:
-      "Connect with other moms — share wins, ask questions, and follow topics that match your stage.",
+      "Connect with other moms — browse public groups, join communities that match your stage, and see everything you've joined in one place.",
     href: "/apps/community",
-    status: "coming_soon",
+    status: "available",
     icon: "community",
-    plannedFeatures: [
-      "Stage-based feeds (pregnancy, newborn, toddler)",
-      "Moderated discussions",
-      "Saved posts and notifications",
-    ],
   },
   {
     id: "groups",

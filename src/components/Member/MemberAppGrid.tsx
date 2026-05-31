@@ -56,6 +56,14 @@ export function MemberAppGrid() {
           </div>
         );
 
+        if (!isAvailable) {
+          return (
+            <div key={app.id} className="block h-full cursor-default">
+              {card}
+            </div>
+          );
+        }
+
         return (
           <Link key={app.id} href={app.href} className="block h-full">
             {card}

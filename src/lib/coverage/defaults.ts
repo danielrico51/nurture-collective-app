@@ -12,24 +12,22 @@ export const DEFAULT_COVERAGE_CONFIG: CoverageConfig = {
       name: "Northern New Jersey",
       status: "active",
       services:
-        "Birth doula, postpartum care, overnight newborn care, lactation support, prenatal massage",
+        "Bergen, Essex, Hudson, Passaic, Morris, Union, Middlesex, Somerset, Monmouth, and surrounding counties",
       zipPrefixes: ["070", "071", "072", "073", "074", "075", "077", "078", "079"],
       center: { lat: 40.85, lng: -74.35 },
       radiusMiles: 35,
       coverageRatio: 90,
     },
     {
-      id: "nyc-metro",
-      name: "NYC Metro & surrounding",
-      status: "expanding",
+      id: "lower-hudson-valley",
+      name: "Lower Hudson Valley, NY",
+      status: "active",
       services:
-        "Select virtual and in-person support — expanding provider network",
-      zipPrefixes: ["100", "101", "102", "103", "104", "110", "111", "112", "113"],
-      center: { lat: 40.75, lng: -73.98 },
-      radiusMiles: 25,
-      coverageRatio: 35,
-      conciergeNote:
-        "We're actively expanding into the NYC metro. Some services may be virtual or waitlist while we grow.",
+        "Birth doula, postpartum support, overnight newborn support, lactation, prenatal massage",
+      zipPrefixes: ["105", "106", "107", "108", "109"],
+      center: { lat: 41.1, lng: -73.9 },
+      radiusMiles: 30,
+      coverageRatio: 85,
     },
     {
       id: "national-waitlist",
@@ -48,5 +46,8 @@ export const DEFAULT_COVERAGE_CONFIG: CoverageConfig = {
 
 export const getPublicCoverageRegions = (config: CoverageConfig = DEFAULT_COVERAGE_CONFIG) =>
   config.regions.filter(
-    (region) => region.id !== "national-waitlist" && region.id !== "bergen-nj"
+    (region) =>
+      region.status === "active" &&
+      region.id !== "national-waitlist" &&
+      region.id !== "bergen-nj"
   );

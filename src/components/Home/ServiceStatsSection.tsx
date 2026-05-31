@@ -8,7 +8,7 @@ const ServiceStatsSection = () => {
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <h2 className="font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl">
-            Care that makes a measurable difference
+            Support that makes a measurable difference
           </h2>
           <p className="mt-4 text-lg text-nurture-charcoal/70">
             Our core services are backed by research on better outcomes for moms

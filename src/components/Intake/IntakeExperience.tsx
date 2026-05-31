@@ -9,13 +9,11 @@ import {
 import { careCoordinator } from "@/content/site";
 import { isPublicIntakeEnabled } from "@/config/intakeAccess";
 import { getOrCreateGuestSessionId } from "@/lib/auth/guestSession";
-import { useMemberIntake } from "@/hooks/useMemberIntake";
 import { useSessionAuth } from "@/hooks/useSessionAuth";
 import { attributesToProfileForm } from "@/lib/auth/profileAttributes";
-import { isIntakeComplete } from "@/types/intake";
 import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 import { useRouter } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 
 interface IntakeExperienceProps {
   /** When true, skip Cognito and use guest session (public dev intake). */
@@ -26,11 +24,7 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
   const router = useRouter();
   const publicMode = allowGuest && isPublicIntakeEnabled();
   const { authStatus, ready } = useSessionAuth();
-  const intakeEnabled =
-    ready && (publicMode || authStatus === "authenticated");
-  const { intake, loading: intakeLoading } = useMemberIntake(intakeEnabled);
   const [authReady, setAuthReady] = useState(publicMode);
-  const [bootstrapped, setBootstrapped] = useState(publicMode);
   const [userId, setUserId] = useState<string | null>(
     publicMode ? getOrCreateGuestSessionId() : null
   );
@@ -43,24 +37,11 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
     if (typeof window === "undefined") return null;
     return resolveCareServiceContext();
   });
-  const redirectedRef = useRef(false);
-
-  useEffect(() => {
-    if (publicMode) return;
-    if (!ready || intakeLoading || redirectedRef.current) return;
-    if (isIntakeComplete(intake?.profile?.intakeStatus)) {
-      redirectedRef.current = true;
-      router.replace("/apps/dashboard");
-      return;
-    }
-    setBootstrapped(true);
-  }, [intake?.profile?.intakeStatus, intakeLoading, publicMode, ready, router]);
 
   useEffect(() => {
     if (publicMode) {
       setUserId(getOrCreateGuestSessionId());
       setAuthReady(true);
-      setBootstrapped(true);
       return;
     }
 
@@ -100,7 +81,9 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
     load();
   }, [authStatus, publicMode, ready, router]);
 
-  if (!ready || !authReady || !bootstrapped || !userId) {
+  const chatReady = publicMode || (ready && authReady && userId);
+
+  if (!chatReady) {
     return (
       <div className="flex min-h-[60vh] items-center justify-center bg-gradient-to-b from-nurture-cream to-white">
         <p className="text-nurture-charcoal/60">{careCoordinator.intake.preparing}</p>
@@ -123,10 +106,10 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
       ) : null}
       <div className="min-h-0 flex-1">
         <ConversationalIntake
-        userId={userId}
-        defaults={defaults}
-        guestMode={publicMode}
-        initialService={initialService}
+          userId={userId!}
+          defaults={defaults}
+          guestMode={publicMode}
+          initialService={initialService}
         />
       </div>
     </div>

@@ -224,10 +224,7 @@ function ContactForm() {
         >
           {integrations.contactEmail}
         </a>
-        . We respond within one business day.{" "}
-        <Link href="/for-providers" className="text-nurture-sage-dark hover:underline">
-          Interested in joining our team?
-        </Link>
+        . We respond within one business day.
       </p>
     </form>
   );

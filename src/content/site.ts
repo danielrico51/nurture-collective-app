@@ -31,17 +31,17 @@ export interface CoreService {
 
 /** Public-facing name for the concierge experience — emphasizes real people, not AI. */
 export const careCoordinator = {
-  short: "Care coordinator",
-  full: "Personal care coordinator",
-  possessive: "your care coordinator",
-  team: "your care team",
-  platform: "personal care coordination",
+  short: "Support coordinator",
+  full: "Personal support coordinator",
+  possessive: "your support coordinator",
+  team: "your support team",
+  platform: "personal support coordination",
   /** Guided intake / concierge chat UI */
   intake: {
     title: "Your support coordinator",
     messageLabel: "Your support coordinator",
-    connecting: "Connecting with your support coordinator…",
-    preparing: "Preparing your support coordinator…",
+    connecting: "Starting your conversation…",
+    preparing: "Loading your conversation…",
     inputLabel: "Message your support coordinator",
     typing: "Support coordinator is typing",
   },
@@ -61,9 +61,10 @@ export const brands = {
     wordmarkSrc: "/branding/nesting-place-wordmark.png",
     wordmarkCreamSrc: "/branding/nesting-place-wordmark-cream.png",
     markSrc: "/branding/nesting-place-baby-mark.png",
-    serviceArea: "Northern New Jersey and surrounding areas",
+    serviceArea:
+      "Northern New Jersey, Lower Hudson Valley, and surrounding areas",
     description:
-      "An experienced maternal wellness and postpartum care practice offering birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of care.",
+      "An experienced maternal wellness and postpartum support practice offering birth doula support, overnight newborn care, postpartum support, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of motherhood.",
     phone: "(844) 926-2867",
     phoneE164: "+18449262867",
     email: "info@thenestingplacenj.com",
@@ -103,14 +104,14 @@ export const coverageRegions: CoverageRegion[] = [
     name: "Northern New Jersey",
     status: "active",
     services:
-      "Birth doula, postpartum support, overnight newborn support, lactation support, prenatal massage, childbirth education",
+      "Bergen, Essex, Hudson, Passaic, Morris, Union, Middlesex, Somerset, Monmouth, and surrounding counties — birth doula, postpartum support, overnight newborn support, lactation, prenatal massage, childbirth education",
   },
   {
-    id: "your-area",
-    name: "Your area",
-    status: "expanding",
+    id: "lower-hudson-valley",
+    name: "Lower Hudson Valley, NY",
+    status: "active",
     services:
-      "Request support where you live — we're opening new regions and building our provider network market by market.",
+      "Birth doula, postpartum support, overnight newborn support, lactation support, and prenatal massage",
   },
 ];
 
@@ -121,7 +122,7 @@ export const coverageStatusLabels: Record<CoverageStatus, string> = {
 };
 
 export const coverageIntro =
-  "Service availability depends on your location. These are the regions where our team and provider network support families today.";
+  "These are the regions where our team and provider network support families today.";
 
 /** Core maternal wellness services offered through the network. */
 export const coreServices: CoreService[] = [
@@ -166,7 +167,7 @@ export const coreServices: CoreService[] = [
     title: "Prenatal massage",
     description:
       "Therapeutic prenatal massage to ease discomfort, reduce stress, and support your body through pregnancy.",
-    tag: "Wellness",
+    tag: "Support",
     benefit:
       "Relieve pregnancy discomfort and reconnect with your changing body in a calm, nurturing environment.",
     availabilityNote: "Available in Ridgewood and select Northern NJ locations.",
@@ -176,20 +177,10 @@ export const coreServices: CoreService[] = [
     title: "Postpartum massage",
     description:
       "Therapeutic massage to support recovery, ease tension, and nurture your body after birth.",
-    tag: "Wellness",
+    tag: "Support",
     benefit:
       "Give yourself permission to rest and heal with bodywork designed for the postpartum period.",
     availabilityNote: "Currently available in Ridgewood only.",
-  },
-  {
-    slug: "birth-photography",
-    title: "Birth photography",
-    description:
-      "Capture the raw beauty of your birth story with a trusted photographer partner — preserving moments you'll treasure forever.",
-    tag: "Photography",
-    benefit:
-      "Hold onto the first moments of meeting your baby with artful, respectful birth photography.",
-    status: "coming-soon",
   },
   {
     slug: "childbirth-education",
@@ -248,22 +239,16 @@ export const momHowItWorks = [
     step: "01",
     title: "Reach out — a real person answers",
     description:
-      "Call, text, or send a message. Barb or a member of our team will personally guide you through what you need.",
+      "Call, text, or send a message. Our managing director, Barb, or a member of our team will personally guide you through what you need.",
   },
   {
     step: "02",
-    title: "Complete your guided intake",
+    title: "Design your support plan together",
     description:
-      "Share where you are in your journey at your own pace — we'll learn about your preferences, timeline, and the support you're looking for.",
+      "We'll learn about your preferences, timeline, and the support you're looking for — then walk through next steps with Barb or your coordinator.",
   },
   {
     step: "03",
-    title: "Design your custom care plan with Barb",
-    description:
-      "After intake, we'll schedule a follow-up call with Barb to walk through your needs together and design a personalized care plan for your family.",
-  },
-  {
-    step: "04",
     title: "We're with you every step",
     description:
       "From pregnancy through postpartum, our team stays in direct contact — coordinating support so you never feel alone.",
@@ -294,23 +279,23 @@ export const providerHowItWorks = [
 export const momFaqs = [
   {
     q: "Where is The Nesting Place available?",
-    a: "We launch region by region. Check our coverage map for active areas. If your location is listed as expanding, submit a request — we use demand to prioritize new markets.",
+    a: "We serve families in Northern New Jersey and the Lower Hudson Valley today — including Bergen, Essex, Hudson, Passaic, Morris, and surrounding counties, plus lower Hudson Valley communities in New York. See our coverage section for current service areas.",
   },
   {
     q: "What services are available today?",
-    a: "In active regions we offer birth doula support, overnight newborn support, postpartum support, lactation support, prenatal massage, postpartum massage (Ridgewood), and childbirth education through our vetted provider network.",
+    a: "In our active regions we offer birth doula support, overnight newborn support, postpartum support, lactation support, prenatal massage, postpartum massage (Ridgewood), and childbirth education through our vetted provider network.",
+  },
+  {
+    q: "What is the difference between overnight newborn care and postpartum support?",
+    a: "Overnight newborn care focuses on hands-on newborn support through the night so parents can rest — feeding help, soothing, and newborn routines while you sleep. Postpartum support is broader help for recovery, emotional support, feeding guidance, and practical support for your whole family in the early weeks — often during the day, and sometimes overnight too.",
   },
   {
     q: "Will I talk to a real person?",
-    a: "Yes — always. Barb and our care team are in direct contact with every family. We use tools to stay organized, but you'll never feel like you're talking to a bot.",
+    a: "Yes — always. Our managing director, Barb, and our team are in direct contact with every family. We use tools to stay organized, but you'll never feel like you're talking to a bot.",
   },
   {
     q: "Do you accept employer benefits like Carrot, Maven, or ProgenyHealth?",
-    a: "Many of our clients use employer-sponsored family benefits through platforms such as Carrot, Maven Clinic, and ProgenyHealth. While we are not directly contracted with these programs, your plan may reimburse doula or postpartum care. Visit our Benefits page for a simple guide to each platform, or contact us — we're happy to help you navigate next steps.",
-  },
-  {
-    q: "What is personal care coordination?",
-    a: "As we grow, dedicated care coordinators help organize every service you need — from doula support to everyday help — with a real person guiding you every step of the way.",
+    a: "Many families use employer-sponsored family benefits through platforms such as Carrot, Maven Clinic, and ProgenyHealth. While we are not directly contracted with these programs, your plan may reimburse doula or postpartum support. Visit our Benefits page for a brief overview, or contact us — we're happy to help you navigate next steps.",
   },
   {
     q: "Is this medical support?",
@@ -318,7 +303,7 @@ export const momFaqs = [
   },
   {
     q: "What is the relationship between The Nesting Place and Nurture Collective LLC?",
-    a: "The Nesting Place is our maternal wellness practice in Northern New Jersey — operated by Nurture Collective LLC, which also builds the provider network and care coordination platform as we expand region by region.",
+    a: "The Nesting Place is our maternal wellness practice in Northern New Jersey and the Lower Hudson Valley — operated by Nurture Collective LLC, which also builds the provider network and support coordination platform as we expand region by region.",
   },
 ] as const;
 
@@ -357,4 +342,9 @@ export const isAudience = (value: string | null): value is Audience =>
   value === "mom" || value === "provider";
 
 export const humanTouchMessage =
-  "In a market full of options, what sets us apart is the personal touch. Barb and our team are in direct contact with every family — guiding you, answering questions, and making sure you feel supported from your first call through every stage of care.";
+  "In a market full of options, what sets us apart is the personal touch. Our managing director, Barb, and our team are in direct contact with every family — guiding you, answering questions, and making sure you feel supported from your first call through every stage of motherhood.";
+
+/** Services shown on marketing pages (excludes retired offerings). */
+export const publishedCoreServices = coreServices.filter(
+  (service) => service.slug !== "birth-photography"
+);

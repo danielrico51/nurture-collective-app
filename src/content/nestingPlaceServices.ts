@@ -1,9 +1,9 @@
 /** The Nesting Place — active in-person service offerings (concierge priority). */
 export const NESTING_PLACE_SERVICE_AREA =
-  "Bergen County, Northern New Jersey, and surrounding areas";
+  "Northern New Jersey, Lower Hudson Valley, and surrounding areas";
 
 export const NESTING_PLACE_PRACTICE_SUMMARY =
-  "The Nesting Place is a maternal wellness and postpartum care practice serving families throughout Bergen County, Northern New Jersey, and the surrounding areas. We provide experienced, evidence-based birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage to help families feel confident and supported during pregnancy, labor, and the early weeks at home with their newborn.";
+  "The Nesting Place is a maternal wellness and postpartum support practice serving families throughout Northern New Jersey, the Lower Hudson Valley, and surrounding areas. We provide experienced, evidence-based birth doula support, overnight newborn care, postpartum support, lactation support, and prenatal massage to help families feel confident and supported during pregnancy, labor, and the early weeks at home with their newborn.";
 
 /** Services the concierge should prioritize recommending and discussing. */
 export const NESTING_PLACE_CORE_OFFERINGS = [

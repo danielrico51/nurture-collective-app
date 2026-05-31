@@ -1,18 +1,25 @@
+import { serverBillingConfig } from "@/config/billing";
 import { serverGiftCardConfig } from "@/config/giftCards";
 import { stubGiftCardPaymentProvider } from "@/lib/payments/stubProvider";
 import { stripeGiftCardPaymentProvider } from "@/lib/payments/stripeProvider";
-import type { GiftCardPaymentProvider } from "@/lib/payments/types";
+import type { GiftCardPaymentProvider, PaymentProviderId } from "@/lib/payments/types";
 
-export const getGiftCardPaymentProvider = (): GiftCardPaymentProvider => {
-  switch (serverGiftCardConfig.paymentProvider) {
+const resolveProvider = (providerId: PaymentProviderId): GiftCardPaymentProvider => {
+  switch (providerId) {
     case "stripe":
       return stripeGiftCardPaymentProvider;
     case "square":
       throw new Error(
-        "Square gift card payments are not implemented yet. Set GIFT_CARD_PAYMENT_PROVIDER=stub."
+        "Square payments are not implemented yet. Set payment provider to stub."
       );
     case "stub":
     default:
       return stubGiftCardPaymentProvider;
   }
 };
+
+export const getGiftCardPaymentProvider = (): GiftCardPaymentProvider =>
+  resolveProvider(serverGiftCardConfig.paymentProvider);
+
+export const getBillingPaymentProvider = (): GiftCardPaymentProvider =>
+  resolveProvider(serverBillingConfig.paymentProvider);

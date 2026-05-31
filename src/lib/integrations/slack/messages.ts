@@ -212,7 +212,7 @@ export const buildConsultBookedMessage = (details: ConsultBookedDetails) => {
       type: "header",
       text: {
         type: "plain_text",
-        text: "Discovery call scheduled",
+        text: "Maternal Support Introductory Call scheduled",
         emoji: true,
       },
     },

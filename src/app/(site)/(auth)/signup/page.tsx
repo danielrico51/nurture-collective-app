@@ -116,6 +116,21 @@ const SignupPage = () => {
         components={{
           ...sharedAuthComponents,
           Header: signUpAuthHeader,
+          ConfirmSignUp: {
+            Header() {
+              return (
+                <div className="mb-4 text-center">
+                  <p className="font-serif text-xl font-semibold text-nurture-charcoal">
+                    Check your email
+                  </p>
+                  <p className="mt-2 text-sm text-nurture-charcoal/70">
+                    Enter the verification code we sent. If you don&apos;t see it
+                    within a few minutes, check your spam or promotions folder.
+                  </p>
+                </div>
+              );
+            },
+          },
         }}
         formFields={{
           ...sharedAuthFormFields,

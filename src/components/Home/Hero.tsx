@@ -4,7 +4,7 @@ import { buildCareStartHref } from "@/config/carePaths";
 import { brands } from "@/content/site";
 
 const heroDescription =
-  "An experienced maternal wellness and postpartum care practice offering birth doula support, overnight newborn care, postpartum care, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of care.";
+  "An experienced maternal wellness and postpartum support practice offering birth doula support, overnight newborn care, postpartum support, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of motherhood.";
 
 const Hero = () => {
   return (
@@ -21,18 +21,12 @@ const Hero = () => {
             <p className="mt-6 text-lg leading-relaxed text-nurture-charcoal/80 sm:text-xl">
               {heroDescription}
             </p>
-            <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+            <div className="mt-8">
               <Link
                 href={buildCareStartHref()}
                 className="inline-flex justify-center rounded-full bg-nurture-sage px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-nurture-sage-dark"
               >
                 Request support
-              </Link>
-              <Link
-                href="/services"
-                className="inline-flex justify-center rounded-full border border-nurture-sage px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
-              >
-                View services
               </Link>
             </div>
           </div>

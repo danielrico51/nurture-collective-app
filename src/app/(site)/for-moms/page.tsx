@@ -7,7 +7,13 @@ import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
 import GoogleReviewsSection from "@/components/Reviews/GoogleReviewsSection";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { buildCareStartHref } from "@/config/carePaths";
-import { brands, careCoordinator, coreServices, momFaqs, momHowItWorks } from "@/content/site";
+import {
+  brands,
+  careCoordinator,
+  momFaqs,
+  momHowItWorks,
+  publishedCoreServices,
+} from "@/content/site";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -43,12 +49,6 @@ export default function ForMomsPage() {
               >
                 Request support
               </Link>
-              <Link
-                href="/services"
-                className="rounded-full border border-nurture-sage px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
-              >
-                View services
-              </Link>
             </div>
           </div>
 
@@ -58,7 +58,7 @@ export default function ForMomsPage() {
               subtitle="Experienced, evidence-based maternal wellness — check coverage for availability in your area."
             />
             <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {coreServices.map((service) => (
+              {publishedCoreServices.map((service) => (
                 <article
                   key={service.slug}
                   className="flex flex-col rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm"
@@ -72,12 +72,6 @@ export default function ForMomsPage() {
                   <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
                     {service.description}
                   </p>
-                  <Link
-                    href={buildCareStartHref(service.slug)}
-                    className="mt-6 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
-                  >
-                    Get started →
-                  </Link>
                 </article>
               ))}
             </div>
@@ -86,10 +80,11 @@ export default function ForMomsPage() {
           <div className="mt-20">
             <SectionTitle
               title="Ready to get started?"
-              subtitle="Begin with our guided intake — we'll personalize recommendations for your journey."
+              subtitle="Reach out by phone, message, or schedule a call with our team."
             />
             <ContactOptions
-              variant="intake"
+              variant="contact"
+              formHref="/contact?audience=mom"
               whatsappMessage="Hi! I'm interested in maternal support through The Nesting Place."
               className="mt-10"
             />
@@ -105,7 +100,7 @@ export default function ForMomsPage() {
         className="bg-nurture-sage/5 py-20"
       />
       <FaqList title="Questions from moms" items={momFaqs} />
-      <CalendlyEmbed title="Schedule a discovery call" />
+      <CalendlyEmbed />
     </>
   );
 }

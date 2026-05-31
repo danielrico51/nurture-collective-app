@@ -19,7 +19,11 @@ export default function MemberAppsLayout({ children }: { children: ReactNode }) 
   }
 
   if (!ready) {
-    return null;
+    return (
+      <div className="flex min-h-[50vh] items-center justify-center">
+        <p className="text-nurture-charcoal/60">Loading your apps…</p>
+      </div>
+    );
   }
 
   if (isIntakeFlow) {

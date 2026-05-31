@@ -15,8 +15,8 @@ interface BookingEmbedProps {
 }
 
 const BookingEmbed = ({
-  title = "Schedule a free discovery call",
-  subtitle = "Pick a time that works for you — we'll learn about your needs and answer your questions.",
+  title = "Maternal Support Introductory Call",
+  subtitle = "Pick a time that works for you — we'll learn about your needs and answer your questions. Calendar invites come from Daniel Rico.",
   className = "",
 }: BookingEmbedProps) => {
   const url = getActiveBookingUrl();

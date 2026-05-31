@@ -24,7 +24,7 @@ export const parseCalendlyConsultBooked = (
   const inviteeName = readString(payload.name);
   const inviteeEmail = readString(payload.email);
   const meetingName =
-    readString(scheduledEvent.name) || "Discovery call";
+    readString(scheduledEvent.name) || "Maternal Support Introductory Call";
   const startTime = readString(scheduledEvent.start_time);
   const timezone = readString(scheduledEvent.timezone);
 

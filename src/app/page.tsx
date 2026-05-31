@@ -1,7 +1,7 @@
 import CallToAction from "@/components/Home/CallToAction";
-import AudienceSplit from "@/components/Home/AudienceSplit";
-import ConciergeVision from "@/components/Home/ConciergeVision";
+import JoinTeamSection from "@/components/Home/JoinTeamSection";
 import ServiceStatsSection from "@/components/Home/ServiceStatsSection";
+import TeamBylineBanner from "@/components/Home/TeamBylineBanner";
 import CoverageMap from "@/components/Common/CoverageMap";
 import FaqList from "@/components/Common/FaqList";
 import Hero from "@/components/Home/Hero";
@@ -11,16 +11,16 @@ import { momFaqs, momHowItWorks } from "@/content/site";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
-  title: "The Nesting Place | Maternal Wellness & Postpartum Care",
+  title: "The Nesting Place | Maternal Wellness & Postpartum Support",
   description:
-    "The Nesting Place — birth doula, postpartum, lactation, and newborn support in Northern New Jersey.",
+    "The Nesting Place — birth doula, postpartum, lactation, and newborn support in Northern New Jersey and the Lower Hudson Valley.",
 };
 
 export default function HomePage() {
   return (
     <>
       <Hero />
-      <AudienceSplit />
+      <TeamBylineBanner />
       <ServiceStatsSection />
       <CoverageMap />
       <GoogleReviewsSection className="bg-nurture-sage/5" />
@@ -30,9 +30,9 @@ export default function HomePage() {
         steps={momHowItWorks}
         className="bg-nurture-sage/5 py-20"
       />
-      <ConciergeVision />
       <FaqList items={momFaqs} />
       <CallToAction />
+      <JoinTeamSection />
     </>
   );
 }

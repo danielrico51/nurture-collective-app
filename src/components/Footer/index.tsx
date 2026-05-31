@@ -8,7 +8,7 @@ const Footer = () => {
   return (
     <footer className="border-t border-nurture-sage/20 bg-nurture-cream">
       <div className="mx-auto max-w-screen-xl px-4 py-12 sm:px-6 lg:px-8">
-        <div className="grid gap-8 md:grid-cols-4">
+        <div className="grid gap-8 md:grid-cols-3">
           <div className="md:col-span-2">
             <Link href="/" className="inline-flex transition hover:opacity-90">
               <Image
@@ -37,43 +37,6 @@ const Footer = () => {
                 View coverage
               </Link>
             </p>
-          </div>
-          <div>
-            <p className="text-sm font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-              Explore
-            </p>
-            <ul className="mt-3 space-y-2 text-sm">
-              <li>
-                <Link href="/for-moms" className="hover:text-nurture-sage-dark">
-                  For moms
-                </Link>
-              </li>
-              <li>
-                <Link href="/for-providers" className="hover:text-nurture-sage-dark">
-                  For providers
-                </Link>
-              </li>
-              <li>
-                <Link href="/services" className="hover:text-nurture-sage-dark">
-                  Services
-                </Link>
-              </li>
-              <li>
-                <Link href="/about" className="hover:text-nurture-sage-dark">
-                  About
-                </Link>
-              </li>
-              <li>
-                <Link href="/contact" className="hover:text-nurture-sage-dark">
-                  Contact
-                </Link>
-              </li>
-              <li>
-                <Link href="/sources" className="hover:text-nurture-sage-dark">
-                  Sources
-                </Link>
-              </li>
-            </ul>
           </div>
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-nurture-charcoal/60">
@@ -124,9 +87,10 @@ const Footer = () => {
           ))}
         </div>
         <p className="mt-6 border-t border-nurture-sage/10 pt-6 text-center text-xs text-nurture-charcoal/50">
-          {brands.nestingPlace.name} provides wellness and support services — not
-          medical advice. Always consult your healthcare provider for clinical
-          concerns. © {new Date().getFullYear()} {brands.nurtureCollective.name}.
+          {brands.nestingPlace.name} provides maternal wellness and support
+          services — not medical advice. Always consult your healthcare provider
+          for clinical concerns. © {new Date().getFullYear()}{" "}
+          {brands.nurtureCollective.name}.
         </p>
       </div>
     </footer>

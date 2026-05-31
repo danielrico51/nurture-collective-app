@@ -19,36 +19,38 @@ import { buildCareChecklist } from "@/lib/intake/recommendations";
 import type { MaternalStage } from "@/types/intake";
 import { isIntakeComplete } from "@/types/intake";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { useEffect } from "react";
+
+const MEMBER_INTAKE_PATH = "/apps/dashboard/intake";
 
 export function DashboardView() {
   const router = useRouter();
+  const pathname = usePathname();
   const { ready, user, canAccessAdmin } = useRequireMember();
   const { intake, loading: loadingIntake, reload: reloadIntake } =
     useMemberIntake(ready);
-  const [redirecting, setRedirecting] = useState(false);
+
+  const needsIntake =
+    ready &&
+    !loadingIntake &&
+    !canAccessAdmin &&
+    !isIntakeComplete(intake?.profile?.intakeStatus);
+
+  const headingToIntake =
+    needsIntake && pathname !== MEMBER_INTAKE_PATH;
 
   useEffect(() => {
-    if (!ready || loadingIntake || canAccessAdmin) return;
-
-    if (!isIntakeComplete(intake?.profile?.intakeStatus)) {
-      setRedirecting(true);
-      router.replace("/apps/dashboard/intake");
+    if (headingToIntake) {
+      router.replace(MEMBER_INTAKE_PATH);
     }
-  }, [
-    canAccessAdmin,
-    intake?.profile?.intakeStatus,
-    loadingIntake,
-    ready,
-    router,
-  ]);
+  }, [headingToIntake, router]);
 
-  if (!ready || redirecting || loadingIntake) {
+  if (!ready || loadingIntake || headingToIntake) {
     return (
       <div className="flex min-h-[40vh] items-center justify-center">
         <p className="text-nurture-charcoal/60">
-          {redirecting
+          {headingToIntake
             ? "Continuing your support journey…"
             : "Loading your dashboard…"}
         </p>

@@ -11,6 +11,7 @@ export const serverIntegrations = {
   n8nInquiryWebhookUrl: process.env.N8N_INQUIRY_WEBHOOK_URL?.trim() ?? "",
   n8nWebhookSecret: process.env.N8N_WEBHOOK_SECRET?.trim() ?? "",
   n8nTaskSyncWebhookUrl: process.env.N8N_TASK_SYNC_WEBHOOK_URL?.trim() ?? "",
+  n8nBillingWebhookUrl: process.env.N8N_BILLING_WEBHOOK_URL?.trim() ?? "",
 } as const;
 
 export { serverBookingConfig } from "@/config/bookings";

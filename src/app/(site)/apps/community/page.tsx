@@ -1,7 +1,7 @@
 "use client";
 
-import { MemberComingSoonPage } from "@/components/Member/MemberComingSoonPage";
+import { CommunityView } from "@/components/Member/CommunityView";
 
 export default function CommunityAppPage() {
-  return <MemberComingSoonPage appId="community" />;
+  return <CommunityView />;
 }

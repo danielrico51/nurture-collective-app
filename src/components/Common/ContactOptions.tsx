@@ -27,6 +27,8 @@ interface ContactOptionsProps {
   variant?: "contact" | "intake";
   /** Override intake entry URL (defaults to /care/start). */
   intakeHref?: string;
+  bookingTitle?: string;
+  bookingDescription?: string;
 }
 
 const cardClassName =
@@ -39,6 +41,8 @@ const ContactOptions = ({
   className = "",
   variant = "contact",
   intakeHref = CARE_START_PATH,
+  bookingTitle = "Maternal Support Introductory Call",
+  bookingDescription = "Pick a time that works for you — we'll learn about your needs and answer your questions.",
 }: ContactOptionsProps) => {
   const whatsappUrl = buildWhatsAppUrl(whatsappMessage);
   const showWhatsApp = hasWhatsApp() && whatsappUrl;
@@ -105,10 +109,10 @@ const ContactOptions = ({
             {bookingLabel}
           </p>
           <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
-            Book a call
+            {bookingTitle}
           </h3>
           <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
-            Schedule a free discovery call at a time that works for you.
+            {bookingDescription}
           </p>
           {showBooking && bookingUrl ? (
             <a

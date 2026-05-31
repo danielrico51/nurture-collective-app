@@ -70,6 +70,16 @@ export const hasContactInfo = (profile: ExtractedMaternalProfile): boolean =>
 export const computeCompletionScore = (
   profile: ExtractedMaternalProfile
 ): number => {
+  const hasContact = Boolean(profile.name.trim() && (profile.phone || profile.email));
+  if (!hasContact) {
+    const exploratory = [
+      profile.maternalStage ? 10 : 0,
+      profile.supportInterests.length ? 10 : 0,
+      profile.locationZip ? 5 : 0,
+    ];
+    return Math.min(35, exploratory.reduce((sum, value) => sum + value, 0));
+  }
+
   const weights = [
     profile.maternalStage ? 20 : 0,
     profile.supportInterests.length ? 20 : 0,
@@ -141,7 +151,12 @@ export const parseQuickReplyToPatch = (
   if (STAGE_ALIASES[lower]) patch.maternalStage = STAGE_ALIASES[lower];
   if (lower === "pregnant") patch.maternalStage = "pregnant";
   if (lower.includes("postpartum")) patch.maternalStage = "newly-postpartum";
-  if (lower.includes("trying")) patch.maternalStage = "trying-to-conceive";
+  if (lower.includes("trying") && !lower.includes("prefer not")) {
+    patch.maternalStage = "trying-to-conceive";
+  }
+  if (lower.includes("prefer not to share")) {
+    patch.locationZip = profile.locationZip || "declined";
+  }
 
   for (const [alias, interest] of Object.entries(INTEREST_ALIASES)) {
     if (lower.includes(alias)) {

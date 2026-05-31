@@ -58,6 +58,7 @@ const ConversationalIntake = ({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const initRef = useRef(false);
   const followLatestRef = useRef(false);
+  const [bootstrapError, setBootstrapError] = useState<string | null>(null);
 
   const scrollMessagesToTop = useCallback(() => {
     const container = messagesContainerRef.current;
@@ -101,58 +102,68 @@ const ConversationalIntake = ({
     }
   }, [loading, messages, streamingText]);
 
-  useEffect(() => {
-    if (initRef.current) return;
-    initRef.current = true;
+  const bootstrap = useCallback(async () => {
+    setLoading(true);
+    setBootstrapError(null);
 
-    const bootstrap = async () => {
-      try {
-        const storedSessionId =
-          typeof window !== "undefined"
-            ? window.sessionStorage.getItem(SESSION_STORAGE_KEY)
-            : null;
+    try {
+      const storedSessionId =
+        typeof window !== "undefined"
+          ? window.sessionStorage.getItem(SESSION_STORAGE_KEY)
+          : null;
 
-        if (storedSessionId && !initialService) {
-          try {
-            const stored = await fetchConversation(storedSessionId);
-            followLatestRef.current = hasUserMessages(stored.messages);
-            setSession(stored);
-            setMessages(stored.messages);
-            setQuickReplies(stored.quickReplies);
-            setSessionClosed(stored.status === "completed");
-            if (stored.status === "completed") {
-              followLatestRef.current = true;
-            }
-            return;
-          } catch {
-            window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+      if (storedSessionId && !initialService) {
+        try {
+          const stored = await fetchConversation(storedSessionId);
+          followLatestRef.current = hasUserMessages(stored.messages);
+          setSession(stored);
+          setMessages(stored.messages);
+          setQuickReplies(stored.quickReplies);
+          setSessionClosed(stored.status === "completed");
+          if (stored.status === "completed") {
+            followLatestRef.current = true;
           }
-        } else if (initialService) {
+          return;
+        } catch {
           window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
         }
-
-        const { session: nextSession, quickReplies: replies } =
-          await startConversation(
-            {
-              ...defaults,
-              serviceSlug: initialService?.slug,
-            },
-            { forceNew: Boolean(initialService) }
-          );
-        followLatestRef.current = false;
-        window.sessionStorage.setItem(SESSION_STORAGE_KEY, nextSession.id);
-        setSession(nextSession);
-        setMessages(nextSession.messages);
-        setQuickReplies(replies);
-      } catch (error) {
-        toast.error(error instanceof Error ? error.message : "Could not start chat");
-      } finally {
-        setLoading(false);
+      } else if (initialService) {
+        window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
       }
-    };
 
-    bootstrap();
-  }, [defaults, initialService, userId]);
+      const { session: nextSession, quickReplies: replies } =
+        await startConversation(
+          {
+            ...defaults,
+            serviceSlug: initialService?.slug,
+          },
+          { forceNew: Boolean(initialService) }
+        );
+      followLatestRef.current = false;
+      window.sessionStorage.setItem(SESSION_STORAGE_KEY, nextSession.id);
+      setSession(nextSession);
+      setMessages(nextSession.messages);
+      setQuickReplies(replies);
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not start chat";
+      setBootstrapError(message);
+      toast.error(message);
+    } finally {
+      setLoading(false);
+    }
+  }, [defaults, initialService]);
+
+  useEffect(() => {
+    if (!userId || initRef.current) return;
+    initRef.current = true;
+    void bootstrap();
+  }, [bootstrap, userId]);
+
+  const retryBootstrap = () => {
+    initRef.current = false;
+    void bootstrap();
+  };
 
   const handleComplete = useCallback(
     (nextSession: ConversationSession, intakeSubmitted?: boolean) => {
@@ -253,6 +264,7 @@ const ConversationalIntake = ({
 
   const startFreshSession = async () => {
     setLoading(true);
+    setBootstrapError(null);
     setSessionClosed(false);
     followLatestRef.current = false;
     window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
@@ -279,8 +291,26 @@ const ConversationalIntake = ({
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center">
+      <div className="flex h-full items-center justify-center px-6 text-center">
         <p className="text-nurture-charcoal/60">{careCoordinator.intake.connecting}</p>
+      </div>
+    );
+  }
+
+  if (!session) {
+    return (
+      <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+        <p className="text-sm text-nurture-charcoal/70">
+          {bootstrapError ??
+            "We couldn't start your conversation. Check your connection and try again."}
+        </p>
+        <button
+          type="button"
+          onClick={retryBootstrap}
+          className="rounded-full bg-nurture-sage px-6 py-2.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
+        >
+          Try again
+        </button>
       </div>
     );
   }
@@ -290,7 +320,10 @@ const ConversationalIntake = ({
 
   return (
     <div className="mx-auto flex h-full w-full max-w-3xl flex-col overflow-hidden px-2 sm:max-w-4xl sm:px-4 lg:max-w-5xl">
-      <ProfileProgressBar score={session?.extractedProfile.completionScore ?? 0} />
+      {(session?.extractedProfile.completionScore ?? 0) > 0 &&
+      hasUserMessages(messages) ? (
+        <ProfileProgressBar score={session.extractedProfile.completionScore} />
+      ) : null}
 
       {sessionClosed ? (
         <div className="mx-4 mt-4 shrink-0 rounded-2xl border border-nurture-sage/20 bg-white/80 px-4 py-3 text-sm text-nurture-charcoal/80">

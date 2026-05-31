@@ -19,7 +19,7 @@ export const teamMembers: TeamMemberProfile[] = [
     id: "barbara-hayer",
     name: "Barbara Hayer",
     role: "Managing Director",
-    bio: "Barb helps keep everything running smoothly at The Nesting Place. Families love her calm, friendly nature and the care she takes in coordinating support with warmth and attention. She is often the first reassuring voice parents hear, guiding them through what they need and making sure they feel supported every step of the way.",
+    bio: "Barb helps keep everything running smoothly at The Nesting Place. Families love her calm, friendly nature and the attention she takes in coordinating support with warmth. She is often the first reassuring voice parents hear, guiding them through what they need and making sure they feel supported every step of the way.",
     initials: "BH",
   },
 ];
