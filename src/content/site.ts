@@ -52,8 +52,11 @@ export const brands = {
   nestingPlace: {
     name: "The Nesting Place",
     shortName: "Nesting Place",
-    tagline: "Where happy families begin",
-    byline: "by Nurture Collective LLC",
+    /** Brand slogan — use as byline wherever Nesting Place is presented. */
+    tagline: "Because Every Mother deserves a Team",
+    byline: "Because Every Mother deserves a Team",
+    /** Legal operator shown where entity attribution is required. */
+    operatorLine: "by Nurture Collective LLC",
     logoSrc: "/branding/nesting-place-wordmark.png",
     wordmarkSrc: "/branding/nesting-place-wordmark.png",
     wordmarkCreamSrc: "/branding/nesting-place-wordmark-cream.png",
@@ -302,8 +305,8 @@ export const momFaqs = [
     a: "Yes — always. Barb and our care team are in direct contact with every family. We use tools to stay organized, but you'll never feel like you're talking to a bot.",
   },
   {
-    q: "Do you accept employer benefits like Carrot, Maven, or Progyny?",
-    a: "Many of our clients use employer-sponsored family benefits. While we are not directly affiliated with these programs, our services may be eligible for reimbursement. Visit our Benefits page or contact us — we're happy to guide you.",
+    q: "Do you accept employer benefits like Carrot, Maven, or ProgenyHealth?",
+    a: "Many of our clients use employer-sponsored family benefits through platforms such as Carrot, Maven Clinic, and ProgenyHealth. While we are not directly contracted with these programs, your plan may reimburse doula or postpartum care. Visit our Benefits page for a simple guide to each platform, or contact us — we're happy to help you navigate next steps.",
   },
   {
     q: "What is personal care coordination?",

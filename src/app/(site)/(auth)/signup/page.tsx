@@ -1,9 +1,10 @@
 "use client";
 
+import { AuthFormProvider } from "@/components/Auth/AuthFormProvider";
 import { AuthPageShell } from "@/components/Auth/AuthPageShell";
-import { SocialAuthButtons } from "@/components/Auth/SocialAuthButtons";
-import { Authenticator } from "@aws-amplify/ui-react";
+import { EmailAuthAuthenticator } from "@/components/Auth/EmailAuthAuthenticator";
 import type { ValidatorResult } from "@aws-amplify/ui";
+import { getCurrentUser } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -26,8 +27,21 @@ const SignupPage = () => {
   useEffect(() => {
     if (!canCreateMemberAccount()) {
       router.replace("/signin");
+      return;
     }
-  }, [router]);
+
+    const redirectIfSignedIn = async () => {
+      try {
+        await getCurrentUser();
+        const path = await resolvePostAuthPath(returnTo);
+        router.replace(path);
+      } catch {
+        // not signed in
+      }
+    };
+
+    redirectIfSignedIn();
+  }, [returnTo, router]);
 
   useEffect(() => {
     const unsubscribe = Hub.listen("auth", ({ payload }) => {
@@ -64,10 +78,10 @@ const SignupPage = () => {
         </p>
       }
     >
-      <SocialAuthButtons mode="signUp" returnTo={returnTo} />
-      <Authenticator
-        initialState="signUp"
-        services={{
+      <AuthFormProvider mode="signUp">
+        <EmailAuthAuthenticator
+          mode="signUp"
+          services={{
           ...emailAliasAuthServices,
           async validateCustomSignUp(formData) {
             const errors: ValidatorResult = {};
@@ -168,7 +182,8 @@ const SignupPage = () => {
           "phone_number",
           "address",
         ]}
-      />
+        />
+      </AuthFormProvider>
     </AuthPageShell>
   );
 };

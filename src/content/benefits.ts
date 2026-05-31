@@ -11,15 +11,14 @@ export const benefitsIntro =
 export const benefitSections: BenefitSection[] = [
   {
     id: "employee-benefits",
-    title: "Employee benefits (Carrot, Maven, Progyny & more)",
+    title: "Employer benefits (Carrot, Maven, ProgenyHealth & more)",
     body: [
-      "More and more employers are supporting growing families by partnering with benefits platforms like Carrot, Maven, and Progyny. These programs often include doula care reimbursement as part of their fertility, pregnancy, or postpartum coverage.",
-      "While we are not directly affiliated with these programs, our services may be eligible for reimbursement depending on your plan. We're happy to provide the documentation you need to submit for reimbursement.",
+      "See the Employer family benefits section on this page for an overview of how companies offer care through platforms like Carrot, ProgenyHealth, and Maven Clinic — and how The Nesting Place can support your reimbursement process.",
     ],
     highlights: [
       "Carrot",
-      "Maven",
-      "Progyny",
+      "Maven Clinic",
+      "ProgenyHealth",
       "Out-of-network reimbursement",
     ],
   },

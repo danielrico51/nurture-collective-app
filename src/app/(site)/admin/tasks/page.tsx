@@ -5,7 +5,7 @@ import { useRequireAdmin } from "@/hooks/useRequireAdmin";
 
 export default function AdminTasksPage() {
   const { user } = useRequireAdmin();
-  const userEmail = user?.signInDetails?.loginId ?? "";
+  const userEmail = user?.loginId ?? "";
 
   return <TaskBoard userEmail={userEmail} />;
 }

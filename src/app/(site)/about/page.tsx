@@ -28,7 +28,7 @@ export default function AboutPage() {
             />
             <SectionTitle
               title="Support every mother, in every region we reach"
-              subtitle={`${brands.nestingPlace.name} — ${brands.nestingPlace.byline} — growing one market at a time.`}
+              subtitle={`${brands.nestingPlace.byline} — growing one market at a time.`}
               centered={false}
             />
             <div className="mt-10 space-y-6 text-nurture-charcoal/80">
@@ -42,8 +42,8 @@ export default function AboutPage() {
                 <span className="font-medium text-nurture-charcoal">
                   {brands.nestingPlace.name}
                 </span>{" "}
-                ({brands.nestingPlace.byline}) is a maternal wellness practice and
-                provider network. We
+                ({brands.nestingPlace.operatorLine}) is a maternal wellness practice and
+                provider network — {brands.nestingPlace.byline}. We
                 connect families with vetted maternal wellness professionals —
                 birth doulas, postpartum support, lactation consultants, newborn
                 support specialists, and more — with a dedicated{" "}

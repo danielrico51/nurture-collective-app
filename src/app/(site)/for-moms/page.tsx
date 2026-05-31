@@ -14,7 +14,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "For Moms | The Nesting Place",
   description:
-    "Birth doula support, postpartum support, lactation, and newborn support through The Nesting Place — by Nurture Collective LLC.",
+    `Birth doula support, postpartum support, lactation, and newborn support through The Nesting Place — ${brands.nestingPlace.byline}.`,
 };
 
 export default function ForMomsPage() {

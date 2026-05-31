@@ -1,7 +1,7 @@
 "use client";
 
 import { getTasksAccessGroup } from "@/lib/auth/groups";
-import { useAuthenticator } from "@aws-amplify/ui-react";
+import { signOut } from "aws-amplify/auth";
 import Link from "next/link";
 
 interface AdminAccessDeniedProps {
@@ -15,8 +15,6 @@ export function AdminAccessDenied({
   onRefresh,
   refreshing,
 }: AdminAccessDeniedProps) {
-  const { signOut } = useAuthenticator((context) => [context.signOut]);
-
   const handleSignOut = async () => {
     try {
       await signOut();

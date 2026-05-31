@@ -1,16 +1,13 @@
 "use client";
 
+import { useSessionAuth } from "@/hooks/useSessionAuth";
 import { useUserGroups } from "@/hooks/useUserGroups";
-import { useAuthenticator } from "@aws-amplify/ui-react";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 export const useRequireAdmin = () => {
   const router = useRouter();
-  const { authStatus, user } = useAuthenticator((context) => [
-    context.authStatus,
-    context.user,
-  ]);
+  const { authStatus, user, ready: sessionReady } = useSessionAuth();
   const {
     groups,
     canAccessAdmin,
@@ -20,10 +17,10 @@ export const useRequireAdmin = () => {
   } = useUserGroups(authStatus === "authenticated");
 
   useEffect(() => {
-    if (authStatus === "unauthenticated") {
+    if (sessionReady && authStatus === "unauthenticated") {
       router.push("/signin");
     }
-  }, [authStatus, router]);
+  }, [authStatus, router, sessionReady]);
 
   const ready =
     authStatus === "authenticated" && !groupsLoading && canAccessAdmin;

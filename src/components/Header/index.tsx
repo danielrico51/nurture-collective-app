@@ -3,7 +3,7 @@
 import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
 import { primaryNavLinks } from "@/config/navigation";
 import { useUserGroups } from "@/hooks/useUserGroups";
-import { useAuthenticator } from "@aws-amplify/ui-react";
+import { signOut } from "aws-amplify/auth";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
@@ -14,7 +14,6 @@ interface HeaderProps {
 
 const Header = ({ isAuthenticated }: HeaderProps) => {
   const pathname = usePathname();
-  const { signOut } = useAuthenticator((context) => [context.signOut]);
   const { canAccessAdmin } = useUserGroups(isAuthenticated);
   const [menuOpen, setMenuOpen] = useState(false);
   const [sticky, setSticky] = useState(false);

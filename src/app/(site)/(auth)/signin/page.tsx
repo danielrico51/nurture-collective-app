@@ -1,8 +1,8 @@
 "use client";
 
+import { AuthFormProvider } from "@/components/Auth/AuthFormProvider";
 import { AuthPageShell } from "@/components/Auth/AuthPageShell";
-import { SocialAuthButtons } from "@/components/Auth/SocialAuthButtons";
-import { Authenticator } from "@aws-amplify/ui-react";
+import { EmailAuthAuthenticator } from "@/components/Auth/EmailAuthAuthenticator";
 import { getCurrentUser } from "aws-amplify/auth";
 import { Hub } from "aws-amplify/utils";
 import { brands } from "@/content/site";
@@ -96,31 +96,31 @@ const SigninPage = () => {
         )
       }
     >
-      <SocialAuthButtons mode="signIn" returnTo={returnTo} />
-      <Authenticator
-        initialState="signIn"
-        hideSignUp
-        services={emailAliasAuthServices}
-        formFields={{
-          ...sharedAuthFormFields,
-          signIn: {
-            username: {
-              label: "Username or email",
-              placeholder: "yourname or you@example.com",
-              isRequired: true,
+      <AuthFormProvider mode="signIn">
+        <EmailAuthAuthenticator
+          mode="signIn"
+          services={emailAliasAuthServices}
+          formFields={{
+            ...sharedAuthFormFields,
+            signIn: {
+              username: {
+                label: "Username or email",
+                placeholder: "yourname or you@example.com",
+                isRequired: true,
+              },
+              password: {
+                label: "Password",
+                placeholder: "Enter your password",
+                isRequired: true,
+              },
             },
-            password: {
-              label: "Password",
-              placeholder: "Enter your password",
-              isRequired: true,
-            },
-          },
-        }}
-        components={{
-          ...sharedAuthComponents,
-          Header: signInAuthHeader,
-        }}
-      />
+          }}
+          components={{
+            ...sharedAuthComponents,
+            Header: signInAuthHeader,
+          }}
+        />
+      </AuthFormProvider>
     </AuthPageShell>
   );
 };

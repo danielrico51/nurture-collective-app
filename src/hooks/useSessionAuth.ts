@@ -1,45 +1,42 @@
 "use client";
 
-import { getCurrentUser } from "aws-amplify/auth";
+import { loadSessionUser, type SessionUser } from "@/lib/auth/sessionUser";
 import { Hub } from "aws-amplify/utils";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 export type SessionAuthStatus = "configuring" | "authenticated" | "unauthenticated";
 
 /**
- * Reliable Cognito session detection for pages outside the Authenticator form.
- * Prefer this over useAuthenticator() on marketing and redirect routes.
+ * Cognito session for pages outside the Authenticator form (header, dashboard, admin).
  */
 export const useSessionAuth = () => {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [ready, setReady] = useState(false);
+  const [user, setUser] = useState<SessionUser | null>(null);
+
+  const syncAuth = useCallback(async () => {
+    const sessionUser = await loadSessionUser();
+    setUser(sessionUser);
+    setIsAuthenticated(sessionUser !== null);
+    setReady(true);
+  }, []);
 
   useEffect(() => {
-    const syncAuth = async () => {
-      try {
-        await getCurrentUser();
-        setIsAuthenticated(true);
-      } catch {
-        setIsAuthenticated(false);
-      } finally {
-        setReady(true);
-      }
-    };
-
-    syncAuth();
+    void syncAuth();
 
     const unsubscribe = Hub.listen("auth", ({ payload }) => {
       if (payload.event === "signedIn") {
-        setIsAuthenticated(true);
-        setReady(true);
+        void syncAuth();
       }
       if (payload.event === "signedOut") {
+        setUser(null);
         setIsAuthenticated(false);
+        setReady(true);
       }
     });
 
     return () => unsubscribe();
-  }, []);
+  }, [syncAuth]);
 
   const authStatus: SessionAuthStatus = !ready
     ? "configuring"
@@ -47,5 +44,5 @@ export const useSessionAuth = () => {
       ? "authenticated"
       : "unauthenticated";
 
-  return { isAuthenticated, ready, authStatus };
+  return { isAuthenticated, ready, authStatus, user };
 };

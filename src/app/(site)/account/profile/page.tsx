@@ -3,22 +3,22 @@
 import ProfileForm from "@/components/Account/ProfileForm";
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import SectionTitle from "@/components/Common/SectionTitle";
-import { useAuthenticator } from "@aws-amplify/ui-react";
+import { useSessionAuth } from "@/hooks/useSessionAuth";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 const ProfilePage = () => {
   const router = useRouter();
-  const { authStatus } = useAuthenticator((context) => [context.authStatus]);
+  const { authStatus, ready } = useSessionAuth();
 
   useEffect(() => {
-    if (authStatus === "unauthenticated") {
+    if (ready && authStatus === "unauthenticated") {
       router.push("/signin");
     }
-  }, [authStatus, router]);
+  }, [authStatus, ready, router]);
 
-  if (authStatus !== "authenticated") {
+  if (!ready || authStatus !== "authenticated") {
     return (
       <div className="flex min-h-[50vh] items-center justify-center">
         <p className="text-nurture-charcoal/60">Loading your profile…</p>

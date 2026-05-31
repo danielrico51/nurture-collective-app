@@ -25,7 +25,7 @@ export default function AdminLeadsPage() {
   return (
     <LeadQueue
       coordinatorId={coordinatorId}
-      coordinatorEmail={user?.signInDetails?.loginId ?? ""}
+      coordinatorEmail={user?.loginId ?? ""}
     />
   );
 }

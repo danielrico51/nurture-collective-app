@@ -58,7 +58,7 @@ export function DashboardView() {
 
   const displayName =
     intake?.profile?.name?.split(" ")[0] ||
-    user?.signInDetails?.loginId?.split("@")[0] ||
+    user?.loginId?.split("@")[0] ||
     "there";
 
   const intakeComplete = isIntakeComplete(intake?.profile?.intakeStatus);

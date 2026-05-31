@@ -1,7 +1,6 @@
 import type { AuthenticatorProps } from "@aws-amplify/ui-react";
 import { AuthCardHeader } from "@/components/Auth/AuthCardHeader";
 import { ForceNewPasswordFormFields } from "@/components/Auth/ForceNewPasswordFormFields";
-import { isSocialAuthEnabled } from "@/config/socialAuth";
 
 export const sharedAuthFormFields: AuthenticatorProps["formFields"] = {
   confirmResetPassword: {
@@ -45,11 +44,7 @@ export const signInAuthHeader = () => (
   <AuthCardHeader
     icon="signin"
     title="Sign in"
-    subtitle={
-      isSocialAuthEnabled()
-        ? "Use Google, Facebook, Apple, or your username and password."
-        : "Use your username or email and password."
-    }
+    subtitle="Use your username or email and password."
   />
 );
 
@@ -57,10 +52,6 @@ export const signUpAuthHeader = () => (
   <AuthCardHeader
     icon="signup"
     title="Create your account"
-    subtitle={
-      isSocialAuthEnabled()
-        ? "Sign up with Google, Facebook, Apple, or create an account with email."
-        : "Join with a username and the email tied to your membership."
-    }
+    subtitle="Choose a username and complete the fields below."
   />
 );

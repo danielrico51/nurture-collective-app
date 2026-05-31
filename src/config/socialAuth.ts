@@ -1,5 +1,11 @@
 export type SocialAuthProvider = "Google" | "Facebook" | "Apple";
 
+/**
+ * Set to true only when Cognito Hosted UI + provider apps are verified end-to-end.
+ * Until then, social buttons stay hidden regardless of env flags.
+ */
+export const SOCIAL_AUTH_INTEGRATION_READY = false;
+
 const parseEnabled = (value: string | undefined): boolean =>
   value === "true" || value === "1";
 
@@ -34,6 +40,7 @@ export const getOAuthCallbackUrl = (): string =>
 export const getOAuthSignOutUrl = (): string => `${getAppBaseUrl()}/`;
 
 export const isSocialAuthEnabled = (): boolean =>
+  SOCIAL_AUTH_INTEGRATION_READY &&
   parseEnabled(process.env.NEXT_PUBLIC_SOCIAL_AUTH_ENABLED) &&
   Boolean(getCognitoOAuthDomain());
 
@@ -49,11 +56,6 @@ export const getEnabledSocialProviders = (): SocialAuthProvider[] => {
   }
   if (parseEnabled(process.env.NEXT_PUBLIC_AUTH_APPLE_ENABLED)) {
     providers.push("Apple");
-  }
-
-  // Global flag on but no per-provider flags — show Google at minimum
-  if (providers.length === 0 && parseEnabled(process.env.NEXT_PUBLIC_SOCIAL_AUTH_ENABLED)) {
-    providers.push("Google");
   }
 
   return providers;

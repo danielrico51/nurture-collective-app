@@ -3,7 +3,6 @@
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import { configureAmplify } from "@/utils/amplifyConfig";
-import { Authenticator } from "@aws-amplify/ui-react";
 import "@aws-amplify/ui-react/styles.css";
 import { Hub } from "aws-amplify/utils";
 import { getCurrentUser } from "aws-amplify/auth";
@@ -55,11 +54,11 @@ export default function RootLayoutClient({
   }
 
   return (
-    <Authenticator.Provider>
+    <>
       <Toaster position="top-center" />
       <Header isAuthenticated={isAuthenticated} />
       <main className="min-h-screen pt-20">{children}</main>
       <Footer />
-    </Authenticator.Provider>
+    </>
   );
 }

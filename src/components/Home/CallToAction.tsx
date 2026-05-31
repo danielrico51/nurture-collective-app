@@ -1,5 +1,6 @@
 import ContactOptions from "@/components/Common/ContactOptions";
 import { buildCareStartHref } from "@/config/carePaths";
+import { brands } from "@/content/site";
 import Link from "next/link";
 
 const CallToAction = () => {
@@ -8,7 +9,7 @@ const CallToAction = () => {
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
         <div className="rounded-3xl bg-nurture-sage px-8 py-16 text-center text-white sm:px-16">
           <h2 className="font-serif text-3xl font-semibold sm:text-4xl">
-            Every mother deserves a team
+            {brands.nestingPlace.byline}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-white/90">
             Nurture Collective connects families with trusted maternal wellness

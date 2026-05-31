@@ -19,8 +19,14 @@ const Footer = () => {
                 className="h-[6.3rem] w-[6.3rem] object-contain sm:h-28 sm:w-28"
               />
             </Link>
-            <p className="mt-5 max-w-lg text-sm text-nurture-charcoal/70">
+            <p className="mt-3 font-serif text-base font-semibold text-nurture-sage-dark">
+              {brands.nestingPlace.byline}
+            </p>
+            <p className="mt-3 max-w-lg text-sm text-nurture-charcoal/70">
               {brands.nestingPlace.description}
+            </p>
+            <p className="mt-2 text-xs text-nurture-charcoal/55">
+              {brands.nestingPlace.operatorLine}
             </p>
             <p className="mt-2 text-xs text-nurture-charcoal/55">
               {brands.nestingPlace.serviceArea}
