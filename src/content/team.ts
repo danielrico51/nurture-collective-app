@@ -14,7 +14,7 @@ export const teamMembers: TeamMemberProfile[] = [
     id: "alex-burleigh",
     name: "Alex Burleigh",
     role: "Owner",
-    bio: "Alex is excited to pick up the torch from Alison and lead The Nesting Place and Nurture Collective — growing the team and provider network so more moms and families feel supported every step of the way.",
+    bio: "Alex is a proud mother to a wonderful four-year-old and is eagerly awaiting the arrival of her second daughter this August. Her own journey into motherhood—including navigating fertility challenges, balancing a rewarding career, and preparing to welcome another child—has given her a deep appreciation of the value of compassionate, personalized support throughout pregnancy, birth, and the postpartum period. These experiences have shaped her passion for maternal wellness and fuel her commitment to ensuring that every family feels supported, informed, and cared for during this transformative chapter of life.",
     initials: "AB",
     imageSrc: "/images/team/alex-burleigh.png",
     imageAlt: "Alex Burleigh, Owner of The Nesting Place",
