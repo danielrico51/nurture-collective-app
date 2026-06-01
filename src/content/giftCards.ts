@@ -39,7 +39,7 @@ export const giftCardFaqs = [
   },
   {
     q: "What can it be used for?",
-    a: "Gift cards apply toward eligible maternal wellness services at The Nesting Place — doula care, postpartum support, lactation, massage, and more, subject to availability in your service area.",
+    a: "Gift cards apply toward eligible Maternal Wellness services at The Nesting Place — doula care, postpartum support, lactation, massage, and more.",
   },
   {
     q: "Do gift cards expire?",

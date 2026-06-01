@@ -2,7 +2,6 @@ import CallToAction from "@/components/Home/CallToAction";
 import JoinTeamSection from "@/components/Home/JoinTeamSection";
 import ServiceStatsSection from "@/components/Home/ServiceStatsSection";
 import TeamBylineBanner from "@/components/Home/TeamBylineBanner";
-import CoverageMap from "@/components/Common/CoverageMap";
 import FaqList from "@/components/Common/FaqList";
 import Hero from "@/components/Home/Hero";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
@@ -13,7 +12,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "The Nesting Place | Maternal Wellness & Postpartum Support",
   description:
-    "The Nesting Place — birth doula, postpartum, lactation, and newborn support in Northern New Jersey and the Lower Hudson Valley.",
+    "The Nesting Place — birth doula, postpartum, lactation, and newborn support with real people guiding you every step of the way.",
 };
 
 export default function HomePage() {
@@ -22,7 +21,6 @@ export default function HomePage() {
       <Hero />
       <TeamBylineBanner />
       <ServiceStatsSection />
-      <CoverageMap />
       <GoogleReviewsSection className="bg-nurture-sage/5" />
       <HowItWorksSteps
         title="How it works for moms"

@@ -462,8 +462,7 @@ const EGiftCardForm = () => {
           required
           className="mt-1 accent-nurture-sage"
         />
-        I understand gift cards are non-refundable except where required by law, and
-        services are subject to availability in the recipient&apos;s service area.
+        I understand gift cards are non-refundable except where required by law.
       </label>
 
       <button

@@ -11,9 +11,9 @@ const TeamBylineBanner = () => {
             {brands.nestingPlace.byline}
           </h2>
           <p className="mx-auto mt-4 max-w-xl text-white/90">
-            Nurture Collective connects families with trusted maternal wellness
-            support — expanding region by region, with a dedicated support
-            coordinator by your side.
+            Nurture Collective connects families with trusted Maternal Wellness
+            support — with a dedicated coordinator by your side from your first
+            call through every stage of motherhood.
           </p>
           <div className="mt-8">
             <Link

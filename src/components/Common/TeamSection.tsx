@@ -1,4 +1,5 @@
 import type { TeamMemberProfile } from "@/content/team";
+import Image from "next/image";
 import Link from "next/link";
 
 interface TeamMemberCardProps {
@@ -12,14 +13,30 @@ const TeamMemberCard = ({ member, compact = false }: TeamMemberCardProps) => (
       compact ? "p-6" : "p-8"
     }`}
   >
-    <div
-      className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-nurture-blush to-nurture-sage/30 font-serif font-semibold text-nurture-sage-dark ${
-        compact ? "h-16 w-16 text-xl" : "h-20 w-20 text-2xl"
-      }`}
-      aria-hidden
-    >
-      {member.initials}
-    </div>
+    {member.imageSrc ? (
+      <div
+        className={`relative shrink-0 overflow-hidden rounded-full border border-nurture-sage/20 bg-nurture-cream ${
+          compact ? "h-16 w-16" : "h-20 w-20"
+        }`}
+      >
+        <Image
+          src={member.imageSrc}
+          alt={member.imageAlt ?? `${member.name}, ${member.role}`}
+          fill
+          sizes={compact ? "64px" : "80px"}
+          className="object-cover object-center"
+        />
+      </div>
+    ) : (
+      <div
+        className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-nurture-blush to-nurture-sage/30 font-serif font-semibold text-nurture-sage-dark ${
+          compact ? "h-16 w-16 text-xl" : "h-20 w-20 text-2xl"
+        }`}
+        aria-hidden
+      >
+        {member.initials}
+      </div>
+    )}
     <h3 className="mt-5 font-serif text-xl font-semibold text-nurture-charcoal">
       {member.name}
     </h3>

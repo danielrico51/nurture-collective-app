@@ -1,7 +1,6 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import CalendlyEmbed from "@/components/Common/CalendlyEmbed";
 import ContactOptions from "@/components/Common/ContactOptions";
-import CoverageMap from "@/components/Common/CoverageMap";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { brands, publishedCoreServices } from "@/content/site";
 import type { Metadata } from "next";
@@ -9,7 +8,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "Services | The Nesting Place",
   description:
-    "Birth doula support, overnight newborn support, postpartum support, lactation support, and prenatal massage — available in active coverage regions.",
+    "Birth doula support, overnight newborn support, postpartum support, lactation support, and prenatal massage through The Nesting Place.",
 };
 
 export default function ServicesPage() {
@@ -19,8 +18,8 @@ export default function ServicesPage() {
       <section className="py-16">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <SectionTitle
-            title="Maternal wellness — available today"
-            subtitle={`Evidence-based support through ${brands.nestingPlace.name}. Check coverage for availability in your area.`}
+            title="Maternal Wellness — available now"
+            subtitle={`Experienced, evidence-based support through ${brands.nestingPlace.name}. Reach out — our team is here to help.`}
           />
           <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
             {publishedCoreServices.map((service) => (
@@ -59,7 +58,6 @@ export default function ServicesPage() {
           </div>
         </div>
       </section>
-      <CoverageMap />
       <CalendlyEmbed />
     </>
   );

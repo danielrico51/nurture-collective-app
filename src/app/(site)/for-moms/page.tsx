@@ -1,7 +1,6 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import CalendlyEmbed from "@/components/Common/CalendlyEmbed";
 import ContactOptions from "@/components/Common/ContactOptions";
-import CoverageMap from "@/components/Common/CoverageMap";
 import FaqList from "@/components/Common/FaqList";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
 import GoogleReviewsSection from "@/components/Reviews/GoogleReviewsSection";
@@ -37,10 +36,10 @@ export default function ForMomsPage() {
               Support that meets you where you are
             </h1>
             <p className="mt-6 text-lg text-nurture-charcoal/80">
-              Start with evidence-based support from vetted providers in your
-              region. As {brands.nestingPlace.name} grows,{" "}
-              {careCoordinator.possessive} will coordinate every service you
-              need — from doula support to cleaning, childcare, and beyond.
+              Start with evidence-based support from vetted providers. As{" "}
+              {brands.nestingPlace.name} grows, {careCoordinator.possessive} will
+              coordinate every service you need — from doula support to cleaning,
+              childcare, and beyond.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
@@ -55,7 +54,7 @@ export default function ForMomsPage() {
           <div className="mt-20">
             <SectionTitle
               title="Available services"
-              subtitle="Experienced, evidence-based maternal wellness — check coverage for availability in your area."
+              subtitle="Experienced, evidence-based Maternal Wellness support — reach out when you're ready."
             />
             <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
               {publishedCoreServices.map((service) => (
@@ -92,7 +91,6 @@ export default function ForMomsPage() {
         </div>
       </section>
 
-      <CoverageMap />
       <GoogleReviewsSection />
       <HowItWorksSteps
         title="Your support journey"

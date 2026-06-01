@@ -85,8 +85,7 @@ const ContactOptions = ({
             Chat with us
           </h3>
           <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
-            Message our team directly — great for quick questions or scheduling
-            updates.
+            Message our team directly — we want to be easily available to you.
           </p>
           {showWhatsApp ? (
             <a

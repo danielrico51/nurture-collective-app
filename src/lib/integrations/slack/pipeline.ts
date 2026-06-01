@@ -4,11 +4,8 @@ import {
   buildIntakeCompletedMessage,
   buildLeadStatusMessage,
   buildNewLeadMessage,
-  buildOutOfRegionLeadMessage,
   type ConsultBookedDetails,
 } from "@/lib/integrations/slack/messages";
-import { getCoverageConfig } from "@/lib/coverage/storage";
-import { resolveCoverageForZip } from "@/lib/coverage/resolve";
 import type { LeadRecord, LeadStatus } from "@/types/lead";
 
 const hasCoordinatorContact = (lead: LeadRecord): boolean =>
@@ -38,16 +35,7 @@ export const shouldNotifyStatusChange = (
 ): boolean =>
   Boolean(previous && previous.status !== current.status);
 
-export const shouldNotifyOutOfRegion = (
-  previous: LeadRecord | null,
-  current: LeadRecord,
-  coverageStatus: "outside" | "active" | "expanding" | "waitlist"
-): boolean => {
-  const zip = current.locationZip?.trim();
-  if (!zip) return false;
-  if (previous?.locationZip?.trim() === zip) return false;
-  return coverageStatus === "outside";
-};
+export const shouldNotifyOutOfRegion = (): boolean => false;
 
 export const resolveStatusChangeChannel = (
   status: LeadStatus
@@ -89,15 +77,6 @@ export const notifyConsultBooked = async (
   await postSlackMessage({ channel: "scheduledCalls", text, blocks });
 };
 
-export const notifyOutOfRegionLead = async (
-  lead: LeadRecord,
-  zip: string,
-  coverageMessage: string
-): Promise<void> => {
-  const { text, blocks } = buildOutOfRegionLeadMessage(lead, zip, coverageMessage);
-  await postSlackMessage({ channel: "newLeads", text, blocks });
-};
-
 export const notifyLeadPipelineEvent = async (input: {
   previous: LeadRecord | null;
   current: LeadRecord;
@@ -115,15 +94,5 @@ export const notifyLeadPipelineEvent = async (input: {
 
   if (shouldNotifyStatusChange(previous, current) && previous) {
     await notifyLeadStatusChanged(current, previous.status);
-  }
-
-  const zip = current.locationZip?.trim();
-  const previousZip = previous?.locationZip?.trim();
-  if (zip && zip !== previousZip) {
-    const config = await getCoverageConfig();
-    const coverage = resolveCoverageForZip(zip, config);
-    if (shouldNotifyOutOfRegion(previous, current, coverage.status)) {
-      await notifyOutOfRegionLead(current, zip, coverage.message);
-    }
   }
 };

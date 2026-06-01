@@ -34,7 +34,7 @@ export const ADMIN_APPS: AdminApp[] = [
   {
     id: "coverage",
     title: "Coverage map",
-    description: "Manage service regions, ZIP coverage, and expansion ratio for the concierge.",
+    description: "Plan service regions and ZIP areas for internal use (not shown on the public site).",
     href: "/admin/coverage",
     status: "available",
     icon: "coverage",

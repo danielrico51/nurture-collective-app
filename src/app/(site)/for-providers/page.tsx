@@ -1,6 +1,5 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import ContactOptions from "@/components/Common/ContactOptions";
-import CoverageMap from "@/components/Common/CoverageMap";
 import FaqList from "@/components/Common/FaqList";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
 import SectionTitle from "@/components/Common/SectionTitle";
@@ -17,7 +16,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = {
   title: "For Service Providers | The Nesting Place",
   description:
-    "Join The Nesting Place provider network. We're recruiting doulas, lactation consultants, newborn care specialists, and more as we expand region by region.",
+    "Join The Nesting Place provider network. We're recruiting doulas, lactation consultants, newborn care specialists, and more.",
 };
 
 export default function ForProvidersPage() {
@@ -34,10 +33,10 @@ export default function ForProvidersPage() {
               Grow your practice with a team that puts moms first
             </h1>
             <p className="mt-6 text-lg text-nurture-charcoal/80">
-              {brands.nestingPlace.name} is building a provider
-              network with personal care coordinators who match exceptional
-              providers with families who need them. Provider recruitment is
-              essential to our success — join us as we expand market by market.
+              {brands.nestingPlace.name} is building a provider network with
+              personal care coordinators who match exceptional providers with
+              families who need them. Provider recruitment is essential to our
+              success — we&apos;d love to hear from you.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
@@ -86,7 +85,7 @@ export default function ForProvidersPage() {
           <div className="mt-20">
             <SectionTitle
               title="Why partner with us?"
-              subtitle="A marketplace built for scale — starting in our active regions and growing nationally."
+              subtitle="A marketplace built for thoughtful matching — personal relationships, not automated lists."
             />
             <div className="mt-10 grid gap-6 md:grid-cols-3">
               {[
@@ -98,7 +97,7 @@ export default function ForProvidersPage() {
                 {
                   title: "Expand with us",
                   description:
-                    "We onboard in active coverage regions first, then open new markets based on family and provider demand.",
+                    "Grow your practice alongside a team that values quality, communication, and family-centered care.",
                 },
                 {
                   title: "Get matched with families",
@@ -130,7 +129,6 @@ export default function ForProvidersPage() {
         </div>
       </section>
 
-      <CoverageMap title="Where we're onboarding providers" />
       <HowItWorksSteps
         title="Provider onboarding"
         steps={providerHowItWorks}

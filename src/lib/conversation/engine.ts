@@ -7,8 +7,7 @@ import {
   mergeExtractedProfile,
 } from "@/lib/conversation/profileMapper";
 import { NESTING_PLACE_CONCIERGE_QUICK_REPLIES } from "@/content/nestingPlaceServices";
-import { formatCoverageForConcierge } from "@/lib/coverage/concierge";
-import { getCoverageConfig } from "@/lib/coverage/storage";
+import { formatServiceAreaForConcierge } from "@/lib/coverage/concierge";
 import { CONCIERGE_SYSTEM_PROMPT } from "@/lib/conversation/prompts";
 import {
   detectSafetyEscalation,
@@ -32,7 +31,7 @@ const WELCOME_MESSAGE =
   "Hi — I'm your support coordinator for The Nesting Place. I'm here to help connect you with the right support — birth doula, postpartum help, lactation, overnight newborn care, or prenatal massage. There's no rush. How far along are you in your motherhood journey?";
 
 const BIRTH_DOULA_WELCOME =
-  "Hi — I'm your support coordinator for The Nesting Place. I see you're interested in birth doula support. What ZIP code are you in? That helps me confirm what we can offer near you — or you can say you prefer not to share.";
+  "Hi — I'm your support coordinator for The Nesting Place. I see you're interested in birth doula support. How far along are you in your pregnancy?";
 
 const buildWelcomeMessage = (
   userId: string,
@@ -53,7 +52,7 @@ const DEFAULT_QUICK_REPLIES = [
   "Infant care",
 ];
 
-const BIRTH_DOULA_QUICK_REPLIES = ["Pregnant", "Newly postpartum", "Prefer not to share ZIP"];
+const BIRTH_DOULA_QUICK_REPLIES = ["First trimester", "Second trimester", "Third trimester"];
 
 const FALLBACK_REPLIES: Record<string, string[]> = {
   start: DEFAULT_QUICK_REPLIES,
@@ -132,15 +131,11 @@ const buildChatMessages = async (
   const needsContact =
     !profile.name.trim() || (!profile.phone.trim() && !profile.email.trim());
 
-  const coverageConfig = await getCoverageConfig();
-  const coveragePrompt = formatCoverageForConcierge(
-    coverageConfig,
-    profile.locationZip
-  );
+  const serviceAreaPrompt = formatServiceAreaForConcierge(profile.locationZip);
 
   const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
     { role: "system", content: CONCIERGE_SYSTEM_PROMPT },
-    { role: "system", content: coveragePrompt },
+    { role: "system", content: serviceAreaPrompt },
     {
       role: "system",
       content: `Current extracted profile (background): ${JSON.stringify(profile)}`,
@@ -196,7 +191,7 @@ const fallbackAssistantReply = (
   if (!profile.maternalStage) {
     return {
       content:
-        "Thank you for sharing. That helps me understand where you are. What ZIP code are you in? That helps me confirm what Nesting Place support we can offer near you.",
+        "Thank you for sharing. That helps me understand where you are in your journey. What kind of support are you looking for right now?",
       quickReplies: FALLBACK_REPLIES.maternalStage,
     };
   }
@@ -206,13 +201,13 @@ const fallbackAssistantReply = (
     if (declinedZip) {
       return {
         content:
-          "No problem — we can still answer your questions. What would be most helpful to know about our support?",
+          "No problem — we can still help. What would be most useful to know about our support?",
         quickReplies: [],
       };
     }
     return {
       content:
-        "What's your ZIP code? I'll check our current coverage in your area. You can also say you prefer not to share.",
+        "If you're comfortable sharing your ZIP code, it helps our team with scheduling — but it's completely optional.",
       quickReplies: ["Prefer not to share ZIP"],
     };
   }

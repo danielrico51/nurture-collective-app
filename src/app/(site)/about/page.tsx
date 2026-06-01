@@ -17,8 +17,7 @@ export const metadata: Metadata = {
 const values = [
   {
     title: "Real people, always",
-    description:
-      "Every family deserves a steady, human presence — not a ticket queue or a chatbot.",
+    description: "Every family deserves a steady, human presence.",
   },
   {
     title: "Evidence-based support",
@@ -54,9 +53,9 @@ export default function AboutPage() {
                 dedicated support coordinator who knows your name.
               </p>
               <p>
-                We began in Northern New Jersey and the Lower Hudson Valley,
-                growing region by region with the same standard of personal,
-                family-centered support.
+                We began in Northern New Jersey and the Lower Hudson Valley with
+                a simple promise: every mother deserves a team and a coordinator
+                who knows her by name — and we welcome families wherever they are.
               </p>
             </div>
 

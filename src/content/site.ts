@@ -61,8 +61,7 @@ export const brands = {
     wordmarkSrc: "/branding/nesting-place-wordmark.png",
     wordmarkCreamSrc: "/branding/nesting-place-wordmark-cream.png",
     markSrc: "/branding/nesting-place-baby-mark.png",
-    serviceArea:
-      "Northern New Jersey, Lower Hudson Valley, and surrounding areas",
+    serviceArea: "Based in Northern New Jersey & the Lower Hudson Valley — welcoming families everywhere",
     description:
       "An experienced maternal wellness and postpartum support practice offering birth doula support, overnight newborn care, postpartum support, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of motherhood.",
     phone: "(844) 926-2867",
@@ -130,7 +129,7 @@ export const coreServices: CoreService[] = [
     slug: "birth-doula",
     title: "Birth doula support",
     description:
-      "Experienced, evidence-based doula support for labor, birth planning, and continuous support through your birthing experience.",
+      "Experienced evidence-based doula support for birth planning and labor.",
     tag: "Doula support",
     benefit:
       "Feel calm and confident with a steady, compassionate presence from early labor through your baby's first moments.",
@@ -139,7 +138,7 @@ export const coreServices: CoreService[] = [
     slug: "overnight-newborn",
     title: "Overnight newborn support",
     description:
-      "Skilled overnight support so you can rest and recover while experienced postpartum professionals support your newborn.",
+      "Experienced postpartum professionals support your newborn so you can rest and recover.",
     tag: "Newborn support",
     benefit:
       "Sleep and recover knowing your baby is in experienced, nurturing hands through the night.",
@@ -279,11 +278,11 @@ export const providerHowItWorks = [
 export const momFaqs = [
   {
     q: "Where is The Nesting Place available?",
-    a: "We serve families in Northern New Jersey and the Lower Hudson Valley today — including Bergen, Essex, Hudson, Passaic, Morris, and surrounding counties, plus lower Hudson Valley communities in New York. See our coverage section for current service areas.",
+    a: "We welcome families from anywhere. Our team is based in Northern New Jersey and the Lower Hudson Valley, and we work with families in person, virtually, and through coordinated support nationwide. Reach out — we'll discuss what works best for your situation.",
   },
   {
     q: "What services are available today?",
-    a: "In our active regions we offer birth doula support, overnight newborn support, postpartum support, lactation support, prenatal massage, postpartum massage (Ridgewood), and childbirth education through our vetted provider network.",
+    a: "We offer birth doula support, overnight newborn support, postpartum support, lactation support, prenatal massage, postpartum massage (Ridgewood), and childbirth education through our vetted provider network.",
   },
   {
     q: "What is the difference between overnight newborn care and postpartum support?",
@@ -303,7 +302,7 @@ export const momFaqs = [
   },
   {
     q: "What is the relationship between The Nesting Place and Nurture Collective LLC?",
-    a: "The Nesting Place is our maternal wellness practice in Northern New Jersey and the Lower Hudson Valley — operated by Nurture Collective LLC, which also builds the provider network and support coordination platform as we expand region by region.",
+    a: "The Nesting Place is our Maternal Wellness practice — operated by Nurture Collective LLC, which also builds the provider network and support coordination platform families rely on.",
   },
 ] as const;
 
@@ -314,7 +313,7 @@ export const providerFaqs = [
   },
   {
     q: "Why join The Nesting Place network?",
-    a: "Partner with a growing practice that values personal relationships and dedicated care coordinators. Our team personally matches you with families — starting in our active regions and expanding nationally.",
+    a: "Partner with a growing practice that values personal relationships and dedicated care coordinators. Our team personally matches you with families who need your expertise.",
   },
   {
     q: "What is the application process?",
@@ -322,7 +321,7 @@ export const providerFaqs = [
   },
   {
     q: "Where do you operate?",
-    a: "We onboard providers in our active coverage regions first, then expand based on family demand.",
+    a: "We welcome experienced providers nationwide. Share your credentials and availability — our team will discuss fit and onboarding with you directly.",
   },
 ] as const;
 

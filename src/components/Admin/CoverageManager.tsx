@@ -140,7 +140,7 @@ const CoverageManager = () => {
       setConfig(saved);
       setLoadError(null);
       setUsingDefaults(false);
-      toast.success("Coverage map saved — concierge will use this immediately");
+      toast.success("Coverage map saved — stored for internal planning");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Save failed");
     } finally {

@@ -74,23 +74,8 @@ describe("Slack pipeline rules", () => {
     expect(shouldNotifyStatusChange(previous, current)).toBe(true);
   });
 
-  it("notifies when a new out-of-region ZIP is captured", () => {
-    const previous = baseLead({
-      name: "Alex",
-      email: "alex@example.com",
-      status: "intake_in_progress",
-    });
-    const current = baseLead({
-      name: "Alex",
-      email: "alex@example.com",
-      status: "intake_in_progress",
-      locationZip: "90210",
-    });
-    expect(shouldNotifyOutOfRegion(previous, current, "outside")).toBe(true);
-    expect(shouldNotifyOutOfRegion(previous, current, "active")).toBe(false);
-    expect(
-      shouldNotifyOutOfRegion(current, current, "outside")
-    ).toBe(false);
+  it("does not send separate out-of-region alerts (all leads use standard flow)", () => {
+    expect(shouldNotifyOutOfRegion()).toBe(false);
   });
 });
 

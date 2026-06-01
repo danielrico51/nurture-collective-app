@@ -32,9 +32,9 @@ const Footer = () => {
               {brands.nestingPlace.serviceArea}
             </p>
             <p className="mt-3 text-xs text-nurture-charcoal/50">
-              Expanding region by region ·{" "}
-              <Link href="/for-moms#coverage" className="hover:text-nurture-sage-dark">
-                View coverage
+              Questions?{" "}
+              <Link href="/contact" className="hover:text-nurture-sage-dark">
+                Contact our team
               </Link>
             </p>
           </div>

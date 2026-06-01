@@ -34,7 +34,7 @@ export const howEmployerBenefitsWork = [
   {
     title: "The Nesting Place supports your journey",
     description:
-      "We provide in-person and local maternal wellness services in Northern New Jersey. We are happy to help you understand whether your plan may apply and provide the paperwork you need to request reimbursement when eligible.",
+      "We provide Maternal Wellness services with a home base in Northern New Jersey. We are happy to help you understand whether your plan may apply and provide the paperwork you need to request reimbursement when eligible.",
   },
 ];
 
