@@ -7,14 +7,24 @@ import {
 import { verifyRequest } from "@/lib/auth/verifyRequest";
 
 export const requireMemberAuth = async (request: NextRequest) => {
+  const authorizationHeader = request.headers.get("authorization");
+  if (!authorizationHeader?.startsWith("Bearer ")) {
+    return {
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      user: null,
+      authorizationHeader: null,
+    };
+  }
+
   const user = await verifyRequest(request);
   if (!user) {
     return {
       error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
       user: null,
+      authorizationHeader: null,
     };
   }
-  return { error: null, user };
+  return { error: null, user, authorizationHeader };
 };
 
 export const handleCommunityProxyError = (error: unknown) => {
@@ -52,8 +62,82 @@ export const proxyCommunityGet = async (
   if (auth.error) return auth.error;
 
   try {
-    const response = await proxyCommunityRequest(auth.user!, path);
+    const response = await proxyCommunityRequest(
+      auth.authorizationHeader!,
+      path
+    );
     const { status, data } = await readCommunityJson(response);
+    if (status === 401) {
+      return NextResponse.json(
+        {
+          error:
+            "Community service rejected your session. Restart community-service after setting COGNITO_USER_POOL_ID and COGNITO_USER_POOL_CLIENT_ID (same as Next.js), or sign in again.",
+        },
+        { status: 401 }
+      );
+    }
+    return NextResponse.json(data, { status });
+  } catch (error) {
+    return handleCommunityProxyError(error);
+  }
+};
+
+export const proxyCommunityDelete = async (
+  request: NextRequest,
+  path: string
+) => {
+  const auth = await requireMemberAuth(request);
+  if (auth.error) return auth.error;
+
+  try {
+    const response = await proxyCommunityRequest(
+      auth.authorizationHeader!,
+      path,
+      { method: "DELETE" }
+    );
+    const { status, data } = await readCommunityJson(response);
+    if (status === 401) {
+      return NextResponse.json(
+        {
+          error:
+            "Community service rejected your session. Restart community-service after setting COGNITO_USER_POOL_ID and COGNITO_USER_POOL_CLIENT_ID (same as Next.js), or sign in again.",
+        },
+        { status: 401 }
+      );
+    }
+    return NextResponse.json(data, { status });
+  } catch (error) {
+    return handleCommunityProxyError(error);
+  }
+};
+
+export const proxyCommunityPatch = async (
+  request: NextRequest,
+  path: string,
+  body: unknown
+) => {
+  const auth = await requireMemberAuth(request);
+  if (auth.error) return auth.error;
+
+  try {
+    const response = await proxyCommunityRequest(
+      auth.authorizationHeader!,
+      path,
+      {
+        method: "PATCH",
+        body: JSON.stringify(body),
+      }
+    );
+    const { status, data } = await readCommunityJson(response);
+    if (status === 401) {
+      return NextResponse.json(
+        {
+          error:
+            "Community service rejected your session. Restart community-service after setting COGNITO_USER_POOL_ID and COGNITO_USER_POOL_CLIENT_ID (same as Next.js), or sign in again.",
+        },
+        { status: 401 }
+      );
+    }
     return NextResponse.json(data, { status });
   } catch (error) {
     return handleCommunityProxyError(error);
@@ -69,11 +153,24 @@ export const proxyCommunityPost = async (
   if (auth.error) return auth.error;
 
   try {
-    const response = await proxyCommunityRequest(auth.user!, path, {
-      method: "POST",
-      body: JSON.stringify(body),
-    });
+    const response = await proxyCommunityRequest(
+      auth.authorizationHeader!,
+      path,
+      {
+        method: "POST",
+        body: JSON.stringify(body),
+      }
+    );
     const { status, data } = await readCommunityJson(response);
+    if (status === 401) {
+      return NextResponse.json(
+        {
+          error:
+            "Community service rejected your session. Restart community-service after setting COGNITO_USER_POOL_ID and COGNITO_USER_POOL_CLIENT_ID (same as Next.js), or sign in again.",
+        },
+        { status: 401 }
+      );
+    }
     return NextResponse.json(data, { status });
   } catch (error) {
     return handleCommunityProxyError(error);

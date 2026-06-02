@@ -1,11 +1,11 @@
 # Shared authentication utilities for monorepo services.
 #
-# TODO Sprint 1: Extract Cognito JWT validation from:
-#   - frontend: src/lib/auth/verifyRequest.ts patterns
-#   - backend: nurture_platform Cognito settings
+# Cognito JWT validation for community-service lives in:
+#   community-service/users/auth/cognito_provider.py
 #
-# Planned modules:
-#   shared/auth/cognito.py      — JWT verify + claims parsing
+# Next.js verifies tokens in src/lib/auth/verifyRequest.ts and forwards the
+# same ID token via src/lib/community/proxy.ts.
+#
+# Planned extraction:
+#   shared/auth/cognito.py      — JWT verify + claims parsing (Python)
 #   shared/auth/permissions.py  — RBAC helpers (parent, provider, admin)
-#
-# community-service/users/middleware.py will import from here.

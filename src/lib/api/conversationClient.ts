@@ -39,7 +39,7 @@ export const sendConversationMessage = async (
     }) => void;
     onError: (error: string) => void;
   }
-): Promise<void> => {
+): Promise<{ doneReceived: boolean }> => {
   const response = await fetch("/api/conversation/message", {
     method: "POST",
     headers: await intakeRequestHeaders(),
@@ -51,12 +51,13 @@ export const sendConversationMessage = async (
     handlers.onError(
       typeof data.error === "string" ? data.error : "Message failed"
     );
-    return;
+    return { doneReceived: false };
   }
 
   const reader = response.body.getReader();
   const decoder = new TextDecoder();
   let buffer = "";
+  let doneReceived = false;
 
   while (true) {
     const { done, value } = await reader.read();
@@ -69,7 +70,9 @@ export const sendConversationMessage = async (
       const line = part.trim();
       if (!line.startsWith("data:")) continue;
       const payload = line.slice(5).trim();
-      if (payload === "[DONE]") return;
+      if (payload === "[DONE]") {
+        return { doneReceived };
+      }
       try {
         const event = JSON.parse(payload) as {
           type: string;
@@ -80,6 +83,7 @@ export const sendConversationMessage = async (
         };
         if (event.type === "token" && event.value) handlers.onToken(event.value);
         if (event.type === "done" && event.session) {
+          doneReceived = true;
           handlers.onDone({
             session: event.session,
             intakeSubmitted: event.intakeSubmitted,
@@ -91,6 +95,8 @@ export const sendConversationMessage = async (
       }
     }
   }
+
+  return { doneReceived };
 };
 
 export const fetchConversation = async (

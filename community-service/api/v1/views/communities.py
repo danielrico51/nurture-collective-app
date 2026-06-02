@@ -84,7 +84,7 @@ def _create_community(request: Request) -> Response:
             "description": community.description,
             "visibility": community.visibility,
             "tags": community.tags,
-            "member_count": 0,
+            "member_count": 1,
             "created_at": community.created_at,
             "updated_at": community.updated_at,
         },

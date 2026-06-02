@@ -1,5 +1,6 @@
 "use client";
 
+import { CreateCommunityForm } from "@/components/Community/CreateCommunityForm";
 import { JoinCommunityButton } from "@/components/Community/JoinCommunityButton";
 import { LeaveCommunityButton } from "@/components/Community/LeaveCommunityButton";
 import {
@@ -8,6 +9,8 @@ import {
   leaveCommunityWithFallback,
 } from "@/lib/community/client";
 import type { CommunitySummary, MyCommunity } from "@/lib/api/communityApi";
+import { communityDetailPath } from "@/lib/community/paths";
+import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 
 function TagList({ tags }: { tags: string[] }) {
@@ -86,6 +89,20 @@ export function CommunityList() {
         </div>
       ) : null}
 
+      <div className="rounded-2xl border border-nurture-sage/20 bg-nurture-cream/40 p-5">
+        <div className="flex flex-col gap-4">
+          <div>
+            <h2 className="font-serif text-lg font-semibold text-nurture-charcoal">
+              Start your own community
+            </h2>
+            <p className="mt-1 text-sm text-nurture-charcoal/65">
+              Bring together moms who share your stage, interests, or neighborhood.
+            </p>
+          </div>
+          <CreateCommunityForm onCreated={load} />
+        </div>
+      </div>
+
       <section>
         <div className="flex items-end justify-between gap-4">
           <div>
@@ -93,7 +110,7 @@ export function CommunityList() {
               Your communities
             </h2>
             <p className="mt-1 text-sm text-nurture-charcoal/65">
-              Groups you&apos;ve joined — check back here for updates and discussions.
+              Groups you&apos;ve joined or created — check back here for updates and discussions.
             </p>
           </div>
           <span className="rounded-full bg-nurture-sage/10 px-3 py-1 text-xs font-semibold text-nurture-sage-dark">
@@ -130,10 +147,18 @@ export function CommunityList() {
                     </p>
                     <TagList tags={community.tags} />
                   </div>
-                  <LeaveCommunityButton
-                    communityId={community.community_id}
-                    onLeft={load}
-                  />
+                  <div className="flex shrink-0 flex-col items-stretch gap-2 sm:items-end">
+                    <Link
+                      href={communityDetailPath(community.community_id)}
+                      className="inline-flex justify-center rounded-full bg-nurture-sage px-4 py-2 text-sm font-semibold text-white transition hover:bg-nurture-sage-dark"
+                    >
+                      View
+                    </Link>
+                    <LeaveCommunityButton
+                      communityId={community.community_id}
+                      onLeft={load}
+                    />
+                  </div>
                 </div>
               </li>
             ))}
@@ -167,16 +192,24 @@ export function CommunityList() {
                 </p>
                 <TagList tags={community.tags} />
               </div>
-              {joinedIds.has(community.community_id) ? (
-                <span className="rounded-full bg-nurture-cream px-4 py-2 text-sm font-medium text-nurture-sage-dark">
-                  Joined
-                </span>
-              ) : (
-                <JoinCommunityButton
-                  communityId={community.community_id}
-                  onJoined={load}
-                />
-              )}
+              <div className="flex flex-col items-stretch gap-2 sm:items-end">
+                <Link
+                  href={communityDetailPath(community.community_id)}
+                  className="inline-flex justify-center rounded-full border border-nurture-sage px-4 py-2 text-sm font-medium text-nurture-sage-dark transition hover:bg-nurture-sage/10"
+                >
+                  {joinedIds.has(community.community_id) ? "Open" : "View"}
+                </Link>
+                {joinedIds.has(community.community_id) ? (
+                  <span className="text-center text-xs font-medium text-nurture-sage-dark">
+                    Joined
+                  </span>
+                ) : (
+                  <JoinCommunityButton
+                    communityId={community.community_id}
+                    onJoined={load}
+                  />
+                )}
+              </div>
             </li>
           ))}
         </ul>

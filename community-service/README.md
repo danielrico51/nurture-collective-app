@@ -2,7 +2,7 @@
 
 Standalone Django service for community groups, messaging, cohorts, and AI companion — part of the `nurture-collective-app` monorepo.
 
-**Status:** Sprint 1 complete — communities API, member app UI, local dev seed.
+**Status:** Sprint 1–2 — communities + group discussions (REST + WebSocket), member app UI.
 
 ## Quick start (Docker)
 
@@ -46,17 +46,43 @@ Optional demo users:
 docker compose exec app python manage.py seed_communities_demo --with-users --join-demo
 ```
 
+After migrations, backfill discussion channels for existing communities:
+
+```bash
+python manage.py seed_community_channels
+```
+
+Run with ASGI for WebSocket support:
+
+```bash
+daphne -b 0.0.0.0 -p 8001 community_platform.asgi:application
+```
+
+(`runserver` works for REST; use **daphne** for live chat.)
+
 ## Approved build order
 
-1. Communities
-2. Messaging
+1. Communities ✓
+2. Messaging ✓
 3. Cohorts
 4. Analytics events
 5. AI layer
 
+## Auth (Cognito)
+
+The Next.js proxy at `/api/community/*` forwards the member's Cognito **ID token** to this service. Configure the same pool and app client as the main app:
+
+| Variable | Next.js equivalent |
+|----------|-------------------|
+| `COGNITO_USER_POOL_ID` | `NEXT_PUBLIC_USER_POOL_ID` |
+| `COGNITO_USER_POOL_CLIENT_ID` | `NEXT_PUBLIC_USER_POOL_CLIENT_ID` |
+| `COGNITO_ADMIN_GROUP` | `MANAGEMENT_COGNITO_GROUP` (default `admin`) |
+
+Set `JWT_DEV_BYPASS=false` in staging/production.
+
 ## Integration TODOs
 
-- Auth: reuse Cognito JWT from existing platform (`shared/auth` — Sprint 2)
+- Auth: optional extract to `shared/auth/` (Cognito validation is implemented in `users/auth/cognito_provider.py`)
 - Onboarding: auto-cohort assignment from intake profile
 - Payments: premium community gating
 - Notifications: push/email (out of Phase 1)

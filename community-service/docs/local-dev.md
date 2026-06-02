@@ -107,7 +107,9 @@ Authorization: Bearer dev:parent:550e8400-e29b-41d4-a716-446655440000
 
 Format: `dev:{platform_role}:{user_uuid}`
 
-**Sprint 2+:** Wire `shared/auth` Cognito JWT validator (TODO).
+**Production / staging:** Set `JWT_DEV_BYPASS=false` and the same `COGNITO_USER_POOL_ID` / `COGNITO_USER_POOL_CLIENT_ID` as the Next.js app. The member proxy forwards Cognito **ID tokens** unchanged.
+
+**Sprint 2+:** Optionally extract JWT helpers to `shared/auth/`.
 
 ---
 

@@ -81,7 +81,9 @@ See [slack-setup.md](./slack-setup.md) for dev workspace configuration.
 | Provider | Integration | Webhook |
 |----------|-------------|---------|
 | Calendly (interim) | `NEXT_PUBLIC_CALENDLY_URL` + embed | `/api/webhooks/calendly` |
-| Google Workspace (target) | `NEXT_PUBLIC_GOOGLE_BOOKING_URL` | `/api/webhooks/google-bookings` |
+| Google Workspace (target) | `NEXT_PUBLIC_GOOGLE_BOOKING_URL` + Calendar API (concierge slots) | `/api/webhooks/google-bookings` |
+
+**Calendar API implementation plan:** [google-calendar-concierge-booking.md](./google-calendar-concierge-booking.md)
 
 | Step | Action | Artifact |
 |------|--------|----------|

@@ -160,10 +160,17 @@ class Command(BaseCommand):
                         joined += 1
             self.stdout.write(self.style.SUCCESS(f"Demo memberships created: {joined}"))
 
+        from django.core.management import call_command
+
+        call_command("seed_community_channels")
+
         self.stdout.write("")
         self.stdout.write("Next steps:")
         self.stdout.write("  1. Set COMMUNITY_API_URL=http://localhost:8001 in Next.js .env.local")
-        self.stdout.write("  2. Sign in to the member app and open /apps/community")
+        self.stdout.write(
+            "  2. Start API with: daphne -b 0.0.0.0 -p 8001 community_platform.asgi:application"
+        )
+        self.stdout.write("  3. Sign in, join a community, open it, and use General discussion")
         self.stdout.write(
             "  3. Optional dev token: Bearer dev:parent:seed-demo-parent-1 "
             "(only when JWT_DEV_BYPASS=true)"

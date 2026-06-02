@@ -7,10 +7,12 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "community_platform.settings")
 
 django_asgi_app = get_asgi_application()
 
-# WebSocket routing added in Sprint 2 (messaging/routing.py)
+from messaging.middleware import JwtAuthMiddleware  # noqa: E402
+from messaging.routing import websocket_urlpatterns  # noqa: E402
+
 application = ProtocolTypeRouter(
     {
         "http": django_asgi_app,
-        "websocket": URLRouter([]),
+        "websocket": JwtAuthMiddleware(URLRouter(websocket_urlpatterns)),
     }
 )

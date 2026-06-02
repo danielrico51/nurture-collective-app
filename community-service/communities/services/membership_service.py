@@ -54,6 +54,17 @@ class MembershipService:
             joined_at=timezone.now(),
         )
 
+        from messaging.services.channel_service import ChannelService
+
+        channel_svc = ChannelService()
+        channel_svc.create_default_channel_for_community(
+            organization_id=auth.organization_id,
+            community_id=community_id,
+        )
+        channel_svc.ensure_community_channel_membership(
+            auth.user_id, community_id
+        )
+
         emit_event(
             CommunityEvent(
                 event_type=EVENT_COMMUNITY_JOINED,

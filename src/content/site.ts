@@ -53,8 +53,8 @@ export const brands = {
     name: "The Nesting Place",
     shortName: "Nesting Place",
     /** Brand slogan — use as byline wherever Nesting Place is presented. */
-    tagline: "Because Every Mother deserves a Team",
-    byline: "Because Every Mother deserves a Team",
+    tagline: "Every Mother Deserves A Team",
+    byline: "Every Mother Deserves A Team",
     /** Legal operator shown where entity attribution is required. */
     operatorLine: "by Nurture Collective LLC",
     logoSrc: "/branding/nesting-place-wordmark.png",

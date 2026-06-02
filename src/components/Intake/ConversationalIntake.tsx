@@ -21,6 +21,7 @@ import {
   sendConversationMessage,
   startConversation,
 } from "@/lib/api/conversationClient";
+import { formatConversationStreamError } from "@/lib/conversation/errors";
 import type { ConversationMessage, ConversationSession } from "@/types/conversation";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -59,6 +60,7 @@ const ConversationalIntake = ({
   const initRef = useRef(false);
   const followLatestRef = useRef(false);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
 
   const scrollMessagesToTop = useCallback(() => {
     const container = messagesContainerRef.current;
@@ -198,12 +200,33 @@ const ConversationalIntake = ({
     [guestMode, router]
   );
 
+  const syncSessionFromServer = useCallback(
+    async (sessionId: string, attemptedMessage?: string) => {
+      const refreshed = await fetchConversation(sessionId);
+      setSession(refreshed);
+      setMessages(refreshed.messages);
+      setQuickReplies(refreshed.quickReplies);
+      followLatestRef.current = hasUserMessages(refreshed.messages);
+      const reopened = refreshed.status === "active";
+      setSessionClosed(!reopened);
+      const messageSaved = attemptedMessage
+        ? refreshed.messages.some(
+            (item) =>
+              item.role === "user" && item.content.trim() === attemptedMessage
+          )
+        : false;
+      return { refreshed, reopened, messageSaved };
+    },
+    []
+  );
+
   const sendMessage = async (text: string) => {
     const trimmed = text.trim();
     if (!trimmed || !session || sending || sessionClosed) return;
 
     followLatestRef.current = true;
     setSending(true);
+    setSendError(null);
     setInput("");
     setQuickReplies([]);
     setStreamingText("");
@@ -217,40 +240,60 @@ const ConversationalIntake = ({
     setMessages((current) => [...current, optimisticUser]);
 
     try {
-      await sendConversationMessage(session.id, trimmed, {
+      const { doneReceived } = await sendConversationMessage(session.id, trimmed, {
         onToken: (token) => setStreamingText((current) => current + token),
         onDone: ({ session: nextSession, intakeSubmitted }) => {
           setStreamingText("");
+          setSendError(null);
           handleComplete(nextSession, intakeSubmitted);
         },
         onError: async (error) => {
           setStreamingText("");
           try {
-            const refreshed = await fetchConversation(session.id);
-            setSession(refreshed);
-            setMessages(refreshed.messages);
-            setQuickReplies(refreshed.quickReplies);
-            followLatestRef.current = hasUserMessages(refreshed.messages);
-            const reopened = refreshed.status === "active";
-            setSessionClosed(!reopened);
-            if (reopened) {
-              toast.error(
-                "Your message did not go through. The conversation is open again — please try sending once more."
-              );
-            } else {
-              toast.error(
-                error.includes("finished") || error.includes("completed")
-                  ? error
-                  : error
-              );
-            }
+            const { messageSaved } = await syncSessionFromServer(
+              session.id,
+              trimmed
+            );
+            const friendly = formatConversationStreamError(error, {
+              messageSaved,
+            });
+            setSendError(friendly);
+            toast.error(friendly, { id: "concierge-send-error" });
           } catch {
-            toast.error(error);
+            const friendly = formatConversationStreamError(error);
+            setSendError(friendly);
+            toast.error(friendly, { id: "concierge-send-error" });
           }
         },
       });
+
+      if (!doneReceived) {
+        setStreamingText("");
+        try {
+          const { reopened, messageSaved } = await syncSessionFromServer(
+            session.id,
+            trimmed
+          );
+          if (reopened) {
+            const friendly = formatConversationStreamError(
+              "The reply did not finish loading.",
+              { messageSaved }
+            );
+            setSendError(friendly);
+            toast.error(friendly, { id: "concierge-send-error" });
+          }
+        } catch {
+          setSendError(
+            "The reply did not finish loading. Please try sending your message again."
+          );
+        }
+      }
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Message failed");
+      const friendly = formatConversationStreamError(
+        error instanceof Error ? error.message : "Message failed"
+      );
+      setSendError(friendly);
+      toast.error(friendly, { id: "concierge-send-error" });
     } finally {
       setSending(false);
       inputRef.current?.focus({ preventScroll: true });
@@ -414,6 +457,21 @@ const ConversationalIntake = ({
       </div>
 
       <div className="shrink-0 border-t border-nurture-sage/10 bg-gradient-to-t from-nurture-cream via-nurture-cream/95 to-nurture-cream/80 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 overscroll-contain">
+        {sendError ? (
+          <div
+            role="alert"
+            className="mb-2 rounded-xl border border-amber-200/80 bg-amber-50/90 px-3 py-2 text-sm text-nurture-charcoal/85"
+          >
+            <p>{sendError}</p>
+            <button
+              type="button"
+              className="mt-1 text-xs font-semibold text-nurture-sage-dark hover:underline"
+              onClick={() => setSendError(null)}
+            >
+              Dismiss
+            </button>
+          </div>
+        ) : null}
         {showGuestSaveHint ? (
           <GuestSaveProgressPrompt variant="compact" className="mb-2" />
         ) : null}

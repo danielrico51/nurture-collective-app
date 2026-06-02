@@ -26,6 +26,9 @@ pydantic>=2.7
 # Config
 python-dotenv>=1.0
 
+# Cognito JWT (member auth)
+PyJWT[crypto]>=2.8
+
 # AI (Sprint 5+)
 httpx>=0.27
 openai>=1.30

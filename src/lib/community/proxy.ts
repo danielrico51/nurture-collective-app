@@ -1,5 +1,3 @@
-import { canAccessAdminApps } from "@/lib/auth/groups";
-import type { AuthUser } from "@/lib/auth/verifyRequest";
 import { getCommunityApiUrl } from "@/lib/community/config";
 
 export class CommunityServiceError extends Error {
@@ -12,13 +10,12 @@ export class CommunityServiceError extends Error {
   }
 }
 
-const buildServiceAuthHeader = (user: AuthUser): string => {
-  const role = canAccessAdminApps(user.groups) ? "admin" : "parent";
-  return `Bearer dev:${role}:${user.sub}`;
-};
-
+/**
+ * Forwards the member's Cognito ID token to community-service (validated again server-side).
+ * Local dev may still use JWT_DEV_BYPASS + `Bearer dev:role:sub` when bypass is enabled there.
+ */
 export const proxyCommunityRequest = async (
-  user: AuthUser,
+  authorizationHeader: string,
   path: string,
   init: RequestInit = {}
 ): Promise<Response> => {
@@ -31,7 +28,7 @@ export const proxyCommunityRequest = async (
   }
 
   const headers = new Headers(init.headers);
-  headers.set("Authorization", buildServiceAuthHeader(user));
+  headers.set("Authorization", authorizationHeader);
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }

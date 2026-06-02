@@ -6,7 +6,7 @@ from django.core.exceptions import ImproperlyConfigured
 from django.http import HttpRequest, HttpResponse, JsonResponse
 
 from users.auth.base import AuthContext
-from users.auth.dev_provider import get_auth_provider
+from users.auth.providers import get_auth_provider
 
 logger = logging.getLogger(__name__)
 
@@ -40,18 +40,24 @@ class AuthMiddleware:
 
 
 def validate_dev_bypass_settings() -> None:
-    if not settings.JWT_DEV_BYPASS:
-        return
-
-    allowed_hosts = set(settings.ALLOWED_HOSTS)
-    is_local = settings.DEBUG and (
-        allowed_hosts <= {"localhost", "127.0.0.1", "app", "*"} or "localhost" in allowed_hosts
-    )
-    if not is_local:
-        raise ImproperlyConfigured(
-            "JWT_DEV_BYPASS=true is only allowed in local/dev environments."
+    if settings.JWT_DEV_BYPASS:
+        allowed_hosts = set(settings.ALLOWED_HOSTS)
+        is_local = settings.DEBUG and (
+            allowed_hosts <= {"localhost", "127.0.0.1", "app", "*"}
+            or "localhost" in allowed_hosts
+        )
+        if not is_local:
+            raise ImproperlyConfigured(
+                "JWT_DEV_BYPASS=true is only allowed in local/dev environments."
+            )
+        logger.warning(
+            "JWT_DEV_BYPASS is enabled — do not use in staging or production."
         )
 
-    logger.warning(
-        "JWT_DEV_BYPASS is enabled — do not use in staging or production."
-    )
+    if not settings.JWT_DEV_BYPASS and (
+        not settings.COGNITO_USER_POOL_ID or not settings.COGNITO_USER_POOL_CLIENT_ID
+    ):
+        raise ImproperlyConfigured(
+            "COGNITO_USER_POOL_ID and COGNITO_USER_POOL_CLIENT_ID are required "
+            "when JWT_DEV_BYPASS is false."
+        )

@@ -8,6 +8,7 @@ import { normalizePhoneNumber } from "@/utils/signUpAttributes";
 import type { ProfileFormData } from "@/types/profile";
 import { emptyProfileForm } from "@/types/profile";
 import { fetchUserAttributes, updateUserAttributes } from "aws-amplify/auth";
+import { ProfileAvatarField } from "@/components/Account/ProfileAvatarField";
 import { FormEvent, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -53,6 +54,25 @@ const ProfileForm = () => {
         }),
       });
 
+      const fullName = [form.givenName, form.familyName]
+        .filter(Boolean)
+        .join(" ")
+        .trim();
+      if (fullName) {
+        try {
+          const { intakeRequestHeaders } = await import(
+            "@/lib/api/intakeRequestHeaders"
+          );
+          await fetch("/api/community/users/me", {
+            method: "PATCH",
+            headers: await intakeRequestHeaders(),
+            body: JSON.stringify({ display_name: fullName }),
+          });
+        } catch {
+          /* community service optional */
+        }
+      }
+
       toast.success("Profile updated");
       const refreshed = await fetchUserAttributes();
       setForm(attributesToProfileForm(refreshed));
@@ -78,6 +98,9 @@ const ProfileForm = () => {
       onSubmit={handleSubmit}
       className="space-y-6 rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm md:p-10"
     >
+      <ProfileAvatarField
+        displayName={[form.givenName, form.familyName].filter(Boolean).join(" ")}
+      />
       <div className="grid gap-6 sm:grid-cols-2">
         <div>
           <label htmlFor="username" className="block text-sm font-medium">

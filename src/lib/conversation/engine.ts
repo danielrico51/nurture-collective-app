@@ -301,6 +301,8 @@ export async function* processConversationMessageStream(
     session.extractedProfile
   );
   session.messages.push(userMsg);
+  session.extractedProfile = profile;
+  session = await saveConversationSession(session);
 
   if (detectSafetyEscalation(userMessage)) {
     session.safetyEscalation = true;
@@ -322,7 +324,6 @@ export async function* processConversationMessageStream(
     return;
   }
 
-  session.extractedProfile = profile;
   let assistantContent = "";
   for await (const token of generateAssistantStream(session, options)) {
     assistantContent += token;
@@ -359,10 +360,14 @@ export async function* processConversationMessageStream(
   }
 
   session.extractedProfile = profile;
-  await upsertProfileDraft(
-    session.userId,
-    extractedProfileToIntakeDraft(profile)
-  );
+  try {
+    await upsertProfileDraft(
+      session.userId,
+      extractedProfileToIntakeDraft(profile)
+    );
+  } catch (draftError) {
+    console.error("[conversation] profile draft sync failed:", draftError);
+  }
 
   try {
     const { getIntakeForUser } = await import("@/lib/intake/storage");
@@ -388,27 +393,35 @@ export async function* processConversationMessageStream(
     (profile.phone || profile.email) &&
     profile.supportInterests.length > 0
   ) {
-    const draft = extractedProfileToIntakeDraft(profile);
-    await submitProfile(session.userId, {
-      ...draft,
-      maternalStage: profile.maternalStage,
-      supportInterests: profile.supportInterests,
-    });
     try {
-      const { getIntakeForUser } = await import("@/lib/intake/storage");
-      const intake = await getIntakeForUser(session.userId);
-      await syncLeadFromIntake({
-        userId: session.userId,
-        intake: intake.profile,
-        extracted: profile,
-        conversationSessionId: session.id,
-        hasSubmittedIntake: true,
+      const draft = extractedProfileToIntakeDraft(profile);
+      await submitProfile(session.userId, {
+        ...draft,
+        maternalStage: profile.maternalStage,
+        supportInterests: profile.supportInterests,
       });
-    } catch (leadError) {
-      console.error("[conversation] lead sync on submit failed:", leadError);
+      try {
+        const { getIntakeForUser } = await import("@/lib/intake/storage");
+        const intake = await getIntakeForUser(session.userId);
+        await syncLeadFromIntake({
+          userId: session.userId,
+          intake: intake.profile,
+          extracted: profile,
+          conversationSessionId: session.id,
+          hasSubmittedIntake: true,
+        });
+      } catch (leadError) {
+        console.error("[conversation] lead sync on submit failed:", leadError);
+      }
+      session.status = "completed";
+      intakeSubmitted = true;
+    } catch (submitError) {
+      console.error("[conversation] intake submit failed:", submitError);
+      session.quickReplies = [
+        "Try completing again",
+        ...(session.quickReplies.length ? session.quickReplies : ["Keep chatting"]),
+      ];
     }
-    session.status = "completed";
-    intakeSubmitted = true;
   } else if (wantsComplete) {
     session.quickReplies = [
       ...(session.quickReplies.length ? session.quickReplies : []),

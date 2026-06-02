@@ -56,6 +56,27 @@ grep -q '^CELERY_BROKER_URL=redis://127.0.0.1:6379/1' .env 2>/dev/null ||
 grep -q '^EVENTS_USE_LOCAL=true' .env || echo 'EVENTS_USE_LOCAL=true' >> .env
 grep -q '^JWT_DEV_BYPASS=true' .env || echo 'JWT_DEV_BYPASS=true' >> .env
 
+# Sync Cognito pool/client from monorepo .env.local (same as Next.js)
+MONOREPO_ENV="../.env.local"
+if [[ -f "$MONOREPO_ENV" ]]; then
+  POOL_ID="$(grep -E '^NEXT_PUBLIC_USER_POOL_ID=' "$MONOREPO_ENV" | cut -d= -f2- | tr -d '"' || true)"
+  CLIENT_ID="$(grep -E '^NEXT_PUBLIC_USER_POOL_CLIENT_ID=' "$MONOREPO_ENV" | cut -d= -f2- | tr -d '"' || true)"
+  if [[ -n "$POOL_ID" ]]; then
+    if grep -q '^COGNITO_USER_POOL_ID=' .env; then
+      sed -i '' "s|^COGNITO_USER_POOL_ID=.*|COGNITO_USER_POOL_ID=${POOL_ID}|" .env
+    else
+      echo "COGNITO_USER_POOL_ID=${POOL_ID}" >> .env
+    fi
+  fi
+  if [[ -n "$CLIENT_ID" ]]; then
+    if grep -q '^COGNITO_USER_POOL_CLIENT_ID=' .env; then
+      sed -i '' "s|^COGNITO_USER_POOL_CLIENT_ID=.*|COGNITO_USER_POOL_CLIENT_ID=${CLIENT_ID}|" .env
+    else
+      echo "COGNITO_USER_POOL_CLIENT_ID=${CLIENT_ID}" >> .env
+    fi
+  fi
+fi
+
 pip install -q -r requirements.txt
 
 python manage.py migrate
