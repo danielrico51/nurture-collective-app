@@ -3,6 +3,7 @@
 import { AuthorAvatar } from "@/components/Community/AuthorAvatar";
 import { formatPostTime } from "@/components/Community/discussionHelpers";
 import { PostImages } from "@/components/Community/PostImages";
+import { PostOwnerMenu } from "@/components/Community/PostOwnerMenu";
 import { PostReactionsControlled } from "@/components/Community/PostReactions";
 import {
   createPostComment,
@@ -20,6 +21,7 @@ import {
 import { isCommunityDemoMode } from "@/lib/community/client";
 import { communityDetailPath } from "@/lib/community/paths";
 import Link from "next/link";
+import { fetchMemberProfile } from "@/lib/account/profileAvatarClient";
 import { useCallback, useEffect, useState } from "react";
 
 interface CommunityPostViewProps {
@@ -96,6 +98,14 @@ export function CommunityPostView({ communityId, postId }: CommunityPostViewProp
   const [replyToId, setReplyToId] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [usingDemo, setUsingDemo] = useState(false);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (usingDemo) return;
+    fetchMemberProfile()
+      .then((p) => setMyUserId(p.user_id))
+      .catch(() => undefined);
+  }, [usingDemo]);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -265,6 +275,14 @@ export function CommunityPostView({ communityId, postId }: CommunityPostViewProp
           communityId={communityId}
           demoMode={usingDemo}
           onPostUpdate={setPost}
+        />
+        <PostOwnerMenu
+          communityId={communityId}
+          post={post}
+          myUserId={myUserId}
+          demoMode={usingDemo}
+          variant="full"
+          onUpdated={(updated) => setPost(withDefaultReactions(updated))}
         />
       </article>
 

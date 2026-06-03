@@ -78,7 +78,7 @@ def community_posts(request: Request, community_id: UUID) -> Response:
         return _error_response(exc, status)
 
 
-@api_view(["GET"])
+@api_view(["GET", "PATCH", "DELETE"])
 @require_feature("ENABLE_GROUP_CHAT")
 def community_post_detail(
     request: Request, community_id: UUID, post_id: UUID
@@ -87,19 +87,54 @@ def community_post_detail(
     if err:
         return err
 
+    cid = _as_uuid(community_id)
+    pid = _as_uuid(post_id)
     env_scope = get_request_env_scope(request)
+    svc = DiscussionService()
+
+    if request.method == "GET":
+        try:
+            post = svc.get_post(auth, cid, pid, env_scope=env_scope)
+            return Response(DiscussionService.serialize_post(post))
+        except ChannelNotFoundError as exc:
+            return _error_response(exc, 404)
+        except MessagingError as exc:
+            return _error_response(exc, 403)
+
+    if request.method == "DELETE":
+        try:
+            svc.delete_post(auth, cid, pid, env_scope=env_scope)
+            return Response(status=204)
+        except ChannelNotFoundError as exc:
+            return _error_response(exc, 404)
+        except MessagingError as exc:
+            return _error_response(exc, 403)
+
     try:
-        post = DiscussionService().get_post(
+        data = request.data
+        has_title = "title" in data
+        has_body = "body" in data
+        has_images = "image_urls" in data
+        if not (has_title or has_body or has_images):
+            return Response(
+                {"error": "Provide title, body, and/or image_urls to update"},
+                status=400,
+            )
+        post = svc.update_post(
             auth,
-            _as_uuid(community_id),
-            _as_uuid(post_id),
+            cid,
+            pid,
             env_scope=env_scope,
+            title=data.get("title") if has_title else None,
+            body=data.get("body") if has_body else None,
+            image_urls=data.get("image_urls") if has_images else None,
         )
         return Response(DiscussionService.serialize_post(post))
     except ChannelNotFoundError as exc:
         return _error_response(exc, 404)
     except MessagingError as exc:
-        return _error_response(exc, 403)
+        status = 400 if exc.code == "VALIDATION_ERROR" else 403
+        return _error_response(exc, status)
 
 
 @api_view(["GET", "POST"])

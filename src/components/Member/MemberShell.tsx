@@ -1,6 +1,6 @@
 "use client";
 
-import { MEMBER_APPS, MEMBER_APPS_HREF } from "@/config/memberApps";
+import { getMemberAppsForHub, MEMBER_APPS_HREF } from "@/config/memberApps";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type { ReactNode } from "react";
@@ -75,7 +75,7 @@ export function MemberShell({
               >
                 All apps
               </Link>
-              {MEMBER_APPS.map((app) => {
+              {getMemberAppsForHub().map((app) => {
                 const active =
                   pathname === app.href || pathname.startsWith(`${app.href}/`);
                 const isAvailable = app.status === "available";

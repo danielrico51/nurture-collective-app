@@ -7,6 +7,7 @@ import {
 } from "@/components/Community/discussionHelpers";
 import { PostComposer } from "@/components/Community/PostComposer";
 import { PostImages } from "@/components/Community/PostImages";
+import { PostOwnerMenu } from "@/components/Community/PostOwnerMenu";
 import { PostReactionsControlled } from "@/components/Community/PostReactions";
 import {
   createCommunityPost,
@@ -31,12 +32,16 @@ function PostCard({
   communityId,
   post,
   demoMode,
+  myUserId,
   onPostUpdate,
+  onPostDeleted,
 }: {
   communityId: string;
   post: CommunityPost;
   demoMode: boolean;
+  myUserId: string | null;
   onPostUpdate: (post: CommunityPost) => void;
+  onPostDeleted: (postId: string) => void;
 }) {
   const href = communityPostPath(communityId, post.post_id);
   const images = post.image_urls ?? [];
@@ -112,11 +117,15 @@ export function CommunityFeed({
   const [error, setError] = useState<string | null>(null);
   const [usingDemo, setUsingDemo] = useState(demoMode);
   const [myAvatarUrl, setMyAvatarUrl] = useState<string | null>(null);
+  const [myUserId, setMyUserId] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isMember || demoMode) return;
     fetchMemberProfile()
-      .then((profile) => setMyAvatarUrl(profile.avatar_url || null))
+      .then((profile) => {
+        setMyAvatarUrl(profile.avatar_url || null);
+        setMyUserId(profile.user_id);
+      })
       .catch(() => undefined);
   }, [isMember, demoMode]);
 
@@ -276,12 +285,16 @@ export function CommunityFeed({
               communityId={communityId}
               post={post}
               demoMode={usingDemo}
+              myUserId={myUserId}
               onPostUpdate={(updated) =>
                 setPosts((prev) =>
                   prev.map((p) =>
                     p.post_id === updated.post_id ? updated : p
                   )
                 )
+              }
+              onPostDeleted={(postId) =>
+                setPosts((prev) => prev.filter((p) => p.post_id !== postId))
               }
             />
           ))

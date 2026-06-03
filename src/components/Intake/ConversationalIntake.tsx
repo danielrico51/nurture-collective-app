@@ -183,7 +183,7 @@ const ConversationalIntake = ({
             : "Your care profile is ready — welcome!"
         );
         if (!guestMode) {
-          router.push("/apps/dashboard");
+          router.push("/apps");
         }
         return;
       }
@@ -193,7 +193,7 @@ const ConversationalIntake = ({
         toast(
           guestMode
             ? "This conversation is complete. Create a free account to save your plan, or book a call below."
-            : "This conversation was marked complete. You can review it below or continue on your dashboard."
+            : "This conversation was marked complete. You can review it below or continue in your apps."
         );
       }
     },
@@ -374,7 +374,7 @@ const ConversationalIntake = ({
           <p className="mt-1">
             {guestMode
               ? "Create a free account to save this conversation and your care profile for next time."
-              : "Your messages are saved. If your profile was submitted, head to your dashboard for next steps."}
+              : "Your messages are saved. If your profile was submitted, head to your apps for next steps."}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {guestMode ? (
@@ -386,10 +386,10 @@ const ConversationalIntake = ({
               </Link>
             ) : (
               <Link
-                href="/apps/dashboard"
+                href="/apps"
                 className="rounded-full bg-nurture-sage px-4 py-2 text-xs font-semibold text-white hover:bg-nurture-sage-dark"
               >
-                Go to dashboard
+                Go to apps
               </Link>
             )}
             <button

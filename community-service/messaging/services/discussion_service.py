@@ -139,6 +139,70 @@ class DiscussionService:
         self._attach_reactions([post], auth.user_id)
         return post
 
+    @staticmethod
+    def _require_post_author(auth: AuthContext, post: CommunityPost) -> None:
+        if str(post.author_id) != str(auth.user_id):
+            raise PermissionDeniedError("You can only edit or delete your own posts")
+
+    def update_post(
+        self,
+        auth: AuthContext,
+        community_id: UUID,
+        post_id: UUID,
+        *,
+        env_scope: str,
+        title: str | None = None,
+        body: str | None = None,
+        image_urls: list | None = None,
+    ) -> CommunityPost:
+        post = self.get_post(auth, community_id, post_id, env_scope=env_scope)
+        self._require_post_author(auth, post)
+
+        title_clean = post.title if title is None else (title or "").strip()[:300]
+        text_body = post.body if body is None else (body or "").strip()
+        urls = (
+            list(post.image_urls or [])
+            if image_urls is None
+            else self._normalize_image_urls(image_urls)
+        )
+
+        if not text_body and not urls:
+            raise ValidationError("Add text or at least one photo")
+
+        if len(text_body) > 8000:
+            raise ValidationError("Post is too long")
+
+        moderate_blob = f"{title_clean}\n{text_body}\n" + "\n".join(urls)
+        status = self._moderate_text(auth, community_id, moderate_blob)
+
+        post.title = title_clean
+        post.body = text_body
+        post.image_urls = urls
+        post.moderation_status = status
+        post.save(
+            update_fields=[
+                "title",
+                "body",
+                "image_urls",
+                "moderation_status",
+                "updated_at",
+            ]
+        )
+        self._attach_reactions([post], auth.user_id)
+        return post
+
+    def delete_post(
+        self,
+        auth: AuthContext,
+        community_id: UUID,
+        post_id: UUID,
+        *,
+        env_scope: str,
+    ) -> None:
+        post = self.get_post(auth, community_id, post_id, env_scope=env_scope)
+        self._require_post_author(auth, post)
+        post.soft_delete()
+
     def set_post_reaction(
         self,
         auth: AuthContext,

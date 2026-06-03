@@ -135,7 +135,7 @@ Legacy multipart routes remain for **local dev** when `COMMUNITY_MEDIA_S3_BUCKET
 | Communities | `GET/POST /api/v1/communities/`, `GET /api/v1/communities/{id}/`, join/leave | Any member can create a community (creator = owner) |
 | Profile | `GET/PATCH /api/v1/users/me/` | Display name, avatar URL in `profile_metadata` |
 | Feed | `GET/POST /api/v1/communities/{id}/posts/` | Requires membership; scoped by env |
-| Post | `GET /api/v1/communities/{id}/posts/{post_id}/` | |
+| Post | `GET/PATCH/DELETE /api/v1/communities/{id}/posts/{post_id}/` | Authors may edit or delete their own posts |
 | Comments | `GET/POST .../posts/{post_id}/comments/` | One level of replies |
 | Reactions | `POST/DELETE .../posts/{post_id}/reactions/` | like, love, care, etc. |
 | Health | `GET /health/` | Load balancer probe |

@@ -61,10 +61,10 @@ export function MemberAppPlaceholder({ app }: MemberAppPlaceholderProps) {
 
       <div className="mt-8 flex flex-wrap gap-3">
         <Link
-          href="/apps/dashboard"
+          href="/apps"
           className="rounded-full bg-nurture-sage px-5 py-2.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
         >
-          Back to support dashboard
+          Back to apps
         </Link>
         <Link
           href={MEMBER_APPS_HREF}

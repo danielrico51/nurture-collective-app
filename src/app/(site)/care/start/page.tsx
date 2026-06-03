@@ -42,7 +42,7 @@ export default function CareStartPage() {
     fetchIntake()
       .then((data) => {
         if (isIntakeComplete(data.profile?.intakeStatus)) {
-          router.replace("/apps/dashboard");
+          router.replace("/apps");
           return;
         }
         router.replace(buildIntakeHref(service));

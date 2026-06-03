@@ -25,13 +25,13 @@ export interface MemberApp {
 /** Registry of member-facing apps. Add new apps here as they are built. */
 export const MEMBER_APPS: MemberApp[] = [
   {
-    id: "dashboard",
-    title: "Support dashboard",
+    id: "community",
+    title: "Community",
     description:
-      "Your personalized support journey — intake status, recommendations, checklist, and coordinator next steps.",
-    href: "/apps/dashboard",
+      "Connect with other moms — browse public groups, join communities that match your stage, and see everything you've joined in one place.",
+    href: "/apps/community",
     status: "available",
-    icon: "dashboard",
+    icon: "community",
   },
   {
     id: "purchases",
@@ -60,15 +60,6 @@ export const MEMBER_APPS: MemberApp[] = [
       "Browse by size, category, and distance",
       "Safe messaging between members",
     ],
-  },
-  {
-    id: "community",
-    title: "Community",
-    description:
-      "Connect with other moms — browse public groups, join communities that match your stage, and see everything you've joined in one place.",
-    href: "/apps/community",
-    status: "available",
-    icon: "community",
   },
   {
     id: "groups",
@@ -146,6 +137,13 @@ export const MEMBER_APPS_HREF = "/apps";
 
 export const getAvailableMemberApps = () =>
   MEMBER_APPS.filter((app) => app.status === "available");
+
+/** Apps hub + sidebar: available first, then coming soon. */
+export const getMemberAppsForHub = (): MemberApp[] =>
+  [...MEMBER_APPS].sort((a, b) => {
+    if (a.status === b.status) return 0;
+    return a.status === "available" ? -1 : 1;
+  });
 
 export const getMemberAppById = (id: string) =>
   MEMBER_APPS.find((app) => app.id === id);

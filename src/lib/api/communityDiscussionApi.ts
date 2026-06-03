@@ -203,6 +203,40 @@ export const fetchCommunityPost = async (
   return handleResponse<CommunityPost>(response);
 };
 
+export const updateCommunityPost = async (
+  communityId: string,
+  postId: string,
+  payload: { title?: string; body?: string; image_urls?: string[] }
+): Promise<CommunityPost> => {
+  const response = await fetch(
+    `${communityBase(communityId)}/posts/${encodeURIComponent(postId)}`,
+    {
+      method: "PATCH",
+      headers: await authHeaders(),
+      body: JSON.stringify(payload),
+    }
+  );
+  return handleResponse<CommunityPost>(response);
+};
+
+export const deleteCommunityPost = async (
+  communityId: string,
+  postId: string
+): Promise<void> => {
+  const response = await fetch(
+    `${communityBase(communityId)}/posts/${encodeURIComponent(postId)}`,
+    {
+      method: "DELETE",
+      headers: await authHeaders(),
+    }
+  );
+  if (response.status === 204) return;
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    throw new Error(parseCommunityApiError(data, response.status));
+  }
+};
+
 export const fetchPostComments = async (
   communityId: string,
   postId: string

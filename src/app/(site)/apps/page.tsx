@@ -9,8 +9,7 @@ export default function MemberAppsHubPage() {
         Choose an app
       </h2>
       <p className="mt-2 text-sm text-nurture-charcoal/65">
-        Your support dashboard, community tools, and resources — built for moms.
-        More apps will roll out over time.
+        Start with the apps that are ready today. More tools will roll out over time.
       </p>
       <div className="mt-8">
         <MemberAppGrid />

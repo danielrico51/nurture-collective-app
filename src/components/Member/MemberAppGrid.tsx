@@ -1,13 +1,13 @@
 "use client";
 
-import { MEMBER_APPS } from "@/config/memberApps";
+import { getMemberAppsForHub } from "@/config/memberApps";
 import Link from "next/link";
 import { MemberAppIcon } from "./MemberAppIcon";
 
 export function MemberAppGrid() {
   return (
     <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-      {MEMBER_APPS.map((app) => {
+      {getMemberAppsForHub().map((app) => {
         const isAvailable = app.status === "available";
 
         const card = (
