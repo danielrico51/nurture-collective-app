@@ -8,11 +8,8 @@ import { MemberAppIcon } from "@/components/Member/MemberAppIcon";
 import { getMemberAppById } from "@/config/memberApps";
 import {
   deleteJournalEntry,
-  fetchJournalEntries,
+  fetchJournalBundle,
   fetchJournalEntry,
-  fetchJournalProfile,
-  fetchJournalTimeline,
-  fetchJournalToday,
 } from "@/lib/api/journalClient";
 import { formatStageLabel } from "@/lib/journal/timeline";
 import { useRequireMember } from "@/hooks/useRequireMember";
@@ -40,12 +37,7 @@ export function JournalView() {
     setLoading(true);
     setError(null);
     try {
-      const [p, list, events, today] = await Promise.all([
-        fetchJournalProfile(),
-        fetchJournalEntries(),
-        fetchJournalTimeline(),
-        fetchJournalToday(),
-      ]);
+      const { profile: p, items: list, events, today } = await fetchJournalBundle();
       setProfile(p);
       setEntries(list);
       setTimeline(events);

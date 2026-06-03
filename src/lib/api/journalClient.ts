@@ -171,6 +171,49 @@ export const fetchJournalToday = async (): Promise<{
   return handleResponse(response);
 };
 
+const JOURNAL_LOAD_RETRY_DELAY_MS = 800;
+
+const isRetryableJournalLoadError = (error: unknown): boolean => {
+  if (!(error instanceof Error)) return false;
+  const message = error.message.toLowerCase();
+  if (message.includes("not authenticated") || message.includes("unauthorized")) {
+    return false;
+  }
+  return (
+    message.includes("server error (5") ||
+    message.includes("request failed (5") ||
+    message.includes("failed to fetch") ||
+    message.includes("network") ||
+    message.includes("load failed")
+  );
+};
+
+/** Profile, entries, timeline, and today prompt — one automatic retry on cold-start 5xx. */
+export const fetchJournalBundle = async (): Promise<{
+  profile: JournalProfile;
+  items: JournalEntryIndexItem[];
+  events: JourneyTimelineEvent[];
+  today: { checkIn: JournalEntry | null; prompt: JournalPrompt };
+}> => {
+  const load = async () => {
+    const [profile, items, events, today] = await Promise.all([
+      fetchJournalProfile(),
+      fetchJournalEntries(),
+      fetchJournalTimeline(),
+      fetchJournalToday(),
+    ]);
+    return { profile, items, events, today };
+  };
+
+  try {
+    return await load();
+  } catch (first) {
+    if (!isRetryableJournalLoadError(first)) throw first;
+    await new Promise((resolve) => setTimeout(resolve, JOURNAL_LOAD_RETRY_DELAY_MS));
+    return load();
+  }
+};
+
 export const MOOD_LABELS: Record<MoodScale, string> = {
   1: "Rough",
   2: "Low",
