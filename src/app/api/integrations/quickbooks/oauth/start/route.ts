@@ -9,17 +9,13 @@ import {
 
 export const dynamic = "force-dynamic";
 
-export async function GET(request: NextRequest) {
+/**
+ * Starts QuickBooks OAuth for signed-in admins.
+ * Returns JSON + sets state cookie — use from /admin/integrations/quickbooks (not a bare browser tab).
+ */
+export async function POST(request: NextRequest) {
   const auth = await requireManagementAuth(request);
-  if (auth.error) {
-    return NextResponse.json(
-      {
-        error: "Unauthorized",
-        hint: "Sign in as an admin, then open /admin/integrations/quickbooks and click Connect QuickBooks.",
-      },
-      { status: 401 }
-    );
-  }
+  if (auth.error) return auth.error;
 
   if (!isQuickBooksOAuthConfigured()) {
     return NextResponse.json(
@@ -34,7 +30,7 @@ export async function GET(request: NextRequest) {
   const state = createQuickBooksOAuthState();
   const authorizeUrl = buildQuickBooksOAuthAuthorizeUrl(state);
 
-  const response = NextResponse.redirect(authorizeUrl);
+  const response = NextResponse.json({ ok: true, authorizeUrl });
   applyQuickBooksOAuthStateCookie(response, state);
   return response;
 }

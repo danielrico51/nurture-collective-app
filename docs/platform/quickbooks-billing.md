@@ -135,10 +135,11 @@ Replace `<your-domain>` with your production `NEXT_PUBLIC_APP_URL` (no trailing 
 
 ### 2. Connect OAuth (admin)
 
-1. Sign in as admin on the site.
-2. Visit `/api/integrations/quickbooks/oauth/authorize` — redirects to Intuit.
-3. Authorize the company; callback stores tokens in S3 (`management/integrations/quickbooks/oauth.json`).
-4. Verify: `GET /api/integrations/quickbooks/status` (admin auth required).
+1. Sign in as a user in the **admin** Cognito group.
+2. Open **`/admin/integrations/quickbooks`** and click **Connect QuickBooks**.
+   - Do not paste `/api/integrations/quickbooks/oauth/authorize` in the browser bar — that API requires an `Authorization: Bearer` token and returns `Unauthorized` without it.
+3. Authorize the company in Intuit; the callback stores tokens in S3 (`management/integrations/quickbooks/oauth.json`).
+4. Return to the admin page and click **Refresh status**, or call `GET /api/integrations/quickbooks/status` with a Bearer token.
 
 Alternatively, set `QBO_REFRESH_TOKEN` and `QBO_REALM_ID` manually in Amplify env vars.
 

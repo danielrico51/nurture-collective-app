@@ -63,6 +63,14 @@ export const ADMIN_APPS: AdminApp[] = [
     status: "available",
     icon: "events",
   },
+  {
+    id: "quickbooks",
+    title: "QuickBooks",
+    description: "Connect QuickBooks Online for billing, invoices, and payment sync.",
+    href: "/admin/integrations/quickbooks",
+    status: "available",
+    icon: "settings",
+  },
 ];
 
 export const getAvailableAdminApps = () =>

@@ -36,12 +36,14 @@ export async function GET(request: NextRequest) {
 
   try {
     const tokens = await exchangeQuickBooksAuthCode(code, realmId);
-    const response = NextResponse.json({
-      ok: true,
-      message: "QuickBooks connected successfully",
-      realmId: tokens.realmId,
-      expiresAt: tokens.expiresAt,
-    });
+    const redirectUrl = new URL(
+      "/admin/integrations/quickbooks",
+      request.nextUrl.origin
+    );
+    redirectUrl.searchParams.set("connected", "1");
+    redirectUrl.searchParams.set("realmId", tokens.realmId);
+
+    const response = NextResponse.redirect(redirectUrl);
     response.cookies.delete(QBO_OAUTH_STATE_COOKIE);
     return response;
   } catch (error) {
