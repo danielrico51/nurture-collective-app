@@ -19,10 +19,10 @@ export const parseCommunityApiError = (
     return "Not found. Restart the Next.js dev server if you recently added community API routes.";
   }
   if (status === 503) {
-    return "Community service is not reachable. Start it on port 8001 (see community-service README).";
+    return "The community service is temporarily unavailable. Please try again in a moment.";
   }
   if (status >= 500) {
-    return "Community service error. Check that migrations are applied (python manage.py migrate).";
+    return "The community service hit a temporary error. Please try again in a moment.";
   }
 
   return `Request failed (${status})`;

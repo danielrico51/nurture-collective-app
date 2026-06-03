@@ -1,4 +1,5 @@
 import { parseCommunityApiError } from "@/lib/api/communityApiError";
+import { fetchCommunityWithRetry } from "@/lib/api/communityFetch";
 import type { PostReactions, ReactionType } from "@/lib/community/reactions";
 import { emptyReactions } from "@/lib/community/reactions";
 
@@ -79,7 +80,7 @@ export const fetchCommunityPosts = async (
 ): Promise<PostListResponse> => {
   const params = new URLSearchParams({ limit: "30" });
   if (cursor) params.set("cursor", cursor);
-  const response = await fetch(
+  const response = await fetchCommunityWithRetry(
     `${communityBase(communityId)}/posts?${params}`,
     { headers: await authHeaders(), cache: "no-store" }
   );
@@ -119,7 +120,7 @@ export const fetchCommunityPost = async (
   communityId: string,
   postId: string
 ): Promise<CommunityPost> => {
-  const response = await fetch(
+  const response = await fetchCommunityWithRetry(
     `${communityBase(communityId)}/posts/${encodeURIComponent(postId)}`,
     { headers: await authHeaders(), cache: "no-store" }
   );
@@ -130,7 +131,7 @@ export const fetchPostComments = async (
   communityId: string,
   postId: string
 ): Promise<CommentListResponse> => {
-  const response = await fetch(
+  const response = await fetchCommunityWithRetry(
     `${communityBase(communityId)}/posts/${encodeURIComponent(postId)}/comments`,
     { headers: await authHeaders(), cache: "no-store" }
   );

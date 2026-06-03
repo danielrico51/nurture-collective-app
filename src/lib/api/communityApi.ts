@@ -1,4 +1,5 @@
 import { parseCommunityApiError } from "@/lib/api/communityApiError";
+import { fetchCommunityWithRetry } from "@/lib/api/communityFetch";
 import { isCommunityServiceConfigured } from "@/lib/community/config";
 
 /** @deprecated Use isCommunityServiceConfigured — kept for older imports */
@@ -89,7 +90,7 @@ export const createCommunity = async (
 };
 
 export const fetchCommunities = async (): Promise<CommunityListResponse> => {
-  const response = await fetch("/api/community/communities", {
+  const response = await fetchCommunityWithRetry("/api/community/communities", {
     headers: await authHeaders(),
     cache: "no-store",
   });
@@ -97,17 +98,20 @@ export const fetchCommunities = async (): Promise<CommunityListResponse> => {
 };
 
 export const fetchMyCommunities = async (): Promise<MyCommunitiesResponse> => {
-  const response = await fetch("/api/community/communities/me", {
-    headers: await authHeaders(),
-    cache: "no-store",
-  });
+  const response = await fetchCommunityWithRetry(
+    "/api/community/communities/me",
+    {
+      headers: await authHeaders(),
+      cache: "no-store",
+    }
+  );
   return handleResponse<MyCommunitiesResponse>(response);
 };
 
 export const fetchCommunityDetail = async (
   communityId: string
 ): Promise<CommunityDetail> => {
-  const response = await fetch(
+  const response = await fetchCommunityWithRetry(
     `/api/community/communities/${encodeURIComponent(communityId)}`,
     {
       headers: await authHeaders(),
