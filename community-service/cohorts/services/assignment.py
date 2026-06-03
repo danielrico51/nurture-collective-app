@@ -87,10 +87,49 @@ def _pregnancy_window_days(cohort: Cohort) -> int | None:
     return (cohort.window_end - cohort.window_start).days
 
 
+def _effective_due_date(metadata: dict[str, Any]) -> date | None:
+    for key in ("due_date", "estimated_due_date", "expected_due_date"):
+        parsed = _parse_date(metadata.get(key))
+        if parsed is not None:
+            return parsed
+    return None
+
+
+def match_journey_stage_cohorts(
+    cohorts: list[Cohort], profile_metadata: dict[str, Any]
+) -> list[CohortMatch]:
+    stage = profile_metadata.get("maternal_stage")
+    if not stage or not isinstance(stage, str):
+        return []
+
+    journey_path = profile_metadata.get("journey_path")
+    matches: list[CohortMatch] = []
+    for cohort in cohorts:
+        if not cohort.is_active:
+            continue
+        meta = cohort.metadata or {}
+        stages = meta.get("match_stages") or []
+        if stage not in stages:
+            continue
+        allowed_paths = meta.get("match_journey_paths") or []
+        if allowed_paths and journey_path not in allowed_paths:
+            continue
+        reason = f"stage {stage}"
+        if journey_path:
+            reason = f"{reason}, path {journey_path}"
+        matches.append(
+            CohortMatch(
+                cohort=cohort,
+                reason=f"matches {reason}",
+            )
+        )
+    return matches[:1]
+
+
 def match_pregnancy_cohorts(
     cohorts: list[Cohort], profile_metadata: dict[str, Any]
 ) -> list[CohortMatch]:
-    due = _parse_date(profile_metadata.get("due_date"))
+    due = _effective_due_date(profile_metadata)
     if due is None:
         return []
 
@@ -169,6 +208,7 @@ def match_all_cohorts(
     seen: set[str] = set()
     ordered: list[CohortMatch] = []
     for matcher in (
+        match_journey_stage_cohorts,
         match_pregnancy_cohorts,
         match_postpartum_cohorts,
         match_newborn_cohorts,

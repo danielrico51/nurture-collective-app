@@ -3,7 +3,11 @@ from datetime import date
 import pytest
 
 from cohorts.models import CohortType
-from cohorts.services.assignment import match_all_cohorts, match_pregnancy_cohorts
+from cohorts.services.assignment import (
+    match_all_cohorts,
+    match_journey_stage_cohorts,
+    match_pregnancy_cohorts,
+)
 from tests.factories import CohortFactory, OrganizationFactory
 
 
@@ -24,6 +28,21 @@ def test_pregnancy_match_by_due_date():
 
 
 @pytest.mark.django_db
+def test_pregnancy_match_estimated_due_date():
+    org = OrganizationFactory()
+    cohort = CohortFactory(
+        organization=org,
+        cohort_type=CohortType.PREGNANCY,
+        window_start=date(2026, 7, 1),
+        window_end=date(2026, 7, 31),
+    )
+    matches = match_pregnancy_cohorts(
+        [cohort], {"estimated_due_date": "2026-07-20"}
+    )
+    assert len(matches) == 1
+
+
+@pytest.mark.django_db
 def test_pregnancy_no_match_without_due_date():
     org = OrganizationFactory()
     cohort = CohortFactory(
@@ -33,6 +52,42 @@ def test_pregnancy_no_match_without_due_date():
         window_end=date(2026, 6, 30),
     )
     assert match_pregnancy_cohorts([cohort], {}) == []
+
+
+@pytest.mark.django_db
+def test_journey_stage_ivf_match():
+    org = OrganizationFactory()
+    cohort = CohortFactory(
+        organization=org,
+        cohort_type=CohortType.PREGNANCY,
+        metadata={
+            "match_stages": ["trying-to-conceive"],
+            "match_journey_paths": ["ivf"],
+        },
+    )
+    matches = match_journey_stage_cohorts(
+        [cohort],
+        {"maternal_stage": "trying-to-conceive", "journey_path": "ivf"},
+    )
+    assert len(matches) == 1
+
+
+@pytest.mark.django_db
+def test_journey_stage_ttc_not_ivf_cohort():
+    org = OrganizationFactory()
+    cohort = CohortFactory(
+        organization=org,
+        name="IVF only",
+        metadata={
+            "match_stages": ["trying-to-conceive"],
+            "match_journey_paths": ["ivf"],
+        },
+    )
+    matches = match_journey_stage_cohorts(
+        [cohort],
+        {"maternal_stage": "trying-to-conceive", "journey_path": "ttc"},
+    )
+    assert len(matches) == 0
 
 
 @pytest.mark.django_db

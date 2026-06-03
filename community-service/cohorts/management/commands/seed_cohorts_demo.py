@@ -26,6 +26,29 @@ class Command(BaseCommand):
         specs = [
             {
                 "cohort_type": CohortType.PREGNANCY,
+                "name": "Future moms — TTC & IVF",
+                "description": "Trying to conceive, IVF, and all paths to parenthood",
+                "window_start": None,
+                "window_end": None,
+                "linked_community": first_time,
+                "metadata": {
+                    "match_stages": ["trying-to-conceive"],
+                },
+            },
+            {
+                "cohort_type": CohortType.PREGNANCY,
+                "name": "IVF & fertility journey",
+                "description": "Peer support during IVF and fertility treatment",
+                "window_start": None,
+                "window_end": None,
+                "linked_community": first_time,
+                "metadata": {
+                    "match_stages": ["trying-to-conceive", "pregnant"],
+                    "match_journey_paths": ["ivf"],
+                },
+            },
+            {
+                "cohort_type": CohortType.PREGNANCY,
                 "name": "Due June 2026",
                 "description": "Moms with due dates in June 2026",
                 "window_start": date(2026, 6, 1),

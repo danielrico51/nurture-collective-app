@@ -13,12 +13,12 @@ export const MATERNAL_STAGES: {
   {
     value: "trying-to-conceive",
     label: "Trying to conceive",
-    description: "Planning and preparing for pregnancy",
+    description: "Planning, TTC, IVF, or other paths toward pregnancy",
   },
   {
     value: "pregnant",
     label: "Pregnant",
-    description: "Expecting and preparing for birth",
+    description: "Expecting — including IVF pregnancies; due date can be an estimate",
   },
   {
     value: "newly-postpartum",

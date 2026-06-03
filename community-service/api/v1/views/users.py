@@ -6,12 +6,29 @@ from users.middleware import get_request_auth
 from users.services.profile_service import avatar_url_for_profile, get_profile, update_profile
 
 
+_JOURNEY_METADATA_KEYS = (
+    "maternal_stage",
+    "journey_path",
+    "due_date",
+    "estimated_due_date",
+    "postpartum_weeks",
+    "postpartum_months",
+    "newborn_age_days",
+)
+
+
+def _journey_metadata(profile) -> dict:
+    meta = profile.profile_metadata or {}
+    return {k: meta[k] for k in _JOURNEY_METADATA_KEYS if k in meta}
+
+
 def _serialize_profile(profile) -> dict:
     return {
         "user_id": str(profile.id),
         "display_name": profile.display_name or "",
         "avatar_url": avatar_url_for_profile(profile),
         "platform_role": profile.platform_role,
+        "profile_metadata": _journey_metadata(profile),
     }
 
 
