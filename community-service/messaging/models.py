@@ -170,13 +170,19 @@ class CommunityPost(TimestampedSoftDeleteModel):
         choices=ModerationStatus.choices,
         default=ModerationStatus.VISIBLE,
     )
+    env_scope = models.CharField(
+        max_length=32,
+        default="production",
+        db_index=True,
+        help_text="Deployment scope (dev/staging/production) so branch previews do not mix feeds.",
+    )
 
     class Meta:
         db_table = "messaging_communitypost"
         indexes = [
             models.Index(
-                fields=["community", "-created_at"],
-                name="post_community_created_idx",
+                fields=["community", "env_scope", "-created_at"],
+                name="post_comm_env_created_idx",
                 condition=models.Q(deleted_at__isnull=True),
             ),
         ]

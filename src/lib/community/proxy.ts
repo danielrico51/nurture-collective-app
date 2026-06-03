@@ -1,4 +1,4 @@
-import { getCommunityApiUrl } from "@/lib/community/config";
+import { getCommunityApiUrl, getCommunityEnvScope } from "@/lib/community/config";
 
 export class CommunityServiceError extends Error {
   constructor(
@@ -29,6 +29,7 @@ export const proxyCommunityRequest = async (
 
   const headers = new Headers(init.headers);
   headers.set("Authorization", authorizationHeader);
+  headers.set("X-Community-Env-Scope", getCommunityEnvScope());
   if (init.body && !headers.has("Content-Type")) {
     headers.set("Content-Type", "application/json");
   }

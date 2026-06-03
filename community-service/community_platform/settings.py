@@ -44,6 +44,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "django.middleware.security.SecurityMiddleware",
     "django.middleware.common.CommonMiddleware",
+    "community_platform.env_scope_middleware.CommunityEnvScopeMiddleware",
     "users.middleware.AuthMiddleware",
 ]
 
@@ -147,6 +148,9 @@ COGNITO_USER_POOL_CLIENT_ID = _first_env(
 COGNITO_ADMIN_GROUP = _first_env("COGNITO_ADMIN_GROUP", "MANAGEMENT_COGNITO_GROUP", default="admin")
 COGNITO_PROVIDER_GROUP = os.environ.get("COGNITO_PROVIDER_GROUP", "provider")
 JWT_DEV_BYPASS = os.environ.get("JWT_DEV_BYPASS", "false").lower() == "true"
+
+# Post feed isolation when dev/staging Amplify branches share one community-service.
+COMMUNITY_ENV_SCOPE = _first_env("COMMUNITY_ENV_SCOPE", default="production")
 
 CELERY_BROKER_URL = os.environ.get("CELERY_BROKER_URL", "redis://redis:6379/1")
 CELERY_RESULT_BACKEND = os.environ.get("CELERY_RESULT_BACKEND", CELERY_BROKER_URL)

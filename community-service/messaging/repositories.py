@@ -119,19 +119,31 @@ class PostRepository:
         return CommunityPost.objects.create(**kwargs)
 
     def get_by_id(
-        self, post_id: UUID, *, community_id: UUID | None = None
+        self,
+        post_id: UUID,
+        *,
+        community_id: UUID | None = None,
+        env_scope: str | None = None,
     ) -> CommunityPost | None:
         qs = CommunityPost.objects.filter(id=post_id).select_related("author")
         if community_id:
             qs = qs.filter(community_id=community_id)
+        if env_scope:
+            qs = qs.filter(env_scope=env_scope)
         return qs.first()
 
     def list_for_community(
-        self, community_id: UUID, *, limit: int = 30, cursor: UUID | None = None
+        self,
+        community_id: UUID,
+        *,
+        env_scope: str,
+        limit: int = 30,
+        cursor: UUID | None = None,
     ) -> list[CommunityPost]:
         qs = (
             CommunityPost.objects.filter(
                 community_id=community_id,
+                env_scope=env_scope,
                 moderation_status=ModerationStatus.VISIBLE,
             )
             .select_related("author")

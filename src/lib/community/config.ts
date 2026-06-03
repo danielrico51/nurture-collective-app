@@ -18,6 +18,25 @@ export const isCommunityServiceConfigured = (): boolean =>
 export const isCommunityDemoFallbackEnabled = (): boolean =>
   process.env.COMMUNITY_DEMO_FALLBACK !== "false";
 
+const ALLOWED_ENV_SCOPES = new Set(["dev", "staging", "production"]);
+
+/**
+ * Isolates community posts per deployment (e.g. dev Amplify branch vs production).
+ * Sent to community-service as X-Community-Env-Scope on every proxied request.
+ */
+export const getCommunityEnvScope = (): string => {
+  const fromEnv =
+    process.env.COMMUNITY_ENV_SCOPE?.trim().toLowerCase() ||
+    process.env.NEXT_PUBLIC_COMMUNITY_ENV_SCOPE?.trim().toLowerCase() ||
+    "";
+  if (ALLOWED_ENV_SCOPES.has(fromEnv)) return fromEnv;
+  return process.env.NODE_ENV === "development" ? "dev" : "production";
+};
+
+/** True when running the dev/staging feed (posts are not visible in production). */
+export const isCommunityDevScope = (): boolean =>
+  getCommunityEnvScope() === "dev";
+
 /** WebSocket base for browser clients (use public URL in production). */
 export const getCommunityWsBaseUrl = (): string | undefined => {
   const httpUrl =

@@ -4,6 +4,7 @@ from rest_framework.decorators import api_view
 from rest_framework.request import Request
 from rest_framework.response import Response
 
+from community_platform.env_scope import get_request_env_scope
 from infrastructure.feature_flags import require_feature
 from messaging.exceptions import ChannelNotFoundError, MessagingError, PermissionDeniedError
 from messaging.services.discussion_service import DiscussionService
@@ -39,6 +40,7 @@ def community_posts(request: Request, community_id: UUID) -> Response:
         return err
 
     cid = _as_uuid(community_id)
+    env_scope = get_request_env_scope(request)
     svc = DiscussionService()
 
     if request.method == "GET":
@@ -48,6 +50,7 @@ def community_posts(request: Request, community_id: UUID) -> Response:
             posts, next_cursor = svc.list_posts(
                 auth,
                 cid,
+                env_scope=env_scope,
                 cursor=_as_uuid(cursor) if cursor else None,
                 limit=limit,
             )
@@ -64,6 +67,7 @@ def community_posts(request: Request, community_id: UUID) -> Response:
         post = svc.create_post(
             auth,
             cid,
+            env_scope=env_scope,
             title=request.data.get("title", ""),
             body=request.data.get("body", ""),
             image_urls=request.data.get("image_urls"),
@@ -71,43 +75,6 @@ def community_posts(request: Request, community_id: UUID) -> Response:
         return Response(svc.serialize_post(post), status=201)
     except MessagingError as exc:
         status = 400 if exc.code in ("VALIDATION_ERROR",) else 403
-        return _error_response(exc, status)
-
-
-@api_view(["POST", "DELETE"])
-@require_feature("ENABLE_GROUP_CHAT")
-def post_reactions(
-    request: Request, community_id: UUID, post_id: UUID
-) -> Response:
-    auth, err = _require_auth(request)
-    if err:
-        return err
-
-    cid = _as_uuid(community_id)
-    pid = _as_uuid(post_id)
-    svc = DiscussionService()
-
-    if request.method == "DELETE":
-        try:
-            reactions = svc.remove_post_reaction(auth, cid, pid)
-            return Response({"reactions": reactions})
-        except ChannelNotFoundError as exc:
-            return _error_response(exc, 404)
-        except MessagingError as exc:
-            return _error_response(exc, 403)
-
-    try:
-        reactions = svc.set_post_reaction(
-            auth,
-            cid,
-            pid,
-            reaction_type=request.data.get("reaction_type", ""),
-        )
-        return Response({"reactions": reactions})
-    except ChannelNotFoundError as exc:
-        return _error_response(exc, 404)
-    except MessagingError as exc:
-        status = 400 if exc.code == "VALIDATION_ERROR" else 403
         return _error_response(exc, status)
 
 
@@ -120,9 +87,13 @@ def community_post_detail(
     if err:
         return err
 
+    env_scope = get_request_env_scope(request)
     try:
         post = DiscussionService().get_post(
-            auth, _as_uuid(community_id), _as_uuid(post_id)
+            auth,
+            _as_uuid(community_id),
+            _as_uuid(post_id),
+            env_scope=env_scope,
         )
         return Response(DiscussionService.serialize_post(post))
     except ChannelNotFoundError as exc:
@@ -142,11 +113,12 @@ def post_comments(
 
     cid = _as_uuid(community_id)
     pid = _as_uuid(post_id)
+    env_scope = get_request_env_scope(request)
     svc = DiscussionService()
 
     if request.method == "GET":
         try:
-            comments = svc.list_comments(auth, cid, pid)
+            comments = svc.list_comments(auth, cid, pid, env_scope=env_scope)
             return Response(
                 {"comments": svc.build_comment_tree(comments)}
             )
@@ -161,6 +133,7 @@ def post_comments(
             auth,
             cid,
             pid,
+            env_scope=env_scope,
             body=request.data.get("body", ""),
             parent_id=_as_uuid(parent) if parent else None,
         )
@@ -183,11 +156,14 @@ def post_reactions(
 
     cid = _as_uuid(community_id)
     pid = _as_uuid(post_id)
+    env_scope = get_request_env_scope(request)
     svc = DiscussionService()
 
     if request.method == "DELETE":
         try:
-            reactions = svc.remove_post_reaction(auth, cid, pid)
+            reactions = svc.remove_post_reaction(
+                auth, cid, pid, env_scope=env_scope
+            )
             return Response({"reactions": reactions})
         except ChannelNotFoundError as exc:
             return _error_response(exc, 404)
@@ -199,6 +175,7 @@ def post_reactions(
             auth,
             cid,
             pid,
+            env_scope=env_scope,
             reaction_type=request.data.get("reaction_type", ""),
         )
         return Response({"reactions": reactions})

@@ -8,6 +8,7 @@ import {
   isMediaS3Enabled,
   putMediaObject,
 } from "@/lib/aws/s3Objects";
+import { getCommunityEnvScope } from "@/lib/community/config";
 
 const LOCAL_ROOT = path.join(process.cwd(), ".data", "community-post-images");
 const S3_PREFIX = "community-post-images";
@@ -57,8 +58,9 @@ export const buildPostImageObject = (
     throw new Error("Unsupported image type");
   }
   const safeCommunity = safeCommunityId(communityId);
+  const scope = getCommunityEnvScope();
   const filename = `${randomUUID()}.${ext}`;
-  const key = `${S3_PREFIX}/${safeCommunity}/${filename}`;
+  const key = `${S3_PREFIX}/${scope}/${safeCommunity}/${filename}`;
   const url = `/api/community/media/${encodeURIComponent(safeCommunity)}/${encodeURIComponent(filename)}`;
   return { key, url, filename };
 };
@@ -78,8 +80,9 @@ export const storeCommunityPostImage = async (
   const url = `/api/community/media/${encodeURIComponent(safeCommunity)}/${encodeURIComponent(filename)}`;
 
   if (isMediaS3Enabled()) {
+    const scope = getCommunityEnvScope();
     await putMediaObject(
-      `${S3_PREFIX}/${safeCommunity}/${filename}`,
+      `${S3_PREFIX}/${scope}/${safeCommunity}/${filename}`,
       buffer,
       contentType
     );
@@ -100,6 +103,11 @@ export const readCommunityPostImage = async (
   const safeName = path.basename(filename);
 
   if (isMediaS3Enabled()) {
+    const scope = getCommunityEnvScope();
+    const scopedKey = `${S3_PREFIX}/${scope}/${safeCommunity}/${safeName}`;
+    const found = await getMediaObject(scopedKey);
+    if (found) return found;
+    // Legacy keys before env-scoped prefixes
     return getMediaObject(`${S3_PREFIX}/${safeCommunity}/${safeName}`);
   }
 

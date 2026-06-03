@@ -58,13 +58,14 @@ class DiscussionService:
         auth: AuthContext,
         community_id: UUID,
         *,
+        env_scope: str,
         cursor: UUID | None = None,
         limit: int = 30,
     ):
         self._require_member(auth, community_id)
         limit = min(max(limit, 1), 50)
         posts = self.post_repo.list_for_community(
-            community_id, limit=limit, cursor=cursor
+            community_id, env_scope=env_scope, limit=limit, cursor=cursor
         )
         self._attach_reactions(posts, auth.user_id)
         next_cursor = str(posts[-1].id) if len(posts) >= limit else None
@@ -75,6 +76,7 @@ class DiscussionService:
         auth: AuthContext,
         community_id: UUID,
         *,
+        env_scope: str,
         title: str = "",
         body: str,
         image_urls: list | None = None,
@@ -99,6 +101,7 @@ class DiscussionService:
             body=text_body,
             image_urls=urls,
             moderation_status=status,
+            env_scope=env_scope,
         )
 
     @staticmethod
@@ -119,9 +122,18 @@ class DiscussionService:
                 break
         return cleaned
 
-    def get_post(self, auth: AuthContext, community_id: UUID, post_id: UUID) -> CommunityPost:
+    def get_post(
+        self,
+        auth: AuthContext,
+        community_id: UUID,
+        post_id: UUID,
+        *,
+        env_scope: str,
+    ) -> CommunityPost:
         self._require_member(auth, community_id)
-        post = self.post_repo.get_by_id(post_id, community_id=community_id)
+        post = self.post_repo.get_by_id(
+            post_id, community_id=community_id, env_scope=env_scope
+        )
         if post is None:
             raise ChannelNotFoundError("Post not found")
         self._attach_reactions([post], auth.user_id)
@@ -133,9 +145,10 @@ class DiscussionService:
         community_id: UUID,
         post_id: UUID,
         *,
+        env_scope: str,
         reaction_type: str,
     ) -> dict:
-        post = self.get_post(auth, community_id, post_id)
+        post = self.get_post(auth, community_id, post_id, env_scope=env_scope)
         rtype = (reaction_type or "").strip().lower()
         if rtype not in REACTION_TYPES:
             raise ValidationError(
@@ -156,9 +169,14 @@ class DiscussionService:
         return self._reaction_summary_for_post(post.id, auth.user_id)
 
     def remove_post_reaction(
-        self, auth: AuthContext, community_id: UUID, post_id: UUID
+        self,
+        auth: AuthContext,
+        community_id: UUID,
+        post_id: UUID,
+        *,
+        env_scope: str,
     ) -> dict:
-        post = self.get_post(auth, community_id, post_id)
+        post = self.get_post(auth, community_id, post_id, env_scope=env_scope)
         self.reaction_repo.remove_reaction(post.id, auth.user_id)
         return self._reaction_summary_for_post(post.id, auth.user_id)
 
@@ -191,9 +209,14 @@ class DiscussionService:
         }
 
     def list_comments(
-        self, auth: AuthContext, community_id: UUID, post_id: UUID
+        self,
+        auth: AuthContext,
+        community_id: UUID,
+        post_id: UUID,
+        *,
+        env_scope: str,
     ) -> list[PostComment]:
-        self.get_post(auth, community_id, post_id)
+        self.get_post(auth, community_id, post_id, env_scope=env_scope)
         return list(self.comment_repo.list_for_post(post_id))
 
     def create_comment(
@@ -202,10 +225,11 @@ class DiscussionService:
         community_id: UUID,
         post_id: UUID,
         *,
+        env_scope: str,
         body: str,
         parent_id: UUID | None = None,
     ) -> PostComment:
-        post = self.get_post(auth, community_id, post_id)
+        post = self.get_post(auth, community_id, post_id, env_scope=env_scope)
         text = (body or "").strip()
         if not text:
             raise ValidationError("Comment cannot be empty")
