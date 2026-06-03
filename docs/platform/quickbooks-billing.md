@@ -119,6 +119,15 @@ Example payload:
 
 ### 1. Intuit Developer app
 
+**Legal URLs (required by Intuit):**
+
+| Field | URL |
+|-------|-----|
+| Privacy policy | `https://<your-domain>/privacy-policy` |
+| End-user license agreement | `https://<your-domain>/terms` |
+
+Replace `<your-domain>` with your production `NEXT_PUBLIC_APP_URL` (no trailing slash). Pages are public at `src/app/(site)/privacy-policy/` and `src/app/(site)/terms/`.
+
 1. Create an app at [developer.intuit.com](https://developer.intuit.com).
 2. Add scopes: `com.intuit.quickbooks.accounting`, `openid`, `profile`, `email`.
 3. Set redirect URI: `https://<your-domain>/api/integrations/quickbooks/oauth/callback`

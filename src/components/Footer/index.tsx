@@ -2,6 +2,7 @@ import { SocialIcon } from "@/components/Common/SocialIcon";
 import Image from "next/image";
 import Link from "next/link";
 import { brands, socialLinks } from "@/content/site";
+import { legalPaths } from "@/content/legal";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 
 const Footer = () => {
@@ -40,6 +41,21 @@ const Footer = () => {
           </div>
           <div>
             <p className="text-sm font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Legal
+            </p>
+            <ul className="mt-3 space-y-2 text-sm">
+              <li>
+                <Link href={legalPaths.privacyPolicy} className="hover:text-nurture-sage-dark">
+                  Privacy Policy
+                </Link>
+              </li>
+              <li>
+                <Link href={legalPaths.termsOfUse} className="hover:text-nurture-sage-dark">
+                  Terms of Use
+                </Link>
+              </li>
+            </ul>
+            <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-nurture-charcoal/60">
               Account
             </p>
             <ul className="mt-3 space-y-2 text-sm">

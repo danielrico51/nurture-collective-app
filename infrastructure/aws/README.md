@@ -82,7 +82,23 @@ NURTURE_LEADS_BUCKET=nurture-leads-dev-<your-account-id>
 TASKS_S3_BUCKET=nurture-collective-tasks
 INTAKE_S3_BUCKET=nurture-collective-tasks
 AWS_REGION=us-east-1
+QBO_ENVIRONMENT=sandbox
+QBO_CLIENT_ID=<from Intuit Developer>
+QBO_CLIENT_SECRET=<from Intuit Developer>
+QBO_REDIRECT_URI=https://dev.d9588bqvrp5xs.amplifyapp.com/api/integrations/quickbooks/oauth/callback
+BILLING_SYNC_MODE=n8n
 ```
+
+QuickBooks credentials (merge into existing Amplify app env without wiping other keys):
+
+```bash
+export QBO_CLIENT_ID='...'
+export QBO_CLIENT_SECRET='...'
+chmod +x infrastructure/aws/scripts/set-amplify-qbo-env.sh
+./infrastructure/aws/scripts/set-amplify-qbo-env.sh
+```
+
+Redeploy the **dev** branch after updating env vars.
 
 Bucket name must match the CloudFormation `LeadsBucketName` output exactly.
 
