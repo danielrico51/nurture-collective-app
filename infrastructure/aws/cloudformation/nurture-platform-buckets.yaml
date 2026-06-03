@@ -266,6 +266,12 @@ Resources:
             Resource:
               - !Sub "arn:aws:s3:::nurture-collective-tasks"
               - !Sub "arn:aws:s3:::nurture-collective-tasks/*"
+          - Sid: SESSendGiftCards
+            Effect: Allow
+            Action:
+              - ses:SendEmail
+              - ses:SendRawEmail
+            Resource: "*"
 
   BackendPlatformPolicy:
     Type: AWS::IAM::ManagedPolicy

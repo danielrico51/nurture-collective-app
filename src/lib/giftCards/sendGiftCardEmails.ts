@@ -12,50 +12,94 @@ const replyTo = () => {
   return reply ? [reply] : undefined;
 };
 
-const isScheduledForLater = (order: GiftCardOrder) =>
-  order.deliveryTiming === "scheduled" && Boolean(order.deliverOn?.trim());
+export type GiftCardEmailSendResult = {
+  fulfillment: boolean;
+  recipient: boolean;
+  purchaserCopy: boolean;
+  errors: string[];
+};
+
+const sendOne = async (
+  label: string,
+  input: Parameters<typeof sendSesEmail>[0],
+  errors: string[]
+): Promise<boolean> => {
+  try {
+    await sendSesEmail(input);
+    return true;
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    errors.push(`${label}: ${message}`);
+    console.error(`[gift-cards] ${label} email failed:`, error);
+    return false;
+  }
+};
 
 /** Send interim eGift emails via SES from a verified personal address. */
-export const sendGiftCardEmails = async (order: GiftCardOrder): Promise<void> => {
+export const sendGiftCardEmails = async (
+  order: GiftCardOrder
+): Promise<GiftCardEmailSendResult> => {
   const from = serverGiftCardConfig.emailFrom;
+  const result: GiftCardEmailSendResult = {
+    fulfillment: false,
+    recipient: false,
+    purchaserCopy: false,
+    errors: [],
+  };
+
   if (!serverGiftCardConfig.emailEnabled || !from) {
-    return;
+    return result;
   }
 
-  if (!isScheduledForLater(order)) {
-    const recipientEmail = buildGiftCardRecipientEmail(order);
-    await sendSesEmail({
+  const reply = replyTo();
+  const fulfillmentTo = serverGiftCardConfig.fulfillmentEmail;
+
+  // Ops inbox first — always attempt (verified address); survives SES sandbox on recipient.
+  if (fulfillmentTo) {
+    const alert = buildGiftCardFulfillmentAlertEmail(order);
+    result.fulfillment = await sendOne(
+      "fulfillment",
+      {
+        from,
+        to: [fulfillmentTo],
+        subject: alert.subject,
+        text: alert.text,
+        html: alert.html,
+        replyTo: reply,
+      },
+      result.errors
+    );
+  }
+
+  const recipientEmail = buildGiftCardRecipientEmail(order);
+  result.recipient = await sendOne(
+    "recipient",
+    {
       from,
       to: [order.recipient.email],
       subject: recipientEmail.subject,
       text: recipientEmail.text,
       html: recipientEmail.html,
-      replyTo: replyTo(),
-    });
-  }
+      replyTo: reply,
+    },
+    result.errors
+  );
 
-  if (order.sendCopyToPurchaser && order.purchaser.email !== order.recipient.email) {
+  if (order.sendCopyToPurchaser) {
     const copy = buildGiftCardPurchaserCopyEmail(order);
-    await sendSesEmail({
-      from,
-      to: [order.purchaser.email],
-      subject: copy.subject,
-      text: copy.text,
-      html: copy.html,
-      replyTo: replyTo(),
-    });
+    result.purchaserCopy = await sendOne(
+      "purchaser_copy",
+      {
+        from,
+        to: [order.purchaser.email],
+        subject: copy.subject,
+        text: copy.text,
+        html: copy.html,
+        replyTo: reply,
+      },
+      result.errors
+    );
   }
 
-  const fulfillmentTo = serverGiftCardConfig.fulfillmentEmail;
-  if (fulfillmentTo) {
-    const alert = buildGiftCardFulfillmentAlertEmail(order);
-    await sendSesEmail({
-      from,
-      to: [fulfillmentTo],
-      subject: alert.subject,
-      text: alert.text,
-      html: alert.html,
-      replyTo: replyTo(),
-    });
-  }
+  return result;
 };

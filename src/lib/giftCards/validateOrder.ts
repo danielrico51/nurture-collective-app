@@ -37,27 +37,6 @@ export const validateGiftCardCheckout = (
     return { ok: false, error: "Please choose a gift card design." };
   }
 
-  const deliveryTiming = body.deliveryTiming;
-  if (deliveryTiming !== "immediate" && deliveryTiming !== "scheduled") {
-    return { ok: false, error: "Please choose when to deliver the gift card." };
-  }
-
-  const deliverOn = body.deliverOn?.trim();
-  if (deliveryTiming === "scheduled") {
-    if (!deliverOn) {
-      return { ok: false, error: "Please choose a delivery date." };
-    }
-    const deliveryDate = new Date(`${deliverOn}T12:00:00`);
-    if (Number.isNaN(deliveryDate.getTime())) {
-      return { ok: false, error: "Delivery date is invalid." };
-    }
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    if (deliveryDate < today) {
-      return { ok: false, error: "Delivery date must be today or later." };
-    }
-  }
-
   const purchaserName = body.purchaser?.name?.trim() ?? "";
   const purchaserEmail = body.purchaser?.email?.trim() ?? "";
   const purchaserPhone = body.purchaser?.phone?.trim() || undefined;
@@ -101,8 +80,6 @@ export const validateGiftCardCheckout = (
     data: {
       amountCents,
       designId: designId as GiftCardDesignId,
-      deliveryTiming,
-      deliverOn: deliveryTiming === "scheduled" ? deliverOn : undefined,
       purchaser: {
         name: purchaserName,
         email: purchaserEmail,

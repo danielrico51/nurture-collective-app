@@ -1,7 +1,5 @@
 import type { GiftCardDesignId } from "@/content/giftCards";
 
-export type GiftCardDeliveryTiming = "immediate" | "scheduled";
-
 export type GiftCardOrderStatus =
   | "pending_payment"
   | "paid"
@@ -25,7 +23,8 @@ export interface GiftCardOrder {
   amountCents: number;
   currency: "USD";
   designId: GiftCardDesignId;
-  deliveryTiming: GiftCardDeliveryTiming;
+  /** @deprecated Legacy orders only; new orders are always emailed immediately. */
+  deliveryTiming?: "immediate" | "scheduled";
   deliverOn?: string;
   purchaser: {
     name: string;
@@ -46,13 +45,19 @@ export interface GiftCardOrder {
   paymentReference?: string;
   paidAt?: string;
   quickbooks?: GiftCardOrderQuickBooksRef;
+  /** Set after SES fulfillment attempt(s). */
+  emailDelivery?: {
+    lastAttemptAt: string;
+    recipient?: boolean;
+    fulfillment?: boolean;
+    purchaserCopy?: boolean;
+    errors?: string[];
+  };
 }
 
 export interface GiftCardCheckoutRequest {
   amountCents: number;
   designId: GiftCardDesignId;
-  deliveryTiming: GiftCardDeliveryTiming;
-  deliverOn?: string;
   purchaser: {
     name: string;
     email: string;

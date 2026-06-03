@@ -2,6 +2,7 @@ import { integrations, serverIntegrations } from "@/config/integrations";
 import { serverGiftCardConfig } from "@/config/giftCards";
 import { centsToDollars } from "@/lib/giftCards/validateOrder";
 import { sendGiftCardEmails } from "@/lib/giftCards/sendGiftCardEmails";
+import { writeGiftCardOrder } from "@/lib/giftCards/storage";
 import { forwardToN8n } from "@/lib/webhooks/n8n";
 import type { GiftCardOrder } from "@/types/giftCard";
 
@@ -20,8 +21,6 @@ const forwardGiftCardToN8n = async (order: GiftCardOrder): Promise<void> => {
     orderId: order.id,
     amountDollars: amount,
     designId: order.designId,
-    deliveryTiming: order.deliveryTiming,
-    deliverOn: order.deliverOn,
     purchaser: order.purchaser,
     recipient: order.recipient,
     message: order.message,
@@ -34,17 +33,43 @@ const forwardGiftCardToN8n = async (order: GiftCardOrder): Promise<void> => {
   });
 };
 
+const emailDeliveryComplete = (order: GiftCardOrder): boolean => {
+  const delivery = order.emailDelivery;
+  if (!delivery?.lastAttemptAt) return false;
+  if (delivery.errors?.length) return false;
+  if (!delivery.recipient) return false;
+  if (order.sendCopyToPurchaser && !delivery.purchaserCopy) return false;
+  if (serverGiftCardConfig.fulfillmentEmail && !delivery.fulfillment) return false;
+  return true;
+};
+
 /** Interim fulfillment: SES from personal email + optional n8n backup. */
-export const notifyGiftCardFulfillment = async (order: GiftCardOrder): Promise<void> => {
+export const notifyGiftCardFulfillment = async (
+  order: GiftCardOrder
+): Promise<GiftCardOrder> => {
+  let updated = order;
+
   if (serverGiftCardConfig.emailEnabled && serverGiftCardConfig.emailFrom) {
-    try {
-      await sendGiftCardEmails(order);
-      console.info("[gift-cards] Fulfillment emails sent", {
-        orderId: order.id,
-        recipient: order.recipient.email,
-      });
-    } catch (error) {
-      console.error("[gift-cards] SES email failed:", error);
+    const emailResult = await sendGiftCardEmails(order);
+    updated = {
+      ...order,
+      emailDelivery: {
+        lastAttemptAt: new Date().toISOString(),
+        recipient: emailResult.recipient,
+        fulfillment: emailResult.fulfillment,
+        purchaserCopy: emailResult.purchaserCopy,
+        errors: emailResult.errors.length ? emailResult.errors : undefined,
+      },
+      updatedAt: new Date().toISOString(),
+    };
+    await writeGiftCardOrder(updated);
+    console.info("[gift-cards] SES email results", {
+      orderId: order.id,
+      recipientEmail: order.recipient.email,
+      ...emailResult,
+    });
+    if (emailResult.errors.length > 0) {
+      console.warn("[gift-cards] Some emails failed:", emailResult.errors);
     }
   } else {
     console.info(
@@ -53,8 +78,13 @@ export const notifyGiftCardFulfillment = async (order: GiftCardOrder): Promise<v
   }
 
   try {
-    await forwardGiftCardToN8n(order);
+    await forwardGiftCardToN8n(updated);
   } catch (error) {
     console.error("[gift-cards] Fulfillment n8n notify failed:", error);
   }
+
+  return updated;
 };
+
+export const shouldSendGiftCardEmails = (order: GiftCardOrder): boolean =>
+  order.status === "paid" && !emailDeliveryComplete(order);

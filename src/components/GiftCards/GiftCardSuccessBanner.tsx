@@ -7,8 +7,6 @@ export type GiftCardConfirmSummary = {
   amountDollars: number;
   recipientName: string;
   recipientEmail: string;
-  deliveryTiming: "immediate" | "scheduled";
-  deliverOn?: string;
   sendCopyToPurchaser: boolean;
 };
 
@@ -41,10 +39,8 @@ export function GiftCardSuccessBanner({ summary, loading }: GiftCardSuccessBanne
           <p className="mt-2 text-sm text-nurture-charcoal/80">
             Your {formatCurrency(summary.amountDollars)} eGift card for{" "}
             <span className="font-medium">{summary.recipientName}</span> (
-            {summary.recipientEmail}) is being prepared.
-            {summary.deliveryTiming === "scheduled" && summary.deliverOn
-              ? ` Scheduled delivery: ${summary.deliverOn}.`
-              : " We aim to email the recipient within one business day."}
+            {summary.recipientEmail}) is being prepared. We email the recipient shortly
+            after payment.
           </p>
         ) : (
           <p className="mt-2 text-sm text-nurture-charcoal/80">
@@ -59,9 +55,7 @@ export function GiftCardSuccessBanner({ summary, loading }: GiftCardSuccessBanne
           </li>
           <li>
             <span className="font-medium">eGift card delivery:</span> We email the recipient
-            shortly{summary?.deliveryTiming === "scheduled" && summary.deliverOn
-              ? ` (scheduled for ${summary.deliverOn})`
-              : " (usually within minutes)"}
+            {" "}shortly after payment
             .{summary?.sendCopyToPurchaser ? " A copy goes to you if you requested one." : null}
           </li>
         </ul>

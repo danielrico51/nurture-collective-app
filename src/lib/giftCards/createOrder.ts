@@ -19,8 +19,6 @@ export const createGiftCardCheckout = async (
     amountCents: input.amountCents,
     currency: "USD",
     designId: input.designId,
-    deliveryTiming: input.deliveryTiming,
-    deliverOn: input.deliverOn,
     purchaser: input.purchaser,
     recipient: input.recipient,
     message: input.message,
@@ -37,7 +35,7 @@ export const createGiftCardCheckout = async (
     orderId,
     amount: centsToDollars(input.amountCents),
     recipientEmail: input.recipient.email,
-    deliveryTiming: input.deliveryTiming,
+    designId: input.designId,
   });
 
   if (serverGiftCardConfig.orderWebhookUrl) {
@@ -69,8 +67,6 @@ export const createGiftCardCheckout = async (
       orderType: "gift_card",
       designId: input.designId,
       recipientEmail: input.recipient.email,
-      deliveryTiming: input.deliveryTiming,
-      deliverOn: input.deliverOn ?? "",
     },
   });
 

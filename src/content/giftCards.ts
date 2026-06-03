@@ -35,7 +35,7 @@ export const giftCardHowItWorks = [
 export const giftCardFaqs = [
   {
     q: "How is the gift card delivered?",
-    a: "After payment, our team emails the branded eGift card to your recipient (usually within one business day). You may receive a Stripe payment receipt separately. Scheduled delivery dates are honored when selected at checkout.",
+    a: "After payment, we email the branded eGift card to your recipient shortly. You may receive a separate payment receipt from Stripe.",
   },
   {
     q: "What can it be used for?",

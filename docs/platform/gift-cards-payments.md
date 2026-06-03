@@ -79,7 +79,7 @@ Use your **personal email** as the sender until Nesting Place domain mail is rea
 
 | Recipient | When |
 |-----------|------|
-| Gift recipient | Immediately after payment (unless delivery is **scheduled** — then only you get the alert) |
+| Gift recipient | Immediately after payment |
 | Purchaser | Copy if they checked “send copy to me” |
 | `GIFT_CARD_FULFILLMENT_EMAIL` | Order summary (your inbox) |
 
@@ -92,3 +92,22 @@ Long term: verify `thenestingplace.com` (or similar) in SES and swap `GIFT_CARD_
 ## Member Purchases app
 
 Signed-in members see orders at `/apps/purchases` (matched by account email or `purchaserUserId` when checkout was authenticated). Columns: **Payment** (Stripe order status) and **QuickBooks** (sales receipt / invoice sync).
+
+## Test gift card emails (inbox sample)
+
+Sends `[SAMPLE]` messages via SES using the same templates as production:
+
+```bash
+export GIFT_CARD_EMAIL_ENABLED=true
+export GIFT_CARD_EMAIL_FROM=danielrico51@gmail.com
+export GIFT_CARD_EMAIL_FROM_NAME="The Nesting Place"
+export GIFT_CARD_FULFILLMENT_EMAIL=danielrico51@gmail.com
+# AWS credentials with ses:SendEmail
+npm run test:gift-card-email
+```
+
+Optional: `TEST_INBOX=you@gmail.com` · `TEST_SEND_RECIPIENT=0` to skip a template.
+
+**Note:** SES sandbox only delivers to **verified** addresses. The local test script sends everything to your inbox; real checkout sends the **recipient** address from the form — if that email is not verified in SES, the eGift email fails until you [request SES production access](https://console.aws.amazon.com/ses/home?region=us-east-1#/account). Stripe payment receipts are separate and always come from Stripe.
+
+After a real payment, you should still receive the **fulfillment** email at `GIFT_CARD_FULFILLMENT_EMAIL` even when the recipient send fails (sandbox).

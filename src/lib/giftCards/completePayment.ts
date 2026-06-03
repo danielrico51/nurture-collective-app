@@ -1,5 +1,8 @@
 import { readGiftCardOrder, writeGiftCardOrder } from "@/lib/giftCards/storage";
-import { notifyGiftCardFulfillment } from "@/lib/giftCards/notify";
+import {
+  notifyGiftCardFulfillment,
+  shouldSendGiftCardEmails,
+} from "@/lib/giftCards/notify";
 import { syncGiftCardPaymentToQuickBooks } from "@/lib/giftCards/quickbooksSync";
 import { forwardToN8n } from "@/lib/webhooks/n8n";
 import { serverGiftCardConfig } from "@/config/giftCards";
@@ -16,6 +19,9 @@ export const completeGiftCardPayment = async (input: {
   }
 
   if (order.status === "paid") {
+    if (shouldSendGiftCardEmails(order)) {
+      return notifyGiftCardFulfillment(order);
+    }
     return order;
   }
 
@@ -31,7 +37,7 @@ export const completeGiftCardPayment = async (input: {
 
   await writeGiftCardOrder(paid);
 
-  await notifyGiftCardFulfillment(paid);
+  const afterEmail = await notifyGiftCardFulfillment(paid);
 
   if (serverGiftCardConfig.orderWebhookUrl) {
     try {
@@ -40,11 +46,11 @@ export const completeGiftCardPayment = async (input: {
         serverGiftCardConfig.orderWebhookSecret,
         {
           type: "gift_card.payment.succeeded",
-          order: paid,
+          order: afterEmail,
           payment: {
             provider: input.paymentProvider,
             reference: input.paymentReference,
-            amountCents: paid.amountCents,
+            amountCents: afterEmail.amountCents,
           },
         }
       );
@@ -53,7 +59,7 @@ export const completeGiftCardPayment = async (input: {
     }
   }
 
-  return syncGiftCardPaymentToQuickBooks(paid, {
+  return syncGiftCardPaymentToQuickBooks(afterEmail, {
     provider: input.paymentProvider,
     reference: input.paymentReference,
   });

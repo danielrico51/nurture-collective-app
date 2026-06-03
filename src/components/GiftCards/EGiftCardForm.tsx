@@ -9,10 +9,7 @@ import {
 } from "@/content/giftCards";
 import { giftCardCheckoutConfig } from "@/config/giftCards";
 import { dollarsToCents } from "@/lib/giftCards/validateOrder";
-import type {
-  GiftCardCheckoutResponse,
-  GiftCardDeliveryTiming,
-} from "@/types/giftCard";
+import type { GiftCardCheckoutResponse } from "@/types/giftCard";
 import { FormEvent, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -26,19 +23,10 @@ const formatCurrency = (amount: number) =>
     maximumFractionDigits: 0,
   }).format(amount);
 
-const tomorrowIsoDate = () => {
-  const date = new Date();
-  date.setDate(date.getDate() + 1);
-  return date.toISOString().slice(0, 10);
-};
-
 const EGiftCardForm = () => {
   const [selectedPreset, setSelectedPreset] = useState<number | "custom">(100);
   const [customAmount, setCustomAmount] = useState("");
   const [designId, setDesignId] = useState<GiftCardDesignId>("sage");
-  const [deliveryTiming, setDeliveryTiming] =
-    useState<GiftCardDeliveryTiming>("immediate");
-  const [deliverOn, setDeliverOn] = useState(tomorrowIsoDate());
   const [sendCopyToPurchaser, setSendCopyToPurchaser] = useState(true);
   const [submitting, setSubmitting] = useState(false);
   const [confirmation, setConfirmation] = useState<{
@@ -46,7 +34,7 @@ const EGiftCardForm = () => {
     message?: string;
     checkoutPending: boolean;
     amountDollars: number;
-    designClassName: string;
+    designId: GiftCardDesignId;
   } | null>(null);
 
   const amountDollars = useMemo(() => {
@@ -85,8 +73,6 @@ const EGiftCardForm = () => {
     const payload = {
       amountCents,
       designId,
-      deliveryTiming,
-      deliverOn: deliveryTiming === "scheduled" ? String(data.get("deliverOn") ?? "") : undefined,
       purchaser: {
         name: String(data.get("purchaserName") ?? ""),
         email: String(data.get("purchaserEmail") ?? ""),
@@ -127,13 +113,12 @@ const EGiftCardForm = () => {
         message: result.message,
         checkoutPending: !giftCardCheckoutConfig.paymentsEnabled,
         amountDollars,
-        designClassName: selectedDesign.className,
+        designId,
       });
       form.reset();
       setSelectedPreset(100);
       setCustomAmount("");
       setDesignId("sage");
-      setDeliveryTiming("immediate");
       toast.success("Gift card order received");
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Checkout failed");
@@ -143,13 +128,15 @@ const EGiftCardForm = () => {
   };
 
   if (confirmation) {
+    const confirmedDesign =
+      giftCardDesigns.find((d) => d.id === confirmation.designId) ?? giftCardDesigns[0];
     return (
       <div className="rounded-2xl border border-nurture-sage/20 bg-white p-8 shadow-sm">
         <div
-          className={`rounded-2xl bg-gradient-to-br ${confirmation.designClassName} px-6 py-10 text-center`}
+          className={`rounded-2xl bg-gradient-to-br ${confirmedDesign.className} px-6 py-10 text-center`}
         >
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-nurture-charcoal/60">
-            The Nesting Place eGift Card
+            The Nesting Place eGift Card · {confirmedDesign.label}
           </p>
           <p className="mt-3 font-serif text-4xl font-semibold text-nurture-charcoal">
             {formatCurrency(confirmation.amountDollars)}
@@ -184,22 +171,23 @@ const EGiftCardForm = () => {
       onSubmit={handleSubmit}
       className="rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm"
     >
-      <div className="flex items-start justify-between gap-4">
+      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
         <div>
           <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
             eGift Card
           </h2>
           <p className="mt-1 text-sm text-nurture-charcoal/65">
-            Digital delivery by email · redeemable toward maternal wellness services
+            Digital delivery by email after payment
           </p>
         </div>
         <div
-          className={`hidden min-w-[7rem] rounded-xl bg-gradient-to-br sm:block ${selectedDesign.className} px-4 py-5 text-center`}
+          className={`w-full max-w-[11rem] shrink-0 rounded-xl bg-gradient-to-br sm:w-auto ${selectedDesign.className} px-5 py-6 text-center shadow-inner`}
+          aria-live="polite"
         >
           <p className="text-[10px] font-semibold uppercase tracking-wide text-nurture-charcoal/55">
-            Preview
+            {selectedDesign.label} preview
           </p>
-          <p className="mt-1 font-serif text-xl font-semibold text-nurture-charcoal">
+          <p className="mt-2 font-serif text-2xl font-semibold text-nurture-charcoal">
             {amountLabel}
           </p>
         </div>
@@ -267,25 +255,47 @@ const EGiftCardForm = () => {
       </fieldset>
 
       <fieldset className="mt-8">
-        <legend className="text-sm font-medium text-nurture-charcoal">Card design</legend>
-        <div className="mt-3 flex flex-wrap gap-3">
-          {giftCardDesigns.map((design) => (
-            <button
-              key={design.id}
-              type="button"
-              onClick={() => setDesignId(design.id)}
-              className={`rounded-xl border px-3 py-2 text-sm font-medium transition ${
-                designId === design.id
-                  ? "border-nurture-sage bg-nurture-sage/10 text-nurture-sage-dark"
-                  : "border-nurture-sage/20 text-nurture-charcoal/70 hover:border-nurture-sage/40"
-              }`}
-            >
-              <span
-                className={`mr-2 inline-block h-4 w-4 rounded-full bg-gradient-to-br ${design.className}`}
-              />
-              {design.label}
-            </button>
-          ))}
+        <legend className="text-sm font-medium text-nurture-charcoal">
+          Card design <span className="font-normal text-nurture-charcoal/50">(3 styles)</span>
+        </legend>
+        <div className="mt-3 grid gap-3 sm:grid-cols-3">
+          {giftCardDesigns.map((design) => {
+            const selected = designId === design.id;
+            return (
+              <button
+                key={design.id}
+                type="button"
+                onClick={() => setDesignId(design.id)}
+                className={`overflow-hidden rounded-xl border text-left transition ${
+                  selected
+                    ? "border-nurture-sage ring-2 ring-nurture-sage/30"
+                    : "border-nurture-sage/20 hover:border-nurture-sage/45"
+                }`}
+              >
+                <div
+                  className={`bg-gradient-to-br ${design.className} px-4 py-8 text-center`}
+                >
+                  <p className="font-serif text-lg font-semibold text-nurture-charcoal">
+                    {amountLabel}
+                  </p>
+                </div>
+                <div
+                  className={`px-3 py-2.5 text-sm font-medium ${
+                    selected
+                      ? "bg-nurture-sage/10 text-nurture-sage-dark"
+                      : "bg-white text-nurture-charcoal/75"
+                  }`}
+                >
+                  {design.label}
+                  {selected ? (
+                    <span className="ml-1 text-xs font-semibold uppercase tracking-wide">
+                      Selected
+                    </span>
+                  ) : null}
+                </div>
+              </button>
+            );
+          })}
         </div>
       </fieldset>
 
@@ -335,69 +345,6 @@ const EGiftCardForm = () => {
           className={inputClassName}
         />
       </div>
-
-      <fieldset className="mt-8">
-        <legend className="text-sm font-medium text-nurture-charcoal">Delivery</legend>
-        <div className="mt-3 grid gap-3 sm:grid-cols-2">
-          <label
-            className={`cursor-pointer rounded-xl border px-4 py-3 text-sm ${
-              deliveryTiming === "immediate"
-                ? "border-nurture-sage bg-nurture-sage/10"
-                : "border-nurture-sage/20"
-            }`}
-          >
-            <input
-              type="radio"
-              name="deliveryTiming"
-              value="immediate"
-              checked={deliveryTiming === "immediate"}
-              onChange={() => setDeliveryTiming("immediate")}
-              className="sr-only"
-            />
-            <span className="font-medium text-nurture-charcoal">Send immediately</span>
-            <p className="mt-1 text-xs text-nurture-charcoal/60">
-              After payment, we email the recipient right away.
-            </p>
-          </label>
-          <label
-            className={`cursor-pointer rounded-xl border px-4 py-3 text-sm ${
-              deliveryTiming === "scheduled"
-                ? "border-nurture-sage bg-nurture-sage/10"
-                : "border-nurture-sage/20"
-            }`}
-          >
-            <input
-              type="radio"
-              name="deliveryTiming"
-              value="scheduled"
-              checked={deliveryTiming === "scheduled"}
-              onChange={() => setDeliveryTiming("scheduled")}
-              className="sr-only"
-            />
-            <span className="font-medium text-nurture-charcoal">Schedule delivery</span>
-            <p className="mt-1 text-xs text-nurture-charcoal/60">
-              Choose a future date for a birthday, shower, or holiday.
-            </p>
-          </label>
-        </div>
-        {deliveryTiming === "scheduled" ? (
-          <div className="mt-4 max-w-xs">
-            <label htmlFor="deliverOn" className="block text-sm font-medium text-nurture-charcoal">
-              Delivery date
-            </label>
-            <input
-              id="deliverOn"
-              name="deliverOn"
-              type="date"
-              required
-              min={new Date().toISOString().slice(0, 10)}
-              value={deliverOn}
-              onChange={(event) => setDeliverOn(event.target.value)}
-              className={inputClassName}
-            />
-          </div>
-        ) : null}
-      </fieldset>
 
       <div className="mt-8 grid gap-6 sm:grid-cols-2">
         <div className="sm:col-span-2">
@@ -452,7 +399,7 @@ const EGiftCardForm = () => {
           onChange={(event) => setSendCopyToPurchaser(event.target.checked)}
           className="mt-1 accent-nurture-sage"
         />
-        Email me a copy of the gift card receipt
+        Email me a copy of the gift card
       </label>
 
       <label className="mt-4 flex items-start gap-3 text-sm text-nurture-charcoal/75">

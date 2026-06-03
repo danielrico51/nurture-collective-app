@@ -55,8 +55,6 @@ export async function GET(request: NextRequest) {
               amountDollars: centsToDollars(order.amountCents),
               recipientName: order.recipient.name,
               recipientEmail: order.recipient.email,
-              deliveryTiming: order.deliveryTiming,
-              deliverOn: order.deliverOn,
               sendCopyToPurchaser: order.sendCopyToPurchaser,
             }
           : undefined,
