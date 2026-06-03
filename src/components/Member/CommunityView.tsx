@@ -52,9 +52,9 @@ export function CommunityView() {
         ) : null}
       </div>
 
-      <div className="mt-8 space-y-8">
-        <CohortRecommendations />
+      <div className="mt-8">
         <CommunityList />
+        <CohortRecommendations />
       </div>
     </div>
   );

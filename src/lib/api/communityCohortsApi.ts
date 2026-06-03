@@ -99,6 +99,17 @@ export const joinCohort = async (
   return handleResponse(response);
 };
 
+export const patchCommunityProfileMetadata = async (
+  metadata: Record<string, string | number>
+): Promise<void> => {
+  const response = await fetchCommunityWithRetry("/api/community/users/me", {
+    method: "PATCH",
+    headers: await authHeaders(),
+    body: JSON.stringify({ profile_metadata: metadata }),
+  });
+  await handleResponse(response);
+};
+
 export const assignCohorts = async (
   forceRefresh = false
 ): Promise<{ assigned: CohortAssignResult[] }> => {
