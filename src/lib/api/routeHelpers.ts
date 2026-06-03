@@ -203,3 +203,57 @@ export const handleEventsStorageError = (error: unknown) => {
 
   return NextResponse.json({ error: "Failed to access events storage" }, { status: 500 });
 };
+
+export const handleJournalStorageError = (error: unknown) => {
+  console.error("[journal] storage error:", error);
+  const message =
+    error instanceof Error ? error.message : "Storage operation failed";
+  const bucket =
+    process.env.JOURNAL_S3_BUCKET?.trim() ||
+    process.env.INTAKE_S3_BUCKET?.trim() ||
+    process.env.TASKS_S3_BUCKET?.trim() ||
+    "nurture-collective-tasks";
+  const usingStaticKeys = Boolean(
+    process.env.SERVER_AWS_ACCESS_KEY_ID?.trim() ||
+      process.env.AMPLIFY_AWS_ACCESS_KEY_ID?.trim()
+  );
+
+  if (message.includes("Cognito environment variables are not configured")) {
+    return NextResponse.json(
+      { error: "Sign-in is not configured on this environment." },
+      { status: 503 }
+    );
+  }
+
+  if (
+    message.includes("AccessDenied") ||
+    message.includes("not authorized") ||
+    message.includes("Access Denied")
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          `Journal storage access denied for s3://${bucket}/management/process=journal/*. ` +
+          (usingStaticKeys
+            ? "Attach s3:GetObject, s3:PutObject, and s3:DeleteObject on that prefix to the IAM user behind SERVER_AWS_ACCESS_KEY_ID, or remove those keys so the Amplify compute role is used."
+            : "Attach the Amplify compute policy with tasks-bucket access (see infrastructure/aws/scripts/attach-amplify-s3-policy.sh), then redeploy."),
+      },
+      { status: 503 }
+    );
+  }
+
+  if (message.includes("EROFS") || message.includes("read-only file system")) {
+    return NextResponse.json(
+      {
+        error:
+          "Journal cannot write to local disk in this environment. Set TASKS_S3_BUCKET (or INTAKE_S3_BUCKET) in Amplify and redeploy.",
+      },
+      { status: 503 }
+    );
+  }
+
+  return NextResponse.json(
+    { error: "Could not save your journal entry. Please try again." },
+    { status: 500 }
+  );
+};

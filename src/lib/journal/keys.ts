@@ -1,6 +1,7 @@
 import { sanitizePartitionSegment } from "@/lib/intake/partitions";
 
-export const JOURNAL_ROOT_PREFIX = "journal/v1/users/";
+/** Hive-style prefix under the tasks bucket (same IAM scope as intake/conversation). */
+export const JOURNAL_PARTITION_PREFIX = "management/process=journal/";
 
 export const resolveJournalUserKey = (
   userId: string,
@@ -11,17 +12,17 @@ export const resolveJournalUserKey = (
   return "unknown";
 };
 
-export const journalUserPrefix = (userKey: string) =>
-  `${JOURNAL_ROOT_PREFIX}${sanitizePartitionSegment(userKey)}/`;
+export const buildJournalUserPrefix = (userKey: string) =>
+  `${JOURNAL_PARTITION_PREFIX}user=${sanitizePartitionSegment(userKey)}/`;
 
 export const journalProfileKey = (userKey: string) =>
-  `${journalUserPrefix(userKey)}profile.json`;
+  `${buildJournalUserPrefix(userKey)}profile.json`;
 
 export const journalTimelineKey = (userKey: string) =>
-  `${journalUserPrefix(userKey)}timeline.json`;
+  `${buildJournalUserPrefix(userKey)}timeline.json`;
 
 export const journalIndexKey = (userKey: string) =>
-  `${journalUserPrefix(userKey)}index.json`;
+  `${buildJournalUserPrefix(userKey)}index.json`;
 
 export const journalEntryKey = (userKey: string, entryId: string) =>
-  `${journalUserPrefix(userKey)}entries/${entryId}.json`;
+  `${buildJournalUserPrefix(userKey)}entries/${sanitizePartitionSegment(entryId)}.json`;

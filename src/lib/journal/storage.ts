@@ -1,11 +1,23 @@
 import { randomUUID } from "crypto";
 import {
+  buildJournalUserPrefix,
   journalEntryKey,
   journalIndexKey,
   journalProfileKey,
   journalTimelineKey,
   resolveJournalUserKey,
 } from "@/lib/journal/keys";
+
+/** Pre-fix layout (outside management/*); kept for read fallback only. */
+const legacyJournalUserPrefix = (userKey: string) =>
+  `journal/v1/users/${resolveJournalUserKey(userKey)}/`;
+
+const legacyKeyForCurrent = (key: string, userKey: string): string | null => {
+  const currentPrefix = buildJournalUserPrefix(userKey);
+  if (!key.startsWith(currentPrefix)) return null;
+  const suffix = key.slice(currentPrefix.length);
+  return `${legacyJournalUserPrefix(userKey)}${suffix}`;
+};
 import { readLocalJson, writeLocalJson } from "@/lib/journal/localStorage";
 import {
   createEmptyJournalProfile,
@@ -33,10 +45,18 @@ import type {
   JourneyTimelineEvent,
 } from "@/types/journal";
 
-const readJson = async <T>(key: string): Promise<T | null> =>
+const readJsonAtKey = async <T>(key: string): Promise<T | null> =>
   getJournalStorageMode() === "local"
     ? readLocalJson<T>(key)
     : readS3ObjectJson<T>(key);
+
+const readJson = async <T>(key: string, userKey?: string): Promise<T | null> => {
+  const primary = await readJsonAtKey<T>(key);
+  if (primary != null || !userKey) return primary;
+  const legacyKey = legacyKeyForCurrent(key, userKey);
+  if (!legacyKey) return null;
+  return readJsonAtKey<T>(legacyKey);
+};
 
 const writeJson = async (key: string, payload: unknown): Promise<void> => {
   if (getJournalStorageMode() === "local") {
@@ -52,7 +72,7 @@ export const getJournalProfile = async (
 ): Promise<JournalProfile> => {
   const userKey = resolveJournalUserKey(userId, email);
   const key = journalProfileKey(userKey);
-  const raw = await readJson<JournalProfile>(key);
+  const raw = await readJson<JournalProfile>(key, userKey);
   if (raw?.userId) {
     return normalizeJournalProfile(raw, userId);
   }
@@ -62,7 +82,7 @@ export const getJournalProfile = async (
     await writeJson(key, seeded);
     const timelineKey = journalTimelineKey(userKey);
     const timeline =
-      (await readJson<JournalTimelineStore>(timelineKey)) ??
+      (await readJson<JournalTimelineStore>(timelineKey, userKey)) ??
       createTimelineStore(userId);
     const withInit = appendTimelineEvent(timeline, {
       type: "profile_initialized",
@@ -90,7 +110,7 @@ export const updateJournalProfile = async (
   await writeJson(journalProfileKey(userKey), merged);
 
   let timeline =
-    (await readJson<JournalTimelineStore>(journalTimelineKey(userKey))) ??
+    (await readJson<JournalTimelineStore>(journalTimelineKey(userKey), userKey)) ??
     createTimelineStore(userId);
 
   for (const event of events) {
@@ -106,7 +126,10 @@ export const getJournalTimeline = async (
   email?: string | null
 ): Promise<JourneyTimelineEvent[]> => {
   const userKey = resolveJournalUserKey(userId, email);
-  const store = await readJson<JournalTimelineStore>(journalTimelineKey(userKey));
+  const store = await readJson<JournalTimelineStore>(
+    journalTimelineKey(userKey),
+    userKey
+  );
   return store?.events ?? [];
 };
 
@@ -124,7 +147,7 @@ export const addJournalTimelineEvent = async (
   const userKey = resolveJournalUserKey(userId, email);
   const timelineKey = journalTimelineKey(userKey);
   let store =
-    (await readJson<JournalTimelineStore>(timelineKey)) ??
+    (await readJson<JournalTimelineStore>(timelineKey, userKey)) ??
     createTimelineStore(userId);
 
   const payload = { ...input.payload };
@@ -144,7 +167,7 @@ const loadEntryIndex = async (
   userKey: string,
   userId: string
 ): Promise<JournalEntryIndex> => {
-  const raw = await readJson<JournalEntryIndex>(journalIndexKey(userKey));
+  const raw = await readJson<JournalEntryIndex>(journalIndexKey(userKey), userKey);
   if (raw?.items) return raw;
   return {
     version: 1,
@@ -189,7 +212,10 @@ export const getJournalEntry = async (
   email?: string | null
 ): Promise<JournalEntry | null> => {
   const userKey = resolveJournalUserKey(userId, email);
-  const entry = await readJson<JournalEntry>(journalEntryKey(userKey, entryId));
+  const entry = await readJson<JournalEntry>(
+    journalEntryKey(userKey, entryId),
+    userKey
+  );
   if (!entry || entry.userId !== userId) return null;
   return entry;
 };
@@ -209,7 +235,7 @@ export const createJournalEntry = async (
     createdAt: now,
     updatedAt: null,
     title: input.title?.trim() || null,
-    body: input.body.trim(),
+    body: String(input.body ?? "").trim(),
     mood: input.mood ?? null,
     sleepQuality: input.sleepQuality ?? null,
     tags: input.tags ?? [],
@@ -251,7 +277,10 @@ export const updateJournalEntry = async (
     entryType: input.entryType ?? existing.entryType,
     journalDate: input.journalDate ?? existing.journalDate,
     title: input.title !== undefined ? input.title : existing.title,
-    body: input.body !== undefined ? input.body.trim() : existing.body,
+    body:
+      input.body !== undefined
+        ? String(input.body).trim()
+        : existing.body,
     mood: input.mood !== undefined ? input.mood : existing.mood,
     sleepQuality:
       input.sleepQuality !== undefined
