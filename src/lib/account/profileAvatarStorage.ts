@@ -34,6 +34,25 @@ export const validateAvatarImageFile = (file: File): string | null => {
 
 const safeUserId = (userId: string) => userId.replace(/[^a-zA-Z0-9._:-]/g, "_");
 
+/**
+ * Compute the S3 object key + same-origin serving URL for an avatar.
+ * Used by the presigned-upload route so the browser can PUT directly to S3.
+ */
+export const buildAvatarObject = (
+  userId: string,
+  contentType: string
+): { key: string; url: string; filename: string } => {
+  const ext = EXT_BY_TYPE[contentType];
+  if (!ext) {
+    throw new Error("Unsupported image type");
+  }
+  const safe = safeUserId(userId);
+  const filename = `${randomUUID()}.${ext}`;
+  const key = `${S3_PREFIX}/${safe}/${filename}`;
+  const url = `/api/account/avatar/${encodeURIComponent(safe)}/${encodeURIComponent(filename)}`;
+  return { key, url, filename };
+};
+
 export const storeProfileAvatar = async (
   userId: string,
   buffer: Buffer,

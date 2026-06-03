@@ -6,6 +6,7 @@ import {
   PutObjectCommand,
   S3Client,
 } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import { getServerCredentials } from "@/lib/aws/amplifyCredentials";
 
 let cachedClient: S3Client | null = null;
@@ -58,6 +59,25 @@ export const putMediaObject = async (
       ContentType: contentType,
       CacheControl: "private, max-age=3600",
     })
+  );
+};
+
+/**
+ * Presigned PUT URL so the browser can upload binary directly to S3,
+ * bypassing the Amplify CDN/SSR layer (which blocks large request bodies).
+ * The client must PUT with the exact same Content-Type used here.
+ */
+export const createPresignedUploadUrl = async (
+  key: string,
+  contentType: string,
+  expiresInSeconds = 120
+): Promise<string> => {
+  const Bucket = getMediaBucket();
+  if (!Bucket) throw new Error("Media bucket is not configured");
+  return getSignedUrl(
+    getS3Client(),
+    new PutObjectCommand({ Bucket, Key: key, ContentType: contentType }),
+    { expiresIn: expiresInSeconds }
   );
 };
 

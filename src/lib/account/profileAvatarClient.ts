@@ -37,10 +37,7 @@ export const prepareProfileAvatarFile = async (file: File): Promise<File> => {
   });
 };
 
-export const uploadProfileAvatar = async (
-  file: File
-): Promise<{ url: string; optimized: boolean }> => {
-  const prepared = await prepareProfileAvatarFile(file);
+const getAuthHeader = async (): Promise<Record<string, string>> => {
   const { intakeRequestHeaders } = await import("@/lib/api/intakeRequestHeaders");
   const authHeaders = await intakeRequestHeaders();
   const headers: Record<string, string> = {};
@@ -48,17 +45,27 @@ export const uploadProfileAvatar = async (
     typeof authHeaders === "object" &&
     authHeaders !== null &&
     "Authorization" in authHeaders &&
-    typeof authHeaders.Authorization === "string"
+    typeof (authHeaders as { Authorization?: unknown }).Authorization === "string"
   ) {
-    headers.Authorization = authHeaders.Authorization;
+    headers.Authorization = (authHeaders as { Authorization: string }).Authorization;
   }
+  return headers;
+};
 
+/**
+ * Legacy multipart upload through the Next.js SSR route. Only used as a
+ * fallback for local dev (filesystem storage) where S3 is not configured.
+ */
+const legacyMultipartUpload = async (
+  prepared: File,
+  original: File,
+  authHeader: Record<string, string>
+): Promise<{ url: string; optimized: boolean }> => {
   const form = new FormData();
   form.append("file", prepared);
-
   const response = await fetch("/api/account/avatar", {
     method: "POST",
-    headers,
+    headers: authHeader,
     body: form,
   });
   const data = await response.json().catch(() => ({}));
@@ -67,8 +74,66 @@ export const uploadProfileAvatar = async (
   }
   return {
     url: (data as { url: string }).url,
-    optimized: prepared.size < file.size,
+    optimized: prepared.size < original.size,
   };
+};
+
+export const uploadProfileAvatar = async (
+  file: File
+): Promise<{ url: string; optimized: boolean }> => {
+  const prepared = await prepareProfileAvatarFile(file);
+  const authHeader = await getAuthHeader();
+
+  // Ask the server for a presigned S3 PUT URL (tiny request/response, so it
+  // never hits the Amplify CDN body-size limit that breaks large uploads).
+  const presignResponse = await fetch("/api/account/avatar/presign", {
+    method: "POST",
+    headers: { ...authHeader, "Content-Type": "application/json" },
+    body: JSON.stringify({ contentType: prepared.type }),
+  });
+
+  // 409 => S3 not configured (local dev): fall back to the legacy route.
+  if (presignResponse.status === 409) {
+    return legacyMultipartUpload(prepared, file, authHeader);
+  }
+
+  const presignData = await presignResponse.json().catch(() => ({}));
+  if (!presignResponse.ok) {
+    throw new Error(
+      typeof presignData.error === "string"
+        ? presignData.error
+        : "Could not prepare the upload."
+    );
+  }
+
+  const { uploadUrl, url } = presignData as { uploadUrl: string; url: string };
+
+  // Upload the bytes DIRECTLY to S3 from the browser (bypasses Amplify SSR).
+  const putResponse = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": prepared.type },
+    body: prepared,
+  });
+  if (!putResponse.ok) {
+    throw new Error("Could not upload your photo to storage. Please try again.");
+  }
+
+  // Persist the avatar URL on the member's community profile.
+  const patchResponse = await fetch("/api/community/users/me", {
+    method: "PATCH",
+    headers: { ...authHeader, "Content-Type": "application/json" },
+    body: JSON.stringify({ avatar_url: url }),
+  });
+  if (!patchResponse.ok) {
+    const data = await patchResponse.json().catch(() => ({}));
+    throw new Error(
+      typeof data.error === "string"
+        ? data.error
+        : "Photo uploaded but profile sync failed."
+    );
+  }
+
+  return { url, optimized: prepared.size < file.size };
 };
 
 export const fetchMemberProfile = async (): Promise<{
