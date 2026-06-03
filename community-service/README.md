@@ -2,7 +2,7 @@
 
 Standalone Django service for community groups, messaging, cohorts, and AI companion — part of the `nurture-collective-app` monorepo.
 
-**Status:** Sprint 1–3 — communities, messaging, cohorts (assignment + recommendations); member app UI.
+**Status:** Sprint 1–5 — communities, messaging, cohorts, analytics events, AI companion API (stub provider).
 
 ## Architecture (Communities member app)
 
@@ -77,9 +77,9 @@ daphne -b 0.0.0.0 -p 8001 community_platform.asgi:application
 
 1. Communities ✓
 2. Messaging ✓
-3. Cohorts (API + assignment + member UI; set `ENABLE_COHORTS=true` locally)
-4. Analytics events
-5. AI layer
+3. Cohorts (API + assignment + member UI; set `ENABLE_COHORTS=true` locally) ✓
+4. Analytics events (discussion emitters + S3 writer; `EVENTS_USE_LOCAL=true` locally) ✓
+5. AI layer (`POST /api/v1/ai/*`; set `ENABLE_AI=true` after `migrate`) ✓
 
 **Next implementation plan (Communities app):** [docs/communities-implementation-plan.md](docs/communities-implementation-plan.md)
 

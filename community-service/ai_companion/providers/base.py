@@ -1,3 +1,12 @@
-"""AI provider abstraction — implement Sprint 5."""
+from dataclasses import dataclass
+from typing import Protocol
 
-# TODO: AIProvider protocol, StubProvider, OpenAIProvider
+
+@dataclass
+class AICompletionRequest:
+    system_prompt: str
+    user_message: str
+
+
+class AIProvider(Protocol):
+    def complete(self, request: AICompletionRequest) -> str: ...

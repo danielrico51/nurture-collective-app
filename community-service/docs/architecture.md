@@ -169,6 +169,9 @@ All major actions call `emit_event()`:
 | `message_sent` | `messaging/` |
 | `message_read` | `messaging/` |
 | `cohort_assigned` | `cohorts/` |
+| `post_created` / `post_updated` / `post_deleted` | `messaging/` |
+| `comment_created` | `messaging/` |
+| `reaction_added` / `reaction_removed` | `messaging/` |
 | `ai_question_asked` | `analytics/` |
 
 S3 path pattern:

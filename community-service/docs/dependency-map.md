@@ -131,7 +131,12 @@ flowchart TB
 | `MessageService.send` | `message_sent` | `messaging/` |
 | `MessageService.mark_read` | `message_read` | `messaging/` |
 | `assign_*_cohort` | `cohort_assigned` | `cohorts/` |
-| `QAService.answer_question` | `ai_question_asked` | `analytics/` |
+| `DiscussionService.create_post` | `post_created` | `messaging/` |
+| `DiscussionService.update_post` | `post_updated` | `messaging/` |
+| `DiscussionService.delete_post` | `post_deleted` | `messaging/` |
+| `DiscussionService.create_comment` | `comment_created` | `messaging/` |
+| `DiscussionService.set/remove_post_reaction` | `reaction_added` / `reaction_removed` | `messaging/` |
+| `CompanionService.ask/recommend` | `ai_question_asked` | `analytics/` |
 
 ---
 

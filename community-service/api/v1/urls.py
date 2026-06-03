@@ -1,6 +1,6 @@
 from django.urls import path
 
-from api.v1.views import cohorts, communities, discussions, messaging, users
+from api.v1.views import ai_companion, cohorts, communities, discussions, messaging, users
 
 urlpatterns = [
     path("users/me/", users.current_user, name="current-user"),
@@ -69,4 +69,8 @@ urlpatterns = [
         messaging.channel_mark_read,
         name="channel-read",
     ),
+    path("ai/checkin/", ai_companion.ai_checkin, name="ai-checkin"),
+    path("ai/ask/", ai_companion.ai_ask, name="ai-ask"),
+    path("ai/recommend/", ai_companion.ai_recommend, name="ai-recommend"),
+    path("ai/escalate/", ai_companion.ai_escalate, name="ai-escalate"),
 ]

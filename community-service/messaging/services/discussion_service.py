@@ -1,5 +1,14 @@
 from uuid import UUID
 
+from analytics.discussion_events import emit_messaging_discussion_event
+from analytics.events import (
+    EVENT_COMMENT_CREATED,
+    EVENT_POST_CREATED,
+    EVENT_POST_DELETED,
+    EVENT_POST_UPDATED,
+    EVENT_REACTION_ADDED,
+    EVENT_REACTION_REMOVED,
+)
 from communities.repositories import MembershipRepository
 from messaging.exceptions import (
     ChannelNotFoundError,
@@ -93,7 +102,7 @@ class DiscussionService:
         moderate_blob = f"{title_clean}\n{text_body}\n" + "\n".join(urls)
         status = self._moderate_text(auth, community_id, moderate_blob)
 
-        return self.post_repo.create(
+        post = self.post_repo.create(
             organization_id=auth.organization_id,
             community_id=community_id,
             author_id=auth.user_id,
@@ -103,6 +112,15 @@ class DiscussionService:
             moderation_status=status,
             env_scope=env_scope,
         )
+        emit_messaging_discussion_event(
+            EVENT_POST_CREATED,
+            auth,
+            community_id=community_id,
+            env_scope=env_scope,
+            post_id=post.id,
+            extra={"has_images": bool(urls)},
+        )
+        return post
 
     @staticmethod
     def _normalize_image_urls(image_urls: list | None) -> list[str]:
@@ -189,6 +207,13 @@ class DiscussionService:
             ]
         )
         self._attach_reactions([post], auth.user_id)
+        emit_messaging_discussion_event(
+            EVENT_POST_UPDATED,
+            auth,
+            community_id=community_id,
+            env_scope=env_scope,
+            post_id=post.id,
+        )
         return post
 
     def delete_post(
@@ -202,6 +227,13 @@ class DiscussionService:
         post = self.get_post(auth, community_id, post_id, env_scope=env_scope)
         self._require_post_author(auth, post)
         post.soft_delete()
+        emit_messaging_discussion_event(
+            EVENT_POST_DELETED,
+            auth,
+            community_id=community_id,
+            env_scope=env_scope,
+            post_id=post.id,
+        )
 
     def set_post_reaction(
         self,
@@ -222,12 +254,31 @@ class DiscussionService:
         existing = self.reaction_repo.get_user_reaction(post.id, auth.user_id)
         if existing and existing.reaction_type == rtype:
             self.reaction_repo.remove_reaction(post.id, auth.user_id)
+            emit_messaging_discussion_event(
+                EVENT_REACTION_REMOVED,
+                auth,
+                community_id=community_id,
+                env_scope=env_scope,
+                post_id=post.id,
+                extra={"reaction_type": rtype},
+            )
         else:
             self.reaction_repo.set_reaction(
                 organization_id=auth.organization_id,
                 post_id=post.id,
                 user_id=auth.user_id,
                 reaction_type=rtype,
+            )
+            emit_messaging_discussion_event(
+                EVENT_REACTION_ADDED,
+                auth,
+                community_id=community_id,
+                env_scope=env_scope,
+                post_id=post.id,
+                extra={
+                    "reaction_type": rtype,
+                    "previous_reaction_type": existing.reaction_type if existing else None,
+                },
             )
 
         return self._reaction_summary_for_post(post.id, auth.user_id)
@@ -241,7 +292,17 @@ class DiscussionService:
         env_scope: str,
     ) -> dict:
         post = self.get_post(auth, community_id, post_id, env_scope=env_scope)
+        existing = self.reaction_repo.get_user_reaction(post.id, auth.user_id)
         self.reaction_repo.remove_reaction(post.id, auth.user_id)
+        if existing:
+            emit_messaging_discussion_event(
+                EVENT_REACTION_REMOVED,
+                auth,
+                community_id=community_id,
+                env_scope=env_scope,
+                post_id=post.id,
+                extra={"reaction_type": existing.reaction_type},
+            )
         return self._reaction_summary_for_post(post.id, auth.user_id)
 
     def _reaction_summary_for_post(self, post_id: UUID, user_id: UUID) -> dict:
@@ -310,7 +371,7 @@ class DiscussionService:
 
         status = self._moderate_text(auth, community_id, text)
 
-        return self.comment_repo.create(
+        comment = self.comment_repo.create(
             organization_id=auth.organization_id,
             post_id=post.id,
             parent_id=parent.id if parent else None,
@@ -318,6 +379,16 @@ class DiscussionService:
             body=text,
             moderation_status=status,
         )
+        emit_messaging_discussion_event(
+            EVENT_COMMENT_CREATED,
+            auth,
+            community_id=community_id,
+            env_scope=env_scope,
+            post_id=post.id,
+            comment_id=comment.id,
+            extra={"parent_id": str(parent.id) if parent else None},
+        )
+        return comment
 
     @staticmethod
     def serialize_post(post: CommunityPost) -> dict:
