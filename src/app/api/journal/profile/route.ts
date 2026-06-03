@@ -6,6 +6,7 @@ import { syncJournalToCommunity } from "@/lib/journal/syncCommunity";
 import type { JournalProfilePatch } from "@/types/journal";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   return runJournalRoute(async () => {

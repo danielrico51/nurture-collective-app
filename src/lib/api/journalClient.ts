@@ -21,10 +21,23 @@ const authHeaders = async (): Promise<HeadersInit> => {
 };
 
 const handleResponse = async <T>(response: Response): Promise<T> => {
-  const data = await response.json().catch(() => ({}));
+  const text = await response.text();
+  let data: Record<string, unknown> = {};
+  if (text) {
+    try {
+      data = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      data = {};
+    }
+  }
   if (!response.ok) {
     const message =
-      typeof data.error === "string" ? data.error : `Request failed (${response.status})`;
+      typeof data.error === "string"
+        ? data.error
+        : typeof data.message === "string"
+          ? data.message
+          : text.trim().slice(0, 200) ||
+            `Request failed (${response.status})`;
     throw new Error(message);
   }
   return data as T;
@@ -52,6 +65,37 @@ export const patchJournalProfile = async (
 export const fetchJournalTimeline = async (): Promise<JourneyTimelineEvent[]> => {
   const response = await fetch("/api/journal/timeline", {
     headers: await authHeaders(),
+  });
+  const data = await handleResponse<{ events: JourneyTimelineEvent[] }>(response);
+  return data.events;
+};
+
+export const createJournalTimelineEvent = async (input: {
+  type: JourneyTimelineEvent["type"];
+  label?: string;
+  note?: string;
+  occurredAt?: string;
+  imageUrl?: string;
+  reminderAt?: string;
+  stage?: string;
+}): Promise<JourneyTimelineEvent[]> => {
+  const response = await fetch("/api/journal/timeline", {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify({
+      type: input.type,
+      label: input.label,
+      note: input.note,
+      occurredAt: input.occurredAt,
+      payload: {
+        label: input.label,
+        note: input.note,
+        imageUrl: input.imageUrl,
+        reminderAt: input.reminderAt,
+        stage: input.stage,
+        kind: input.type === "reminder" ? "reminder" : input.type === "memory" ? "memory" : "milestone",
+      },
+    }),
   });
   const data = await handleResponse<{ events: JourneyTimelineEvent[] }>(response);
   return data.events;

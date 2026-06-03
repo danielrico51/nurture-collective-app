@@ -17,7 +17,19 @@ export type JourneyEventType =
   | "baby_born"
   | "ivf_milestone"
   | "custom_milestone"
+  | "memory"
+  | "reminder"
   | "profile_initialized";
+
+/** Payload fields commonly used on timeline bubbles (memory / reminder / milestones). */
+export type TimelineBubblePayload = {
+  label?: string;
+  note?: string;
+  imageUrl?: string;
+  reminderAt?: string;
+  stage?: string;
+  kind?: "memory" | "reminder" | "milestone";
+};
 
 export type DueDateSource = "confirmed" | "estimated" | "ivf_clinic" | null;
 

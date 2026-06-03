@@ -5,6 +5,7 @@ import { createJournalEntry, listJournalEntries } from "@/lib/journal/storage";
 import type { JournalEntryInput } from "@/types/journal";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 const entryHasContent = (body: JournalEntryInput): boolean =>
   Boolean(body.body?.trim()) ||

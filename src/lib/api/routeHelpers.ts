@@ -252,8 +252,31 @@ export const handleJournalStorageError = (error: unknown) => {
     );
   }
 
+  if (
+    message.includes("Could not load credentials") ||
+    message.includes("CredentialsProviderError") ||
+    message.includes("credential")
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          "Journal storage credentials are missing on the server. Remove SERVER_AWS_ACCESS_KEY_ID from Amplify if set (use the compute role), or attach S3 permissions to the configured IAM user, then redeploy.",
+      },
+      { status: 503 }
+    );
+  }
+
+  if (message.includes("Journal S3 PutObject failed")) {
+    return NextResponse.json({ error: message.slice(0, 500) }, { status: 503 });
+  }
+
   return NextResponse.json(
-    { error: "Could not save your journal entry. Please try again." },
+    {
+      error:
+        process.env.NODE_ENV === "development" && message
+          ? `Journal save failed: ${message}`
+          : "Could not save your journal entry. Please try again.",
+    },
     { status: 500 }
   );
 };

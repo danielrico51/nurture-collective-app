@@ -34,9 +34,10 @@ export const appendTimelineEvent = (
     payload: event.payload,
     createdAt: now,
   };
+  const prior = Array.isArray(store.events) ? store.events : [];
   return {
     ...store,
-    events: [entry, ...store.events].slice(0, 200),
+    events: [entry, ...prior].slice(0, 200),
     updatedAt: now,
   };
 };
@@ -120,5 +121,20 @@ export const mergeJournalProfile = (
 
 export const formatStageLabel = (stage: MaternalStage | null): string => {
   if (!stage) return "Journey";
-  return stage.replace(/-/g, " ");
+  const labels: Partial<Record<MaternalStage, string>> = {
+    "trying-to-conceive": "Trying to conceive",
+    pregnant: "Pregnant",
+    "newly-postpartum": "Newly postpartum",
+    "infant-care": "Infant care",
+    toddler: "Toddler & beyond",
+    "multiple-children": "Multiple children",
+  };
+  return labels[stage] ?? stage.replace(/-/g, " ");
 };
+
+export const JOURNAL_TIMELINE_EVENT_TYPES = [
+  "memory",
+  "reminder",
+  "custom_milestone",
+  "ivf_milestone",
+] as const;

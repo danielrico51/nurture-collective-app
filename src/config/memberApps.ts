@@ -116,7 +116,7 @@ export const MEMBER_APPS: MemberApp[] = [
     id: "journal",
     title: "Wellness journal",
     description:
-      "Your private space — daily check-ins, journal entries, and a timeline for TTC, IVF, pregnancy, and postpartum.",
+      "Your private journey timeline — photo memories, stage reminders, check-ins, and notes in one calm line.",
     href: "/apps/journal",
     status: "available",
     icon: "journal",

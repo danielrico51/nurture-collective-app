@@ -7,17 +7,6 @@ import {
   journalTimelineKey,
   resolveJournalUserKey,
 } from "@/lib/journal/keys";
-
-/** Pre-fix layout (outside management/*); kept for read fallback only. */
-const legacyJournalUserPrefix = (userKey: string) =>
-  `journal/v1/users/${resolveJournalUserKey(userKey)}/`;
-
-const legacyKeyForCurrent = (key: string, userKey: string): string | null => {
-  const currentPrefix = buildJournalUserPrefix(userKey);
-  if (!key.startsWith(currentPrefix)) return null;
-  const suffix = key.slice(currentPrefix.length);
-  return `${legacyJournalUserPrefix(userKey)}${suffix}`;
-};
 import { readLocalJson, writeLocalJson } from "@/lib/journal/localStorage";
 import {
   createEmptyJournalProfile,
@@ -25,6 +14,7 @@ import {
   titlePreview,
   todayDateString,
 } from "@/lib/journal/normalize";
+import { readJournalS3Json, writeJournalS3Json } from "@/lib/journal/s3Storage";
 import { getJournalStorageMode } from "@/lib/journal/storageMode";
 import {
   appendTimelineEvent,
@@ -33,7 +23,6 @@ import {
   mergeJournalProfile,
 } from "@/lib/journal/timeline";
 import { seedJournalProfileFromIntake } from "@/lib/journal/seedFromIntake";
-import { readS3ObjectJson, writeS3ObjectJson } from "@/lib/intake/s3Storage";
 import type {
   JournalEntry,
   JournalEntryIndex,
@@ -45,10 +34,20 @@ import type {
   JourneyTimelineEvent,
 } from "@/types/journal";
 
+/** Pre-fix layout (outside management/*); kept for read fallback only. */
+const legacyJournalUserPrefix = (userKey: string) => `journal/v1/users/${userKey}/`;
+
+const legacyKeyForCurrent = (key: string, userKey: string): string | null => {
+  const currentPrefix = buildJournalUserPrefix(userKey);
+  if (!key.startsWith(currentPrefix)) return null;
+  const suffix = key.slice(currentPrefix.length);
+  return `${legacyJournalUserPrefix(userKey)}${suffix}`;
+};
+
 const readJsonAtKey = async <T>(key: string): Promise<T | null> =>
   getJournalStorageMode() === "local"
     ? readLocalJson<T>(key)
-    : readS3ObjectJson<T>(key);
+    : readJournalS3Json<T>(key);
 
 const readJson = async <T>(key: string, userKey?: string): Promise<T | null> => {
   const primary = await readJsonAtKey<T>(key);
@@ -62,8 +61,41 @@ const writeJson = async (key: string, payload: unknown): Promise<void> => {
   if (getJournalStorageMode() === "local") {
     await writeLocalJson(key, payload);
   } else {
-    await writeS3ObjectJson(key, payload);
+    await writeJournalS3Json(key, payload);
   }
+};
+
+const normalizeEntryIndex = (
+  raw: JournalEntryIndex | null,
+  userId: string
+): JournalEntryIndex => {
+  const now = new Date().toISOString();
+  if (!raw || !Array.isArray(raw.items)) {
+    return { version: 1, userId, items: [], updatedAt: now };
+  }
+  return {
+    version: 1,
+    userId: raw.userId || userId,
+    items: raw.items.filter(
+      (item) => item && typeof item.id === "string" && item.journalDate
+    ),
+    updatedAt: raw.updatedAt || now,
+  };
+};
+
+const normalizeTimelineStore = (
+  raw: JournalTimelineStore | null,
+  userId: string
+): JournalTimelineStore => {
+  if (!raw || !Array.isArray(raw.events)) {
+    return createTimelineStore(userId);
+  }
+  return {
+    version: 1,
+    userId: raw.userId || userId,
+    events: raw.events,
+    updatedAt: raw.updatedAt || new Date().toISOString(),
+  };
 };
 
 export const getJournalProfile = async (
@@ -81,9 +113,10 @@ export const getJournalProfile = async (
   if (seeded) {
     await writeJson(key, seeded);
     const timelineKey = journalTimelineKey(userKey);
-    const timeline =
-      (await readJson<JournalTimelineStore>(timelineKey, userKey)) ??
-      createTimelineStore(userId);
+    const timeline = normalizeTimelineStore(
+      await readJson<JournalTimelineStore>(timelineKey, userKey),
+      userId
+    );
     const withInit = appendTimelineEvent(timeline, {
       type: "profile_initialized",
       payload: { source: "intake" },
@@ -109,9 +142,10 @@ export const updateJournalProfile = async (
 
   await writeJson(journalProfileKey(userKey), merged);
 
-  let timeline =
-    (await readJson<JournalTimelineStore>(journalTimelineKey(userKey), userKey)) ??
-    createTimelineStore(userId);
+  let timeline = normalizeTimelineStore(
+    await readJson<JournalTimelineStore>(journalTimelineKey(userKey), userKey),
+    userId
+  );
 
   for (const event of events) {
     timeline = appendTimelineEvent(timeline, event);
@@ -146,9 +180,10 @@ export const addJournalTimelineEvent = async (
 ): Promise<JourneyTimelineEvent[]> => {
   const userKey = resolveJournalUserKey(userId, email);
   const timelineKey = journalTimelineKey(userKey);
-  let store =
-    (await readJson<JournalTimelineStore>(timelineKey, userKey)) ??
-    createTimelineStore(userId);
+  let store = normalizeTimelineStore(
+    await readJson<JournalTimelineStore>(timelineKey, userKey),
+    userId
+  );
 
   const payload = { ...input.payload };
   if (input.label) payload.label = input.label;
@@ -168,13 +203,7 @@ const loadEntryIndex = async (
   userId: string
 ): Promise<JournalEntryIndex> => {
   const raw = await readJson<JournalEntryIndex>(journalIndexKey(userKey), userKey);
-  if (raw?.items) return raw;
-  return {
-    version: 1,
-    userId,
-    items: [],
-    updatedAt: new Date().toISOString(),
-  };
+  return normalizeEntryIndex(raw, userId);
 };
 
 const saveEntryIndex = async (

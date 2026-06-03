@@ -9,6 +9,7 @@ import {
 import type { JournalEntryInput } from "@/types/journal";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 type RouteContext = { params: Promise<{ id: string }> };
 

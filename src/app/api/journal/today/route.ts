@@ -5,6 +5,7 @@ import { getTodayCheckIn, getJournalProfile } from "@/lib/journal/storage";
 import { pickDailyPrompt } from "@/lib/journal/prompts";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 export async function GET(request: NextRequest) {
   return runJournalRoute(async () => {
