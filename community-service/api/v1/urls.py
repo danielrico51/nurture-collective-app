@@ -1,6 +1,6 @@
 from django.urls import path
 
-from api.v1.views import communities, discussions, messaging, users
+from api.v1.views import cohorts, communities, discussions, messaging, users
 
 urlpatterns = [
     path("users/me/", users.current_user, name="current-user"),
@@ -44,6 +44,19 @@ urlpatterns = [
         "communities/<uuid:community_id>/posts/<uuid:post_id>/reactions/",
         discussions.post_reactions,
         name="post-reactions",
+    ),
+    path("cohorts/", cohorts.cohorts_collection, name="cohorts-collection"),
+    path("cohorts/me/", cohorts.list_my_cohorts, name="cohorts-me"),
+    path(
+        "cohorts/recommendations/",
+        cohorts.cohort_recommendations,
+        name="cohort-recommendations",
+    ),
+    path("cohorts/assign/", cohorts.cohort_assign, name="cohort-assign"),
+    path(
+        "cohorts/<uuid:cohort_id>/join/",
+        cohorts.cohort_join,
+        name="cohort-join",
     ),
     path("channels/", messaging.channels_collection, name="channels-collection"),
     path(

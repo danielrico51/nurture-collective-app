@@ -1,5 +1,6 @@
 "use client";
 
+import { CohortRecommendations } from "@/components/Community/CohortRecommendations";
 import { CommunityList } from "@/components/Community/CommunityList";
 import { MemberAppIcon } from "@/components/Member/MemberAppIcon";
 import { getMemberAppById } from "@/config/memberApps";
@@ -51,7 +52,8 @@ export function CommunityView() {
         ) : null}
       </div>
 
-      <div className="mt-8">
+      <div className="mt-8 space-y-8">
+        <CohortRecommendations />
         <CommunityList />
       </div>
     </div>

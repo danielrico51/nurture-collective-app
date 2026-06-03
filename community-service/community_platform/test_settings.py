@@ -2,6 +2,7 @@ import os
 
 os.environ.setdefault("ENABLE_COMMUNITIES", "true")
 os.environ.setdefault("ENABLE_GROUP_CHAT", "true")
+os.environ.setdefault("ENABLE_COHORTS", "true")
 os.environ.setdefault("JWT_DEV_BYPASS", "true")
 os.environ.setdefault("EVENTS_USE_LOCAL", "true")
 

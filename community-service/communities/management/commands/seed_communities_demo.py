@@ -163,6 +163,7 @@ class Command(BaseCommand):
         from django.core.management import call_command
 
         call_command("seed_community_channels")
+        call_command("seed_cohorts_demo")
 
         self.stdout.write("")
         self.stdout.write("Next steps:")

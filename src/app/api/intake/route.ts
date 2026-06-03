@@ -124,6 +124,20 @@ export async function POST(request: NextRequest) {
     );
 
     try {
+      const authHeader = request.headers.get("authorization");
+      if (authHeader) {
+        const { syncCohortsAfterIntake } = await import(
+          "@/lib/community/cohortIntakeSync"
+        );
+        void syncCohortsAfterIntake(authHeader, profile).catch((syncErr) => {
+          console.warn("[intake] cohort sync failed:", syncErr);
+        });
+      }
+    } catch (cohortSyncError) {
+      console.warn("[intake] cohort sync setup failed:", cohortSyncError);
+    }
+
+    try {
       await forwardToN8n(
         serverIntegrations.n8nInquiryWebhookUrl,
         serverIntegrations.n8nWebhookSecret,

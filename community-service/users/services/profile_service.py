@@ -13,6 +13,7 @@ def update_profile(
     *,
     display_name: str | None = None,
     avatar_url: str | None = None,
+    profile_metadata: dict | None = None,
 ) -> UserProfile:
     profile = get_profile(auth)
     updates: list[str] = []
@@ -28,6 +29,16 @@ def update_profile(
             meta["avatar_url"] = cleaned
         else:
             meta.pop("avatar_url", None)
+        profile.profile_metadata = meta
+        updates.append("profile_metadata")
+
+    if profile_metadata is not None:
+        meta = dict(profile.profile_metadata or {})
+        for key, value in profile_metadata.items():
+            if value is None:
+                meta.pop(key, None)
+            else:
+                meta[key] = value
         profile.profile_metadata = meta
         updates.append("profile_metadata")
 

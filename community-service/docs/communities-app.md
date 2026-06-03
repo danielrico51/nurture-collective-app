@@ -173,7 +173,15 @@ Communities and memberships are **not** scoped by env; only **posts** (and thus 
 | S3 `nurture-community-media-dev-886436941204` | Post images + avatars (private) |
 | Cognito pool `us-east-1_rUfTimytf` | Production member auth (must match Amplify `NEXT_PUBLIC_USER_POOL_*`) |
 
-Deploy backend changes: rsync `community-service/` to EC2, `migrate`, `systemctl restart nurture-daphne`.
+Deploy backend changes:
+
+```bash
+source /tmp/nurture_aws.env   # KEYFILE, EIP
+chmod +x community-service/scripts/deploy-ec2.sh
+./community-service/scripts/deploy-ec2.sh
+```
+
+Or manually: rsync `community-service/` to EC2, set `ENABLE_COHORTS=true` in `/opt/nurture/community-service/.env`, `migrate`, `seed_cohorts_demo`, `systemctl restart nurture-daphne`.
 
 ---
 
@@ -200,6 +208,7 @@ Deploy backend changes: rsync `community-service/` to EC2, `migrate`, `systemctl
 | `JWT_DEV_BYPASS` | `true` only for local dev |
 | `COMMUNITY_ENV_SCOPE` | Fallback if proxy header missing |
 | `CORS_ALLOWED_ORIGINS` | Amplify app URLs |
+| `ENABLE_COHORTS` | `true` on EC2 when cohort matching is live |
 
 ---
 
@@ -210,6 +219,7 @@ Deploy backend changes: rsync `community-service/` to EC2, `migrate`, `systemctl
 ```bash
 python manage.py seed_communities_demo
 python manage.py seed_community_channels
+python manage.py seed_cohorts_demo   # after communities exist; needs ENABLE_COHORTS=true
 ```
 
 ### Reset feed + chat messages (keeps communities & members)
@@ -228,6 +238,7 @@ See [local-dev.md](local-dev.md) and root `COMMUNITY_API_URL=http://localhost:80
 
 ## Related docs
 
+- [communities-implementation-plan.md](communities-implementation-plan.md) — **Next phases** (cohorts → analytics → AI)
 - [architecture.md](architecture.md) — Whole community-service platform plan
 - [database-schema.md](database-schema.md) — Table reference
 - [../README.md](../README.md) — Quick start

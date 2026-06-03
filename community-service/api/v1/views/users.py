@@ -27,9 +27,16 @@ def current_user(request: Request) -> Response:
 
     display_name = request.data.get("display_name")
     avatar_url = request.data.get("avatar_url")
-    if display_name is None and avatar_url is None:
+    profile_metadata = request.data.get("profile_metadata")
+    if (
+        display_name is None
+        and avatar_url is None
+        and profile_metadata is None
+    ):
         return Response(
-            {"error": "Provide display_name and/or avatar_url"},
+            {
+                "error": "Provide display_name, avatar_url, and/or profile_metadata",
+            },
             status=400,
         )
 
@@ -37,5 +44,8 @@ def current_user(request: Request) -> Response:
         auth,
         display_name=display_name if display_name is not None else None,
         avatar_url=avatar_url if avatar_url is not None else None,
+        profile_metadata=(
+            profile_metadata if isinstance(profile_metadata, dict) else None
+        ),
     )
     return Response(_serialize_profile(profile))

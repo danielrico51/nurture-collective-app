@@ -3,6 +3,7 @@ import uuid
 import factory
 from django.utils import timezone
 
+from cohorts.models import Cohort, CohortType
 from communities.models import Community, CommunityMembership, CommunityVisibility
 from users.models import Organization, PlatformRole, UserProfile
 
@@ -35,6 +36,18 @@ class CommunityFactory(factory.django.DjangoModelFactory):
     visibility = CommunityVisibility.PUBLIC
     tags = factory.LazyFunction(list)
     created_by = factory.SubFactory(UserProfileFactory)
+
+
+class CohortFactory(factory.django.DjangoModelFactory):
+    class Meta:
+        model = Cohort
+
+    organization = factory.SubFactory(OrganizationFactory)
+    cohort_type = CohortType.PREGNANCY
+    name = factory.Sequence(lambda n: f"Cohort {n}")
+    description = "Test cohort"
+    is_active = True
+    metadata = factory.LazyFunction(dict)
 
 
 class MembershipFactory(factory.django.DjangoModelFactory):
