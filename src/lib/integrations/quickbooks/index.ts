@@ -17,6 +17,7 @@ export {
   getQuickBooksInvoice,
   sendQuickBooksInvoice,
 } from "@/lib/integrations/quickbooks/invoices";
+export { createQuickBooksSalesReceipt } from "@/lib/integrations/quickbooks/salesReceipts";
 export { verifyQuickBooksWebhookSignature } from "@/lib/integrations/quickbooks/webhooks";
 export type {
   QuickBooksCreateCustomerInput,

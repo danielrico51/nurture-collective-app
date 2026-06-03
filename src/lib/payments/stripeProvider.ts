@@ -1,3 +1,4 @@
+import Stripe from "stripe";
 import { serverGiftCardConfig } from "@/config/giftCards";
 import type {
   GiftCardPaymentProvider,
@@ -5,26 +6,54 @@ import type {
   GiftCardPaymentResult,
 } from "@/lib/payments/types";
 
-/**
- * Stripe Checkout integration point.
- * Install `stripe` and implement session creation when ready.
- */
+const getStripe = (): Stripe => {
+  const key = serverGiftCardConfig.stripeSecretKey;
+  if (!key) {
+    throw new Error("Stripe is selected but STRIPE_SECRET_KEY is not configured.");
+  }
+  return new Stripe(key);
+};
+
 export const stripeGiftCardPaymentProvider: GiftCardPaymentProvider = {
   id: "stripe",
   async createCheckout(input: GiftCardPaymentInput): Promise<GiftCardPaymentResult> {
-    if (!serverGiftCardConfig.stripeSecretKey) {
-      throw new Error(
-        "Stripe is selected but STRIPE_SECRET_KEY is not configured."
-      );
+    const stripe = getStripe();
+
+    const session = await stripe.checkout.sessions.create({
+      mode: "payment",
+      customer_email: input.purchaserEmail,
+      line_items: [
+        {
+          quantity: 1,
+          price_data: {
+            currency: input.currency.toLowerCase(),
+            unit_amount: input.amountCents,
+            product_data: {
+              name: "The Nesting Place eGift Card",
+              description: input.description,
+            },
+          },
+        },
+      ],
+      success_url: `${input.successUrl}${input.successUrl.includes("?") ? "&" : "?"}session_id={CHECKOUT_SESSION_ID}`,
+      cancel_url: input.cancelUrl,
+      metadata: {
+        orderId: input.orderId,
+        orderType: "gift_card",
+        ...input.metadata,
+      },
+    });
+
+    if (!session.url) {
+      throw new Error("Stripe did not return a checkout URL");
     }
 
-    // Integration hook — replace with Stripe Checkout Session:
-    // const stripe = new Stripe(serverGiftCardConfig.stripeSecretKey);
-    // const session = await stripe.checkout.sessions.create({ ... });
-    // return { checkoutUrl: session.url, paymentReference: session.id, ... };
-
-    throw new Error(
-      "Stripe gift card checkout is not implemented yet. Set GIFT_CARD_PAYMENT_PROVIDER=stub or complete src/lib/payments/stripeProvider.ts."
-    );
+    return {
+      provider: "stripe",
+      orderId: input.orderId,
+      status: "pending_payment",
+      checkoutUrl: session.url,
+      paymentReference: session.id,
+    };
   },
 };

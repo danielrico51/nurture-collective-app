@@ -8,6 +8,17 @@ export type GiftCardOrderStatus =
   | "delivered"
   | "cancelled";
 
+export type QuickBooksSyncStatus = "pending" | "synced" | "failed";
+
+export interface GiftCardOrderQuickBooksRef {
+  customerId?: string;
+  salesReceiptId?: string;
+  salesReceiptNumber?: string;
+  syncStatus: QuickBooksSyncStatus;
+  lastSyncAt?: string;
+  lastError?: string;
+}
+
 export interface GiftCardOrder {
   id: string;
   status: GiftCardOrderStatus;
@@ -28,8 +39,11 @@ export interface GiftCardOrder {
   message?: string;
   sendCopyToPurchaser: boolean;
   createdAt: string;
+  updatedAt?: string;
   paymentProvider?: string;
   paymentReference?: string;
+  paidAt?: string;
+  quickbooks?: GiftCardOrderQuickBooksRef;
 }
 
 export interface GiftCardCheckoutRequest {

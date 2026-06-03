@@ -1,5 +1,6 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import EGiftCardForm from "@/components/GiftCards/EGiftCardForm";
+import { GiftCardSuccessHandler } from "@/components/GiftCards/GiftCardSuccessHandler";
 import {
   giftCardFaqs,
   giftCardHowItWorks,
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
 export default function GiftCardsPage() {
   return (
     <>
+      <GiftCardSuccessHandler />
       <Breadcrumb pageName="Gift cards" />
       <section className="py-16">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">

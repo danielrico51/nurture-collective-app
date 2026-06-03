@@ -1,6 +1,7 @@
 import { randomUUID } from "crypto";
 import { serverGiftCardConfig } from "@/config/giftCards";
 import { forwardToN8n } from "@/lib/webhooks/n8n";
+import { writeGiftCardOrder } from "@/lib/giftCards/storage";
 import { getGiftCardPaymentProvider } from "@/lib/payments/getProvider";
 import { centsToDollars } from "@/lib/giftCards/validateOrder";
 import type { GiftCardCheckoutRequest, GiftCardOrder } from "@/types/giftCard";
@@ -22,7 +23,11 @@ export const createGiftCardCheckout = async (input: GiftCardCheckoutRequest) => 
     message: input.message,
     sendCopyToPurchaser: Boolean(input.sendCopyToPurchaser),
     createdAt,
+    updatedAt: createdAt,
+    quickbooks: { syncStatus: "pending" },
   };
+
+  await writeGiftCardOrder(order);
 
   console.info("[gift-cards] Order created", {
     orderId,
@@ -57,6 +62,7 @@ export const createGiftCardCheckout = async (input: GiftCardCheckoutRequest) => 
     cancelUrl: input.cancelUrl,
     metadata: {
       orderId,
+      orderType: "gift_card",
       designId: input.designId,
       recipientEmail: input.recipient.email,
       deliveryTiming: input.deliveryTiming,
@@ -64,12 +70,16 @@ export const createGiftCardCheckout = async (input: GiftCardCheckoutRequest) => 
     },
   });
 
+  const updatedOrder: GiftCardOrder = {
+    ...order,
+    paymentProvider: payment.provider,
+    paymentReference: payment.paymentReference,
+    updatedAt: new Date().toISOString(),
+  };
+  await writeGiftCardOrder(updatedOrder);
+
   return {
-    order: {
-      ...order,
-      paymentProvider: payment.provider,
-      paymentReference: payment.paymentReference,
-    },
+    order: updatedOrder,
     payment,
   };
 };

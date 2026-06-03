@@ -28,7 +28,7 @@ export const quickBooksRequest = async <T>(
   body?: unknown
 ): Promise<T> => {
   const tokens = await getValidQuickBooksTokens();
-  const realmId = serverQuickBooksConfig.realmId || tokens.realmId;
+  const realmId = tokens.realmId || serverQuickBooksConfig.realmId;
   const url = `${getQuickBooksApiBaseUrl()}/v3/company/${realmId}${path}`;
 
   const response = await fetch(url, {
