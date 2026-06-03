@@ -1,7 +1,7 @@
 "use client";
 
-import { MemberComingSoonPage } from "@/components/Member/MemberComingSoonPage";
+import { JournalView } from "@/components/Journal/JournalView";
 
 export default function JournalAppPage() {
-  return <MemberComingSoonPage appId="journal" />;
+  return <JournalView />;
 }

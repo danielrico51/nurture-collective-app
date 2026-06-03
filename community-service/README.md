@@ -83,6 +83,8 @@ daphne -b 0.0.0.0 -p 8001 community_platform.asgi:application
 
 **Next implementation plan (Communities app):** [docs/communities-implementation-plan.md](docs/communities-implementation-plan.md)
 
+**Wellness journal (private journey + diary — design sketch):** [../docs/platform/wellness-journal-data-model.md](../docs/platform/wellness-journal-data-model.md)
+
 ## Auth (Cognito)
 
 The Next.js proxy at `/api/community/*` forwards the member's Cognito **ID token** to this service. Configure the same pool and app client as the main app:
