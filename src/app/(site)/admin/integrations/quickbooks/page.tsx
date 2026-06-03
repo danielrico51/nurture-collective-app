@@ -11,6 +11,7 @@ function AdminQuickBooksContent() {
   const [connected, setConnected] = useState(false);
   const [realmId, setRealmId] = useState<string | null>(null);
   const [connecting, setConnecting] = useState(false);
+  const [statusMessage, setStatusMessage] = useState<string | null>(null);
 
   const authHeaders = useCallback(async (): Promise<HeadersInit> => {
     const session = await fetchAuthSession();
@@ -34,9 +35,13 @@ function AdminQuickBooksContent() {
       };
       setConnected(Boolean(data.connected));
       setRealmId(data.realmId ?? null);
-    } catch {
+      setStatusMessage(data.message ?? (res.ok ? null : `Status check failed (${res.status})`));
+    } catch (error) {
       setConnected(false);
       setRealmId(null);
+      setStatusMessage(
+        error instanceof Error ? error.message : "Could not check QuickBooks status"
+      );
     } finally {
       setStatusLoading(false);
     }
@@ -49,6 +54,11 @@ function AdminQuickBooksContent() {
   useEffect(() => {
     if (searchParams.get("connected") === "1") {
       toast.success("QuickBooks connected successfully");
+      const realmFromUrl = searchParams.get("realmId");
+      if (realmFromUrl) {
+        setRealmId(realmFromUrl);
+        setConnected(true);
+      }
       void loadStatus();
     }
   }, [searchParams, loadStatus]);
@@ -109,9 +119,14 @@ function AdminQuickBooksContent() {
             ) : null}
           </div>
         ) : (
-          <p className="text-sm text-nurture-charcoal/70">
-            Not connected yet. Use the button below while signed in as an admin.
-          </p>
+          <div>
+            <p className="text-sm text-nurture-charcoal/70">
+              Not connected yet. Use the button below while signed in as an admin.
+            </p>
+            {statusMessage ? (
+              <p className="mt-2 text-xs text-amber-800/90">{statusMessage}</p>
+            ) : null}
+          </div>
         )}
 
         <button

@@ -35,19 +35,16 @@ export const serverQuickBooksConfig = {
     "management/integrations/quickbooks/oauth.json",
 } as const;
 
-export const isQuickBooksConfigured = (): boolean =>
-  Boolean(
-    serverQuickBooksConfig.clientId &&
-      serverQuickBooksConfig.clientSecret &&
-      serverQuickBooksConfig.realmId
-  );
-
+/** Client credentials present (OAuth app configured). */
 export const isQuickBooksOAuthConfigured = (): boolean =>
   Boolean(
     serverQuickBooksConfig.clientId &&
       serverQuickBooksConfig.clientSecret &&
       resolveQuickBooksRedirectUri()
   );
+
+/** @deprecated Use isQuickBooksOAuthConfigured — realm ID lives in stored OAuth tokens, not env. */
+export const isQuickBooksConfigured = isQuickBooksOAuthConfigured;
 
 export const getQuickBooksApiBaseUrl = (): string =>
   serverQuickBooksConfig.environment === "production"
