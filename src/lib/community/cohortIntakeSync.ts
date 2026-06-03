@@ -19,7 +19,9 @@ export function intakeToCohortMetadata(
   const meta: Record<string, string | number> = {};
 
   if (profile.dueDate) {
-    meta.due_date = profile.dueDate.slice(0, 10);
+    const d = profile.dueDate.slice(0, 10);
+    meta.due_date = d;
+    meta.estimated_due_date = d;
   }
   if (profile.postpartumWeeks != null) {
     meta.postpartum_weeks = profile.postpartumWeeks;

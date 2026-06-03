@@ -99,6 +99,21 @@ export const joinCohort = async (
   return handleResponse(response);
 };
 
+export interface CommunityUserProfile {
+  user_id: string;
+  display_name: string;
+  avatar_url: string;
+  platform_role: string;
+  profile_metadata?: Record<string, unknown>;
+}
+
+export const fetchCommunityUserProfile = async (): Promise<CommunityUserProfile> => {
+  const response = await fetchCommunityWithRetry("/api/community/users/me", {
+    headers: await authHeaders(),
+  });
+  return handleResponse(response);
+};
+
 export const patchCommunityProfileMetadata = async (
   metadata: Record<string, string | number>
 ): Promise<void> => {
