@@ -107,6 +107,11 @@ export STRIPE_SECRET_KEY='sk_live_...'   # or rk_live_... with Checkout Sessions
 export STRIPE_WEBHOOK_SECRET='whsec_...' # after webhook is created in Stripe Dashboard
 chmod +x infrastructure/aws/scripts/set-amplify-stripe-env.sh
 ./infrastructure/aws/scripts/set-amplify-stripe-env.sh
+
+# Fix `rak_checkout_session_write` errors: test key, update Amplify, redeploy dev
+chmod +x infrastructure/aws/scripts/fix-stripe-gift-card-checkout.sh
+export STRIPE_ADMIN_SECRET_KEY='sk_live_...'   # or fix rk in Dashboard first, then use STRIPE_SECRET_KEY
+./infrastructure/aws/scripts/fix-stripe-gift-card-checkout.sh
 ```
 
 Webhook endpoint: `https://dev.d9588bqvrp5xs.amplifyapp.com/api/webhooks/stripe` · event `checkout.session.completed`

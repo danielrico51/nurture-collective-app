@@ -1,9 +1,9 @@
 export const giftCardsIntro =
   "Give the gift of rest, support, and care. Our eGift cards can be used toward birth doula support, postpartum care, lactation consulting, prenatal massage, and other maternal wellness services at The Nesting Place.";
 
-export const giftCardPresetAmounts = [50, 100, 150, 200, 250, 500] as const;
+export const giftCardPresetAmounts = [5, 50, 100, 150, 200, 250, 500] as const;
 
-export const giftCardMinAmount = 25;
+export const giftCardMinAmount = 5;
 export const giftCardMaxAmount = 1000;
 
 export const giftCardDesigns = [

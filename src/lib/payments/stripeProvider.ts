@@ -14,12 +14,31 @@ const getStripe = (): Stripe => {
   return new Stripe(key);
 };
 
+const formatStripeError = (error: unknown): string => {
+  if (error instanceof Stripe.errors.StripeError) {
+    if (
+      error.message.includes("rak_checkout_session_write") ||
+      error.message.includes("does not have the required permissions")
+    ) {
+      return (
+        "Stripe API key is missing Checkout Sessions write permission. " +
+        "In Stripe Dashboard → API keys → your restricted key → add " +
+        "'Checkout Sessions' Write, or use the standard secret key (sk_live_...)."
+      );
+    }
+    return error.message;
+  }
+  return error instanceof Error ? error.message : "Stripe checkout failed";
+};
+
 export const stripeGiftCardPaymentProvider: GiftCardPaymentProvider = {
   id: "stripe",
   async createCheckout(input: GiftCardPaymentInput): Promise<GiftCardPaymentResult> {
     const stripe = getStripe();
 
-    const session = await stripe.checkout.sessions.create({
+    let session: Stripe.Checkout.Session;
+    try {
+      session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: input.purchaserEmail,
       line_items: [
@@ -43,6 +62,9 @@ export const stripeGiftCardPaymentProvider: GiftCardPaymentProvider = {
         ...input.metadata,
       },
     });
+    } catch (error) {
+      throw new Error(formatStripeError(error));
+    }
 
     if (!session.url) {
       throw new Error("Stripe did not return a checkout URL");

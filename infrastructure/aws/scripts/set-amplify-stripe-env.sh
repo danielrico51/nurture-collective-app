@@ -2,7 +2,8 @@
 # Merge Stripe + gift card payment env into Amplify Hosting (never commit secrets to git).
 #
 # Usage:
-#   export STRIPE_SECRET_KEY='sk_live_...'   # or rk_live_... restricted key
+#   export STRIPE_SECRET_KEY='sk_live_...'   # recommended
+#   # Restricted keys (rk_live_...) MUST include: Checkout Sessions → Write (+ Read)
 #   export STRIPE_WEBHOOK_SECRET='whsec_...'  # optional until webhook is created
 #   ./infrastructure/aws/scripts/set-amplify-stripe-env.sh
 #

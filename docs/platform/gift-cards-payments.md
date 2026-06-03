@@ -15,6 +15,15 @@ Customer → POST /api/gift-cards/checkout
 
 Stripe collects payment. QuickBooks records the sale as a **Sales Receipt** (payment already received).
 
+## Stripe API key permissions
+
+Gift card checkout uses **Stripe Checkout Sessions**. Restricted keys (`rk_live_...`) must include:
+
+- **Checkout Sessions — Write** (`rak_checkout_session_write`)
+- **Checkout Sessions — Read** (recommended, for `/api/gift-cards/confirm`)
+
+Or use the standard **Secret key** (`sk_live_...`) from Stripe Dashboard → API keys.
+
 ## Required Amplify env vars
 
 ```env
