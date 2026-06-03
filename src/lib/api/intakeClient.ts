@@ -1,3 +1,4 @@
+import { fetchWithRetry } from "@/lib/api/fetchWithRetry";
 import { intakeRequestHeaders } from "@/lib/api/intakeRequestHeaders";
 import type {
   CareRecommendation,
@@ -23,7 +24,7 @@ export interface AdminIntakesResponse {
 }
 
 export const fetchIntake = async (): Promise<IntakeApiResponse> => {
-  const response = await fetch("/api/intake", {
+  const response = await fetchWithRetry("/api/intake", {
     headers: await intakeRequestHeaders(),
     cache: "no-store",
   });

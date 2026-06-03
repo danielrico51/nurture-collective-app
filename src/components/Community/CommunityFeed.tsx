@@ -15,6 +15,7 @@ import {
   withDefaultReactions,
   type CommunityPost,
 } from "@/lib/api/communityDiscussionApi";
+import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import { isCommunityConnectionError } from "@/lib/api/communityApiError";
 import { getDemoPostsForCommunity } from "@/lib/community/demoData";
 import { communityPostPath } from "@/lib/community/paths";
@@ -138,7 +139,9 @@ export function CommunityFeed({
         setUsingDemo(true);
         return;
       }
-      const { results } = await fetchCommunityPosts(communityId);
+      const { results } = await runWithAutoRetry(() =>
+        fetchCommunityPosts(communityId)
+      );
       setPosts(results.map(withDefaultReactions));
       setUsingDemo(false);
     } catch (err) {

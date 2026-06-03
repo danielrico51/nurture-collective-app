@@ -18,6 +18,7 @@ import {
   getDemoPostById,
   getDemoPostComments,
 } from "@/lib/community/demoData";
+import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import { isCommunityDemoMode } from "@/lib/community/client";
 import { communityDetailPath } from "@/lib/community/paths";
 import Link from "next/link";
@@ -124,10 +125,12 @@ export function CommunityPostView({ communityId, postId }: CommunityPostViewProp
         return;
       }
 
-      const [postData, commentData] = await Promise.all([
-        fetchCommunityPost(communityId, postId),
-        fetchPostComments(communityId, postId),
-      ]);
+      const [postData, commentData] = await runWithAutoRetry(() =>
+        Promise.all([
+          fetchCommunityPost(communityId, postId),
+          fetchPostComments(communityId, postId),
+        ])
+      );
       setPost(withDefaultReactions(postData));
       setComments(commentData.comments);
       setUsingDemo(false);

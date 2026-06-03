@@ -12,6 +12,7 @@ import {
   type CohortRecommendation,
   type CohortSummary,
 } from "@/lib/api/communityCohortsApi";
+import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import {
   buildJourneyMetadata,
   JOURNEY_PATH_OPTIONS,
@@ -100,12 +101,14 @@ export function CohortRecommendations() {
     setError(null);
     setDisabled(false);
     try {
-      const [recs, mine, all, profile] = await Promise.all([
-        fetchCohortRecommendations(),
-        fetchMyCohorts(),
-        fetchCohorts(),
-        fetchCommunityUserProfile().catch(() => null),
-      ]);
+      const [recs, mine, all, profile] = await runWithAutoRetry(() =>
+        Promise.all([
+          fetchCohortRecommendations(),
+          fetchMyCohorts(),
+          fetchCohorts(),
+          fetchCommunityUserProfile().catch(() => null),
+        ])
+      );
       setRecommendations(recs.recommendations);
       setMemberships(mine.results);
       const joined = new Set(mine.results.map((m) => m.cohort_id));

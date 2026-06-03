@@ -1,3 +1,5 @@
+import { fetchWithRetry } from "@/lib/api/fetchWithRetry";
+
 export interface ChannelSummary {
   channel_id: string;
   channel_type: string;
@@ -63,7 +65,7 @@ export const fetchChannelMessages = async (
   const query = cursor
     ? `?cursor=${encodeURIComponent(cursor)}&limit=50`
     : "?limit=50";
-  const response = await fetch(
+  const response = await fetchWithRetry(
     `/api/community/channels/${encodeURIComponent(channelId)}/messages${query}`,
     { headers: await authHeaders(), cache: "no-store" }
   );

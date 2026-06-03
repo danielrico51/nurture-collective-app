@@ -13,6 +13,7 @@ import {
   type CreateCommunityInput,
   type MyCommunitiesResponse,
 } from "@/lib/api/communityApi";
+import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import { isCommunityDemoFallbackEnabled } from "@/lib/community/config";
 import {
   createDemoCommunity,
@@ -43,7 +44,9 @@ export const loadCommunityDetail = async (
   communityId: string
 ): Promise<CommunityDetailPageData> => {
   try {
-    const detail = await fetchLiveCommunityDetail(communityId);
+    const detail = await runWithAutoRetry(() =>
+      fetchLiveCommunityDetail(communityId)
+    );
     demoModeActive = false;
     return { detail, demoMode: false };
   } catch (error) {
@@ -61,8 +64,11 @@ export const loadCommunityDetail = async (
 
 export const loadCommunityPageData = async (): Promise<CommunityPageData> => {
   try {
-    const listing = await fetchLiveCommunities();
-    const mine = await fetchLiveMyCommunities();
+    const { listing, mine } = await runWithAutoRetry(() =>
+      Promise.all([fetchLiveCommunities(), fetchLiveMyCommunities()]).then(
+        ([listing, mine]) => ({ listing, mine })
+      )
+    );
     demoModeActive = false;
     return { listing, mine, demoMode: false };
   } catch (error) {

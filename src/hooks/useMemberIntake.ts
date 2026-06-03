@@ -1,5 +1,6 @@
 "use client";
 
+import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import { fetchIntake } from "@/lib/api/intakeClient";
 import type { IntakeApiResponse } from "@/types/intake";
 import { useCallback, useEffect, useState } from "react";
@@ -23,7 +24,7 @@ export const useMemberIntake = (enabled: boolean) => {
 
     setLoading(true);
     try {
-      const data = await fetchIntake();
+      const data = await runWithAutoRetry(() => fetchIntake());
       setIntake(data);
       return data;
     } catch {

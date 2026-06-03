@@ -8,6 +8,10 @@ import type {
   MoodScale,
 } from "@/types/journal";
 import type { JournalPrompt } from "@/lib/journal/prompts";
+import {
+  fetchWithRetry,
+  runWithAutoRetry,
+} from "@/lib/api/fetchWithRetry";
 
 const authHeaders = async (): Promise<HeadersInit> => {
   const { fetchAuthSession } = await import("aws-amplify/auth");
@@ -47,8 +51,13 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
   return data as T;
 };
 
+const journalFetch = (
+  input: RequestInfo | URL,
+  init?: RequestInit
+): Promise<Response> => fetchWithRetry(input, init);
+
 export const fetchJournalProfile = async (): Promise<JournalProfile> => {
-  const response = await fetch("/api/journal/profile", {
+  const response = await journalFetch("/api/journal/profile", {
     headers: await authHeaders(),
   });
   const data = await handleResponse<{ profile: JournalProfile }>(response);
@@ -58,7 +67,7 @@ export const fetchJournalProfile = async (): Promise<JournalProfile> => {
 export const patchJournalProfile = async (
   patch: JournalProfilePatch
 ): Promise<{ profile: JournalProfile; timeline: JourneyTimelineEvent[] }> => {
-  const response = await fetch("/api/journal/profile", {
+  const response = await journalFetch("/api/journal/profile", {
     method: "PATCH",
     headers: await authHeaders(),
     body: JSON.stringify(patch),
@@ -67,7 +76,7 @@ export const patchJournalProfile = async (
 };
 
 export const fetchJournalTimeline = async (): Promise<JourneyTimelineEvent[]> => {
-  const response = await fetch("/api/journal/timeline", {
+  const response = await journalFetch("/api/journal/timeline", {
     headers: await authHeaders(),
   });
   const data = await handleResponse<{ events: JourneyTimelineEvent[] }>(response);
@@ -83,7 +92,7 @@ export const createJournalTimelineEvent = async (input: {
   reminderAt?: string;
   stage?: string;
 }): Promise<JourneyTimelineEvent[]> => {
-  const response = await fetch("/api/journal/timeline", {
+  const response = await journalFetch("/api/journal/timeline", {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({
@@ -113,7 +122,7 @@ export const fetchJournalEntries = async (params?: {
   if (params?.from) qs.set("from", params.from);
   if (params?.to) qs.set("to", params.to);
   const suffix = qs.toString() ? `?${qs}` : "";
-  const response = await fetch(`/api/journal/entries${suffix}`, {
+  const response = await journalFetch(`/api/journal/entries${suffix}`, {
     headers: await authHeaders(),
   });
   const data = await handleResponse<{ items: JournalEntryIndexItem[] }>(response);
@@ -121,7 +130,7 @@ export const fetchJournalEntries = async (params?: {
 };
 
 export const fetchJournalEntry = async (id: string): Promise<JournalEntry> => {
-  const response = await fetch(`/api/journal/entries/${encodeURIComponent(id)}`, {
+  const response = await journalFetch(`/api/journal/entries/${encodeURIComponent(id)}`, {
     headers: await authHeaders(),
   });
   const data = await handleResponse<{ entry: JournalEntry }>(response);
@@ -131,7 +140,7 @@ export const fetchJournalEntry = async (id: string): Promise<JournalEntry> => {
 export const createJournalEntry = async (
   input: JournalEntryInput
 ): Promise<JournalEntry> => {
-  const response = await fetch("/api/journal/entries", {
+  const response = await journalFetch("/api/journal/entries", {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify(input),
@@ -144,7 +153,7 @@ export const updateJournalEntry = async (
   id: string,
   input: Partial<JournalEntryInput>
 ): Promise<JournalEntry> => {
-  const response = await fetch(`/api/journal/entries/${encodeURIComponent(id)}`, {
+  const response = await journalFetch(`/api/journal/entries/${encodeURIComponent(id)}`, {
     method: "PATCH",
     headers: await authHeaders(),
     body: JSON.stringify(input),
@@ -154,7 +163,7 @@ export const updateJournalEntry = async (
 };
 
 export const deleteJournalEntry = async (id: string): Promise<void> => {
-  const response = await fetch(`/api/journal/entries/${encodeURIComponent(id)}`, {
+  const response = await journalFetch(`/api/journal/entries/${encodeURIComponent(id)}`, {
     method: "DELETE",
     headers: await authHeaders(),
   });
@@ -165,37 +174,20 @@ export const fetchJournalToday = async (): Promise<{
   checkIn: JournalEntry | null;
   prompt: JournalPrompt;
 }> => {
-  const response = await fetch("/api/journal/today", {
+  const response = await journalFetch("/api/journal/today", {
     headers: await authHeaders(),
   });
   return handleResponse(response);
 };
 
-const JOURNAL_LOAD_RETRY_DELAY_MS = 800;
-
-const isRetryableJournalLoadError = (error: unknown): boolean => {
-  if (!(error instanceof Error)) return false;
-  const message = error.message.toLowerCase();
-  if (message.includes("not authenticated") || message.includes("unauthorized")) {
-    return false;
-  }
-  return (
-    message.includes("server error (5") ||
-    message.includes("request failed (5") ||
-    message.includes("failed to fetch") ||
-    message.includes("network") ||
-    message.includes("load failed")
-  );
-};
-
-/** Profile, entries, timeline, and today prompt — one automatic retry on cold-start 5xx. */
-export const fetchJournalBundle = async (): Promise<{
+/** Profile, entries, timeline, and today prompt — per-request + bundle auto-retry. */
+export const fetchJournalBundle = (): Promise<{
   profile: JournalProfile;
   items: JournalEntryIndexItem[];
   events: JourneyTimelineEvent[];
   today: { checkIn: JournalEntry | null; prompt: JournalPrompt };
-}> => {
-  const load = async () => {
+}> =>
+  runWithAutoRetry(async () => {
     const [profile, items, events, today] = await Promise.all([
       fetchJournalProfile(),
       fetchJournalEntries(),
@@ -203,16 +195,7 @@ export const fetchJournalBundle = async (): Promise<{
       fetchJournalToday(),
     ]);
     return { profile, items, events, today };
-  };
-
-  try {
-    return await load();
-  } catch (first) {
-    if (!isRetryableJournalLoadError(first)) throw first;
-    await new Promise((resolve) => setTimeout(resolve, JOURNAL_LOAD_RETRY_DELAY_MS));
-    return load();
-  }
-};
+  });
 
 export const MOOD_LABELS: Record<MoodScale, string> = {
   1: "Rough",

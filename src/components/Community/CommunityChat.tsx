@@ -1,5 +1,6 @@
 "use client";
 
+import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import {
   fetchChannelMessages,
   fetchCommunityChannels,
@@ -102,7 +103,9 @@ export function CommunityChat({
       setLoading(true);
       setError(null);
       try {
-        const { results } = await fetchCommunityChannels(communityId);
+        const { results } = await runWithAutoRetry(() =>
+          fetchCommunityChannels(communityId)
+        );
         const general =
           results.find((c) => c.name === "General") ?? results[0];
         if (!general) {

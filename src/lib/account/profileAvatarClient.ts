@@ -141,8 +141,9 @@ export const fetchMemberProfile = async (): Promise<{
   display_name: string;
   avatar_url: string;
 }> => {
+  const { fetchWithRetry } = await import("@/lib/api/fetchWithRetry");
   const { intakeRequestHeaders } = await import("@/lib/api/intakeRequestHeaders");
-  const response = await fetch("/api/community/users/me", {
+  const response = await fetchWithRetry("/api/community/users/me", {
     headers: await intakeRequestHeaders(),
     cache: "no-store",
   });

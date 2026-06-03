@@ -1,5 +1,6 @@
 "use client";
 
+import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import { fetchMemberPurchases } from "@/lib/api/purchasesClient";
 import { MemberAppIcon } from "@/components/Member/MemberAppIcon";
 import { getMemberAppById } from "@/config/memberApps";
@@ -117,7 +118,7 @@ export function PurchasesView() {
     setLoading(true);
     setError(null);
     try {
-      const data = await fetchMemberPurchases();
+      const data = await runWithAutoRetry(() => fetchMemberPurchases());
       setPurchases(data.purchases);
       setAccountEmail(data.email);
     } catch (err) {

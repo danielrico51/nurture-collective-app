@@ -1,5 +1,6 @@
-import type { ConversationSession } from "@/types/conversation";
+import { fetchWithRetry } from "@/lib/api/fetchWithRetry";
 import { intakeRequestHeaders } from "@/lib/api/intakeRequestHeaders";
+import type { ConversationSession } from "@/types/conversation";
 
 export const startConversation = async (
   defaults?: {
@@ -102,7 +103,7 @@ export const sendConversationMessage = async (
 export const fetchConversation = async (
   sessionId: string
 ): Promise<ConversationSession> => {
-  const response = await fetch(`/api/conversation/${sessionId}`, {
+  const response = await fetchWithRetry(`/api/conversation/${sessionId}`, {
     headers: await intakeRequestHeaders(),
     cache: "no-store",
   });

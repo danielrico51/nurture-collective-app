@@ -1,3 +1,4 @@
+import { fetchWithRetry } from "@/lib/api/fetchWithRetry";
 import { fetchAuthSession } from "aws-amplify/auth";
 import type { MemberPurchasesResponse } from "@/types/memberPurchases";
 
@@ -13,7 +14,7 @@ const authHeaders = async (): Promise<HeadersInit> => {
 };
 
 export const fetchMemberPurchases = async (): Promise<MemberPurchasesResponse> => {
-  const response = await fetch("/api/member/purchases", {
+  const response = await fetchWithRetry("/api/member/purchases", {
     headers: await authHeaders(),
     cache: "no-store",
   });
