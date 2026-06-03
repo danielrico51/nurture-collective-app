@@ -46,7 +46,7 @@ export const isQuickBooksOAuthConfigured = (): boolean =>
   Boolean(
     serverQuickBooksConfig.clientId &&
       serverQuickBooksConfig.clientSecret &&
-      serverQuickBooksConfig.redirectUri
+      resolveQuickBooksRedirectUri()
   );
 
 export const getQuickBooksApiBaseUrl = (): string =>
@@ -59,3 +59,43 @@ export const getQuickBooksOAuthBaseUrl = (): string =>
 
 export const getQuickBooksTokenUrl = (): string =>
   "https://oauth.platform.intuit.com/oauth2/v1/tokens/bearer";
+
+const isLocalhostUrl = (value: string): boolean =>
+  /localhost|127\.0\.0\.1/i.test(value);
+
+/** OAuth callback URL — never use localhost on deployed Amplify unless explicitly local. */
+export const resolveQuickBooksRedirectUri = (): string => {
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim().replace(/\/$/, "") ?? "";
+  const derivedFromApp = appUrl
+    ? `${appUrl}/api/integrations/quickbooks/oauth/callback`
+    : "";
+
+  const explicit = serverQuickBooksConfig.redirectUri.trim();
+
+  if (explicit && !isLocalhostUrl(explicit)) {
+    return explicit;
+  }
+
+  if (derivedFromApp && !isLocalhostUrl(derivedFromApp)) {
+    return derivedFromApp;
+  }
+
+  return explicit || derivedFromApp;
+};
+
+/** Site origin for post-OAuth redirects (never localhost on deployed hosts). */
+export const getQuickBooksSiteOrigin = (): string => {
+  const redirect = resolveQuickBooksRedirectUri();
+  if (redirect) {
+    try {
+      return new URL(redirect).origin;
+    } catch {
+      /* fall through */
+    }
+  }
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL?.trim();
+  if (appUrl && !isLocalhostUrl(appUrl)) {
+    return appUrl.replace(/\/$/, "");
+  }
+  return "";
+};

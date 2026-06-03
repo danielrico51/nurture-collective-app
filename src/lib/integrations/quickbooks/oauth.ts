@@ -1,6 +1,7 @@
 import {
   getQuickBooksOAuthBaseUrl,
   getQuickBooksTokenUrl,
+  resolveQuickBooksRedirectUri,
   serverQuickBooksConfig,
 } from "@/config/quickbooks";
 import {
@@ -69,9 +70,10 @@ const requestTokens = async (
 };
 
 export const buildQuickBooksAuthorizeUrl = (state: string): string => {
+  const redirectUri = resolveQuickBooksRedirectUri();
   const params = new URLSearchParams({
     client_id: serverQuickBooksConfig.clientId,
-    redirect_uri: serverQuickBooksConfig.redirectUri,
+    redirect_uri: redirectUri,
     response_type: "code",
     scope: QBO_SCOPES,
     state,
@@ -86,7 +88,7 @@ export const exchangeQuickBooksAuthCode = async (
   const body = new URLSearchParams({
     grant_type: "authorization_code",
     code,
-    redirect_uri: serverQuickBooksConfig.redirectUri,
+    redirect_uri: resolveQuickBooksRedirectUri(),
   });
 
   const data = await requestTokens(body);

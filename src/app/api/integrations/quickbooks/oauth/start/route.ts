@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isQuickBooksOAuthConfigured } from "@/config/quickbooks";
+import {
+  isQuickBooksOAuthConfigured,
+  resolveQuickBooksRedirectUri,
+} from "@/config/quickbooks";
 import { requireManagementAuth } from "@/lib/api/routeHelpers";
 import {
   applyQuickBooksOAuthStateCookie,
@@ -30,7 +33,11 @@ export async function POST(request: NextRequest) {
   const state = createQuickBooksOAuthState();
   const authorizeUrl = buildQuickBooksOAuthAuthorizeUrl(state);
 
-  const response = NextResponse.json({ ok: true, authorizeUrl });
+  const response = NextResponse.json({
+    ok: true,
+    authorizeUrl,
+    redirectUri: resolveQuickBooksRedirectUri(),
+  });
   applyQuickBooksOAuthStateCookie(response, state);
   return response;
 }

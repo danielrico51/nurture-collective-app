@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { isQuickBooksOAuthConfigured } from "@/config/quickbooks";
+import {
+  getQuickBooksSiteOrigin,
+  isQuickBooksOAuthConfigured,
+} from "@/config/quickbooks";
 import { exchangeQuickBooksAuthCode } from "@/lib/integrations/quickbooks";
 import { QBO_OAUTH_STATE_COOKIE } from "@/lib/integrations/quickbooks/constants";
 
@@ -36,10 +39,8 @@ export async function GET(request: NextRequest) {
 
   try {
     const tokens = await exchangeQuickBooksAuthCode(code, realmId);
-    const redirectUrl = new URL(
-      "/admin/integrations/quickbooks",
-      request.nextUrl.origin
-    );
+    const siteOrigin = getQuickBooksSiteOrigin() || request.nextUrl.origin;
+    const redirectUrl = new URL("/admin/integrations/quickbooks", siteOrigin);
     redirectUrl.searchParams.set("connected", "1");
     redirectUrl.searchParams.set("realmId", tokens.realmId);
 
