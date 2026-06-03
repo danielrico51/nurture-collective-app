@@ -119,6 +119,23 @@ Example payload:
 
 ### 1. Intuit Developer app
 
+**Production app URLs (required to unlock production keys):**
+
+Replace `YOUR_DOMAIN` with your live `NEXT_PUBLIC_APP_URL` host (no path, no `https://`). Example Amplify **main** branch: `main.d9588bqvrp5xs.amplifyapp.com`. Example dev: `dev.d9588bqvrp5xs.amplifyapp.com`.
+
+| Intuit field | Example value |
+|--------------|----------------|
+| Host domain | `main.d9588bqvrp5xs.amplifyapp.com` |
+| Launch URL | `https://main.d9588bqvrp5xs.amplifyapp.com/admin/integrations/quickbooks` |
+| Disconnect URL | `https://main.d9588bqvrp5xs.amplifyapp.com/admin/integrations/quickbooks?disconnected=1` |
+| Connect/Reconnect URL | `https://main.d9588bqvrp5xs.amplifyapp.com/admin/integrations/quickbooks` |
+
+**Redirect URI** (separate: **Keys & credentials → Redirect URIs → Production**):
+
+`https://main.d9588bqvrp5xs.amplifyapp.com/api/integrations/quickbooks/oauth/callback`
+
+All hosts must match the same deployment. If you later use a custom domain (e.g. `app.thenestingplacenj.com`), update every URL and Amplify `NEXT_PUBLIC_APP_URL` / `QBO_REDIRECT_URI` together.
+
 **Legal URLs (required by Intuit):**
 
 | Field | URL |
@@ -142,6 +159,16 @@ Replace `<your-domain>` with your production `NEXT_PUBLIC_APP_URL` (no trailing 
 4. Return to the admin page and click **Refresh status**, or call `GET /api/integrations/quickbooks/status` with a Bearer token.
 
 Alternatively, set `QBO_REFRESH_TOKEN` and `QBO_REALM_ID` manually in Amplify env vars.
+
+**Amplify (configured via script):** App-level and `main` branch use production keys. After changing keys or environment, **reconnect** QuickBooks (old sandbox tokens are invalid). Run:
+
+```bash
+export QBO_CLIENT_ID='...' QBO_CLIENT_SECRET='...' QBO_ENVIRONMENT=production
+QBO_APP_URL=https://dev.d9588bqvrp5xs.amplifyapp.com ./infrastructure/aws/scripts/set-amplify-qbo-env.sh
+AMPLIFY_BRANCH=main QBO_APP_URL=https://main.d9588bqvrp5xs.amplifyapp.com ./infrastructure/aws/scripts/set-amplify-qbo-env.sh
+```
+
+Register **both** production redirect URIs in Intuit if you use dev and main: `.../dev.../oauth/callback` and `.../main.../oauth/callback`.
 
 ### 3. Webhooks
 
