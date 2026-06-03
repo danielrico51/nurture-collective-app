@@ -37,7 +37,18 @@ export const verifyRequest = async (
   if (!token) return null;
 
   try {
-    const payload = await getVerifier().verify(token);
+    let payload;
+    try {
+      payload = await getVerifier().verify(token);
+    } catch (configError) {
+      if (
+        configError instanceof Error &&
+        configError.message.includes("Cognito environment variables are not configured")
+      ) {
+        throw configError;
+      }
+      return null;
+    }
     const groupsRaw = payload["cognito:groups"];
     const groups = Array.isArray(groupsRaw)
       ? groupsRaw.map(String)

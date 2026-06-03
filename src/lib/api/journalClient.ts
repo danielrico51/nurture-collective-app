@@ -31,13 +31,17 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
     }
   }
   if (!response.ok) {
+    const trimmed = text.trim();
+    const isHtmlError =
+      trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html");
     const message =
       typeof data.error === "string"
         ? data.error
         : typeof data.message === "string"
           ? data.message
-          : text.trim().slice(0, 200) ||
-            `Request failed (${response.status})`;
+          : isHtmlError
+            ? `Server error (${response.status}). Redeploy dev after IAM/S3 env changes, or check Amplify logs for /api/journal.`
+            : trimmed.slice(0, 200) || `Request failed (${response.status})`;
     throw new Error(message);
   }
   return data as T;

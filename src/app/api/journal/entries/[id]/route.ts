@@ -11,14 +11,14 @@ import type { JournalEntryInput } from "@/types/journal";
 export const dynamic = "force-dynamic";
 export const runtime = "nodejs";
 
-type RouteContext = { params: Promise<{ id: string }> };
+type RouteContext = { params: { id: string } };
 
 export async function GET(request: NextRequest, { params }: RouteContext) {
   return runJournalRoute(async () => {
     const auth = await requireJournalMember(request);
     if (auth.error) return auth.error;
 
-    const { id } = await params;
+    const { id } = params;
     const entry = await getJournalEntry(auth.user!.sub, id, auth.user!.email);
     if (!entry) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
@@ -58,7 +58,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
     const auth = await requireJournalMember(request);
     if (auth.error) return auth.error;
 
-    const { id } = await params;
+    const { id } = params;
     const deleted = await deleteJournalEntry(
       auth.user!.sub,
       id,

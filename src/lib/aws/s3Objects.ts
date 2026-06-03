@@ -81,11 +81,20 @@ export const createPresignedUploadUrl = async (
   );
 };
 
+const isAccessDenied = (error: unknown): boolean => {
+  const err = error as { name?: string; message?: string };
+  return (
+    err.name === "AccessDenied" ||
+    (err.message ?? "").includes("AccessDenied") ||
+    (err.message ?? "").includes("Access Denied")
+  );
+};
+
 export const getMediaObject = async (
   key: string
 ): Promise<{ buffer: Buffer; contentType: string } | null> => {
   const Bucket = getMediaBucket();
-  if (!Bucket) throw new Error("Media bucket is not configured");
+  if (!Bucket) return null;
   try {
     const response = await getS3Client().send(
       new GetObjectCommand({ Bucket, Key: key })
@@ -98,6 +107,10 @@ export const getMediaObject = async (
     };
   } catch (error) {
     if (isNotFound(error)) return null;
+    if (isAccessDenied(error)) {
+      console.warn(`[media] Access denied reading s3://${Bucket}/${key}`);
+      return null;
+    }
     throw error;
   }
 };

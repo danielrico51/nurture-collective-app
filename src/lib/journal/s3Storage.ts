@@ -36,7 +36,13 @@ export const readJournalS3Json = async <T>(key: string): Promise<T | null> => {
     );
     const body = await response.Body?.transformToString();
     if (!body) return null;
-    return JSON.parse(body) as T;
+    try {
+      return JSON.parse(body) as T;
+    } catch {
+      throw new Error(
+        `Invalid JSON in journal object s3://${Bucket}/${key}`
+      );
+    }
   } catch (error) {
     if (isNotFound(error)) return null;
     const err = error as { name?: string; message?: string };
@@ -44,8 +50,10 @@ export const readJournalS3Json = async <T>(key: string): Promise<T | null> => {
       err.name === "AccessDenied" ||
       (err.message ?? "").includes("AccessDenied")
     ) {
-      console.warn(`[journal] Access denied reading s3://${Bucket}/${key}`);
-      return null;
+      throw new Error(
+        `Access denied reading journal object s3://${Bucket}/${key}. ` +
+          "Grant s3:GetObject on management/process=journal/* for the Amplify compute role or SERVER_AWS IAM user."
+      );
     }
     throw error;
   }

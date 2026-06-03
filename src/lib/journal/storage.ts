@@ -109,6 +109,7 @@ export const getJournalProfile = async (
     return normalizeJournalProfile(raw, userId);
   }
 
+  // Only seed or create when the object is missing — never overwrite on read errors.
   const seeded = await seedJournalProfileFromIntake(userId, email);
   if (seeded) {
     await writeJson(key, seeded);

@@ -7,11 +7,11 @@ import { sanitizePartitionSegment } from "@/lib/intake/partitions";
 import { JOURNAL_PARTITION_PREFIX } from "@/lib/journal/keys";
 import { ALLOWED_JOURNAL_IMAGE_TYPES } from "@/lib/journal/mediaTypes";
 import {
-  createPresignedUploadUrl,
-  getMediaObject,
-  isMediaS3Enabled,
-  putMediaObject,
-} from "@/lib/aws/s3Objects";
+  createJournalPresignedUploadUrl,
+  getJournalMediaObject,
+  isJournalMediaS3Enabled,
+  putJournalMediaObject,
+} from "@/lib/journal/s3Media";
 
 const LOCAL_ROOT = path.join(process.cwd(), ".data", "journal", "media");
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -56,8 +56,8 @@ export const storeJournalMedia = async (
 ): Promise<{ url: string; filename: string }> => {
   const { key, url, filename } = buildJournalMediaObject(userId, contentType);
 
-  if (isMediaS3Enabled()) {
-    await putMediaObject(key, buffer, contentType);
+  if (isJournalMediaS3Enabled()) {
+    await putJournalMediaObject(key, buffer, contentType);
     return { url, filename };
   }
 
@@ -74,9 +74,9 @@ export const readJournalMedia = async (
   const safe = safeUserId(userId);
   const decoded = decodeURIComponent(filename);
 
-  if (isMediaS3Enabled()) {
+  if (isJournalMediaS3Enabled()) {
     const key = `${JOURNAL_PARTITION_PREFIX}user=${safe}/media/${decoded}`;
-    const result = await getMediaObject(key);
+    const result = await getJournalMediaObject(key);
     if (!result) return null;
     return { buffer: result.buffer, contentType: result.contentType };
   }

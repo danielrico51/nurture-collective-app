@@ -3,7 +3,10 @@ import {
   ALLOWED_JOURNAL_IMAGE_TYPES,
   buildJournalMediaObject,
 } from "@/lib/journal/mediaStorage";
-import { createPresignedUploadUrl, isMediaS3Enabled } from "@/lib/aws/s3Objects";
+import {
+  createJournalPresignedUploadUrl,
+  isJournalMediaS3Enabled,
+} from "@/lib/journal/s3Media";
 import { requireJournalMember } from "@/lib/api/journalAuth";
 import { runJournalRoute } from "@/lib/api/journalRoute";
 
@@ -31,7 +34,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!isMediaS3Enabled()) {
+    if (!isJournalMediaS3Enabled()) {
       return NextResponse.json(
         { error: "Use direct upload in local mode." },
         { status: 409 }
@@ -39,7 +42,7 @@ export async function POST(request: NextRequest) {
     }
 
     const { key, url } = buildJournalMediaObject(auth.user!.sub, contentType);
-    const uploadUrl = await createPresignedUploadUrl(key, contentType, 120);
+    const uploadUrl = await createJournalPresignedUploadUrl(key, contentType, 120);
     return NextResponse.json({ uploadUrl, key, url });
   });
 }
