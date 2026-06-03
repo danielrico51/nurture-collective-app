@@ -49,3 +49,42 @@ QuickBooks OAuth must be connected at `/admin/integrations/quickbooks`.
 `s3://<BILLING_S3_BUCKET>/gift-cards/orders/order_id=<uuid>/order.json`
 
 Includes `quickbooks.salesReceiptId` after successful sync.
+
+## Email (interim — personal address via SES)
+
+Use your **personal email** as the sender until Nesting Place domain mail is ready.
+
+### One-time setup
+
+1. **Verify the address in SES** (same AWS account/region as Amplify, usually `us-east-1`):
+
+   ```bash
+   aws ses verify-email-identity --email-address "you@gmail.com" --region us-east-1
+   ```
+
+   Click the verification link AWS emails you.
+
+2. **Amplify env** (after verification):
+
+   ```bash
+   export GIFT_CARD_EMAIL_FROM='you@gmail.com'
+   export GIFT_CARD_FULFILLMENT_EMAIL='you@gmail.com'
+   chmod +x infrastructure/aws/scripts/set-amplify-gift-card-email-env.sh
+   ./infrastructure/aws/scripts/set-amplify-gift-card-email-env.sh
+   ```
+
+3. Redeploy **dev**.
+
+### What gets sent
+
+| Recipient | When |
+|-----------|------|
+| Gift recipient | Immediately after payment (unless delivery is **scheduled** — then only you get the alert) |
+| Purchaser | Copy if they checked “send copy to me” |
+| `GIFT_CARD_FULFILLMENT_EMAIL` | Order summary (your inbox) |
+
+Emails show as **“The Nesting Place &lt;you@gmail.com&gt;”** with optional `GIFT_CARD_EMAIL_REPLY_TO` (e.g. `hello@nurturecollective.com`).
+
+Also: **Stripe receipt** (Dashboard → Customer emails → Successful payments) and **n8n** `N8N_INQUIRY_WEBHOOK_URL` as backup.
+
+Long term: verify `thenestingplace.com` (or similar) in SES and swap `GIFT_CARD_EMAIL_FROM`.

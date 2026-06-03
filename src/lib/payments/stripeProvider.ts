@@ -41,6 +41,9 @@ export const stripeGiftCardPaymentProvider: GiftCardPaymentProvider = {
       session = await stripe.checkout.sessions.create({
       mode: "payment",
       customer_email: input.purchaserEmail,
+      payment_intent_data: {
+        receipt_email: input.purchaserEmail,
+      },
       line_items: [
         {
           quantity: 1,

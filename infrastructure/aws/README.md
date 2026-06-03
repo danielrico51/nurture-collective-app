@@ -108,6 +108,11 @@ export STRIPE_WEBHOOK_SECRET='whsec_...' # after webhook is created in Stripe Da
 chmod +x infrastructure/aws/scripts/set-amplify-stripe-env.sh
 ./infrastructure/aws/scripts/set-amplify-stripe-env.sh
 
+# Interim eGift emails from a verified personal address (SES)
+export GIFT_CARD_EMAIL_FROM='you@gmail.com'
+chmod +x infrastructure/aws/scripts/set-amplify-gift-card-email-env.sh
+./infrastructure/aws/scripts/set-amplify-gift-card-email-env.sh
+
 # Fix `rak_checkout_session_write` errors: test key, update Amplify, redeploy dev
 chmod +x infrastructure/aws/scripts/fix-stripe-gift-card-checkout.sh
 export STRIPE_ADMIN_SECRET_KEY='sk_live_...'   # or fix rk in Dashboard first, then use STRIPE_SECRET_KEY

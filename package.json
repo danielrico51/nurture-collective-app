@@ -20,6 +20,7 @@
     "@aws-amplify/ui-react": "^6.0.0",
     "@aws-sdk/client-cognito-identity-provider": "^3.1053.0",
     "@aws-sdk/client-s3": "^3.1053.0",
+    "@aws-sdk/client-ses": "^3.1060.0",
     "@aws-sdk/s3-request-presigner": "^3.1059.0",
     "@fontsource-variable/inter": "^5.2.8",
     "@fontsource-variable/lora": "^5.2.8",

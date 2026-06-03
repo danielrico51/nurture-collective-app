@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { serverGiftCardConfig } from "@/config/giftCards";
 import { completeGiftCardPayment } from "@/lib/giftCards/completePayment";
+import { centsToDollars } from "@/lib/giftCards/validateOrder";
 import { readGiftCardOrder } from "@/lib/giftCards/storage";
 
 export const dynamic = "force-dynamic";
@@ -48,6 +49,17 @@ export async function GET(request: NextRequest) {
       orderId: order.id,
       status: order.status,
       quickbooks: order.quickbooks,
+      summary:
+        order.status === "paid"
+          ? {
+              amountDollars: centsToDollars(order.amountCents),
+              recipientName: order.recipient.name,
+              recipientEmail: order.recipient.email,
+              deliveryTiming: order.deliveryTiming,
+              deliverOn: order.deliverOn,
+              sendCopyToPurchaser: order.sendCopyToPurchaser,
+            }
+          : undefined,
     });
   } catch (error) {
     console.error("[gift-cards/confirm] failed:", error);

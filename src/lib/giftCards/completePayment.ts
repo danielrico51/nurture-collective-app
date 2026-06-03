@@ -1,4 +1,5 @@
 import { readGiftCardOrder, writeGiftCardOrder } from "@/lib/giftCards/storage";
+import { notifyGiftCardFulfillment } from "@/lib/giftCards/notify";
 import { syncGiftCardPaymentToQuickBooks } from "@/lib/giftCards/quickbooksSync";
 import { forwardToN8n } from "@/lib/webhooks/n8n";
 import { serverGiftCardConfig } from "@/config/giftCards";
@@ -29,6 +30,8 @@ export const completeGiftCardPayment = async (input: {
   };
 
   await writeGiftCardOrder(paid);
+
+  await notifyGiftCardFulfillment(paid);
 
   if (serverGiftCardConfig.orderWebhookUrl) {
     try {
