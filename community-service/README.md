@@ -4,6 +4,12 @@ Standalone Django service for community groups, messaging, cohorts, and AI compa
 
 **Status:** Sprint 1–2 — communities + group discussions (REST + WebSocket), member app UI.
 
+## Architecture (Communities member app)
+
+End-to-end design for the **Apps → Community** experience (Next.js proxy, Cognito, env-scoped posts, S3 uploads, production EC2/RDS):
+
+**[docs/communities-app.md](docs/communities-app.md)**
+
 ## Quick start (Docker)
 
 Requires [Docker Desktop](https://www.docker.com/products/docker-desktop/) or `brew install --cask docker`, then open Docker so `docker` is on your PATH.
@@ -50,6 +56,13 @@ After migrations, backfill discussion channels for existing communities:
 
 ```bash
 python manage.py seed_community_channels
+```
+
+Reset all posts, comments, reactions, and channel messages (keeps communities and memberships):
+
+```bash
+python manage.py purge_community_feed --dry-run   # preview counts
+python manage.py purge_community_feed --yes     # non-interactive purge
 ```
 
 Run with ASGI for WebSocket support:
