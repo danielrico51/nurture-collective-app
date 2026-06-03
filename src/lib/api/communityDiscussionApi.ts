@@ -99,7 +99,30 @@ export const createCommunityPost = async (
   return handleResponse<CommunityPost>(response);
 };
 
-export const uploadCommunityPostImage = async (
+const parseMediaUploadError = async (
+  response: Response,
+  fallback: string
+): Promise<string> => {
+  const text = await response.text();
+  try {
+    const data = JSON.parse(text) as { error?: string };
+    if (typeof data.error === "string" && data.error.trim()) {
+      return data.error;
+    }
+  } catch {
+    /* HTML from CDN (e.g. body size limit) — not JSON */
+  }
+  if (response.status === 403) {
+    return "Photo upload was blocked. Try a smaller image or try again in a moment.";
+  }
+  if (response.status >= 500) {
+    return "Photo upload failed temporarily. Please try again.";
+  }
+  return parseCommunityApiError({}, response.status) || fallback;
+};
+
+/** Local dev fallback when S3 is not configured (filesystem storage). */
+const legacyPostImageUpload = async (
   communityId: string,
   file: File
 ): Promise<{ url: string; filename: string }> => {
@@ -113,7 +136,60 @@ export const uploadCommunityPostImage = async (
       body: form,
     }
   );
-  return handleResponse<{ url: string; filename: string }>(response);
+  if (!response.ok) {
+    throw new Error(
+      await parseMediaUploadError(response, "Could not upload photo")
+    );
+  }
+  return response.json() as Promise<{ url: string; filename: string }>;
+};
+
+export const uploadCommunityPostImage = async (
+  communityId: string,
+  file: File
+): Promise<{ url: string; filename: string }> => {
+  const headers = await authHeaders();
+
+  const presignResponse = await fetch(
+    `${communityBase(communityId)}/posts/upload/presign`,
+    {
+      method: "POST",
+      headers,
+      body: JSON.stringify({ contentType: file.type }),
+    }
+  );
+
+  if (presignResponse.status === 409) {
+    return legacyPostImageUpload(communityId, file);
+  }
+
+  if (!presignResponse.ok) {
+    throw new Error(
+      await parseMediaUploadError(
+        presignResponse,
+        "Could not prepare photo upload"
+      )
+    );
+  }
+
+  const { uploadUrl, url, filename } = (await presignResponse.json()) as {
+    uploadUrl: string;
+    url: string;
+    filename: string;
+  };
+
+  const putResponse = await fetch(uploadUrl, {
+    method: "PUT",
+    headers: { "Content-Type": file.type },
+    body: file,
+  });
+  if (!putResponse.ok) {
+    throw new Error(
+      "Could not upload your photo to storage. Please try again."
+    );
+  }
+
+  return { url, filename };
 };
 
 export const fetchCommunityPost = async (

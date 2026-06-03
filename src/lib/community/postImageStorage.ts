@@ -42,6 +42,27 @@ export const validatePostImageFile = (file: File): string | null => {
   return null;
 };
 
+const safeCommunityId = (communityId: string) =>
+  communityId.replace(/[^a-zA-Z0-9-]/g, "");
+
+/**
+ * S3 key + same-origin URL for a post image (presigned browser upload).
+ */
+export const buildPostImageObject = (
+  communityId: string,
+  contentType: string
+): { key: string; url: string; filename: string } => {
+  const ext = EXT_BY_TYPE[contentType];
+  if (!ext) {
+    throw new Error("Unsupported image type");
+  }
+  const safeCommunity = safeCommunityId(communityId);
+  const filename = `${randomUUID()}.${ext}`;
+  const key = `${S3_PREFIX}/${safeCommunity}/${filename}`;
+  const url = `/api/community/media/${encodeURIComponent(safeCommunity)}/${encodeURIComponent(filename)}`;
+  return { key, url, filename };
+};
+
 export const storeCommunityPostImage = async (
   communityId: string,
   buffer: Buffer,
