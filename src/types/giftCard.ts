@@ -38,6 +38,8 @@ export interface GiftCardOrder {
   };
   message?: string;
   sendCopyToPurchaser: boolean;
+  /** Cognito sub when checkout started while signed in */
+  purchaserUserId?: string;
   createdAt: string;
   updatedAt?: string;
   paymentProvider?: string;

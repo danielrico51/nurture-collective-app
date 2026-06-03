@@ -88,3 +88,7 @@ Emails show as **“The Nesting Place &lt;you@gmail.com&gt;”** with optional `
 Also: **Stripe receipt** (Dashboard → Customer emails → Successful payments) and **n8n** `N8N_INQUIRY_WEBHOOK_URL` as backup.
 
 Long term: verify `thenestingplace.com` (or similar) in SES and swap `GIFT_CARD_EMAIL_FROM`.
+
+## Member Purchases app
+
+Signed-in members see orders at `/apps/purchases` (matched by account email or `purchaserUserId` when checkout was authenticated). Columns: **Payment** (Stripe order status) and **QuickBooks** (sales receipt / invoice sync).

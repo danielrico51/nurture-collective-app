@@ -6,7 +6,10 @@ import { getGiftCardPaymentProvider } from "@/lib/payments/getProvider";
 import { centsToDollars } from "@/lib/giftCards/validateOrder";
 import type { GiftCardCheckoutRequest, GiftCardOrder } from "@/types/giftCard";
 
-export const createGiftCardCheckout = async (input: GiftCardCheckoutRequest) => {
+export const createGiftCardCheckout = async (
+  input: GiftCardCheckoutRequest,
+  options?: { purchaserUserId?: string }
+) => {
   const orderId = randomUUID();
   const createdAt = new Date().toISOString();
 
@@ -22,6 +25,7 @@ export const createGiftCardCheckout = async (input: GiftCardCheckoutRequest) => 
     recipient: input.recipient,
     message: input.message,
     sendCopyToPurchaser: Boolean(input.sendCopyToPurchaser),
+    purchaserUserId: options?.purchaserUserId,
     createdAt,
     updatedAt: createdAt,
     quickbooks: { syncStatus: "pending" },

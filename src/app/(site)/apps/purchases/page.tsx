@@ -1,7 +1,7 @@
 "use client";
 
-import { MemberComingSoonPage } from "@/components/Member/MemberComingSoonPage";
+import { PurchasesView } from "@/components/Member/PurchasesView";
 
 export default function PurchasesAppPage() {
-  return <MemberComingSoonPage appId="purchases" />;
+  return <PurchasesView />;
 }

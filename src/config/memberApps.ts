@@ -37,15 +37,10 @@ export const MEMBER_APPS: MemberApp[] = [
     id: "purchases",
     title: "Purchases",
     description:
-      "View orders, service packages, and billing history for doula care, classes, and add-ons.",
+      "View eGift card and service orders, payment status, and QuickBooks sync for your account.",
     href: "/apps/purchases",
-    status: "coming_soon",
+    status: "available",
     icon: "purchases",
-    plannedFeatures: [
-      "Order history and receipts",
-      "Active packages and renewals",
-      "Gift cards and credits",
-    ],
   },
   {
     id: "thrift",

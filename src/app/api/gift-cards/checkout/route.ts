@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { verifyRequest } from "@/lib/auth/verifyRequest";
 import { createGiftCardCheckout } from "@/lib/giftCards/createOrder";
 import { validateGiftCardCheckout } from "@/lib/giftCards/validateOrder";
 import type { GiftCardCheckoutRequest } from "@/types/giftCard";
@@ -19,7 +20,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const { order, payment } = await createGiftCardCheckout(validated.data);
+    const authed = await verifyRequest(request);
+    const { order, payment } = await createGiftCardCheckout(validated.data, {
+      purchaserUserId: authed?.sub,
+    });
 
     return NextResponse.json({
       ok: true,
