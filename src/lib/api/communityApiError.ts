@@ -7,6 +7,9 @@ export const parseCommunityApiError = (
     if (typeof record.error === "string" && record.error.trim()) {
       return record.error;
     }
+    if (record.code === "FEATURE_DISABLED") {
+      return "Feature disabled";
+    }
   }
 
   if (status === 401) {

@@ -59,6 +59,13 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
   return data as T;
 };
 
+export const fetchCohorts = async (): Promise<{ results: CohortSummary[] }> => {
+  const response = await fetchCommunityWithRetry("/api/community/cohorts", {
+    headers: await authHeaders(),
+  });
+  return handleResponse(response);
+};
+
 export const fetchMyCohorts = async (): Promise<{
   results: CohortMembershipSummary[];
 }> => {
