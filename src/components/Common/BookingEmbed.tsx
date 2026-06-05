@@ -6,6 +6,7 @@ import {
   getActiveBookingUrl,
   hasBooking,
   LEGACY_CALENDLY_ANCHOR_ID,
+  resolveBookingProvider,
 } from "@/config/bookings";
 
 interface BookingEmbedProps {
@@ -23,6 +24,8 @@ const BookingEmbed = ({
   if (!hasBooking() || !url) return null;
 
   const embedUrl = buildBookingEmbedUrl(url);
+  const embedHeight =
+    resolveBookingProvider() === "google" ? "h-[600px]" : "h-[700px]";
 
   return (
     <section className={`py-16 ${className}`} id={BOOKING_ANCHOR_ID}>
@@ -38,7 +41,7 @@ const BookingEmbed = ({
           <iframe
             src={embedUrl}
             title="Schedule a call with The Nesting Place"
-            className="h-[700px] w-full border-0"
+            className={`${embedHeight} w-full border-0`}
             loading="lazy"
           />
         </div>

@@ -1,5 +1,5 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
-import CalendlyEmbed from "@/components/Common/CalendlyEmbed";
+import BookingEmbed from "@/components/Common/BookingEmbed";
 import ContactOptions from "@/components/Common/ContactOptions";
 import FaqList from "@/components/Common/FaqList";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
@@ -98,7 +98,7 @@ export default function ForMomsPage() {
         className="bg-nurture-sage/5 py-20"
       />
       <FaqList title="Questions from moms" items={momFaqs} />
-      <CalendlyEmbed />
+      <BookingEmbed />
     </>
   );
 }

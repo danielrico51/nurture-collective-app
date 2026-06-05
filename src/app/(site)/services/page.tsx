@@ -1,5 +1,5 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
-import CalendlyEmbed from "@/components/Common/CalendlyEmbed";
+import BookingEmbed from "@/components/Common/BookingEmbed";
 import ContactOptions from "@/components/Common/ContactOptions";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { brands, publishedCoreServices } from "@/content/site";
@@ -58,7 +58,7 @@ export default function ServicesPage() {
           </div>
         </div>
       </section>
-      <CalendlyEmbed />
+      <BookingEmbed />
     </>
   );
 }

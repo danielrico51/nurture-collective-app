@@ -1,9 +1,13 @@
 /**
  * Booking / scheduling provider abstraction.
  *
- * Supports Calendly today and Google Workspace appointment schedules when ready.
- * Set NEXT_PUBLIC_BOOKING_PROVIDER=google once NEXT_PUBLIC_GOOGLE_BOOKING_URL is configured.
+ * Production uses Google Workspace appointment schedules (embedded iframe).
+ * Calendly remains available as fallback via NEXT_PUBLIC_CALENDLY_URL.
  */
+
+/** Public Google Calendar appointment schedule for The Nesting Place. */
+export const DEFAULT_GOOGLE_BOOKING_URL =
+  "https://calendar.google.com/calendar/appointments/schedules/AcZssZ3Q0wMuGu20kSp9Vqk7iNhSc8QBEeT4nZGIBLSvCGtlXiP19t27By7jJa0y77koQzPRYRTdhAuL?gv=true";
 
 export type BookingProvider = "calendly" | "google" | "none";
 
@@ -18,30 +22,27 @@ export const LEGACY_CALENDLY_ANCHOR_ID = "calendly";
 const readProviderSetting = (): BookingProviderSetting => {
   const raw = process.env.NEXT_PUBLIC_BOOKING_PROVIDER?.trim().toLowerCase();
   if (raw === "calendly" || raw === "google" || raw === "auto") return raw;
-  return "auto";
+  return "google";
 };
 
 /** Client-safe booking URLs and provider selection. */
 export const bookingConfig = {
   providerSetting: readProviderSetting(),
   calendlyUrl: process.env.NEXT_PUBLIC_CALENDLY_URL?.trim() ?? "",
-  googleBookingUrl: process.env.NEXT_PUBLIC_GOOGLE_BOOKING_URL?.trim() ?? "",
+  googleBookingUrl:
+    process.env.NEXT_PUBLIC_GOOGLE_BOOKING_URL?.trim() ||
+    DEFAULT_GOOGLE_BOOKING_URL,
 } as const;
 
 export const resolveBookingProvider = (): BookingProvider => {
   const { providerSetting, calendlyUrl, googleBookingUrl } = bookingConfig;
 
-  if (providerSetting === "calendly") {
-    return calendlyUrl ? "calendly" : "none";
-  }
-  if (providerSetting === "google") {
-    return googleBookingUrl ? "google" : "none";
+  // Calendly only when explicitly requested (legacy / local testing).
+  if (providerSetting === "calendly" && calendlyUrl) {
+    return "calendly";
   }
 
-  // auto — prefer Google Workspace when configured (production target)
-  if (googleBookingUrl) return "google";
-  if (calendlyUrl) return "calendly";
-  return "none";
+  return googleBookingUrl ? "google" : "none";
 };
 
 export const getActiveBookingUrl = (): string | null => {
@@ -70,7 +71,15 @@ export const buildBookingEmbedUrl = (url: string): string => {
       ? `${url}&hide_gdpr_banner=1`
       : `${url}?hide_gdpr_banner=1`;
   }
-  return url;
+  try {
+    const parsed = new URL(url);
+    if (!parsed.searchParams.has("gv")) {
+      parsed.searchParams.set("gv", "true");
+    }
+    return parsed.toString();
+  } catch {
+    return url;
+  }
 };
 
 export interface BookingPrefill {
