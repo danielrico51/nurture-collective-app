@@ -1,0 +1,101 @@
+import { describe, expect, it } from "vitest";
+import {
+  describePullSyncResult,
+  describePushSyncResult,
+  formatGoogleTasksError,
+  getGooglePushEligibility,
+  googleTasksDestinationHint,
+  isGoogleTasksErrorMessage,
+} from "@/lib/tasks/googleSyncFeedback";
+import type { ManagementTask } from "@/types/task";
+
+const sampleTask = (overrides: Partial<ManagementTask> = {}): ManagementTask => ({
+  id: "task-1",
+  title: "Test",
+  description: "",
+  assignees: [],
+  dueDate: null,
+  urgent: false,
+  completed: false,
+  completedAt: null,
+  createdAt: "2026-06-01T12:00:00.000Z",
+  updatedAt: "2026-06-01T12:00:00.000Z",
+  createdBy: "admin@nesting-place.com",
+  category: "internal",
+  clickUpTaskId: null,
+  googleTaskId: null,
+  googleTaskIdsByUser: {},
+  clientEmail: null,
+  ...overrides,
+});
+
+describe("googleSyncFeedback", () => {
+  it("detects Google API error messages", () => {
+    expect(isGoogleTasksErrorMessage("Request failed with status code 403")).toBe(
+      true
+    );
+    expect(isGoogleTasksErrorMessage("Domain-wide delegation is not configured")).toBe(
+      true
+    );
+    expect(isGoogleTasksErrorMessage("S3 bucket missing")).toBe(false);
+  });
+
+  it("formats Google errors without masking delegation guidance", () => {
+    const message = "Domain-wide delegation failed for admin@nesting-place.com";
+    expect(formatGoogleTasksError(new Error(message))).toBe(message);
+    expect(formatGoogleTasksError(new Error("invalid_grant"))).toContain(
+      "Google Tasks sync failed"
+    );
+  });
+
+  it("counts push eligibility by category and link state", () => {
+    const counts = getGooglePushEligibility([
+      sampleTask(),
+      sampleTask({ id: "task-2", googleTaskId: "g-1" }),
+      sampleTask({ id: "task-3", category: "client" }),
+    ]);
+    expect(counts).toEqual({ eligible: 1, alreadyLinked: 1, clientTasks: 1 });
+  });
+
+  it("describes push results with actionable copy", () => {
+    const eligibility = { eligible: 2, alreadyLinked: 0, clientTasks: 1 };
+    expect(describePushSyncResult({ migrated: 1, skipped: 0, errors: [] }, eligibility)).toEqual({
+      tone: "success",
+      message: "Pushed 1 internal task to Google Tasks.",
+    });
+    expect(
+      describePushSyncResult({ migrated: 0, skipped: 0, errors: [] }, eligibility)
+    ).toMatchObject({ tone: "info" });
+    expect(
+      describePushSyncResult(
+        { migrated: 0, skipped: 0, errors: ["boom"] },
+        eligibility
+      ).tone
+    ).toBe("error");
+  });
+
+  it("describes pull results", () => {
+    expect(describePullSyncResult({ pulled: 2, linked: 1, skipped: 0 }).tone).toBe(
+      "success"
+    );
+    expect(describePullSyncResult({ pulled: 0, linked: 0, skipped: 3 }).message).toContain(
+      "skipped"
+    );
+  });
+
+  it("builds destination hints for delegated and personal sync", () => {
+    expect(
+      googleTasksDestinationHint({
+        personalSync: false,
+        delegatedUser: "admin@nesting-place.com",
+        taskListTitle: "Nesting Place Tasks",
+      })
+    ).toContain("admin@nesting-place.com");
+    expect(
+      googleTasksDestinationHint({
+        personalSync: true,
+        connected: false,
+      })
+    ).toContain("Connect Google Tasks");
+  });
+});

@@ -25,6 +25,12 @@ import {
 import { buildOpenTaskReport } from "@/lib/tasks/reportData";
 import { exportOpenTasksToExcel } from "@/lib/tasks/exportExcel";
 import { exportOpenTasksToPdf } from "@/lib/tasks/exportPdf";
+import {
+  describePullSyncResult,
+  describePushSyncResult,
+  getGooglePushEligibility,
+  googleTasksDestinationHint,
+} from "@/lib/tasks/googleSyncFeedback";
 import type {
   CreateTaskInput,
   ManagementTask,
@@ -79,6 +85,13 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
   const [googleConnected, setGoogleConnected] = useState(false);
   const [googleConnecting, setGoogleConnecting] = useState(false);
   const [googleSyncing, setGoogleSyncing] = useState(false);
+  const [googleDelegatedUser, setGoogleDelegatedUser] = useState<string | null>(
+    null
+  );
+  const [googleTaskListTitle, setGoogleTaskListTitle] = useState<string | null>(
+    null
+  );
+  const [googleSyncNotice, setGoogleSyncNotice] = useState<string | null>(null);
 
   const reportScopeLabel =
     ownershipFilter === "mine" ? "My open tasks" : "All open tasks";
@@ -114,25 +127,36 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
     }
   }, []);
 
+  const showSyncToast = useCallback(
+    (tone: "success" | "error" | "info", message: string) => {
+      setGoogleSyncNotice(message);
+      if (tone === "success") toast.success(message);
+      else if (tone === "error") toast.error(message);
+      else toast(message, { icon: "ℹ️" });
+    },
+    []
+  );
+
   const pullFromGoogle = useCallback(async (silent = false) => {
     setGoogleSyncing(true);
     try {
       const result = await syncGoogleTasks({ action: "pull" });
       await loadTasks();
-      const pullCount = result.pull?.pulled ?? 0;
-      if (!silent && pullCount > 0) {
-        toast.success(`Synced ${pullCount} update(s) from Google Tasks`);
+      if (!silent) {
+        const feedback = describePullSyncResult(result.pull);
+        showSyncToast(feedback.tone, feedback.message);
       }
     } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Could not pull from Google Tasks";
+      setGoogleSyncNotice(message);
       if (!silent) {
-        toast.error(
-          error instanceof Error ? error.message : "Could not pull from Google Tasks"
-        );
+        toast.error(message);
       }
     } finally {
       setGoogleSyncing(false);
     }
-  }, [loadTasks]);
+  }, [loadTasks, showSyncToast]);
 
   const loadGoogleSyncState = useCallback(async () => {
     try {
@@ -146,6 +170,8 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
         connection.personalSync || status.googleTasks.personalSync === true
       );
       setGoogleConnected(connection.connected);
+      setGoogleDelegatedUser(status.googleTasks.delegatedUser ?? null);
+      setGoogleTaskListTitle(status.googleTasks.taskListTitle ?? null);
       return {
         enabled,
         connected: connection.connected,
@@ -373,29 +399,41 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
       return;
     }
     setGoogleSyncing(true);
+    const eligibility = getGooglePushEligibility(tasks);
     try {
       const result = await syncGoogleTasks({ action });
       await loadTasks();
-      const migrateCount = result.migrate?.migrated ?? 0;
-      const pullCount = result.pull?.pulled ?? 0;
-      const errors = result.migrate?.errors ?? [];
-      if (errors.length > 0) {
-        toast.error(`Google sync finished with ${errors.length} error(s)`);
-      } else if (migrateCount > 0 || pullCount > 0) {
-        toast.success(
-          `Google Tasks synced (${migrateCount} migrated, ${pullCount} updated)`
-        );
-      } else {
-        toast.success("Google Tasks already up to date");
+      if (action === "migrate" || action === "both") {
+        const pushFeedback = describePushSyncResult(result.migrate, eligibility);
+        showSyncToast(pushFeedback.tone, pushFeedback.message);
+      }
+      if (action === "both" && result.pull) {
+        const pullFeedback = describePullSyncResult(result.pull);
+        if (pullFeedback.tone === "success") {
+          toast.success(pullFeedback.message);
+        }
       }
     } catch (error) {
-      toast.error(
-        error instanceof Error ? error.message : "Could not sync Google Tasks"
-      );
+      const message =
+        error instanceof Error ? error.message : "Could not sync Google Tasks";
+      setGoogleSyncNotice(message);
+      toast.error(message);
     } finally {
       setGoogleSyncing(false);
     }
   };
+
+  const googleDestinationHint = googleTasksDestinationHint({
+    personalSync: googlePersonalSync,
+    delegatedUser: googleDelegatedUser,
+    taskListTitle: googleTaskListTitle,
+    connected: googleConnected,
+  });
+
+  const pushEligibility = useMemo(
+    () => getGooglePushEligibility(tasks),
+    [tasks]
+  );
 
   return (
     <div className="space-y-8">
@@ -590,6 +628,32 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
           </button>
         </div>
       </div>
+
+      {googleTasksEnabled && googleDestinationHint ? (
+        <p className="text-xs text-nurture-charcoal/60">{googleDestinationHint}</p>
+      ) : null}
+
+      {googleTasksEnabled && !loading ? (
+        <p className="text-xs text-nurture-charcoal/55">
+          {pushEligibility.eligible} internal task
+          {pushEligibility.eligible === 1 ? "" : "s"} ready to push
+          {pushEligibility.alreadyLinked > 0
+            ? ` · ${pushEligibility.alreadyLinked} already in Google`
+            : ""}
+          {pushEligibility.clientTasks > 0
+            ? ` · ${pushEligibility.clientTasks} client (not synced to Google)`
+            : ""}
+        </p>
+      ) : null}
+
+      {googleSyncNotice ? (
+        <div
+          role="status"
+          className="rounded-xl border border-nurture-sage/20 bg-nurture-sage/5 px-4 py-3 text-sm text-nurture-charcoal/80"
+        >
+          {googleSyncNotice}
+        </div>
+      ) : null}
 
       {!loading && openTaskCount > 0 ? (
         <p className="text-xs text-nurture-charcoal/55">

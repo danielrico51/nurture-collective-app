@@ -110,8 +110,19 @@ export const pullInternalTasksFromGoogle = async (
     return pullInternalTasksForUser(userEmail);
   }
 
-  const taskListId = await getOrCreateTaskListId();
-  const googleTasks = await listGoogleTasks(taskListId);
+  let taskListId: string;
+  let googleTasks;
+  try {
+    taskListId = await getOrCreateTaskListId();
+    googleTasks = await listGoogleTasks(taskListId);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      detail.includes("Domain-wide delegation")
+        ? detail
+        : `Google Tasks pull failed: ${detail}`
+    );
+  }
   const localTasks = await listTasks();
   const byGoogleId = new Map(
     localTasks
@@ -182,7 +193,17 @@ export const migrateInternalTasksToGoogle = async (
   }
 
   const dryRun = options?.dryRun ?? false;
-  const taskListId = await getOrCreateTaskListId();
+  let taskListId: string;
+  try {
+    taskListId = await getOrCreateTaskListId();
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    throw new Error(
+      detail.includes("Domain-wide delegation")
+        ? detail
+        : `Google Tasks push failed: ${detail}`
+    );
+  }
   const tasks = await listTasks();
   let migrated = 0;
   let skipped = 0;

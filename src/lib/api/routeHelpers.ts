@@ -1,5 +1,9 @@
 import { NextResponse } from "next/server";
 import { isManagementUser, verifyRequest } from "@/lib/auth/verifyRequest";
+import {
+  formatGoogleTasksError,
+  isGoogleTasksErrorMessage,
+} from "@/lib/tasks/googleSyncFeedback";
 import type { NextRequest } from "next/server";
 
 export const requireManagementAuth = async (request: NextRequest) => {
@@ -23,6 +27,13 @@ export const handleStorageError = (error: unknown) => {
   console.error("Tasks storage error:", error);
   const message =
     error instanceof Error ? error.message : "Storage operation failed";
+
+  if (isGoogleTasksErrorMessage(message)) {
+    return NextResponse.json(
+      { error: formatGoogleTasksError(message) },
+      { status: 503 }
+    );
+  }
 
   if (message.includes("TASKS_S3_BUCKET")) {
     return NextResponse.json(
