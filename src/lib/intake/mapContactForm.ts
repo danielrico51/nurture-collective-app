@@ -33,9 +33,6 @@ export const resolveServiceRequested = (input: {
   );
 };
 
-export const SMS_CONSENT_LABEL =
-  "I agree to receive text messages from The Nesting Place about my inquiry and care coordination. Message and data rates may apply. Reply STOP to opt out.";
-
 export interface ContactFormValues {
   audience: Audience;
   name: string;
