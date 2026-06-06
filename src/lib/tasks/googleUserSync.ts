@@ -248,7 +248,8 @@ export const resetUserGoogleTaskListId = async (
 
 export const migrateInternalTasksForUser = async (
   userEmail: string,
-  options?: { dryRun?: boolean }
+  options?: { dryRun?: boolean },
+  matchers?: string[]
 ): Promise<{ migrated: number; skipped: number; errors: string[] }> => {
   const connection = await getGoogleTasksConnection(userEmail);
   if (!connection) {
