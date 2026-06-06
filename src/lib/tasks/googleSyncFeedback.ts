@@ -1,3 +1,4 @@
+import { shouldPushTaskToGoogleForUser } from "@/lib/tasks/utils";
 import type { ManagementTask } from "@/types/task";
 
 export interface GoogleMigrateResult {
@@ -49,7 +50,10 @@ export const formatGoogleTasksError = (error: unknown): string => {
   return message;
 };
 
-export const getGooglePushEligibility = (tasks: ManagementTask[]) => {
+export const getGooglePushEligibility = (
+  tasks: ManagementTask[],
+  matchers?: string[]
+) => {
   let eligible = 0;
   let alreadyLinked = 0;
   let clientTasks = 0;
@@ -57,6 +61,9 @@ export const getGooglePushEligibility = (tasks: ManagementTask[]) => {
   for (const task of tasks) {
     if (task.category !== "internal") {
       clientTasks += 1;
+      continue;
+    }
+    if (matchers?.length && !shouldPushTaskToGoogleForUser(task, matchers)) {
       continue;
     }
     if (task.googleTaskId) {
@@ -93,7 +100,7 @@ export const describePushSyncResult = (
         : "";
     return {
       tone: "success",
-      message: `Pushed ${migrated} internal task${migrated === 1 ? "" : "s"} to Google Tasks.${clearedNote}`,
+      message: `Pushed ${migrated} assigned task${migrated === 1 ? "" : "s"} to Google Tasks.${clearedNote}`,
     };
   }
 
@@ -129,7 +136,7 @@ export const describePushSyncResult = (
         ? eligibility.alreadyLinked > 0 && eligibility.eligible === 0
           ? `Nothing to push — ${parts.join(", ")}. If you deleted the Google list, use Re-create in Google to rebuild it.`
           : `Nothing to push — ${parts.join(", ")}. Only unlinked internal tasks sync to Google.`
-        : "Nothing to push — create an internal task first.",
+        : "Nothing to push — create an internal task assigned to you first.",
   };
 };
 
@@ -167,10 +174,10 @@ export const googleTasksDestinationHint = (options: {
   connected?: boolean;
 }): string | null => {
   if (!options.personalSync && options.delegatedUser) {
-    return `Internal tasks sync to ${options.delegatedUser} → list “${options.taskListTitle ?? "Nesting Place Tasks"}”. Open tasks.google.com signed in as that account.`;
+    return `Your in-progress assigned tasks sync to ${options.delegatedUser} → list “${options.taskListTitle ?? "Nesting Place Tasks"}”. Done tasks are not pushed. Open tasks.google.com signed in as that account.`;
   }
   if (options.personalSync && options.connected) {
-    return `Tasks mirror to your personal Google Tasks list “${options.taskListTitle ?? "Nesting Place Tasks"}”.`;
+    return `Your in-progress assigned tasks mirror to your personal Google Tasks list “${options.taskListTitle ?? "Nesting Place Tasks"}”. Done tasks are not pushed.`;
   }
   if (options.personalSync) {
     return "Connect Google Tasks to mirror internal tasks to your personal Google account.";

@@ -61,7 +61,7 @@ export async function GET(request: NextRequest) {
       email,
       refreshToken: tokens.refresh_token,
       taskListId: null,
-      syncAllTasks: true,
+      syncAllTasks: false,
       connectedAt: new Date().toISOString(),
     });
 

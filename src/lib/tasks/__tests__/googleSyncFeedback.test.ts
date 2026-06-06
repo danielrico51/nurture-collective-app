@@ -50,18 +50,46 @@ describe("googleSyncFeedback", () => {
 
   it("counts push eligibility by category and link state", () => {
     const counts = getGooglePushEligibility([
-      sampleTask(),
-      sampleTask({ id: "task-2", googleTaskId: "g-1" }),
+      sampleTask({ assignees: ["Alison"] }),
+      sampleTask({ id: "task-2", assignees: ["Alison"], googleTaskId: "g-1" }),
       sampleTask({ id: "task-3", category: "client" }),
+      sampleTask({ id: "task-4", assignees: ["Bob"] }),
     ]);
-    expect(counts).toEqual({ eligible: 1, alreadyLinked: 1, clientTasks: 1 });
+    expect(counts).toEqual({ eligible: 2, alreadyLinked: 1, clientTasks: 1 });
+  });
+
+  it("limits eligibility to tasks assigned to the current user", () => {
+    const counts = getGooglePushEligibility(
+      [
+        sampleTask({ id: "mine", assignees: ["Alison"] }),
+        sampleTask({ id: "theirs", assignees: ["Bob"], googleTaskId: "g-1" }),
+      ],
+      ["alison"]
+    );
+    expect(counts).toEqual({ eligible: 1, alreadyLinked: 0, clientTasks: 0 });
+  });
+
+  it("excludes completed tasks from push eligibility", () => {
+    const counts = getGooglePushEligibility(
+      [
+        sampleTask({ id: "open", assignees: ["Alison"] }),
+        sampleTask({
+          id: "done",
+          assignees: ["Alison"],
+          completed: true,
+          googleTaskId: "g-done",
+        }),
+      ],
+      ["alison"]
+    );
+    expect(counts).toEqual({ eligible: 1, alreadyLinked: 0, clientTasks: 0 });
   });
 
   it("describes push results with actionable copy", () => {
     const eligibility = { eligible: 2, alreadyLinked: 0, clientTasks: 1 };
     expect(describePushSyncResult({ migrated: 1, skipped: 0, errors: [] }, eligibility)).toEqual({
       tone: "success",
-      message: "Pushed 1 internal task to Google Tasks.",
+      message: "Pushed 1 assigned task to Google Tasks.",
     });
     expect(
       describePushSyncResult({ migrated: 0, skipped: 0, errors: [] }, eligibility)

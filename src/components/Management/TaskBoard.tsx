@@ -447,7 +447,7 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
       return;
     }
     setGoogleSyncing(true);
-    const eligibility = getGooglePushEligibility(tasks);
+    const eligibility = getGooglePushEligibility(tasks, userAssigneeMatchers);
     try {
       const result = await syncGoogleTasks({ action });
       await loadTasks();
@@ -694,8 +694,8 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
 
       {googleTasksEnabled && !loading ? (
         <p className="text-xs text-nurture-charcoal/55">
-          {pushEligibility.eligible} internal task
-          {pushEligibility.eligible === 1 ? "" : "s"} ready to push
+          {pushEligibility.eligible} in-progress task
+          {pushEligibility.eligible === 1 ? "" : "s"} assigned to you ready for Google
           {pushEligibility.alreadyLinked > 0
             ? ` · ${pushEligibility.alreadyLinked} linked in app${
                 pushEligibility.eligible === 0

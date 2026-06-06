@@ -44,7 +44,9 @@ export async function POST(request: NextRequest) {
     };
 
     if (action === "recreate") {
-      const linksCleared = dryRun ? 0 : await clearGoogleTaskIds();
+      const linksCleared = dryRun
+        ? 0
+        : await clearGoogleTaskIds(auth.user!.email);
       result.linksCleared = linksCleared;
       if (!dryRun) {
         result.migrate = await migrateInternalTasksToGoogle(

@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
     const tasks = await listTasks();
     tasks.unshift(task);
     await saveTasks(tasks);
-    const synced = await syncInternalTaskToGoogle(task, "create");
+    const synced = await syncInternalTaskToGoogle(task, "create", auth.user!.email);
     if (synced.googleTaskId && synced.googleTaskId !== task.googleTaskId) {
       tasks[0] = synced;
       await saveTasks(tasks);

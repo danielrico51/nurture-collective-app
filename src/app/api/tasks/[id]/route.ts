@@ -89,7 +89,11 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
     tasks[index] = updated;
     await saveTasks(tasks);
-    const synced = await syncInternalTaskToGoogle(updated, "update");
+    const synced = await syncInternalTaskToGoogle(
+      updated,
+      "update",
+      auth.user!.email
+    );
     if (synced.googleTaskId !== updated.googleTaskId) {
       tasks[index] = synced;
       await saveTasks(tasks);
@@ -113,7 +117,7 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
     }
     if (removed) {
-      await syncInternalTaskToGoogle(removed, "delete");
+      await syncInternalTaskToGoogle(removed, "delete", auth.user!.email);
     }
     await saveTasks(next);
     return NextResponse.json({ ok: true });

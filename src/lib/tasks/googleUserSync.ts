@@ -18,7 +18,11 @@ import {
   saveGoogleTasksConnection,
 } from "@/lib/tasks/googleConnectionsStorage";
 import { listTasks, saveTasks } from "@/lib/tasks/storage";
-import { taskAssignedToUser, getUserAssigneeMatchers } from "@/lib/tasks/utils";
+import {
+  getUserAssigneeMatchers,
+  shouldPushTaskToGoogleForUser,
+  taskAssignedToUser,
+} from "@/lib/tasks/utils";
 import type { GoogleTasksUserConnection } from "@/types/googleTasksConnection";
 import type { ManagementTask } from "@/types/task";
 
@@ -29,7 +33,6 @@ export const shouldSyncTaskForConnection = (
   connection: GoogleTasksUserConnection
 ): boolean => {
   if (!shouldSyncTaskToGoogle(task)) return false;
-  if (connection.syncAllTasks) return true;
   const matchers = getUserAssigneeMatchers(connection.email);
   return taskAssignedToUser(task, matchers);
 };
@@ -64,6 +67,14 @@ export const syncTaskForConnection = async (
     return task;
   }
 
+  const linkedId = getGoogleTaskIdForUser(task, userEmail);
+  if (task.completed && !linkedId) {
+    return task;
+  }
+  if (action === "create" && task.completed) {
+    return task;
+  }
+
   const taskListId = await getOrCreateUserTaskListId(
     connection.refreshToken,
     connection.taskListId
@@ -71,8 +82,6 @@ export const syncTaskForConnection = async (
   if (!connection.taskListId) {
     await saveGoogleTasksConnection({ ...connection, taskListId });
   }
-
-  const linkedId = getGoogleTaskIdForUser(task, userEmail);
 
   if (action === "delete") {
     if (linkedId) {
@@ -251,8 +260,9 @@ export const migrateInternalTasksForUser = async (
   let skipped = 0;
   const errors: string[] = [];
 
+  const matchers = getUserAssigneeMatchers(connection.email);
   for (const task of tasks) {
-    if (!shouldSyncTaskForConnection(task, connection)) {
+    if (!shouldPushTaskToGoogleForUser(task, matchers)) {
       skipped += 1;
       continue;
     }

@@ -24,6 +24,11 @@ import {
   shouldSyncTaskToGoogle,
 } from "@/lib/tasks/googleSyncMapping";
 import { listTasks, saveTasks } from "@/lib/tasks/storage";
+import {
+  getUserAssigneeMatchers,
+  shouldPushTaskToGoogleForUser,
+  shouldSyncTaskToGoogleForUser,
+} from "@/lib/tasks/utils";
 import type { ManagementTask } from "@/types/task";
 
 export {
@@ -48,7 +53,8 @@ const persistGoogleTaskId = async (
 
 export const syncInternalTaskToGoogle = async (
   task: ManagementTask,
-  action: "create" | "update" | "delete"
+  action: "create" | "update" | "delete",
+  userEmail?: string
 ): Promise<ManagementTask> => {
   if (!isGoogleTasksActive() || !shouldSyncTaskToGoogle(task)) {
     return task;
@@ -56,6 +62,11 @@ export const syncInternalTaskToGoogle = async (
 
   if (isPersonalGoogleTasksSync()) {
     return syncInternalTaskToConnectedUsers(task, action);
+  }
+
+  const matchers = getUserAssigneeMatchers(userEmail);
+  if (!shouldSyncTaskToGoogleForUser(task, matchers)) {
+    return task;
   }
 
   try {
@@ -177,11 +188,18 @@ export const pullInternalTasksFromGoogle = async (
 
 export const findStaleGoogleTaskLinks = (
   tasks: ManagementTask[],
-  validGoogleTaskIds: ReadonlySet<string>
+  validGoogleTaskIds: ReadonlySet<string>,
+  matchers?: string[]
 ): { cleared: number; next: ManagementTask[] } => {
   let cleared = 0;
   const next = tasks.map((task) => {
-    if (!shouldSyncTaskToGoogle(task) || !task.googleTaskId) return task;
+    if (
+      !shouldSyncTaskToGoogle(task) ||
+      !task.googleTaskId ||
+      (matchers?.length && !shouldPushTaskToGoogleForUser(task, matchers))
+    ) {
+      return task;
+    }
     if (validGoogleTaskIds.has(task.googleTaskId)) return task;
     cleared += 1;
     return {
@@ -193,25 +211,28 @@ export const findStaleGoogleTaskLinks = (
   return { cleared, next };
 };
 
-export const clearStaleGoogleTaskLinks = async (): Promise<number> => {
+export const clearStaleGoogleTaskLinks = async (
+  userEmail?: string
+): Promise<number> => {
   if (!isGoogleTasksActive() || isPersonalGoogleTasksSync()) {
     return 0;
   }
 
+  const matchers = getUserAssigneeMatchers(userEmail);
   const taskListId = await getOrCreateTaskListId();
   let googleTasks;
   try {
     googleTasks = await listGoogleTasks(taskListId);
   } catch (error) {
     if (!isGoogleNotFoundError(error)) throw error;
-    return clearGoogleTaskIds();
+    return clearGoogleTaskIds(userEmail);
   }
 
   const validIds = new Set(
     googleTasks.map((task) => task.id).filter((id): id is string => Boolean(id))
   );
   const tasks = await listTasks();
-  const { cleared, next } = findStaleGoogleTaskLinks(tasks, validIds);
+  const { cleared, next } = findStaleGoogleTaskLinks(tasks, validIds, matchers);
   if (cleared > 0) {
     await saveTasks(next);
   }
@@ -267,8 +288,9 @@ export const migrateInternalTasksToGoogle = async (
   let skipped = 0;
   const errors: string[] = [];
 
+  const matchers = getUserAssigneeMatchers(userEmail);
   for (const task of tasks) {
-    if (!shouldSyncTaskToGoogle(task)) {
+    if (!shouldSyncTaskToGoogleForUser(task, matchers)) {
       skipped += 1;
       continue;
     }
@@ -314,11 +336,15 @@ export const migrateInternalTasksToGoogle = async (
   return { migrated, skipped, errors, linksCleared };
 };
 
-export const clearGoogleTaskIds = async (): Promise<number> => {
+export const clearGoogleTaskIds = async (userEmail?: string): Promise<number> => {
+  const matchers = getUserAssigneeMatchers(userEmail);
   const tasks = await listTasks();
   let cleared = 0;
   const next = tasks.map((task) => {
     if (!task.googleTaskId) return task;
+    if (matchers.length && !shouldPushTaskToGoogleForUser(task, matchers)) {
+      return task;
+    }
     cleared += 1;
     return {
       ...task,

@@ -30,6 +30,20 @@ export const getUserAssigneeMatchers = (
   return Array.from(matchers);
 };
 
+export const shouldSyncTaskToGoogleForUser = (
+  task: ManagementTask,
+  matchers: string[]
+): boolean => {
+  if (task.category !== "internal" || matchers.length === 0) return false;
+  return taskAssignedToUser(task, matchers);
+};
+
+/** In-progress internal tasks assigned to the user (eligible for Google push). */
+export const shouldPushTaskToGoogleForUser = (
+  task: ManagementTask,
+  matchers: string[]
+): boolean => shouldSyncTaskToGoogleForUser(task, matchers) && !task.completed;
+
 export const taskAssignedToUser = (
   task: ManagementTask,
   matchers: string[]
