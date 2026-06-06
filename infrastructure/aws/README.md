@@ -125,6 +125,17 @@ Bucket name must match the CloudFormation `LeadsBucketName` output exactly.
 
 Admin **coverage map** reads/writes `s3://nurture-collective-tasks/platform/coverage/coverage-config.json`. The compute policy must allow `s3:GetObject` and `s3:PutObject` on that path (see `policies/nurture-collective-amplify-compute-live.json`).
 
+### SES (gift card + transactional email)
+
+Amplify uses `SERVER_AWS_*` keys → IAM user `nurture-collective-amplify-server` (inline `NurtureSESSendGiftCards`). Also sync the managed compute policy:
+
+```bash
+chmod +x infrastructure/aws/scripts/apply-amplify-compute-live-policy.sh
+./infrastructure/aws/scripts/apply-amplify-compute-live-policy.sh
+```
+
+**Production access** (send to any customer inbox) is separate from IAM — request in the SES console. See [docs/platform/ses-production-access.md](../../docs/platform/ses-production-access.md).
+
 ### Django backend API
 
 Use `BackendApiRoleArn` for ECS task role, EC2 instance profile, or Elastic Beanstalk.

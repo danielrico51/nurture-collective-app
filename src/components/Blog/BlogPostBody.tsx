@@ -1,4 +1,4 @@
-import { splitBlogBody } from "@/lib/blog/format";
+import { parseBlogBody } from "@/lib/blog/format";
 
 interface BlogPostBodyProps {
   body: string;
@@ -6,13 +6,22 @@ interface BlogPostBodyProps {
 }
 
 export function BlogPostBody({ body, className = "" }: BlogPostBodyProps) {
-  const paragraphs = splitBlogBody(body);
+  const blocks = parseBlogBody(body);
 
   return (
     <div className={`space-y-5 text-base leading-relaxed text-nurture-charcoal/85 ${className}`.trim()}>
-      {paragraphs.map((paragraph, index) => (
-        <p key={index}>{paragraph}</p>
-      ))}
+      {blocks.map((block, index) =>
+        block.type === "heading" ? (
+          <h2
+            key={index}
+            className="pt-2 font-serif text-xl font-semibold text-nurture-charcoal"
+          >
+            {block.text}
+          </h2>
+        ) : (
+          <p key={index}>{block.text}</p>
+        )
+      )}
     </div>
   );
 }

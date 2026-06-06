@@ -1,3 +1,4 @@
+import { BlogDigest } from "@/components/Blog/BlogDigest";
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { formatBlogDate } from "@/lib/blog/format";
@@ -27,6 +28,8 @@ export default async function BlogIndexPage() {
             subtitle={`Practical support from ${brands.nestingPlace.name} — ${brands.nestingPlace.tagline.toLowerCase()}.`}
             centered
           />
+
+          <BlogDigest articleCount={posts.length} />
 
           {posts.length === 0 ? (
             <p className="mt-12 text-center text-nurture-charcoal/60">

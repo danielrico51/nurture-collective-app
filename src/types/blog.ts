@@ -34,3 +34,8 @@ export type CreateBlogPostInput = {
 export type UpdateBlogPostInput = Partial<
   Omit<BlogPost, "slug" | "createdAt" | "updatedAt">
 >;
+
+export type BlogDigestHistoryMessage = {
+  role: "user" | "assistant";
+  content: string;
+};

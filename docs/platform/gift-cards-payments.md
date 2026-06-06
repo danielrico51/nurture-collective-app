@@ -108,6 +108,6 @@ npm run test:gift-card-email
 
 Optional: `TEST_INBOX=you@gmail.com` · `TEST_SEND_RECIPIENT=0` to skip a template.
 
-**Note:** SES sandbox only delivers to **verified** addresses. The local test script sends everything to your inbox; real checkout sends the **recipient** address from the form — if that email is not verified in SES, the eGift email fails until you [request SES production access](https://console.aws.amazon.com/ses/home?region=us-east-1#/account). Stripe payment receipts are separate and always come from Stripe.
+**Note:** SES sandbox only delivers to **verified** addresses. The local test script sends everything to your inbox; real checkout sends the **recipient** address from the form — if that email is not verified in SES, the eGift email fails until production access is granted. See **[ses-production-access.md](./ses-production-access.md)** for IAM, status checks, and a re-request template. Stripe payment receipts are separate and always come from Stripe.
 
 After a real payment, you should still receive the **fulfillment** email at `GIFT_CARD_FULFILLMENT_EMAIL` even when the recipient send fails (sandbox).

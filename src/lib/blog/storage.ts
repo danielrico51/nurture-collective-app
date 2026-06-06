@@ -7,7 +7,7 @@ import {
   S3Client,
 } from "@aws-sdk/client-s3";
 import { normalizeBlogPost, buildCreatePost } from "@/lib/blog/normalize";
-import { SAMPLE_BLOG_POSTS } from "@/lib/blog/samples";
+import { LEGACY_IMPORTED_BLOG_POSTS } from "@/lib/blog/legacyImported";
 import { isValidSlug } from "@/lib/blog/slug";
 import {
   emptyBlogDocument,
@@ -125,13 +125,13 @@ const sortPosts = (posts: BlogPost[]): BlogPost[] =>
       b.slug.localeCompare(a.slug)
   );
 
-/** Seed sample posts when storage is empty (local dev). */
+/** Seed legacy imported posts when storage is empty (local dev). */
 export const seedBlogSamplesIfEmpty = async (): Promise<boolean> => {
   const doc = await readBlogDocument();
   if (doc.posts.length > 0) return false;
   await writeBlogDocument({
     version: 1,
-    posts: SAMPLE_BLOG_POSTS,
+    posts: LEGACY_IMPORTED_BLOG_POSTS,
     updatedAt: new Date().toISOString(),
   });
   return true;
@@ -139,7 +139,7 @@ export const seedBlogSamplesIfEmpty = async (): Promise<boolean> => {
 
 export const listAllPosts = async (): Promise<BlogPost[]> => {
   const doc = await readBlogDocument();
-  if (doc.posts.length === 0 && getBlogStorageMode() === "local") {
+  if (doc.posts.length === 0) {
     await seedBlogSamplesIfEmpty();
     const seeded = await readBlogDocument();
     return sortPosts(seeded.posts);

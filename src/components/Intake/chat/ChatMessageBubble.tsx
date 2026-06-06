@@ -4,12 +4,14 @@ interface ChatMessageBubbleProps {
   role: "user" | "assistant";
   content: string;
   streaming?: boolean;
+  assistantLabel?: string;
 }
 
 const ChatMessageBubble = ({
   role,
   content,
   streaming = false,
+  assistantLabel = careCoordinator.intake.messageLabel,
 }: ChatMessageBubbleProps) => {
   const isUser = role === "user";
 
@@ -27,7 +29,7 @@ const ChatMessageBubble = ({
             isUser ? "text-right text-white/75" : "text-nurture-sage-dark"
           }`}
         >
-          {isUser ? "You" : careCoordinator.intake.messageLabel}
+          {isUser ? "You" : assistantLabel}
         </p>
         <p className="whitespace-pre-wrap">{content}</p>
         {streaming ? (

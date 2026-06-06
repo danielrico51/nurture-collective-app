@@ -29,6 +29,12 @@
       "Effect": "Allow",
       "Action": ["cognito-idp:ListUsers", "cognito-idp:ListUsersInGroup"],
       "Resource": "arn:aws:cognito-idp:us-east-1:886436941204:userpool/us-east-1_rUfTimytf"
+    },
+    {
+      "Sid": "SESSendTransactional",
+      "Effect": "Allow",
+      "Action": ["ses:SendEmail", "ses:SendRawEmail"],
+      "Resource": "*"
     }
   ]
 }

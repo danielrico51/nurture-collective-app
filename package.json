@@ -21,6 +21,7 @@
     "reset:migrate:google-tasks": "tsx scripts/reset-and-migrate-google-tasks.ts",
     "google-tasks:oauth-setup": "tsx scripts/google-tasks-oauth-setup.ts",
     "list:google-tasks": "tsx scripts/list-google-task-lists.ts",
+    "import:legacy-blog": "tsx scripts/import-legacy-blog.ts",
     "setup:personal-google-tasks": "bash infrastructure/google/setup-personal-tasks-sync.sh"
   },
   "dependencies": {
