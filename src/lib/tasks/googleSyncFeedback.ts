@@ -30,19 +30,58 @@ export const isGoogleTasksErrorMessage = (message: string): boolean => {
     lower.includes("oauth") ||
     lower.includes("delegation failed") ||
     lower.includes("gaxios") ||
-    lower.includes("request failed with status code 4")
+    lower.includes("request failed with status code 4") ||
+    lower.includes("invalid authentication") ||
+    lower.includes("insufficient permission") ||
+    lower.includes("insufficient authentication") ||
+    lower.includes("token has been expired") ||
+    lower.includes("token has been revoked") ||
+    lower.includes("no refresh token")
   );
 };
 
+const readErrorMessage = (error: unknown): string => {
+  if (typeof error === "string") return error;
+  if (!(error instanceof Error)) return String(error ?? "Unknown error");
+
+  const parts = [error.message];
+  const extended = error as Error & {
+    response?: {
+      status?: number;
+      data?: { error?: { message?: string } };
+    };
+  };
+  if (extended.response?.status) {
+    parts.push(`status ${extended.response.status}`);
+  }
+  const apiMessage = extended.response?.data?.error?.message;
+  if (apiMessage) parts.push(apiMessage);
+  return parts.filter(Boolean).join(" — ");
+};
+
 export const formatGoogleTasksError = (error: unknown): string => {
-  const message =
-    error instanceof Error ? error.message : String(error ?? "Unknown error");
+  const message = readErrorMessage(error);
 
   if (message.includes("Domain-wide delegation")) {
     return message;
   }
+  if (message.includes("invalid_rapt") || message.includes("reauth related error")) {
+    return [
+      "Google Tasks sync needs a fresh Workspace sign-in for the delegated account",
+      "(admin@nesting-place.com).",
+      "Have that user sign in at accounts.google.com, complete any security prompts,",
+      "then retry sync.",
+      "Or use Connect Google Tasks on the task board for personal sync (recommended).",
+    ].join(" ");
+  }
   if (message.includes("Connect Google Tasks")) {
     return message;
+  }
+  if (message.includes("invalid_grant")) {
+    return [
+      "Google Tasks connection expired or was revoked.",
+      "Click Disconnect, then Connect Google Tasks again on the task board.",
+    ].join(" ");
   }
   if (isGoogleTasksErrorMessage(message)) {
     return `Google Tasks sync failed: ${message}`;

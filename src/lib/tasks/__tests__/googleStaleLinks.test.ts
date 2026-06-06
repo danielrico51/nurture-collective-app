@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { findStaleGoogleTaskLinks } from "@/lib/tasks/googleSync";
+import {
+  clearGoogleTaskLinksInTasks,
+  findStaleGoogleTaskLinks,
+} from "@/lib/tasks/googleSync";
 import type { ManagementTask } from "@/types/task";
 
 const sampleTask = (overrides: Partial<ManagementTask> = {}): ManagementTask => ({
@@ -38,5 +41,33 @@ describe("findStaleGoogleTaskLinks", () => {
     expect(next[0].googleTaskId).toBeNull();
     expect(next[1].googleTaskId).toBe("still-there");
     expect(next[2].googleTaskId).toBe("gone-2");
+  });
+});
+
+describe("clearGoogleTaskLinksInTasks", () => {
+  it("clears per-user Google links used by personal sync", () => {
+    const tasks = [
+      sampleTask({
+        id: "mine",
+        assignees: ["Daniel"],
+        googleTaskIdsByUser: { "admin@nesting-place.com": "deleted-google-id" },
+      }),
+      sampleTask({
+        id: "other",
+        assignees: ["Bob"],
+        googleTaskIdsByUser: { "bob@nesting-place.com": "bob-google-id" },
+      }),
+    ];
+
+    const { cleared, next } = clearGoogleTaskLinksInTasks(
+      tasks,
+      "admin@nesting-place.com"
+    );
+
+    expect(cleared).toBe(1);
+    expect(next[0].googleTaskIdsByUser).toEqual({});
+    expect(next[1].googleTaskIdsByUser).toEqual({
+      "bob@nesting-place.com": "bob-google-id",
+    });
   });
 });

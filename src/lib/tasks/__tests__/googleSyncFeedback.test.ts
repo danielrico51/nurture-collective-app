@@ -44,7 +44,7 @@ describe("googleSyncFeedback", () => {
     const message = "Domain-wide delegation failed for admin@nesting-place.com";
     expect(formatGoogleTasksError(new Error(message))).toBe(message);
     expect(formatGoogleTasksError(new Error("invalid_grant"))).toContain(
-      "Google Tasks sync failed"
+      "Connect Google Tasks again"
     );
   });
 

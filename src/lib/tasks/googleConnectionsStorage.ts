@@ -14,7 +14,7 @@ import type {
 
 const DEFAULT_KEY = "management/google-tasks-connections.json";
 const DEFAULT_TASKS_BUCKET = "nurture-collective-tasks";
-const LOCAL_DIR = path.join(process.cwd(), ".local-data");
+const LOCAL_DIR = path.join(process.cwd(), ".data", "management");
 const LOCAL_FILE = path.join(LOCAL_DIR, "google-tasks-connections.json");
 
 const emptyDocument = (): GoogleTasksConnectionsDocument => ({

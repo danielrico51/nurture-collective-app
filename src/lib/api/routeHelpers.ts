@@ -23,10 +23,50 @@ export const requireManagementAuth = async (request: NextRequest) => {
   return { error: null, user };
 };
 
+export const getErrorMessage = (error: unknown): string => {
+  if (!(error instanceof Error)) {
+    return String(error ?? "Unknown error");
+  }
+
+  const parts = [error.message];
+  const extended = error as Error & {
+    cause?: unknown;
+    code?: string | number;
+    response?: {
+      status?: number;
+      data?: { error?: { message?: string; errors?: Array<{ message?: string }> } };
+    };
+  };
+
+  if (extended.code) parts.push(String(extended.code));
+  if (extended.response?.status) {
+    parts.push(`status ${extended.response.status}`);
+  }
+
+  const apiMessage = extended.response?.data?.error?.message;
+  if (apiMessage) parts.push(apiMessage);
+
+  const apiErrors = extended.response?.data?.error?.errors;
+  if (Array.isArray(apiErrors)) {
+    for (const row of apiErrors) {
+      if (row.message) parts.push(row.message);
+    }
+  }
+
+  if (extended.cause) parts.push(getErrorMessage(extended.cause));
+
+  return parts.filter(Boolean).join(" — ");
+};
+
 export const handleStorageError = (error: unknown) => {
   console.error("Tasks storage error:", error);
-  const message =
-    error instanceof Error ? error.message : "Storage operation failed";
+  const message = getErrorMessage(error);
+  const bucket =
+    process.env.TASKS_S3_BUCKET?.trim() || "nurture-collective-tasks";
+  const usingStaticKeys = Boolean(
+    process.env.SERVER_AWS_ACCESS_KEY_ID?.trim() ||
+      process.env.AMPLIFY_AWS_ACCESS_KEY_ID?.trim()
+  );
 
   if (isGoogleTasksErrorMessage(message)) {
     return NextResponse.json(
@@ -45,6 +85,35 @@ export const handleStorageError = (error: unknown) => {
     );
   }
 
+  if (message.includes("EROFS") || message.includes("read-only file system")) {
+    return NextResponse.json(
+      {
+        error:
+          "Task storage cannot write to local disk in this environment. Set TASKS_S3_BUCKET in Amplify and redeploy.",
+      },
+      { status: 503 }
+    );
+  }
+
+  if (
+    message.includes("Could not load credentials") ||
+    message.includes("CredentialsProviderError") ||
+    message.includes("security token included in the request is invalid") ||
+    message.includes("InvalidAccessKeyId") ||
+    message.includes("SignatureDoesNotMatch")
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          `Task storage credentials failed for s3://${bucket}/management/tasks.json. ` +
+          (usingStaticKeys
+            ? "SERVER_AWS_ACCESS_KEY_ID is set — verify those keys are valid and include s3:GetObject and s3:PutObject on the tasks bucket, or remove them so the Amplify compute role is used."
+            : "Attach s3:GetObject and s3:PutObject on the tasks bucket to the Amplify compute role (see infrastructure/aws/scripts/attach-amplify-s3-policy.sh), then redeploy."),
+      },
+      { status: 503 }
+    );
+  }
+
   if (
     message.includes("AccessDenied") ||
     message.includes("not authorized") ||
@@ -53,9 +122,19 @@ export const handleStorageError = (error: unknown) => {
     return NextResponse.json(
       {
         error:
-          "Task storage access denied. Grant the Amplify compute role s3:GetObject and s3:PutObject on the tasks bucket.",
+          `Task storage access denied for s3://${bucket}/management/tasks.json. ` +
+          (usingStaticKeys
+            ? "SERVER_AWS_ACCESS_KEY_ID is set — attach s3:GetObject and s3:PutObject on that bucket to the IAM user, or remove those keys so the Amplify compute role is used."
+            : "Grant the Amplify compute role s3:GetObject and s3:PutObject on the tasks bucket."),
       },
       { status: 503 }
+    );
+  }
+
+  if (process.env.NODE_ENV === "development" && message) {
+    return NextResponse.json(
+      { error: `Task storage failed: ${message}` },
+      { status: 500 }
     );
   }
 
