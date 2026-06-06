@@ -68,6 +68,12 @@ describe("googleSyncFeedback", () => {
     ).toMatchObject({ tone: "info" });
     expect(
       describePushSyncResult(
+        { migrated: 0, skipped: 0, errors: [], linksCleared: 85 },
+        { eligible: 0, alreadyLinked: 85, clientTasks: 0 }
+      ).message
+    ).toContain("Cleared 85 stale");
+    expect(
+      describePushSyncResult(
         { migrated: 0, skipped: 0, errors: ["boom"] },
         eligibility
       ).tone

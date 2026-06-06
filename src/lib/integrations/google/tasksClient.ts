@@ -13,11 +13,24 @@ const getTasksApi = async () => {
   });
 };
 
+const isGoogleNotFoundError = (error: unknown): boolean => {
+  const err = error as { code?: number; response?: { status?: number } };
+  return err.code === 404 || err.response?.status === 404;
+};
+
 export const getOrCreateTaskListId = async (): Promise<string> => {
   const configured = serverGoogleTasksConfig.taskListId;
-  if (configured) return configured;
-
   const api = await getTasksApi();
+
+  if (configured) {
+    try {
+      const { data } = await api.tasklists.get({ tasklist: configured });
+      if (data.id) return configured;
+    } catch (error) {
+      if (!isGoogleNotFoundError(error)) throw error;
+    }
+  }
+
   const { data } = await api.tasklists.list({ maxResults: 100 });
   const existing = (data.items ?? []).find(
     (list) => list.title === serverGoogleTasksConfig.taskListTitle

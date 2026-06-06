@@ -175,10 +175,63 @@ export const pullInternalTasksFromGoogle = async (
   return { pulled, linked, skipped };
 };
 
+export const findStaleGoogleTaskLinks = (
+  tasks: ManagementTask[],
+  validGoogleTaskIds: ReadonlySet<string>
+): { cleared: number; next: ManagementTask[] } => {
+  let cleared = 0;
+  const next = tasks.map((task) => {
+    if (!shouldSyncTaskToGoogle(task) || !task.googleTaskId) return task;
+    if (validGoogleTaskIds.has(task.googleTaskId)) return task;
+    cleared += 1;
+    return {
+      ...task,
+      googleTaskId: null,
+      updatedAt: new Date().toISOString(),
+    };
+  });
+  return { cleared, next };
+};
+
+export const clearStaleGoogleTaskLinks = async (): Promise<number> => {
+  if (!isGoogleTasksActive() || isPersonalGoogleTasksSync()) {
+    return 0;
+  }
+
+  const taskListId = await getOrCreateTaskListId();
+  let googleTasks;
+  try {
+    googleTasks = await listGoogleTasks(taskListId);
+  } catch (error) {
+    if (!isGoogleNotFoundError(error)) throw error;
+    return clearGoogleTaskIds();
+  }
+
+  const validIds = new Set(
+    googleTasks.map((task) => task.id).filter((id): id is string => Boolean(id))
+  );
+  const tasks = await listTasks();
+  const { cleared, next } = findStaleGoogleTaskLinks(tasks, validIds);
+  if (cleared > 0) {
+    await saveTasks(next);
+  }
+  return cleared;
+};
+
+const isGoogleNotFoundError = (error: unknown): boolean => {
+  const err = error as { code?: number; response?: { status?: number } };
+  return err.code === 404 || err.response?.status === 404;
+};
+
 export const migrateInternalTasksToGoogle = async (
   options?: { dryRun?: boolean },
   userEmail?: string
-): Promise<{ migrated: number; skipped: number; errors: string[] }> => {
+): Promise<{
+  migrated: number;
+  skipped: number;
+  errors: string[];
+  linksCleared: number;
+}> => {
   if (!isGoogleTasksActive()) {
     throw new Error(
       "Google Tasks sync is not enabled. Set GOOGLE_TASKS_ENABLED=true and service account credentials."
@@ -189,12 +242,17 @@ export const migrateInternalTasksToGoogle = async (
     if (!userEmail) {
       throw new Error("Connect Google Tasks before pushing tasks.");
     }
-    return migrateInternalTasksForUser(userEmail, options);
+    const result = await migrateInternalTasksForUser(userEmail, options);
+    return { ...result, linksCleared: 0 };
   }
 
   const dryRun = options?.dryRun ?? false;
+  let linksCleared = 0;
   let taskListId: string;
   try {
+    if (!dryRun) {
+      linksCleared = await clearStaleGoogleTaskLinks();
+    }
     taskListId = await getOrCreateTaskListId();
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
@@ -253,7 +311,7 @@ export const migrateInternalTasksToGoogle = async (
     await saveTasks(tasks);
   }
 
-  return { migrated, skipped, errors };
+  return { migrated, skipped, errors, linksCleared };
 };
 
 export const clearGoogleTaskIds = async (): Promise<number> => {

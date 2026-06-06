@@ -393,6 +393,54 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
     setModalOpen(true);
   };
 
+  const handleRecreateGoogleTasks = async () => {
+    const confirmed = window.confirm(
+      "Clear all Google task links and re-push internal tasks? Use this if you deleted the Google Tasks list."
+    );
+    if (!confirmed) return;
+
+    setGoogleSyncing(true);
+    try {
+      const result = await syncGoogleTasks({ action: "recreate" });
+      await loadTasks();
+      const migrate = result.migrate;
+      const cleared =
+        (result.linksCleared ?? 0) + (migrate?.linksCleared ?? 0);
+      const migrated = migrate?.migrated ?? 0;
+      const errors = migrate?.errors ?? [];
+
+      if (errors.length > 0) {
+        showSyncToast(
+          "error",
+          `Re-create finished with ${errors.length} error(s). ${errors.slice(0, 2).join(" ")}`
+        );
+      } else if (migrated > 0) {
+        showSyncToast(
+          "success",
+          `Re-created ${migrated} task${migrated === 1 ? "" : "s"} in Google${
+            cleared > 0 ? ` (cleared ${cleared} stale links)` : ""
+          }.`
+        );
+      } else if (cleared > 0) {
+        showSyncToast(
+          "info",
+          `Cleared ${cleared} stale Google link${cleared === 1 ? "" : "s"} but no tasks were pushed. Check Google credentials and try Push to Google.`
+        );
+      } else {
+        showSyncToast("info", "Nothing to re-create in Google.");
+      }
+    } catch (error) {
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Could not recreate Google Tasks";
+      setGoogleSyncNotice(message);
+      toast.error(message);
+    } finally {
+      setGoogleSyncing(false);
+    }
+  };
+
   const handleGoogleSync = async (action: "pull" | "migrate" | "both") => {
     if (action === "pull") {
       await pullFromGoogle(false);
@@ -605,6 +653,17 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
                   >
                     Push to Google
                   </button>
+                  {pushEligibility.alreadyLinked > 0 &&
+                  pushEligibility.eligible === 0 ? (
+                    <button
+                      type="button"
+                      onClick={() => void handleRecreateGoogleTasks()}
+                      disabled={loading || googleSyncing}
+                      className="rounded-full px-4 py-2 text-sm font-medium text-nurture-charcoal/75 transition hover:bg-amber-50 hover:text-amber-900 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      Re-create in Google
+                    </button>
+                  ) : null}
                 </>
               ) : null}
               {googlePersonalSync && googleConnected ? (
@@ -638,7 +697,11 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
           {pushEligibility.eligible} internal task
           {pushEligibility.eligible === 1 ? "" : "s"} ready to push
           {pushEligibility.alreadyLinked > 0
-            ? ` · ${pushEligibility.alreadyLinked} already in Google`
+            ? ` · ${pushEligibility.alreadyLinked} linked in app${
+                pushEligibility.eligible === 0
+                  ? " (use Re-create in Google if you deleted the list)"
+                  : ""
+              }`
             : ""}
           {pushEligibility.clientTasks > 0
             ? ` · ${pushEligibility.clientTasks} client (not synced to Google)`

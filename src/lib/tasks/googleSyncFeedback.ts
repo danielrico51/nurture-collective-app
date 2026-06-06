@@ -4,6 +4,7 @@ export interface GoogleMigrateResult {
   migrated: number;
   skipped: number;
   errors: string[];
+  linksCleared?: number;
 }
 
 export interface GooglePullResult {
@@ -84,10 +85,22 @@ export const describePushSyncResult = (
   }
 
   const migrated = migrate?.migrated ?? 0;
+  const linksCleared = migrate?.linksCleared ?? 0;
   if (migrated > 0) {
+    const clearedNote =
+      linksCleared > 0
+        ? ` Cleared ${linksCleared} stale Google link${linksCleared === 1 ? "" : "s"} first.`
+        : "";
     return {
       tone: "success",
-      message: `Pushed ${migrated} internal task${migrated === 1 ? "" : "s"} to Google Tasks.`,
+      message: `Pushed ${migrated} internal task${migrated === 1 ? "" : "s"} to Google Tasks.${clearedNote}`,
+    };
+  }
+
+  if (linksCleared > 0 && eligibility.eligible === 0) {
+    return {
+      tone: "info",
+      message: `Cleared ${linksCleared} stale Google link${linksCleared === 1 ? "" : "s"}. Push again to recreate tasks in Google.`,
     };
   }
 
@@ -113,7 +126,9 @@ export const describePushSyncResult = (
     tone: "info",
     message:
       parts.length > 0
-        ? `Nothing to push — ${parts.join(", ")}. Only unlinked internal tasks sync to Google.`
+        ? eligibility.alreadyLinked > 0 && eligibility.eligible === 0
+          ? `Nothing to push — ${parts.join(", ")}. If you deleted the Google list, use Re-create in Google to rebuild it.`
+          : `Nothing to push — ${parts.join(", ")}. Only unlinked internal tasks sync to Google.`
         : "Nothing to push — create an internal task first.",
   };
 };

@@ -104,7 +104,9 @@ export interface GoogleTasksSyncResult {
     migrated: number;
     skipped: number;
     errors: string[];
+    linksCleared?: number;
   };
+  linksCleared?: number;
   pull?: {
     pulled: number;
     linked: number;
@@ -121,7 +123,7 @@ export const fetchGoogleTasksStatus = async (): Promise<GoogleTasksSyncResult> =
 };
 
 export const syncGoogleTasks = async (input?: {
-  action?: "pull" | "migrate" | "both";
+  action?: "pull" | "migrate" | "both" | "recreate";
   dryRun?: boolean;
 }): Promise<GoogleTasksSyncResult> => {
   const response = await fetch("/api/tasks/google/sync", {

@@ -4,6 +4,7 @@ import {
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
 import {
+  clearGoogleTaskIds,
   getGoogleTasksStatus,
   migrateInternalTasksToGoogle,
   pullInternalTasksFromGoogle,
@@ -12,7 +13,7 @@ import {
 export const dynamic = "force-dynamic";
 
 type SyncBody = {
-  action?: "pull" | "migrate" | "both";
+  action?: "pull" | "migrate" | "both" | "recreate";
   dryRun?: boolean;
 };
 
@@ -42,7 +43,16 @@ export async function POST(request: NextRequest) {
       googleTasks: getGoogleTasksStatus(),
     };
 
-    if (action === "migrate" || action === "both") {
+    if (action === "recreate") {
+      const linksCleared = dryRun ? 0 : await clearGoogleTaskIds();
+      result.linksCleared = linksCleared;
+      if (!dryRun) {
+        result.migrate = await migrateInternalTasksToGoogle(
+          { dryRun: false },
+          auth.user!.email
+        );
+      }
+    } else if (action === "migrate" || action === "both") {
       result.migrate = await migrateInternalTasksToGoogle(
         { dryRun },
         auth.user!.email
