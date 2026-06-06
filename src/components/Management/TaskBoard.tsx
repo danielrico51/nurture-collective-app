@@ -28,6 +28,7 @@ import { exportOpenTasksToPdf } from "@/lib/tasks/exportPdf";
 import {
   describePullSyncResult,
   describePushSyncResult,
+  describeRecreateSyncResult,
   getGooglePushEligibility,
   googleTasksDestinationHint,
 } from "@/lib/tasks/googleSyncFeedback";
@@ -404,31 +405,16 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
       const result = await syncGoogleTasks({ action: "recreate" });
       await loadTasks();
       const migrate = result.migrate;
-      const cleared =
-        (result.linksCleared ?? 0) + (migrate?.linksCleared ?? 0);
-      const migrated = migrate?.migrated ?? 0;
-      const errors = migrate?.errors ?? [];
-
-      if (errors.length > 0) {
-        showSyncToast(
-          "error",
-          `Re-create finished with ${errors.length} error(s). ${errors.slice(0, 2).join(" ")}`
-        );
-      } else if (migrated > 0) {
-        showSyncToast(
-          "success",
-          `Re-created ${migrated} task${migrated === 1 ? "" : "s"} in Google${
-            cleared > 0 ? ` (cleared ${cleared} stale links)` : ""
-          }.`
-        );
-      } else if (cleared > 0) {
-        showSyncToast(
-          "info",
-          `Cleared ${cleared} stale Google link${cleared === 1 ? "" : "s"} but no tasks were pushed. Check Google credentials and try Push to Google.`
-        );
-      } else {
-        showSyncToast("info", "Nothing to re-create in Google.");
-      }
+      const feedback = describeRecreateSyncResult({
+        migrated: migrate?.migrated ?? 0,
+        skipped: migrate?.skipped ?? 0,
+        errors: migrate?.errors ?? [],
+        linksCleared:
+          (result.linksCleared ?? 0) + (migrate?.linksCleared ?? 0),
+        listReset: Boolean(result.listReset),
+        eligibility: getGooglePushEligibility(tasks, userAssigneeMatchers),
+      });
+      showSyncToast(feedback.tone, feedback.message);
     } catch (error) {
       const message =
         error instanceof Error

@@ -4,10 +4,10 @@ import {
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
 import {
-  clearGoogleTaskIds,
   getGoogleTasksStatus,
   migrateInternalTasksToGoogle,
   pullInternalTasksFromGoogle,
+  recreateGoogleTasksForUser,
 } from "@/lib/tasks/googleSync";
 
 export const dynamic = "force-dynamic";
@@ -44,15 +44,14 @@ export async function POST(request: NextRequest) {
     };
 
     if (action === "recreate") {
-      const linksCleared = dryRun
-        ? 0
-        : await clearGoogleTaskIds(auth.user!.email);
-      result.linksCleared = linksCleared;
-      if (!dryRun) {
-        result.migrate = await migrateInternalTasksToGoogle(
-          { dryRun: false },
-          auth.user!.email
-        );
+      if (dryRun) {
+        result.linksCleared = 0;
+        result.listReset = false;
+      } else {
+        const recreated = await recreateGoogleTasksForUser(auth.user!.email);
+        result.linksCleared = recreated.linksCleared;
+        result.listReset = recreated.listReset;
+        result.migrate = recreated.migrate;
       }
     } else if (action === "migrate" || action === "both") {
       result.migrate = await migrateInternalTasksToGoogle(

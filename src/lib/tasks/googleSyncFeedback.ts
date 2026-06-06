@@ -89,6 +89,18 @@ export const formatGoogleTasksError = (error: unknown): string => {
   return message;
 };
 
+const isLinkedForMatchers = (
+  task: ManagementTask,
+  matchers?: string[]
+): boolean => {
+  if (task.googleTaskId) return true;
+  if (!matchers?.length) return false;
+  return matchers.some((matcher) => {
+    const normalized = matcher.trim().toLowerCase();
+    return normalized.includes("@") && Boolean(task.googleTaskIdsByUser[normalized]);
+  });
+};
+
 export const getGooglePushEligibility = (
   tasks: ManagementTask[],
   matchers?: string[]
@@ -105,7 +117,7 @@ export const getGooglePushEligibility = (
     if (matchers?.length && !shouldPushTaskToGoogleForUser(task, matchers)) {
       continue;
     }
-    if (task.googleTaskId) {
+    if (isLinkedForMatchers(task, matchers)) {
       alreadyLinked += 1;
       continue;
     }
@@ -176,6 +188,73 @@ export const describePushSyncResult = (
           ? `Nothing to push — ${parts.join(", ")}. If you deleted the Google list, use Re-create in Google to rebuild it.`
           : `Nothing to push — ${parts.join(", ")}. Only unlinked internal tasks sync to Google.`
         : "Nothing to push — create an internal task assigned to you first.",
+  };
+};
+
+export const describeRecreateSyncResult = (input: {
+  migrated: number;
+  skipped: number;
+  errors: string[];
+  linksCleared: number;
+  listReset: boolean;
+  eligibility: ReturnType<typeof getGooglePushEligibility>;
+}): { tone: "success" | "error" | "info"; message: string } => {
+  if (input.errors.length > 0) {
+    const preview = input.errors.slice(0, 2).join(" ");
+    return {
+      tone: "error",
+      message: `Re-create finished with ${input.errors.length} error(s). ${preview}`,
+    };
+  }
+
+  if (input.migrated > 0) {
+    const clearedNote =
+      input.linksCleared > 0
+        ? ` Cleared ${input.linksCleared} stale link${input.linksCleared === 1 ? "" : "s"}.`
+        : "";
+    const listNote = input.listReset
+      ? " Created or reconnected your Google Tasks list."
+      : "";
+    return {
+      tone: "success",
+      message: `Re-created ${input.migrated} task${input.migrated === 1 ? "" : "s"} in Google.${clearedNote}${listNote}`,
+    };
+  }
+
+  if (input.linksCleared > 0 && input.eligibility.eligible > 0) {
+    return {
+      tone: "info",
+      message: `Cleared ${input.linksCleared} stale Google link${input.linksCleared === 1 ? "" : "s"} but no tasks were pushed. Check Google connection and try Push to Google.`,
+    };
+  }
+
+  if (input.eligibility.eligible === 0) {
+    const parts: string[] = [];
+    if (input.skipped > 0) {
+      parts.push(
+        `${input.skipped} skipped (completed, unassigned, or client tasks)`
+      );
+    }
+    if (input.eligibility.alreadyLinked > 0) {
+      parts.push(`${input.eligibility.alreadyLinked} still linked locally`);
+    }
+    if (input.eligibility.clientTasks > 0) {
+      parts.push(`${input.eligibility.clientTasks} client tasks`);
+    }
+    const detail =
+      parts.length > 0
+        ? ` ${parts.join("; ")}.`
+        : " No open internal tasks are assigned to you.";
+    return {
+      tone: "info",
+      message: `Nothing to re-create in Google.${detail} Only your open, assigned internal tasks are pushed.`,
+    };
+  }
+
+  return {
+    tone: "info",
+    message:
+      "Nothing to re-create in Google. No open internal tasks assigned to you were ready to push.",
   };
 };
 

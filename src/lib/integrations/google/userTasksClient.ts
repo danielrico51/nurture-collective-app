@@ -31,10 +31,19 @@ export const getOrCreateUserTaskListId = async (
   refreshToken: string,
   existingListId?: string | null
 ): Promise<string> => {
-  if (existingListId) return existingListId;
-
   const api = await getUserTasksApi(refreshToken);
   const title = serverGoogleTasksConfig.taskListTitle;
+
+  if (existingListId) {
+    try {
+      const { data } = await api.tasklists.get({ tasklist: existingListId });
+      if (data.id) return existingListId;
+    } catch (error) {
+      const err = error as { code?: number };
+      if (err.code !== 404) throw error;
+    }
+  }
+
   const { data } = await api.tasklists.list({ maxResults: 100 });
   const found = (data.items ?? []).find((list) => list.title === title);
   if (found?.id) return found.id;

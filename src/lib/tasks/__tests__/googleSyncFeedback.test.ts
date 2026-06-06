@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   describePullSyncResult,
   describePushSyncResult,
+  describeRecreateSyncResult,
   formatGoogleTasksError,
   getGooglePushEligibility,
   googleTasksDestinationHint,
@@ -106,6 +107,20 @@ describe("googleSyncFeedback", () => {
         eligibility
       ).tone
     ).toBe("error");
+  });
+
+  it("explains empty recreate results", () => {
+    const feedback = describeRecreateSyncResult({
+      migrated: 0,
+      skipped: 5,
+      errors: [],
+      linksCleared: 0,
+      listReset: true,
+      eligibility: { eligible: 0, alreadyLinked: 0, clientTasks: 1 },
+    });
+    expect(feedback.tone).toBe("info");
+    expect(feedback.message).toContain("Nothing to re-create");
+    expect(feedback.message).toContain("assigned internal tasks");
   });
 
   it("describes pull results", () => {

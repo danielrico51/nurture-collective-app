@@ -236,6 +236,15 @@ export const pullInternalTasksForUser = async (
   return { pulled, linked, skipped };
 };
 
+/** Drop cached list id so recreate finds or creates "Nesting Place Tasks" again. */
+export const resetUserGoogleTaskListId = async (
+  userEmail: string
+): Promise<void> => {
+  const connection = await getGoogleTasksConnection(userEmail);
+  if (!connection?.taskListId) return;
+  await saveGoogleTasksConnection({ ...connection, taskListId: null });
+};
+
 export const migrateInternalTasksForUser = async (
   userEmail: string,
   options?: { dryRun?: boolean }

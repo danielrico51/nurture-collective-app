@@ -107,6 +107,7 @@ export interface GoogleTasksSyncResult {
     linksCleared?: number;
   };
   linksCleared?: number;
+  listReset?: boolean;
   pull?: {
     pulled: number;
     linked: number;

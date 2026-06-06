@@ -70,4 +70,23 @@ describe("clearGoogleTaskLinksInTasks", () => {
       "bob@nesting-place.com": "bob-google-id",
     });
   });
+
+  it("clears legacy googleTaskId for assigned tasks on recreate", () => {
+    const tasks = [
+      sampleTask({
+        id: "mine",
+        assignees: ["admin@nesting-place.com"],
+        googleTaskId: "legacy-deleted-id",
+      }),
+    ];
+
+    const { cleared, next } = clearGoogleTaskLinksInTasks(
+      tasks,
+      "admin@nesting-place.com",
+      { recreate: true }
+    );
+
+    expect(cleared).toBe(1);
+    expect(next[0].googleTaskId).toBeNull();
+  });
 });

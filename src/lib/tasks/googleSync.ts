@@ -7,6 +7,7 @@ import {
 import {
   migrateInternalTasksForUser,
   pullInternalTasksForUser,
+  resetUserGoogleTaskListId,
   syncInternalTaskToConnectedUsers,
 } from "@/lib/tasks/googleUserSync";
 import {
@@ -339,10 +340,12 @@ export const migrateInternalTasksToGoogle = async (
 /** Clear stored Google task links so migrate/recreate can push fresh copies. */
 export const clearGoogleTaskLinksInTasks = (
   tasks: ManagementTask[],
-  userEmail?: string
+  userEmail?: string,
+  options?: { recreate?: boolean }
 ): { cleared: number; next: ManagementTask[] } => {
   const matchers = getUserAssigneeMatchers(userEmail);
   const normalized = userEmail?.trim().toLowerCase();
+  const recreate = options?.recreate === true;
   let cleared = 0;
   const next = tasks.map((task) => {
     const hasPersonalLink =
@@ -352,21 +355,32 @@ export const clearGoogleTaskLinksInTasks = (
       return task;
     }
 
+    const assignedToUser =
+      matchers.length > 0 && shouldPushTaskToGoogleForUser(task, matchers);
+
     // Personal sync stores links per user — always clear that user's link on recreate.
     if (
       hasLegacyLink &&
       !hasPersonalLink &&
       matchers.length &&
-      !shouldPushTaskToGoogleForUser(task, matchers)
+      !assignedToUser &&
+      !recreate
     ) {
+      return task;
+    }
+
+    if (recreate && hasLegacyLink && matchers.length && !assignedToUser) {
       return task;
     }
 
     cleared += 1;
     const updatedAt = new Date().toISOString();
+    const clearLegacy =
+      hasLegacyLink &&
+      (!matchers.length || assignedToUser || recreate || !hasPersonalLink);
     return {
       ...task,
-      googleTaskId: null,
+      googleTaskId: clearLegacy ? null : task.googleTaskId,
       googleTaskIdsByUser: normalized
         ? Object.fromEntries(
             Object.entries(task.googleTaskIdsByUser).filter(
@@ -380,13 +394,36 @@ export const clearGoogleTaskLinksInTasks = (
   return { cleared, next };
 };
 
-export const clearGoogleTaskIds = async (userEmail?: string): Promise<number> => {
+export const clearGoogleTaskIds = async (
+  userEmail?: string,
+  options?: { recreate?: boolean }
+): Promise<number> => {
   const tasks = await listTasks();
-  const { cleared, next } = clearGoogleTaskLinksInTasks(tasks, userEmail);
+  const { cleared, next } = clearGoogleTaskLinksInTasks(tasks, userEmail, options);
   if (cleared > 0) {
     await saveTasks(next);
   }
   return cleared;
+};
+
+export const recreateGoogleTasksForUser = async (
+  userEmail: string
+): Promise<{
+  linksCleared: number;
+  listReset: boolean;
+  migrate: Awaited<ReturnType<typeof migrateInternalTasksToGoogle>>;
+}> => {
+  const linksCleared = await clearGoogleTaskIds(userEmail, { recreate: true });
+  let listReset = false;
+  if (isPersonalGoogleTasksSync()) {
+    await resetUserGoogleTaskListId(userEmail);
+    listReset = true;
+  }
+  const migrate = await migrateInternalTasksToGoogle(
+    { dryRun: false },
+    userEmail
+  );
+  return { linksCleared, listReset, migrate };
 };
 
 export const getGoogleTasksStatus = () => ({
