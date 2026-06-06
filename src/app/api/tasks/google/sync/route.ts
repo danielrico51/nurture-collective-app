@@ -3,6 +3,7 @@ import {
   handleStorageError,
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
+import { getAssigneeMatchersForAuthUser } from "@/lib/tasks/members";
 import {
   getGoogleTasksStatus,
   migrateInternalTasksToGoogle,
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
         result.linksCleared = 0;
         result.listReset = false;
       } else {
-        const recreated = await recreateGoogleTasksForUser(auth.user!.email);
+        const recreated = await recreateGoogleTasksForUser(auth.user!);
         result.linksCleared = recreated.linksCleared;
         result.listReset = recreated.listReset;
         result.migrate = recreated.migrate;
@@ -56,7 +57,8 @@ export async function POST(request: NextRequest) {
     } else if (action === "migrate" || action === "both") {
       result.migrate = await migrateInternalTasksToGoogle(
         { dryRun },
-        auth.user!.email
+        auth.user!.email,
+        getAssigneeMatchersForAuthUser(auth.user!)
       );
     }
     if (action === "pull" || action === "both") {

@@ -7,6 +7,7 @@ import { getTasksAccessGroup } from "@/lib/auth/groups";
 import type { TeamMember } from "@/types/teamMember";
 import type { AuthUser } from "@/lib/auth/verifyRequest";
 import { getCognitoClient } from "@/lib/tasks/cognitoClient";
+import { getUserAssigneeMatchers } from "@/lib/tasks/utils";
 
 const ASSIGNABLE_USER_STATUSES = new Set([
   "CONFIRMED",
@@ -104,6 +105,15 @@ export const teamMemberFromAuthUser = (user: AuthUser): TeamMember => {
     username: user.username || user.email.split("@")[0] || user.email,
     email: user.email,
   };
+};
+
+export const getAssigneeMatchersForAuthUser = (user: AuthUser): string[] => {
+  const member = teamMemberFromAuthUser(user);
+  const displayName =
+    user.name ||
+    [user.givenName, user.familyName].filter(Boolean).join(" ") ||
+    undefined;
+  return getUserAssigneeMatchers(user.email, displayName, member);
 };
 
 export { formatCognitoListError } from "@/lib/tasks/cognitoClient";

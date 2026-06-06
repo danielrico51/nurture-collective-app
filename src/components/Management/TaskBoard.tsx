@@ -97,15 +97,17 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
   const reportScopeLabel =
     ownershipFilter === "mine" ? "My open tasks" : "All open tasks";
 
-  const loadTasks = useCallback(async () => {
+  const loadTasks = useCallback(async (): Promise<ManagementTask[]> => {
     setLoading(true);
     try {
       const data = await fetchTasks();
       setTasks(data);
+      return data;
     } catch (error) {
       toast.error(
         error instanceof Error ? error.message : "Could not load tasks"
       );
+      return [];
     } finally {
       setLoading(false);
     }
@@ -403,7 +405,7 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
     setGoogleSyncing(true);
     try {
       const result = await syncGoogleTasks({ action: "recreate" });
-      await loadTasks();
+      const refreshedTasks = await loadTasks();
       const migrate = result.migrate;
       const feedback = describeRecreateSyncResult({
         migrated: migrate?.migrated ?? 0,
@@ -412,7 +414,10 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
         linksCleared:
           (result.linksCleared ?? 0) + (migrate?.linksCleared ?? 0),
         listReset: Boolean(result.listReset),
-        eligibility: getGooglePushEligibility(tasks, userAssigneeMatchers),
+        eligibility: getGooglePushEligibility(
+          refreshedTasks,
+          userAssigneeMatchers
+        ),
       });
       showSyncToast(feedback.tone, feedback.message);
     } catch (error) {
@@ -433,12 +438,14 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
       return;
     }
     setGoogleSyncing(true);
-    const eligibility = getGooglePushEligibility(tasks, userAssigneeMatchers);
     try {
       const result = await syncGoogleTasks({ action });
-      await loadTasks();
+      const refreshedTasks = await loadTasks();
       if (action === "migrate" || action === "both") {
-        const pushFeedback = describePushSyncResult(result.migrate, eligibility);
+        const pushFeedback = describePushSyncResult(
+          result.migrate,
+          getGooglePushEligibility(refreshedTasks, userAssigneeMatchers)
+        );
         showSyncToast(pushFeedback.tone, pushFeedback.message);
       }
       if (action === "both" && result.pull) {

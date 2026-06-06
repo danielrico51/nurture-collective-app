@@ -89,4 +89,42 @@ describe("clearGoogleTaskLinksInTasks", () => {
     expect(cleared).toBe(1);
     expect(next[0].googleTaskId).toBeNull();
   });
+
+  it("clears legacy links for display-name assignees when matchers include the name", () => {
+    const tasks = [
+      sampleTask({
+        id: "mine",
+        assignees: ["Alison"],
+        googleTaskId: "legacy-deleted-id",
+      }),
+    ];
+
+    const { cleared, next } = clearGoogleTaskLinksInTasks(
+      tasks,
+      "alison@nesting-place.com",
+      { recreate: true, matchers: ["alison@nesting-place.com", "alison"] }
+    );
+
+    expect(cleared).toBe(1);
+    expect(next[0].googleTaskId).toBeNull();
+  });
+
+  it("clears personal links even when the stored email key casing differs", () => {
+    const tasks = [
+      sampleTask({
+        id: "mine",
+        assignees: ["Alison"],
+        googleTaskIdsByUser: { "Admin@Nesting-Place.com": "deleted-google-id" },
+      }),
+    ];
+
+    const { cleared, next } = clearGoogleTaskLinksInTasks(
+      tasks,
+      "admin@nesting-place.com",
+      { recreate: true, matchers: ["admin@nesting-place.com", "alison"] }
+    );
+
+    expect(cleared).toBe(1);
+    expect(next[0].googleTaskIdsByUser).toEqual({});
+  });
 });

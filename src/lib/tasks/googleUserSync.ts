@@ -17,6 +17,7 @@ import {
   listGoogleTasksConnections,
   saveGoogleTasksConnection,
 } from "@/lib/tasks/googleConnectionsStorage";
+import { getPersonalGoogleTaskId } from "@/lib/tasks/googleLinkUtils";
 import { listTasks, saveTasks } from "@/lib/tasks/storage";
 import {
   getUserAssigneeMatchers,
@@ -269,13 +270,14 @@ export const migrateInternalTasksForUser = async (
   let skipped = 0;
   const errors: string[] = [];
 
-  const matchers = getUserAssigneeMatchers(connection.email);
+  const resolvedMatchers =
+    matchers ?? getUserAssigneeMatchers(connection.email);
   for (const task of tasks) {
-    if (!shouldPushTaskToGoogleForUser(task, matchers)) {
+    if (!shouldPushTaskToGoogleForUser(task, resolvedMatchers)) {
       skipped += 1;
       continue;
     }
-    if (task.googleTaskIdsByUser[normalized]) {
+    if (getPersonalGoogleTaskId(task, normalized)) {
       skipped += 1;
       continue;
     }

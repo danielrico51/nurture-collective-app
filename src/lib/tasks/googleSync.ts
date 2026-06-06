@@ -26,10 +26,16 @@ import {
 } from "@/lib/tasks/googleSyncMapping";
 import { listTasks, saveTasks } from "@/lib/tasks/storage";
 import {
+  hasPersonalGoogleTaskLink,
+  withoutPersonalGoogleTaskLink,
+} from "@/lib/tasks/googleLinkUtils";
+import {
   getUserAssigneeMatchers,
   shouldPushTaskToGoogleForUser,
   shouldSyncTaskToGoogleForUser,
 } from "@/lib/tasks/utils";
+import { getAssigneeMatchersForAuthUser } from "@/lib/tasks/members";
+import type { AuthUser } from "@/lib/auth/verifyRequest";
 import type { ManagementTask } from "@/types/task";
 
 export {
@@ -247,7 +253,8 @@ const isGoogleNotFoundError = (error: unknown): boolean => {
 
 export const migrateInternalTasksToGoogle = async (
   options?: { dryRun?: boolean },
-  userEmail?: string
+  userEmail?: string,
+  matchers?: string[]
 ): Promise<{
   migrated: number;
   skipped: number;
@@ -264,7 +271,7 @@ export const migrateInternalTasksToGoogle = async (
     if (!userEmail) {
       throw new Error("Connect Google Tasks before pushing tasks.");
     }
-    const result = await migrateInternalTasksForUser(userEmail, options);
+    const result = await migrateInternalTasksForUser(userEmail, options, matchers);
     return { ...result, linksCleared: 0 };
   }
 
@@ -289,9 +296,9 @@ export const migrateInternalTasksToGoogle = async (
   let skipped = 0;
   const errors: string[] = [];
 
-  const matchers = getUserAssigneeMatchers(userEmail);
+  const resolvedMatchers = matchers ?? getUserAssigneeMatchers(userEmail);
   for (const task of tasks) {
-    if (!shouldSyncTaskToGoogleForUser(task, matchers)) {
+    if (!shouldSyncTaskToGoogleForUser(task, resolvedMatchers)) {
       skipped += 1;
       continue;
     }
@@ -341,35 +348,51 @@ export const migrateInternalTasksToGoogle = async (
 export const clearGoogleTaskLinksInTasks = (
   tasks: ManagementTask[],
   userEmail?: string,
-  options?: { recreate?: boolean }
+  options?: { recreate?: boolean; matchers?: string[] }
 ): { cleared: number; next: ManagementTask[] } => {
-  const matchers = getUserAssigneeMatchers(userEmail);
+  const matchers = options?.matchers ?? getUserAssigneeMatchers(userEmail);
   const normalized = userEmail?.trim().toLowerCase();
   const recreate = options?.recreate === true;
   let cleared = 0;
   const next = tasks.map((task) => {
     const hasPersonalLink =
-      Boolean(normalized && task.googleTaskIdsByUser[normalized]);
+      Boolean(normalized && hasPersonalGoogleTaskLink(task, normalized));
     const hasLegacyLink = Boolean(task.googleTaskId);
     if (!hasPersonalLink && !hasLegacyLink) {
       return task;
     }
 
-    const assignedToUser =
+    const syncsToUser =
+      matchers.length > 0 && shouldSyncTaskToGoogleForUser(task, matchers);
+    const pushableToUser =
       matchers.length > 0 && shouldPushTaskToGoogleForUser(task, matchers);
 
-    // Personal sync stores links per user — always clear that user's link on recreate.
+    if (recreate && normalized) {
+      const clearPersonal = hasPersonalLink;
+      const clearLegacy =
+        hasLegacyLink && (hasPersonalLink || syncsToUser || pushableToUser);
+      if (!clearPersonal && !clearLegacy) {
+        return task;
+      }
+
+      cleared += 1;
+      let updated = task;
+      if (clearPersonal) {
+        updated = withoutPersonalGoogleTaskLink(updated, normalized);
+      }
+      return {
+        ...updated,
+        googleTaskId: clearLegacy ? null : updated.googleTaskId,
+        updatedAt: new Date().toISOString(),
+      };
+    }
+
     if (
       hasLegacyLink &&
       !hasPersonalLink &&
       matchers.length &&
-      !assignedToUser &&
-      !recreate
+      !pushableToUser
     ) {
-      return task;
-    }
-
-    if (recreate && hasLegacyLink && matchers.length && !assignedToUser) {
       return task;
     }
 
@@ -377,17 +400,14 @@ export const clearGoogleTaskLinksInTasks = (
     const updatedAt = new Date().toISOString();
     const clearLegacy =
       hasLegacyLink &&
-      (!matchers.length || assignedToUser || recreate || !hasPersonalLink);
+      (!matchers.length || pushableToUser || !hasPersonalLink);
+    let updated = task;
+    if (normalized && hasPersonalLink) {
+      updated = withoutPersonalGoogleTaskLink(updated, normalized);
+    }
     return {
-      ...task,
-      googleTaskId: clearLegacy ? null : task.googleTaskId,
-      googleTaskIdsByUser: normalized
-        ? Object.fromEntries(
-            Object.entries(task.googleTaskIdsByUser).filter(
-              ([email]) => email !== normalized
-            )
-          )
-        : task.googleTaskIdsByUser,
+      ...updated,
+      googleTaskId: clearLegacy ? null : updated.googleTaskId,
       updatedAt,
     };
   });
@@ -396,7 +416,7 @@ export const clearGoogleTaskLinksInTasks = (
 
 export const clearGoogleTaskIds = async (
   userEmail?: string,
-  options?: { recreate?: boolean }
+  options?: { recreate?: boolean; matchers?: string[] }
 ): Promise<number> => {
   const tasks = await listTasks();
   const { cleared, next } = clearGoogleTaskLinksInTasks(tasks, userEmail, options);
@@ -407,21 +427,26 @@ export const clearGoogleTaskIds = async (
 };
 
 export const recreateGoogleTasksForUser = async (
-  userEmail: string
+  user: AuthUser
 ): Promise<{
   linksCleared: number;
   listReset: boolean;
   migrate: Awaited<ReturnType<typeof migrateInternalTasksToGoogle>>;
 }> => {
-  const linksCleared = await clearGoogleTaskIds(userEmail, { recreate: true });
+  const matchers = getAssigneeMatchersForAuthUser(user);
+  const linksCleared = await clearGoogleTaskIds(user.email, {
+    recreate: true,
+    matchers,
+  });
   let listReset = false;
   if (isPersonalGoogleTasksSync()) {
-    await resetUserGoogleTaskListId(userEmail);
+    await resetUserGoogleTaskListId(user.email);
     listReset = true;
   }
   const migrate = await migrateInternalTasksToGoogle(
     { dryRun: false },
-    userEmail
+    user.email,
+    matchers
   );
   return { linksCleared, listReset, migrate };
 };

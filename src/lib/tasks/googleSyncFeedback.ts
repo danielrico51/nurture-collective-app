@@ -1,3 +1,4 @@
+import { hasPersonalGoogleTaskLink } from "@/lib/tasks/googleLinkUtils";
 import { shouldPushTaskToGoogleForUser } from "@/lib/tasks/utils";
 import type { ManagementTask } from "@/types/task";
 
@@ -97,7 +98,7 @@ const isLinkedForMatchers = (
   if (!matchers?.length) return false;
   return matchers.some((matcher) => {
     const normalized = matcher.trim().toLowerCase();
-    return normalized.includes("@") && Boolean(task.googleTaskIdsByUser[normalized]);
+    return normalized.includes("@") && hasPersonalGoogleTaskLink(task, normalized);
   });
 };
 
