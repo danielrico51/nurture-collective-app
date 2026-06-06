@@ -6,7 +6,7 @@
  *   export GIFT_CARD_EMAIL_FROM=danielrico51@gmail.com
  *   export GIFT_CARD_EMAIL_FROM_NAME="The Nesting Place"
  *   export GIFT_CARD_FULFILLMENT_EMAIL=danielrico51@gmail.com
- *   export GIFT_CARD_EMAIL_REPLY_TO=hello@nurturecollective.com
+ *   export GIFT_CARD_EMAIL_REPLY_TO=info@nesting-place.com
  *   # AWS creds with ses:SendEmail (Amplify server keys or your profile)
  *   npm run test:gift-card-email
  *

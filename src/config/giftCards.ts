@@ -1,3 +1,4 @@
+import { brands } from "@/content/site";
 import type { PaymentProviderId } from "@/lib/payments/types";
 
 const readProvider = (): PaymentProviderId => {
@@ -27,7 +28,7 @@ export const serverGiftCardConfig = {
   emailReplyTo:
     process.env.GIFT_CARD_EMAIL_REPLY_TO?.trim() ||
     process.env.GIFT_CARD_EMAIL_FROM?.trim() ||
-    "",
+    brands.nestingPlace.email,
   fulfillmentEmail:
     process.env.GIFT_CARD_FULFILLMENT_EMAIL?.trim() ||
     process.env.GIFT_CARD_EMAIL_FROM?.trim() ||

@@ -14,6 +14,10 @@ export interface ManagementTask {
   createdBy: string;
   category: TaskCategory;
   clickUpTaskId: string | null;
+  /** Linked Google Tasks item (legacy single-list sync). */
+  googleTaskId: string | null;
+  /** Per-user Google Tasks ids when team members connect their own accounts. */
+  googleTaskIdsByUser: Record<string, string>;
   clientEmail: string | null;
 }
 
@@ -47,4 +51,6 @@ export interface UpdateTaskInput {
   category?: TaskCategory;
   clientEmail?: string | null;
   clickUpTaskId?: string | null;
+  googleTaskId?: string | null;
+  googleTaskIdsByUser?: Record<string, string>;
 }

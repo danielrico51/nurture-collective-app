@@ -83,7 +83,7 @@ Use your **personal email** as the sender until Nesting Place domain mail is rea
 | Purchaser | Copy if they checked “send copy to me” |
 | `GIFT_CARD_FULFILLMENT_EMAIL` | Order summary (your inbox) |
 
-Emails show as **“The Nesting Place &lt;you@gmail.com&gt;”** with optional `GIFT_CARD_EMAIL_REPLY_TO` (e.g. `hello@nurturecollective.com`).
+Emails show as **“The Nesting Place &lt;you@gmail.com&gt;”** with optional `GIFT_CARD_EMAIL_REPLY_TO` (e.g. `info@nesting-place.com`).
 
 Also: **Stripe receipt** (Dashboard → Customer emails → Successful payments) and **n8n** `N8N_INQUIRY_WEBHOOK_URL` as backup.
 

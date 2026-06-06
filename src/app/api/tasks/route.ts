@@ -5,6 +5,7 @@ import {
 } from "@/lib/api/routeHelpers";
 import { listTasks, saveTasks } from "@/lib/tasks/storage";
 import { parseAssigneeList } from "@/lib/tasks/normalize";
+import { syncInternalTaskToGoogle } from "@/lib/tasks/googleSync";
 import { syncClientTaskToN8n } from "@/lib/tasks/sync";
 import type { CreateTaskInput, ManagementTask, TaskCategory } from "@/types/task";
 import { randomUUID } from "crypto";
@@ -63,6 +64,8 @@ export async function POST(request: NextRequest) {
     createdBy: auth.user!.email || auth.user!.sub,
     category,
     clickUpTaskId: null,
+    googleTaskId: null,
+    googleTaskIdsByUser: {},
     clientEmail,
   };
 
@@ -70,8 +73,13 @@ export async function POST(request: NextRequest) {
     const tasks = await listTasks();
     tasks.unshift(task);
     await saveTasks(tasks);
-    await syncClientTaskToN8n(task, "create");
-    return NextResponse.json({ task }, { status: 201 });
+    const synced = await syncInternalTaskToGoogle(task, "create");
+    if (synced.googleTaskId && synced.googleTaskId !== task.googleTaskId) {
+      tasks[0] = synced;
+      await saveTasks(tasks);
+    }
+    await syncClientTaskToN8n(synced, "create");
+    return NextResponse.json({ task: synced }, { status: 201 });
   } catch (error) {
     return handleStorageError(error);
   }

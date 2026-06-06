@@ -80,3 +80,81 @@ export const deleteTask = async (id: string): Promise<void> => {
   });
   await handleResponse<{ ok: boolean }>(response);
 };
+
+export interface GoogleTasksConnectionStatus {
+  personalSync: boolean;
+  connected: boolean;
+  email: string;
+  syncAllTasks: boolean;
+  connectedAt: string | null;
+  taskListId: string | null;
+}
+
+export interface GoogleTasksSyncResult {
+  googleTasks: {
+    enabled: boolean;
+    syncMode?: "personal" | "legacy";
+    personalSync?: boolean;
+    legacySync?: boolean;
+    delegatedUser: string;
+    taskListId: string | null;
+    taskListTitle: string;
+  };
+  migrate?: {
+    migrated: number;
+    skipped: number;
+    errors: string[];
+  };
+  pull?: {
+    pulled: number;
+    linked: number;
+    skipped: number;
+  };
+}
+
+export const fetchGoogleTasksStatus = async (): Promise<GoogleTasksSyncResult> => {
+  const response = await fetch("/api/tasks/google/sync", {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  return handleResponse<GoogleTasksSyncResult>(response);
+};
+
+export const syncGoogleTasks = async (input?: {
+  action?: "pull" | "migrate" | "both";
+  dryRun?: boolean;
+}): Promise<GoogleTasksSyncResult> => {
+  const response = await fetch("/api/tasks/google/sync", {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify(input ?? { action: "both" }),
+  });
+  return handleResponse<GoogleTasksSyncResult>(response);
+};
+
+export const fetchGoogleTasksConnection =
+  async (): Promise<GoogleTasksConnectionStatus> => {
+    const response = await fetch("/api/tasks/google/connection", {
+      headers: await authHeaders(),
+      cache: "no-store",
+    });
+    return handleResponse<GoogleTasksConnectionStatus>(response);
+  };
+
+export const startGoogleTasksConnect = async (): Promise<{
+  authorizeUrl: string;
+}> => {
+  const response = await fetch("/api/tasks/google/connect", {
+    method: "POST",
+    headers: await authHeaders(),
+  });
+  return handleResponse<{ authorizeUrl: string }>(response);
+};
+
+export const disconnectGoogleTasks = async (): Promise<void> => {
+  const response = await fetch("/api/tasks/google/connection", {
+    method: "DELETE",
+    headers: await authHeaders(),
+  });
+  await handleResponse<{ ok: boolean }>(response);
+};

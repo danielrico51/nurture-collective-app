@@ -44,6 +44,8 @@ export const normalizeTask = (raw: RawTask): ManagementTask => {
     createdBy: raw.createdBy ?? "",
     category: raw.category === "client" ? "client" : "internal",
     clickUpTaskId: raw.clickUpTaskId ?? null,
+    googleTaskId: raw.googleTaskId ?? null,
+    googleTaskIdsByUser: raw.googleTaskIdsByUser ?? {},
     clientEmail: raw.clientEmail ?? null,
   };
 };

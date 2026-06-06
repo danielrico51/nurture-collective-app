@@ -16,7 +16,12 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "test:gift-card-email": "tsx scripts/send-gift-card-email-sample.ts",
-    "resend:gift-card-email": "tsx scripts/resend-gift-card-email.ts"
+    "resend:gift-card-email": "tsx scripts/resend-gift-card-email.ts",
+    "migrate:tasks-to-google": "tsx scripts/migrate-tasks-to-google.ts",
+    "reset:migrate:google-tasks": "tsx scripts/reset-and-migrate-google-tasks.ts",
+    "google-tasks:oauth-setup": "tsx scripts/google-tasks-oauth-setup.ts",
+    "list:google-tasks": "tsx scripts/list-google-task-lists.ts",
+    "setup:personal-google-tasks": "bash infrastructure/google/setup-personal-tasks-sync.sh"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.0.0",
@@ -28,6 +33,7 @@
     "@fontsource-variable/lora": "^5.2.8",
     "aws-amplify": "^6.0.0",
     "aws-jwt-verify": "^5.1.1",
+    "googleapis": "^173.0.0",
     "leaflet": "^1.9.4",
     "next": "13.4.19",
     "next-themes": "^0.3.0",

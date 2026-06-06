@@ -16,6 +16,8 @@ const sampleTask = (overrides: Partial<ManagementTask> = {}): ManagementTask => 
   createdBy: "alison@example.com",
   category: "internal",
   clickUpTaskId: null,
+  googleTaskId: null,
+  googleTaskIdsByUser: {},
   clientEmail: null,
   ...overrides,
 });

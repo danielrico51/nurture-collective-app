@@ -3,8 +3,13 @@
 import {
   createTask,
   deleteTask,
+  disconnectGoogleTasks,
+  fetchGoogleTasksConnection,
+  fetchGoogleTasksStatus,
   fetchTasks,
   fetchTeamMembers,
+  startGoogleTasksConnect,
+  syncGoogleTasks,
   updateTask,
 } from "@/lib/api/tasksClient";
 import {
@@ -69,6 +74,11 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
   const [editing, setEditing] = useState<ManagementTask | null>(null);
   const [defaultDueDate, setDefaultDueDate] = useState<string | null>(null);
   const [exporting, setExporting] = useState<"excel" | "pdf" | null>(null);
+  const [googleTasksEnabled, setGoogleTasksEnabled] = useState(false);
+  const [googlePersonalSync, setGooglePersonalSync] = useState(false);
+  const [googleConnected, setGoogleConnected] = useState(false);
+  const [googleConnecting, setGoogleConnecting] = useState(false);
+  const [googleSyncing, setGoogleSyncing] = useState(false);
 
   const reportScopeLabel =
     ownershipFilter === "mine" ? "My open tasks" : "All open tasks";
@@ -104,10 +114,109 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
     }
   }, []);
 
+  const pullFromGoogle = useCallback(async (silent = false) => {
+    setGoogleSyncing(true);
+    try {
+      const result = await syncGoogleTasks({ action: "pull" });
+      await loadTasks();
+      const pullCount = result.pull?.pulled ?? 0;
+      if (!silent && pullCount > 0) {
+        toast.success(`Synced ${pullCount} update(s) from Google Tasks`);
+      }
+    } catch (error) {
+      if (!silent) {
+        toast.error(
+          error instanceof Error ? error.message : "Could not pull from Google Tasks"
+        );
+      }
+    } finally {
+      setGoogleSyncing(false);
+    }
+  }, [loadTasks]);
+
+  const loadGoogleSyncState = useCallback(async () => {
+    try {
+      const [status, connection] = await Promise.all([
+        fetchGoogleTasksStatus(),
+        fetchGoogleTasksConnection(),
+      ]);
+      const enabled = status.googleTasks.enabled;
+      setGoogleTasksEnabled(enabled);
+      setGooglePersonalSync(
+        connection.personalSync || status.googleTasks.personalSync === true
+      );
+      setGoogleConnected(connection.connected);
+      return {
+        enabled,
+        connected: connection.connected,
+        personal: connection.personalSync,
+      };
+    } catch {
+      setGoogleTasksEnabled(false);
+      setGooglePersonalSync(false);
+      setGoogleConnected(false);
+      return { enabled: false, connected: false, personal: false };
+    }
+  }, []);
+
+  const handleConnectGoogleTasks = async () => {
+    setGoogleConnecting(true);
+    try {
+      const { authorizeUrl } = await startGoogleTasksConnect();
+      window.location.assign(authorizeUrl);
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not start Google connection"
+      );
+      setGoogleConnecting(false);
+    }
+  };
+
+  const handleDisconnectGoogleTasks = async () => {
+    setGoogleSyncing(true);
+    try {
+      await disconnectGoogleTasks();
+      setGoogleConnected(false);
+      toast.success("Google Tasks disconnected");
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not disconnect Google Tasks"
+      );
+    } finally {
+      setGoogleSyncing(false);
+    }
+  };
+
   useEffect(() => {
-    loadTasks();
-    loadMembers();
-  }, [loadTasks, loadMembers]);
+    const init = async () => {
+      await loadTasks();
+      await loadMembers();
+      const syncState = await loadGoogleSyncState();
+      if (syncState.enabled && (!syncState.personal || syncState.connected)) {
+        await pullFromGoogle(true);
+      }
+    };
+    void init();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- run once on mount
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const google = params.get("google");
+    if (!google) return;
+    if (google === "connected") {
+      toast.success("Google Tasks connected — your list will stay in sync");
+      void loadGoogleSyncState().then((state) => {
+        if (state.connected) void pullFromGoogle(true);
+      });
+    } else if (google === "error") {
+      toast.error(params.get("message") || "Google Tasks connection failed");
+    }
+    params.delete("google");
+    params.delete("message");
+    const next = `${window.location.pathname}${params.toString() ? `?${params}` : ""}`;
+    window.history.replaceState({}, "", next);
+  }, [loadGoogleSyncState, pullFromGoogle]);
 
   const currentMember = useMemo(
     () =>
@@ -258,6 +367,36 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
     setModalOpen(true);
   };
 
+  const handleGoogleSync = async (action: "pull" | "migrate" | "both") => {
+    if (action === "pull") {
+      await pullFromGoogle(false);
+      return;
+    }
+    setGoogleSyncing(true);
+    try {
+      const result = await syncGoogleTasks({ action });
+      await loadTasks();
+      const migrateCount = result.migrate?.migrated ?? 0;
+      const pullCount = result.pull?.pulled ?? 0;
+      const errors = result.migrate?.errors ?? [];
+      if (errors.length > 0) {
+        toast.error(`Google sync finished with ${errors.length} error(s)`);
+      } else if (migrateCount > 0 || pullCount > 0) {
+        toast.success(
+          `Google Tasks synced (${migrateCount} migrated, ${pullCount} updated)`
+        );
+      } else {
+        toast.success("Google Tasks already up to date");
+      }
+    } catch (error) {
+      toast.error(
+        error instanceof Error ? error.message : "Could not sync Google Tasks"
+      );
+    } finally {
+      setGoogleSyncing(false);
+    }
+  };
+
   return (
     <div className="space-y-8">
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-nurture-sage via-nurture-sage-dark to-nurture-charcoal p-8 text-white shadow-lg md:p-10">
@@ -398,6 +537,50 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
               {exporting === "pdf" ? "Opening…" : "Export PDF"}
             </button>
           </div>
+          {googleTasksEnabled ? (
+            <div className="inline-flex flex-wrap items-center gap-2 rounded-full border border-nurture-sage/25 bg-white p-1 shadow-sm">
+              {googlePersonalSync && !googleConnected ? (
+                <button
+                  type="button"
+                  onClick={() => void handleConnectGoogleTasks()}
+                  disabled={loading || googleConnecting}
+                  className="rounded-full px-4 py-2 text-sm font-medium text-nurture-charcoal/75 transition hover:bg-nurture-sage/10 hover:text-nurture-sage-dark disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {googleConnecting ? "Connecting…" : "Connect Google Tasks"}
+                </button>
+              ) : null}
+              {(!googlePersonalSync || googleConnected) ? (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => void handleGoogleSync("pull")}
+                    disabled={loading || googleSyncing}
+                    className="rounded-full px-4 py-2 text-sm font-medium text-nurture-charcoal/75 transition hover:bg-nurture-sage/10 hover:text-nurture-sage-dark disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {googleSyncing ? "Syncing…" : "Sync from Google"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void handleGoogleSync("migrate")}
+                    disabled={loading || googleSyncing}
+                    className="rounded-full px-4 py-2 text-sm font-medium text-nurture-charcoal/75 transition hover:bg-nurture-sage/10 hover:text-nurture-sage-dark disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    Push to Google
+                  </button>
+                </>
+              ) : null}
+              {googlePersonalSync && googleConnected ? (
+                <button
+                  type="button"
+                  onClick={() => void handleDisconnectGoogleTasks()}
+                  disabled={loading || googleSyncing}
+                  className="rounded-full px-4 py-2 text-sm font-medium text-nurture-charcoal/55 transition hover:bg-nurture-sage/10 hover:text-nurture-charcoal disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Disconnect
+                </button>
+              ) : null}
+            </div>
+          ) : null}
           <button
             type="button"
             onClick={loadTasks}
@@ -549,6 +732,10 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
                         {task.category === "client" ? (
                           <span className="shrink-0 rounded-full bg-nurture-sage/15 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-nurture-sage-dark">
                             {task.clickUpTaskId ? "ClickUp synced" : "Client · pending sync"}
+                          </span>
+                        ) : task.googleTaskId ? (
+                          <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
+                            Google Tasks
                           </span>
                         ) : null}
                       </div>

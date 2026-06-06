@@ -12,7 +12,7 @@
 #
 # Optional:
 #   GIFT_CARD_EMAIL_FROM_NAME='The Nesting Place'
-#   GIFT_CARD_EMAIL_REPLY_TO='hello@nurturecollective.com'
+#   GIFT_CARD_EMAIL_REPLY_TO='info@nesting-place.com'
 #   AMPLIFY_APP_ID=d9588bqvrp5xs
 
 set -euo pipefail

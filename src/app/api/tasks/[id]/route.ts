@@ -5,6 +5,7 @@ import {
 } from "@/lib/api/routeHelpers";
 import { listTasks, saveTasks } from "@/lib/tasks/storage";
 import { parseAssigneeList } from "@/lib/tasks/normalize";
+import { syncInternalTaskToGoogle } from "@/lib/tasks/googleSync";
 import { syncClientTaskToN8n } from "@/lib/tasks/sync";
 import type { TaskCategory, UpdateTaskInput } from "@/types/task";
 
@@ -80,12 +81,21 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
         body.clickUpTaskId !== undefined
           ? body.clickUpTaskId
           : current.clickUpTaskId,
+      googleTaskId:
+        body.googleTaskId !== undefined
+          ? body.googleTaskId
+          : current.googleTaskId,
     };
 
     tasks[index] = updated;
     await saveTasks(tasks);
-    await syncClientTaskToN8n(updated, "update");
-    return NextResponse.json({ task: updated });
+    const synced = await syncInternalTaskToGoogle(updated, "update");
+    if (synced.googleTaskId !== updated.googleTaskId) {
+      tasks[index] = synced;
+      await saveTasks(tasks);
+    }
+    await syncClientTaskToN8n(synced, "update");
+    return NextResponse.json({ task: synced });
   } catch (error) {
     return handleStorageError(error);
   }
@@ -97,9 +107,13 @@ export async function DELETE(request: NextRequest, { params }: RouteContext) {
 
   try {
     const tasks = await listTasks();
+    const removed = tasks.find((t) => t.id === params.id);
     const next = tasks.filter((t) => t.id !== params.id);
     if (next.length === tasks.length) {
       return NextResponse.json({ error: "Task not found" }, { status: 404 });
+    }
+    if (removed) {
+      await syncInternalTaskToGoogle(removed, "delete");
     }
     await saveTasks(next);
     return NextResponse.json({ ok: true });

@@ -22,7 +22,7 @@ export const reverseGeocodeZip = async (
 
   const response = await fetch(url.toString(), {
     headers: {
-      "User-Agent": "NurtureCollective/1.0 (coverage-admin; contact@nurturecollective.com)",
+      "User-Agent": "NurtureCollective/1.0 (coverage-admin; info@nesting-place.com)",
       Accept: "application/json",
     },
     next: { revalidate: 0 },

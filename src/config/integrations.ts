@@ -1,9 +1,11 @@
+import { brands } from "@/content/site";
+
 /** Public integration URLs — safe for client components. */
 export const integrations = {
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.trim() ?? "",
   contactEmail:
     process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() ??
-    "hello@nurturecollective.com",
+    brands.nestingPlace.email,
 } as const;
 
 /** Server-only webhook config — use only in API routes. */

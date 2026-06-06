@@ -66,7 +66,7 @@ export const brands = {
       "An experienced maternal wellness and postpartum support practice offering birth doula support, overnight newborn care, postpartum support, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of motherhood.",
     phone: "(844) 926-2867",
     phoneE164: "+18449262867",
-    email: "info@thenestingplacenj.com",
+    email: "info@nesting-place.com",
   },
   /** Legal entity operating The Nesting Place and the provider platform. */
   nurtureCollective: {

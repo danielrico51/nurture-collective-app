@@ -34,23 +34,11 @@ export const bookingConfig = {
     DEFAULT_GOOGLE_BOOKING_URL,
 } as const;
 
-export const resolveBookingProvider = (): BookingProvider => {
-  const { providerSetting, calendlyUrl, googleBookingUrl } = bookingConfig;
+export const resolveBookingProvider = (): BookingProvider =>
+  bookingConfig.googleBookingUrl ? "google" : "none";
 
-  // Calendly only when explicitly requested (legacy / local testing).
-  if (providerSetting === "calendly" && calendlyUrl) {
-    return "calendly";
-  }
-
-  return googleBookingUrl ? "google" : "none";
-};
-
-export const getActiveBookingUrl = (): string | null => {
-  const provider = resolveBookingProvider();
-  if (provider === "google") return bookingConfig.googleBookingUrl;
-  if (provider === "calendly") return bookingConfig.calendlyUrl;
-  return null;
-};
+export const getActiveBookingUrl = (): string | null =>
+  bookingConfig.googleBookingUrl || null;
 
 export const hasBooking = (): boolean => Boolean(getActiveBookingUrl());
 
@@ -66,11 +54,6 @@ export const getBookingProviderLabel = (): string => {
 };
 
 export const buildBookingEmbedUrl = (url: string): string => {
-  if (resolveBookingProvider() === "calendly") {
-    return url.includes("?")
-      ? `${url}&hide_gdpr_banner=1`
-      : `${url}?hide_gdpr_banner=1`;
-  }
   try {
     const parsed = new URL(url);
     if (!parsed.searchParams.has("gv")) {
@@ -94,19 +77,6 @@ export const buildBookingUrlWithPrefill = (
   const base = getActiveBookingUrl();
   if (!base) return null;
 
-  const provider = resolveBookingProvider();
-  if (provider === "calendly") {
-    try {
-      const url = new URL(base);
-      if (prefill.email) url.searchParams.set("email", prefill.email);
-      if (prefill.name) url.searchParams.set("name", prefill.name);
-      return url.toString();
-    } catch {
-      return base;
-    }
-  }
-
-  // Google Workspace booking pages — extend when API / URL prefill is documented
   return base;
 };
 
