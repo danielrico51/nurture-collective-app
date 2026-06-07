@@ -16,13 +16,19 @@ import {
 } from "@/utils/sharedAuthUi";
 import { PUBLIC_SIGNUP_ENABLED, canCreateMemberAccount } from "@/config/publicAccess";
 import { buildGuestAccountSignupHref } from "@/config/intakeAccess";
+import { readAuthReturnTo } from "@/config/socialAuth";
 import { resolvePostAuthPath } from "@/lib/auth/postAuthNavigation";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 
 const SigninPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const returnTo = searchParams.get("returnTo");
+  const queryReturnTo = searchParams.get("returnTo");
+  const returnToRef = useRef<string | null>(null);
+  if (returnToRef.current === null) {
+    returnToRef.current = queryReturnTo ?? readAuthReturnTo();
+  }
+  const returnTo = returnToRef.current;
 
   useEffect(() => {
     const redirectIfSignedIn = async () => {

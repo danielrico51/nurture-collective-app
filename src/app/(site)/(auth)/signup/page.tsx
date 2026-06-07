@@ -15,6 +15,7 @@ import {
   signUpAuthHeader,
 } from "@/utils/sharedAuthUi";
 import { useEffect } from "react";
+import { buildGuestAccountSigninHref } from "@/config/intakeAccess";
 import { canCreateMemberAccount } from "@/config/publicAccess";
 import { resolvePostAuthPath } from "@/lib/auth/postAuthNavigation";
 import { brands } from "@/content/site";
@@ -70,7 +71,7 @@ const SignupPage = () => {
         <p className="mt-4 border-t border-nurture-sage/10 pt-4 text-center text-sm text-nurture-charcoal/65">
           Already a member?{" "}
           <Link
-            href="/signin"
+            href={buildGuestAccountSigninHref(returnTo ?? undefined)}
             className="font-semibold text-nurture-sage-dark transition hover:text-nurture-charcoal hover:underline"
           >
             Sign in

@@ -1,6 +1,11 @@
 "use client";
 
 import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
+import {
+  buildGuestAccountSigninHref,
+  buildGuestAccountSignupHref,
+  isIntakeChatPath,
+} from "@/config/intakeAccess";
 import { primaryNavLinks } from "@/config/navigation";
 import { useUserGroups } from "@/hooks/useUserGroups";
 import { signOut } from "aws-amplify/auth";
@@ -14,6 +19,13 @@ interface HeaderProps {
 
 const Header = ({ isAuthenticated }: HeaderProps) => {
   const pathname = usePathname();
+  const onIntakeChat = isIntakeChatPath(pathname);
+  const signinHref = onIntakeChat
+    ? buildGuestAccountSigninHref()
+    : "/signin";
+  const signupHref = onIntakeChat
+    ? buildGuestAccountSignupHref()
+    : "/signup/mom";
   const { canAccessAdmin } = useUserGroups(isAuthenticated);
   const [menuOpen, setMenuOpen] = useState(false);
   const [sticky, setSticky] = useState(false);
@@ -101,13 +113,13 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
           ) : (
             <>
               <Link
-                href="/signin"
+                href={signinHref}
                 className="text-sm font-medium text-nurture-charcoal/80 hover:text-nurture-sage-dark"
               >
                 Sign in
               </Link>
               <Link
-                href="/signup/mom"
+                href={signupHref}
                 className="rounded-full border border-nurture-sage px-4 py-2 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
               >
                 Sign up
@@ -171,10 +183,10 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 <Link href="/care/start" onClick={() => setMenuOpen(false)}>
                   Request support
                 </Link>
-                <Link href="/signin" onClick={() => setMenuOpen(false)}>
+                <Link href={signinHref} onClick={() => setMenuOpen(false)}>
                   Sign in
                 </Link>
-                <Link href="/signup/mom" onClick={() => setMenuOpen(false)}>
+                <Link href={signupHref} onClick={() => setMenuOpen(false)}>
                   Sign up
                 </Link>
               </>

@@ -8,6 +8,7 @@ import QuickReplyChips from "@/components/Intake/chat/QuickReplyChips";
 import TypingIndicator from "@/components/Intake/chat/TypingIndicator";
 import {
   buildGuestAccountSignupHref,
+  INTAKE_SESSION_STORAGE_KEY,
   PUBLIC_INTAKE_PATH,
 } from "@/config/intakeAccess";
 import type { CareServiceContext } from "@/config/carePaths";
@@ -37,8 +38,6 @@ interface ConversationalIntakeProps {
   guestMode?: boolean;
   initialService?: CareServiceContext | null;
 }
-
-const SESSION_STORAGE_KEY = "nurture-intake-session-id";
 
 const hasUserMessages = (items: ConversationMessage[]) =>
   items.some((message) => message.role === "user");
@@ -134,7 +133,7 @@ const ConversationalIntake = ({
     try {
       const storedSessionId =
         typeof window !== "undefined"
-          ? window.sessionStorage.getItem(SESSION_STORAGE_KEY)
+          ? window.sessionStorage.getItem(INTAKE_SESSION_STORAGE_KEY)
           : null;
 
       if (storedSessionId && !initialService) {
@@ -150,10 +149,10 @@ const ConversationalIntake = ({
           }
           return;
         } catch {
-          window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+          window.sessionStorage.removeItem(INTAKE_SESSION_STORAGE_KEY);
         }
       } else if (initialService) {
-        window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+        window.sessionStorage.removeItem(INTAKE_SESSION_STORAGE_KEY);
       }
 
       const { session: nextSession, quickReplies: replies } =
@@ -165,7 +164,7 @@ const ConversationalIntake = ({
           { forceNew: Boolean(initialService) }
         );
       followLatestRef.current = false;
-      window.sessionStorage.setItem(SESSION_STORAGE_KEY, nextSession.id);
+      window.sessionStorage.setItem(INTAKE_SESSION_STORAGE_KEY, nextSession.id);
       setSession(nextSession);
       setMessages(nextSession.messages);
       setQuickReplies(replies);
@@ -196,7 +195,7 @@ const ConversationalIntake = ({
       setMessages(nextSession.messages);
       setQuickReplies(nextSession.quickReplies);
       followLatestRef.current = true;
-      window.sessionStorage.setItem(SESSION_STORAGE_KEY, nextSession.id);
+      window.sessionStorage.setItem(INTAKE_SESSION_STORAGE_KEY, nextSession.id);
 
       if (intakeSubmitted) {
         setSessionClosed(true);
@@ -328,13 +327,13 @@ const ConversationalIntake = ({
     setBootstrapError(null);
     setSessionClosed(false);
     followLatestRef.current = false;
-    window.sessionStorage.removeItem(SESSION_STORAGE_KEY);
+    window.sessionStorage.removeItem(INTAKE_SESSION_STORAGE_KEY);
     initRef.current = false;
     try {
       const { session: nextSession, quickReplies: replies } =
         await startConversation(defaults, { forceNew: true });
       initRef.current = true;
-      window.sessionStorage.setItem(SESSION_STORAGE_KEY, nextSession.id);
+      window.sessionStorage.setItem(INTAKE_SESSION_STORAGE_KEY, nextSession.id);
       setSession(nextSession);
       setMessages(nextSession.messages);
       setQuickReplies(replies);
@@ -407,11 +406,11 @@ const ConversationalIntake = ({
       ) : null}
 
       {showStartFresh ? (
-        <div className="flex shrink-0 justify-end px-2 pt-2 sm:px-0">
+        <div className="flex shrink-0 justify-end border-b border-nurture-sage/10 bg-white/70 px-4 py-2">
           <button
             type="button"
             onClick={() => void startFreshSession()}
-            className="text-xs font-medium text-nurture-charcoal/55 underline-offset-2 hover:text-nurture-sage-dark hover:underline"
+            className="rounded-full border border-nurture-sage/30 bg-white px-3 py-1.5 text-xs font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
           >
             Start a new conversation
           </button>
@@ -595,7 +594,11 @@ const ConversationalIntake = ({
           </div>
         ) : null}
         {showGuestSaveHint ? (
-          <GuestSaveProgressPrompt variant="compact" className="mb-2" />
+          <GuestSaveProgressPrompt
+            variant="compact"
+            className="mb-2"
+            showStartFresh
+          />
         ) : null}
         <QuickReplyChips
           options={quickReplies}

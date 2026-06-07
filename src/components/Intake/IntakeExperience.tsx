@@ -102,7 +102,11 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
   return (
     <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gradient-to-b from-nurture-cream via-white to-nurture-cream/50">
       {publicMode ? (
-        <GuestSaveProgressPrompt variant="banner" className="shrink-0" />
+        <GuestSaveProgressPrompt
+          variant="banner"
+          className="shrink-0"
+          showStartFresh
+        />
       ) : null}
       <div className="flex min-h-0 flex-1 flex-col">
         <ConversationalIntake
