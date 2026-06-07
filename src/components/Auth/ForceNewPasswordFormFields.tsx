@@ -5,6 +5,10 @@ import {
   POOL_REQUIRED_ATTRIBUTE_NAMES,
   type PoolRequiredAttributeName,
 } from "@/lib/auth/poolAttributes";
+import {
+  formatPhoneInputForAmplify,
+  splitPhoneForAmplifyForm,
+} from "@/utils/signUpAttributes";
 import { useAuthenticator } from "@aws-amplify/ui-react";
 import { useEffect, useMemo, useState } from "react";
 
@@ -29,6 +33,8 @@ export function ForceNewPasswordFormFields() {
   const [missing, setMissing] = useState<PoolRequiredAttributeName[]>([]);
   const [givenName, setGivenName] = useState("");
   const [familyName, setFamilyName] = useState("");
+  const [phoneCountryCode, setPhoneCountryCode] = useState("+1");
+  const [phoneLocal, setPhoneLocal] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -78,6 +84,18 @@ export function ForceNewPasswordFormFields() {
   const needsNameFromParts =
     missing.includes("given_name") && missing.includes("family_name");
   const derivedName = [givenName, familyName].filter(Boolean).join(" ").trim();
+  const storedPhone = existing.phone_number
+    ? splitPhoneForAmplifyForm(existing.phone_number)
+    : null;
+  const showPhoneField = missing.includes("phone_number");
+  const includeStoredPhone =
+    Boolean(storedPhone?.phone_number) && !showPhoneField;
+
+  const hiddenExisting = Object.entries(existing).filter(
+    ([name]) =>
+      name !== "phone_number" &&
+      !missing.includes(name as PoolRequiredAttributeName)
+  );
 
   if (loading) {
     return (
@@ -100,9 +118,32 @@ export function ForceNewPasswordFormFields() {
         </p>
       ) : null}
 
-      {Object.entries(existing).map(([name, value]) => (
+      {hiddenExisting.map(([name, value]) => (
         <input key={name} type="hidden" name={name} value={value} readOnly />
       ))}
+
+      {includeStoredPhone && storedPhone ? (
+        <>
+          <input
+            type="hidden"
+            name="country_code"
+            value={storedPhone.country_code}
+            readOnly
+          />
+          <input
+            type="hidden"
+            name="phone_number"
+            value={storedPhone.phone_number}
+            readOnly
+          />
+        </>
+      ) : null}
+
+      {showPhoneField ? (
+        <>
+          <input type="hidden" name="country_code" value={phoneCountryCode} readOnly />
+        </>
+      ) : null}
 
       {visibleMissing.map((field) => {
         if (needsNameFromParts && field === "given_name") {
@@ -143,6 +184,33 @@ export function ForceNewPasswordFormFields() {
             </div>
           );
         }
+        if (field === "phone_number") {
+          return (
+            <div key={field}>
+              <label htmlFor={field} className="block text-sm font-medium">
+                {POOL_ATTRIBUTE_LABELS[field]}
+              </label>
+              <input
+                id={field}
+                name={field}
+                type="tel"
+                inputMode="tel"
+                autoComplete="tel-national"
+                required
+                value={phoneLocal}
+                onChange={(event) =>
+                  setPhoneLocal(formatPhoneInputForAmplify(event.target.value))
+                }
+                className={inputClassName}
+                placeholder="2626139986"
+              />
+              <p className="mt-1 text-xs text-nurture-charcoal/55">
+                US number without +1 — Amplify adds the country code automatically.
+              </p>
+            </div>
+          );
+        }
+
         return (
           <div key={field}>
             <label htmlFor={field} className="block text-sm font-medium">
@@ -160,7 +228,8 @@ export function ForceNewPasswordFormFields() {
         );
       })}
 
-      {needsNameFromParts && derivedName ? (
+      {(missing.includes("given_name") || missing.includes("family_name")) &&
+      derivedName ? (
         <input type="hidden" name="name" value={derivedName} readOnly />
       ) : null}
 

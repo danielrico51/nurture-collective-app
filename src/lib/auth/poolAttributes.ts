@@ -22,11 +22,34 @@ export const POOL_ATTRIBUTE_LABELS: Record<PoolRequiredAttributeName, string> =
     "custom:username": "Username",
   };
 
+import {
+  isValidE164Phone,
+  normalizePhoneNumber,
+} from "@/utils/signUpAttributes";
+
+/** Drop malformed stored phones so the challenge form can recollect them. */
+export const sanitizePoolAttributes = (
+  attributes: Record<string, string>
+): Record<string, string> => {
+  const sanitized = { ...attributes };
+
+  if (sanitized.phone_number) {
+    const normalized = normalizePhoneNumber(sanitized.phone_number);
+    if (isValidE164Phone(normalized)) {
+      sanitized.phone_number = normalized;
+    } else {
+      delete sanitized.phone_number;
+    }
+  }
+
+  return sanitized;
+};
+
 export const getMissingRequiredAttributes = (
   attributes: Record<string, string>,
   username?: string
 ) => {
-  const merged = { ...attributes };
+  const merged = sanitizePoolAttributes(attributes);
   if (!merged["custom:username"]?.trim() && username) {
     merged["custom:username"] = username;
   }

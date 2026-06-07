@@ -1,3 +1,6 @@
+export const isValidE164Phone = (value: string): boolean =>
+  /^\+\d{10,15}$/.test(value);
+
 /** Build Cognito user attributes required by the user pool schema. */
 export const normalizePhoneNumber = (value: string) => {
   const trimmed = value.trim();
@@ -14,6 +17,37 @@ export const normalizePhoneNumber = (value: string) => {
     return `+${digits}`;
   }
   return `+${digits}`;
+};
+
+/** Amplify ForceNewPassword joins country_code + phone_number — never pass a full E.164 string as phone_number alone. */
+export const splitPhoneForAmplifyForm = (value: string) => {
+  const e164 = normalizePhoneNumber(value);
+  if (!isValidE164Phone(e164)) {
+    return { country_code: "+1", phone_number: "" };
+  }
+
+  if (e164.startsWith("+1") && e164.length === 12) {
+    return { country_code: "+1", phone_number: e164.slice(2) };
+  }
+
+  const match = e164.match(/^(\+\d{1,3})(\d+)$/);
+  if (match) {
+    return { country_code: match[1], phone_number: match[2] };
+  }
+
+  return { country_code: "+1", phone_number: e164.replace(/^\+/, "") };
+};
+
+/** Strip pasted numbers to the local part Amplify expects with a +1 country code. */
+export const formatPhoneInputForAmplify = (value: string): string => {
+  const digits = value.replace(/\D/g, "");
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return digits.slice(1);
+  }
+  if (digits.length > 10 && digits.startsWith("1")) {
+    return digits.slice(1, 11);
+  }
+  return digits.slice(0, 10);
 };
 
 type AttributeMap = Record<string, string | undefined>;
