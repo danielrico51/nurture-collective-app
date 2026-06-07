@@ -25,17 +25,21 @@ export const buildCognitoUserLookupFilters = (username: string): string[] => {
   return [`username = "${normalized}"`];
 };
 
-const attributesFromListUser = (
-  user: { Attributes?: Array<{ Name?: string; Value?: string }> }
+const attributesFromCognito = (
+  attrs?: Array<{ Name?: string; Value?: string }>
 ): Record<string, string> => {
   const attributes: Record<string, string> = {};
-  for (const attr of user.Attributes ?? []) {
+  for (const attr of attrs ?? []) {
     if (attr.Name && attr.Value) {
       attributes[attr.Name] = attr.Value;
     }
   }
   return attributes;
 };
+
+const attributesFromListUser = (
+  user: { Attributes?: Array<{ Name?: string; Value?: string }> }
+): Record<string, string> => attributesFromCognito(user.Attributes);
 
 const findUserByListFilters = async (username: string) => {
   const client = getCognitoClient();
@@ -76,7 +80,7 @@ export const getUserAttributesByUsername = async (username: string) => {
       })
     );
 
-    return attributesFromListUser(response);
+    return attributesFromCognito(response.UserAttributes);
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     throw new Error(`User not found (${username}): ${message}`);
