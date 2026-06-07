@@ -1,9 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { requireAuthUserOrGuest } from "@/lib/api/authHelpers";
-import { serverBookingConfig } from "@/config/bookings";
-import { notifyConsultBooked } from "@/lib/integrations/slack";
-import { forwardToN8n } from "@/lib/webhooks/n8n";
-import { serverIntegrations } from "@/config/integrations";
+import { runConsultBookingIntegrations } from "@/lib/scheduling/bookingIntegrations";
 import { isGoogleSchedulingActive } from "@/lib/scheduling/config";
 import {
   createIntroCallBooking,
@@ -78,28 +75,10 @@ export async function POST(request: NextRequest) {
       await saveBookingIdempotency(auth.user!.sub, idempotencyKey, booking);
     }
 
-    void notifyConsultBooked({
-      inviteeName: booking.attendeeName,
-      inviteeEmail: booking.attendeeEmail,
-      eventName: "Maternal Support Introductory Call",
-      startTime: booking.start,
-      timezone: booking.timezone,
-      bookingUrl: booking.htmlLink,
-    }).catch((error) => {
-      console.error("[scheduling] Slack notification failed:", error);
-    });
-
-    void forwardToN8n(
-      serverBookingConfig.n8nGoogleBookingsWebhookUrl ||
-        serverIntegrations.n8nInquiryWebhookUrl,
-      serverIntegrations.n8nWebhookSecret,
-      {
-        source: "concierge-scheduling",
-        receivedAt: new Date().toISOString(),
-        booking,
-      }
-    ).catch((error) => {
-      console.error("[scheduling] n8n forward failed:", error);
+    void runConsultBookingIntegrations({
+      userId: auth.user!.sub,
+      userEmail: auth.user!.email,
+      booking,
     });
 
     return NextResponse.json({ booking });

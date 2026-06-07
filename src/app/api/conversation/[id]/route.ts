@@ -3,6 +3,7 @@ import { requireAuthUserOrGuest } from "@/lib/api/authHelpers";
 import { handleIntakeStorageError } from "@/lib/api/routeHelpers";
 import { reactivateConversationIfIncomplete } from "@/lib/conversation/sessionLifecycle";
 import { getConversationSession } from "@/lib/conversation/storage";
+import { findConfirmedBookingForConversation } from "@/lib/scheduling/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -18,7 +19,11 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ error: "Session not found" }, { status: 404 });
     }
     session = await reactivateConversationIfIncomplete(session);
-    return NextResponse.json({ session });
+    const confirmedBooking = await findConfirmedBookingForConversation(
+      user.sub,
+      session.id
+    );
+    return NextResponse.json({ session, confirmedBooking });
   } catch (err) {
     return handleIntakeStorageError(err);
   }

@@ -26,8 +26,10 @@ export const deriveLeadStatus = (input: {
   intakeStatus?: string | null;
   completionScore?: number;
   hasSubmittedIntake?: boolean;
+  hasConsultScheduled?: boolean;
   currentStatus?: LeadStatus;
 }): LeadStatus => {
+  if (input.hasConsultScheduled) return "consult_scheduled";
   if (isPreservedStatus(input.currentStatus)) {
     return input.currentStatus!;
   }
@@ -56,6 +58,7 @@ export const buildLeadFromSources = (input: {
   conversationSessionId?: string | null;
   existing?: Partial<LeadRecord> | null;
   hasSubmittedIntake?: boolean;
+  hasConsultScheduled?: boolean;
 }): LeadRecord => {
   const leadId = resolveLeadId(input.userId);
   const intake = input.intake;
@@ -75,6 +78,7 @@ export const buildLeadFromSources = (input: {
     intakeStatus,
     completionScore,
     hasSubmittedIntake: input.hasSubmittedIntake,
+    hasConsultScheduled: input.hasConsultScheduled,
     currentStatus: input.existing?.status,
   });
 

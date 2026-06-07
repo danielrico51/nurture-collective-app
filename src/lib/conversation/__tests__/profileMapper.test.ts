@@ -1,10 +1,15 @@
 import { describe, expect, it } from "vitest";
 import {
+  canOfferScheduling,
   computeMissingFields,
   hasContactInfo,
+  hasCollectedBookingContactInChat,
   mergeExtractedProfile,
   parseQuickReplyToPatch,
+  profileForLlmContext,
+  scrubUnverifiedContactFromProfile,
 } from "@/lib/conversation/profileMapper";
+import type { ConversationMessage } from "@/types/conversation";
 import { createEmptyExtractedProfile } from "@/types/conversation";
 
 describe("profile contact requirements", () => {
@@ -38,6 +43,83 @@ describe("profile contact requirements", () => {
 
     expect(profile.readyToComplete).toBe(true);
     expect(profile.missingFields).not.toContain("contactInfo");
+  });
+
+  it("strips unverified contact before LLM context", () => {
+    const profile = mergeExtractedProfile(createEmptyExtractedProfile(), {
+      name: "Daniel",
+      email: "daniel@example.com",
+    });
+    const messages: ConversationMessage[] = [
+      {
+        id: "1",
+        role: "user",
+        content: "Pregnant",
+        timestamp: "2026-01-01T00:00:00.000Z",
+      },
+    ];
+
+    const scrubbed = scrubUnverifiedContactFromProfile(profile, messages);
+    expect(scrubbed.name).toBe("");
+    expect(scrubbed.email).toBe("");
+    expect(profileForLlmContext(profile, messages).name).toBe("");
+  });
+
+  it("does not offer scheduling until name and email appear in user messages", () => {
+    const profile = mergeExtractedProfile(createEmptyExtractedProfile(), {
+      maternalStage: "pregnant",
+      supportInterests: ["birth-doula"],
+      name: "Daniel",
+      email: "daniel@example.com",
+    });
+    const earlyMessages: ConversationMessage[] = [
+      {
+        id: "1",
+        role: "assistant",
+        content: "How far along are you?",
+        timestamp: "2026-01-01T00:00:00.000Z",
+      },
+      {
+        id: "2",
+        role: "user",
+        content: "Pregnant",
+        timestamp: "2026-01-01T00:01:00.000Z",
+      },
+      {
+        id: "3",
+        role: "assistant",
+        content: "What support are you looking for?",
+        timestamp: "2026-01-01T00:02:00.000Z",
+      },
+      {
+        id: "4",
+        role: "user",
+        content: "What other services do you offer?",
+        timestamp: "2026-01-01T00:03:00.000Z",
+      },
+    ];
+
+    expect(canOfferScheduling(profile, earlyMessages)).toBe(false);
+    expect(hasCollectedBookingContactInChat(earlyMessages, profile)).toBe(false);
+
+    const readyMessages: ConversationMessage[] = [
+      ...earlyMessages,
+      {
+        id: "5",
+        role: "user",
+        content: "My name is Daniel",
+        timestamp: "2026-01-01T00:04:00.000Z",
+      },
+      {
+        id: "6",
+        role: "user",
+        content: "daniel@example.com",
+        timestamp: "2026-01-01T00:05:00.000Z",
+      },
+    ];
+
+    expect(hasCollectedBookingContactInChat(readyMessages, profile)).toBe(true);
+    expect(canOfferScheduling(profile, readyMessages)).toBe(true);
   });
 
   it("extracts email and phone from free-text replies", () => {

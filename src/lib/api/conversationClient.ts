@@ -1,5 +1,6 @@
 import { fetchWithRetry } from "@/lib/api/fetchWithRetry";
 import { intakeRequestHeaders } from "@/lib/api/intakeRequestHeaders";
+import type { ConsultBooking } from "@/lib/scheduling/types";
 import type { ConversationSession } from "@/types/conversation";
 
 export const startConversation = async (
@@ -102,7 +103,10 @@ export const sendConversationMessage = async (
 
 export const fetchConversation = async (
   sessionId: string
-): Promise<ConversationSession> => {
+): Promise<{
+  session: ConversationSession;
+  confirmedBooking: ConsultBooking | null;
+}> => {
   const response = await fetchWithRetry(`/api/conversation/${sessionId}`, {
     headers: await intakeRequestHeaders(),
     cache: "no-store",
@@ -111,5 +115,8 @@ export const fetchConversation = async (
   if (!response.ok) {
     throw new Error(typeof data.error === "string" ? data.error : "Could not load conversation");
   }
-  return data.session;
+  return {
+    session: data.session as ConversationSession,
+    confirmedBooking: (data.confirmedBooking as ConsultBooking | null) ?? null,
+  };
 };

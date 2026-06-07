@@ -168,7 +168,8 @@ const ConversationalIntake = ({
 
       if (storedSessionId && !initialService) {
         try {
-          const stored = await fetchConversation(storedSessionId);
+          const { session: stored, confirmedBooking: storedBooking } =
+            await fetchConversation(storedSessionId);
           if (!isValidStoredSession(stored, userId, guestMode)) {
             window.sessionStorage.removeItem(sessionStorageKey);
             throw new Error("stale session");
@@ -178,6 +179,7 @@ const ConversationalIntake = ({
           setSession(hydrated);
           setMessages(hydrated.messages);
           setQuickReplies(hydrated.quickReplies);
+          setConfirmedBooking(storedBooking);
           setSessionClosed(hydrated.status === "completed");
           if (hydrated.status === "completed") {
             followLatestRef.current = true;
@@ -192,10 +194,7 @@ const ConversationalIntake = ({
 
       const { session: nextSession, quickReplies: replies } =
         await startConversation(
-          {
-            ...defaults,
-            serviceSlug: initialService?.slug,
-          },
+          { serviceSlug: initialService?.slug },
           { forceNew: Boolean(initialService) }
         );
       const hydrated = applyProfileDefaults(nextSession, defaults);
@@ -230,11 +229,12 @@ const ConversationalIntake = ({
       // Extraction finishes after the first stream "done" — refresh so booking UI can appear.
       window.setTimeout(() => {
         void fetchConversation(sessionId)
-          .then((refreshed) => {
+          .then(({ session: refreshed, confirmedBooking: booking }) => {
             const synced = applyProfileDefaults(refreshed, defaults);
             setSession(synced);
             setMessages(synced.messages);
             setQuickReplies(synced.quickReplies);
+            setConfirmedBooking(booking);
           })
           .catch(() => undefined);
       }, 1500);
@@ -278,10 +278,12 @@ const ConversationalIntake = ({
 
   const syncSessionFromServer = useCallback(
     async (sessionId: string, attemptedMessage?: string) => {
-      const refreshed = await fetchConversation(sessionId);
+      const { session: refreshed, confirmedBooking: booking } =
+        await fetchConversation(sessionId);
       setSession(refreshed);
       setMessages(refreshed.messages);
       setQuickReplies(refreshed.quickReplies);
+      setConfirmedBooking(booking);
       followLatestRef.current = hasUserMessages(refreshed.messages);
       const reopened = refreshed.status === "active";
       setSessionClosed(!reopened);
@@ -418,7 +420,7 @@ const ConversationalIntake = ({
     initRef.current = true;
     try {
       const { session: nextSession, quickReplies: replies } =
-        await startConversation(defaults, { forceNew: true });
+        await startConversation({}, { forceNew: true });
       const hydrated = applyProfileDefaults(nextSession, defaults);
       window.sessionStorage.setItem(sessionStorageKey, hydrated.id);
       setSession(hydrated);
@@ -478,8 +480,8 @@ const ConversationalIntake = ({
     email: profile.email?.trim() || defaults?.email?.trim() || "",
     phone: profile.phone?.trim() || defaults?.phone?.trim() || undefined,
   };
-  const userMessageCount = messages.filter((message) => message.role === "user").length;
-  const canOfferBooking = canOfferScheduling(profile, userMessageCount);
+  const canOfferBooking =
+    !confirmedBooking && canOfferScheduling(profile, messages);
   const canUseLiveScheduling =
     liveSchedulingEnabled && canOfferBooking && !confirmedBooking;
   const showBookCallCard =

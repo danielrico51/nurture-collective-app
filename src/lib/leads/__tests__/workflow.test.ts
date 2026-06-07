@@ -25,6 +25,19 @@ describe("lead workflow", () => {
     expect(deriveLeadStatus({ intakeStatus: "in-review" })).toBe("qualified");
   });
 
+  it("prioritizes consult_scheduled when a call is booked", () => {
+    expect(deriveLeadStatus({ hasConsultScheduled: true })).toBe(
+      "consult_scheduled"
+    );
+    expect(
+      deriveLeadStatus({
+        hasConsultScheduled: true,
+        completionScore: 10,
+        currentStatus: "intake_in_progress",
+      })
+    ).toBe("consult_scheduled");
+  });
+
   it("preserves terminal pipeline statuses", () => {
     expect(
       deriveLeadStatus({

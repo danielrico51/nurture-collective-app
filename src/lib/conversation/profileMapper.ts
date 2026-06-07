@@ -4,7 +4,10 @@ import type {
   MaternalStage,
   SupportInterest,
 } from "@/types/intake";
-import type { ExtractedMaternalProfile } from "@/types/conversation";
+import type {
+  ConversationMessage,
+  ExtractedMaternalProfile,
+} from "@/types/conversation";
 
 const STAGE_ALIASES: Record<string, MaternalStage> = {
   ttc: "trying-to-conceive",
@@ -71,14 +74,121 @@ export const hasContactInfo = (profile: ExtractedMaternalProfile): boolean =>
 export const hasBookingContact = (profile: ExtractedMaternalProfile): boolean =>
   Boolean(profile.name.trim() && profile.email.trim());
 
+const EMAIL_IN_TEXT_RE =
+  /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/;
+
+const isExcludedNameReply = (content: string): boolean => {
+  const trimmed = content.trim();
+  const lower = trimmed.toLowerCase();
+  if (!trimmed) return true;
+  if (STAGE_ALIASES[lower]) return true;
+  if (/^(first|second|third) trimester$/i.test(trimmed)) return true;
+  if (/^prefer not to share/i.test(lower)) return true;
+  if (/^(yes|no|ok|okay|thanks|thank you|that's everything)$/i.test(trimmed)) {
+    return true;
+  }
+  if (/\?/.test(trimmed)) return true;
+  if (trimmed.length > 80) return true;
+
+  for (const alias of Object.keys(INTEREST_ALIASES)) {
+    if (lower.includes(alias)) return true;
+  }
+  for (const alias of Object.keys(CHALLENGE_ALIASES)) {
+    if (lower.includes(alias)) return true;
+  }
+
+  return false;
+};
+
+/** Email must appear in a user message — not only in extracted/auth defaults. */
+export const hasEmailProvidedInChat = (
+  messages: Pick<ConversationMessage, "role" | "content">[]
+): boolean =>
+  messages.some(
+    (message) =>
+      message.role === "user" && EMAIL_IN_TEXT_RE.test(message.content)
+  );
+
+/** Name must be stated by the user — not inferred from auth or assistant text. */
+export const hasNameProvidedInChat = (
+  messages: Pick<ConversationMessage, "role" | "content">[],
+  profile: ExtractedMaternalProfile
+): boolean => {
+  const name = profile.name.trim();
+  if (!name) return false;
+
+  return messages.some((message) => {
+    if (message.role !== "user") return false;
+    const content = message.content.trim();
+    if (isExcludedNameReply(content)) return false;
+
+    if (/(?:my name is|name is|i am|i'?m|call me)\s+/i.test(content)) {
+      return true;
+    }
+
+    if (content.toLowerCase() === name.toLowerCase()) return true;
+
+    const parts = name.split(/\s+/).filter(Boolean);
+    if (
+      parts.length <= 3 &&
+      parts.every((part) =>
+        new RegExp(
+          `\\b${part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`,
+          "i"
+        ).test(content)
+      )
+    ) {
+      return true;
+    }
+
+    return false;
+  });
+};
+
+export const hasCollectedBookingContactInChat = (
+  messages: Pick<ConversationMessage, "role" | "content">[],
+  profile: ExtractedMaternalProfile
+): boolean =>
+  hasBookingContact(profile) &&
+  hasEmailProvidedInChat(messages) &&
+  hasNameProvidedInChat(messages, profile);
+
+/** Drop auth/account/extraction guesses until the user stated them in this chat. */
+export const scrubUnverifiedContactFromProfile = (
+  profile: ExtractedMaternalProfile,
+  messages: Pick<ConversationMessage, "role" | "content">[]
+): ExtractedMaternalProfile => {
+  let next = profile;
+  if (profile.name.trim() && !hasNameProvidedInChat(messages, profile)) {
+    next = mergeExtractedProfile(next, { name: "" });
+  }
+  if (profile.email.trim() && !hasEmailProvidedInChat(messages)) {
+    next = mergeExtractedProfile(next, { email: "" });
+  }
+  return next;
+};
+
+/** Profile snapshot safe to show the LLM (no unverified PII). */
+export const profileForLlmContext = (
+  profile: ExtractedMaternalProfile,
+  messages: Pick<ConversationMessage, "role" | "content">[]
+): ExtractedMaternalProfile => scrubUnverifiedContactFromProfile(profile, messages);
+
 export const canOfferScheduling = (
   profile: ExtractedMaternalProfile,
-  userMessageCount = 0
-): boolean =>
-  userMessageCount >= 2 &&
-  Boolean(profile.maternalStage) &&
-  profile.supportInterests.length > 0 &&
-  hasBookingContact(profile);
+  messages: Pick<ConversationMessage, "role" | "content">[] = []
+): boolean => {
+  const userMessageCount = messages.filter(
+    (message) => message.role === "user"
+  ).length;
+
+  return (
+    userMessageCount >= 3 &&
+    Boolean(profile.maternalStage) &&
+    profile.supportInterests.length > 0 &&
+    hasCollectedBookingContactInChat(messages, profile)
+  );
+};
 
 export const computeCompletionScore = (
   profile: ExtractedMaternalProfile

@@ -81,8 +81,10 @@ export const notifyLeadPipelineEvent = async (input: {
   previous: LeadRecord | null;
   current: LeadRecord;
   hasSubmittedIntake?: boolean;
+  /** When set, consult-booked Slack already covers the status change. */
+  skipStatusChange?: boolean;
 }): Promise<void> => {
-  const { previous, current, hasSubmittedIntake } = input;
+  const { previous, current, hasSubmittedIntake, skipStatusChange } = input;
 
   if (shouldNotifyNewLead(previous, current)) {
     await notifyNewLead(current);
@@ -92,7 +94,11 @@ export const notifyLeadPipelineEvent = async (input: {
     await notifyIntakeCompleted(current);
   }
 
-  if (shouldNotifyStatusChange(previous, current) && previous) {
+  if (
+    !skipStatusChange &&
+    shouldNotifyStatusChange(previous, current) &&
+    previous
+  ) {
     await notifyLeadStatusChanged(current, previous.status);
   }
 };

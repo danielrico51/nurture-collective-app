@@ -20,7 +20,13 @@ import {
   listS3NotesForLead,
 } from "@/lib/leads/platformS3";
 import { notifyLeadPipelineEvent } from "@/lib/integrations/slack/pipeline";
-import { buildLeadFromSources, canTransitionLeadStatus } from "@/lib/leads/workflow";
+import {
+  buildLeadFromSources,
+  canTransitionLeadStatus,
+  isGuestLead,
+} from "@/lib/leads/workflow";
+import { formatConsultBookingSummary } from "@/lib/scheduling/bookingSummary";
+import type { ConsultBooking } from "@/lib/scheduling/types";
 import type { ExtractedMaternalProfile } from "@/types/conversation";
 import type { IntakeProfile } from "@/types/intake";
 import type {
@@ -79,6 +85,92 @@ export const syncLeadFromIntake = async (input: {
   });
 
   return saved;
+};
+
+/** Update CRM when a concierge introductory call is booked. */
+export const syncLeadFromConsultBooking = async (input: {
+  userId: string;
+  userEmail?: string | null;
+  booking: ConsultBooking;
+}): Promise<{ lead: LeadRecord; isNewConsultSchedule: boolean }> => {
+  const existing = await getLeadById(input.userId);
+  const isNewConsultSchedule = existing?.status !== "consult_scheduled";
+
+  let intake: IntakeProfile | null = null;
+  if (!isGuestLead(input.userId)) {
+    try {
+      const data = await getIntakeForUser(input.userId, input.userEmail ?? undefined);
+      intake = data.profile;
+    } catch (error) {
+      console.error("[leads] intake profile load failed:", error);
+    }
+  }
+
+  let extracted: ExtractedMaternalProfile | null = null;
+  let conversationSessionId = input.booking.conversationSessionId ?? null;
+
+  try {
+    if (conversationSessionId) {
+      const session = await getConversationSession(
+        input.userId,
+        conversationSessionId,
+        input.userEmail
+      );
+      extracted = session?.extractedProfile ?? null;
+    } else {
+      const session = await getLatestConversationForUser(
+        input.userId,
+        input.userEmail
+      );
+      if (session) {
+        extracted = session.extractedProfile ?? null;
+        conversationSessionId = session.id;
+      }
+    }
+  } catch (error) {
+    console.error("[leads] conversation prep failed:", error);
+  }
+
+  const base = buildLeadFromSources({
+    userId: input.userId,
+    intake,
+    extracted,
+    conversationSessionId,
+    existing,
+    hasConsultScheduled: true,
+  });
+
+  const saved = await saveLeadProfile({
+    ...base,
+    status: "consult_scheduled",
+    name: input.booking.attendeeName || base.name,
+    email: input.booking.attendeeEmail || base.email,
+  });
+
+  if (isNewConsultSchedule) {
+    try {
+      await addCoordinatorNote(
+        input.userId,
+        { id: "concierge-scheduling", email: "concierge@nesting-place.com" },
+        {
+          body: formatConsultBookingSummary(input.booking),
+          type: "call_log",
+        }
+      );
+    } catch (error) {
+      console.error("[leads] consult booking note failed:", error);
+    }
+  }
+
+  void notifyLeadPipelineEvent({
+    previous: existing,
+    current: saved,
+    skipStatusChange: true,
+  }).catch((error) => {
+    console.error("[leads] Slack notification failed:", error);
+  });
+
+  return { lead: saved, isNewConsultSchedule };
 };
 
 export const listAllLeads = async (): Promise<LeadRecord[]> => {

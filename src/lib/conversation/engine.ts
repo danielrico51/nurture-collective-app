@@ -7,6 +7,8 @@ import {
   extractedProfileToIntakeDraft,
   hasBookingContact,
   mergeExtractedProfile,
+  profileForLlmContext,
+  scrubUnverifiedContactFromProfile,
 } from "@/lib/conversation/profileMapper";
 import { NESTING_PLACE_CONCIERGE_QUICK_REPLIES } from "@/content/nestingPlaceServices";
 import { formatServiceAreaForConcierge } from "@/lib/coverage/concierge";
@@ -21,6 +23,9 @@ import { syncLeadFromIntake } from "@/lib/leads/storage";
 import { saveConversationSession } from "@/lib/conversation/storage";
 import { isOpenAiConfigured, streamChatCompletion } from "@/lib/openai/client";
 import { upsertProfileDraft, submitProfile } from "@/lib/intake/storage";
+import { formatConsultBookingSummary } from "@/lib/scheduling/bookingSummary";
+import { findConfirmedBookingForConversation } from "@/lib/scheduling/storage";
+import type { ConsultBooking } from "@/lib/scheduling/types";
 import type {
   ConversationMessage,
   ConversationSession,
@@ -127,27 +132,39 @@ type ConversationChannelOptions = {
 
 const buildChatMessages = async (
   session: ConversationSession,
-  options: ConversationChannelOptions = {}
+  options: ConversationChannelOptions = {},
+  confirmedBooking: ConsultBooking | null = null
 ) => {
-  const profile = session.extractedProfile;
-  const userMessageCount = session.messages.filter(
-    (message) => message.role === "user"
-  ).length;
+  const profile = profileForLlmContext(
+    session.extractedProfile,
+    session.messages
+  );
   const needsContact = !profile.name.trim() || !profile.email.trim();
-  const offerScheduling = canOfferScheduling(profile, userMessageCount);
+  const offerScheduling =
+    !confirmedBooking && canOfferScheduling(profile, session.messages);
 
   const serviceAreaPrompt = formatServiceAreaForConcierge(profile.locationZip);
 
   const messages: Array<{ role: "system" | "user" | "assistant"; content: string }> = [
     { role: "system", content: CONCIERGE_SYSTEM_PROMPT },
+    {
+      role: "system",
+      content:
+        "CONVERSATION CONTEXT: Use only user and assistant messages in THIS thread. Do not use account login data, prior sessions, browser storage, or guesses. If name or email are blank in the profile snapshot, the user has not provided them yet — do not invent or assume them.",
+    },
     { role: "system", content: serviceAreaPrompt },
     {
       role: "system",
-      content: `Current extracted profile (background): ${JSON.stringify(profile)}`,
+      content: `Current extracted profile for this thread only (background — may omit unverified contact): ${JSON.stringify(profile)}`,
     },
   ];
 
-  if (!offerScheduling) {
+  if (confirmedBooking) {
+    messages.push({
+      role: "system",
+      content: `INTRODUCTORY CALL ALREADY BOOKED: ${formatConsultBookingSummary(confirmedBooking)}. Do NOT ask the user to book again, do NOT mention the scheduler or "Book a call" below, and do NOT say they still need to pick a time. If they ask about next steps, confirm the call is scheduled, mention they should have a calendar invite, and explain we will use that call to discuss support options. Offer to answer questions before the call.`,
+    });
+  } else if (!offerScheduling) {
     messages.push({
       role: "system",
       content:
@@ -205,9 +222,36 @@ const buildChatMessages = async (
 const fallbackAssistantReply = (
   profile: ExtractedMaternalProfile,
   userMessage: string,
-  userMessageCount = 1
+  messages: ConversationMessage[] = [],
+  confirmedBooking: ConsultBooking | null = null
 ): { content: string; quickReplies: string[] } => {
   const lower = userMessage.toLowerCase();
+  if (confirmedBooking) {
+    const when = new Date(confirmedBooking.start).toLocaleString(undefined, {
+      weekday: "long",
+      month: "long",
+      day: "numeric",
+      hour: "numeric",
+      minute: "2-digit",
+      timeZone: confirmedBooking.timezone,
+    });
+    if (/next step|what happens|what now|after the call/i.test(lower)) {
+      return {
+        content: `Your introductory call is already booked for ${when}. You should have a calendar invite at ${confirmedBooking.attendeeEmail}. On that call, our team will learn more about your needs and walk through postpartum support options. Is there anything you'd like us to know before then?`,
+        quickReplies: ["That's all for now", "Add a note for the team"],
+      };
+    }
+    if (/book|schedule|introductory call|pick a time/i.test(lower)) {
+      return {
+        content: `You're all set — your introductory call is already booked for ${when}. Check your email for the calendar invite${confirmedBooking.meetLink ? " and Google Meet link" : ""}.`,
+        quickReplies: [],
+      };
+    }
+    return {
+      content: `Your introductory call is confirmed for ${when}. We'll use that time to discuss your support needs in detail. What else can I help you with before then?`,
+      quickReplies: ["That's all for now", "Add a note for the team"],
+    };
+  }
   if (!profile.maternalStage) {
     return {
       content:
@@ -259,7 +303,7 @@ const fallbackAssistantReply = (
     }
     return { content, quickReplies: [] };
   }
-  if (!canOfferScheduling(profile, userMessageCount)) {
+  if (!canOfferScheduling(profile, messages)) {
     return {
       content:
         "Thank you — I have your details saved. Is there anything else you'd like your care coordinator to know?",
@@ -293,13 +337,15 @@ const fallbackAssistantReply = (
 
 async function* generateAssistantStream(
   session: ConversationSession,
-  options: ConversationChannelOptions = {}
+  options: ConversationChannelOptions = {},
+  confirmedBooking: ConsultBooking | null = null
 ): AsyncGenerator<string, string, unknown> {
   if (!isOpenAiConfigured()) {
     const { content } = fallbackAssistantReply(
       session.extractedProfile,
       session.messages.at(-1)?.content ?? "",
-      session.messages.filter((message) => message.role === "user").length
+      session.messages,
+      confirmedBooking
     );
     yield content;
     return content;
@@ -307,7 +353,7 @@ async function* generateAssistantStream(
 
   let full = "";
   for await (const token of streamChatCompletion(
-    await buildChatMessages(session, options)
+    await buildChatMessages(session, options, confirmedBooking)
   )) {
     full += token;
     yield token;
@@ -333,11 +379,11 @@ export async function* processConversationMessageStream(
     timestamp: now,
   };
 
-  let profile = applyUserMessageHeuristics(
-    userMessage,
-    session.extractedProfile
-  );
   session.messages.push(userMsg);
+  let profile = scrubUnverifiedContactFromProfile(
+    applyUserMessageHeuristics(userMessage, session.extractedProfile),
+    session.messages
+  );
   session.extractedProfile = profile;
   session = await saveConversationSession(session);
 
@@ -361,8 +407,17 @@ export async function* processConversationMessageStream(
     return;
   }
 
+  const confirmedBooking = await findConfirmedBookingForConversation(
+    session.userId,
+    session.id
+  );
+
   let assistantContent = "";
-  for await (const token of generateAssistantStream(session, options)) {
+  for await (const token of generateAssistantStream(
+    session,
+    options,
+    confirmedBooking
+  )) {
     assistantContent += token;
     yield { type: "token", value: token };
   }
@@ -371,7 +426,8 @@ export async function* processConversationMessageStream(
     const fallback = fallbackAssistantReply(
       profile,
       userMessage,
-      session.messages.filter((message) => message.role === "user").length
+      session.messages,
+      confirmedBooking
     );
     assistantContent = fallback.content;
     session.quickReplies = fallback.quickReplies;
@@ -388,13 +444,13 @@ export async function* processConversationMessageStream(
   const initialFallback = fallbackAssistantReply(
     profile,
     userMessage,
-    session.messages.filter((message) => message.role === "user").length
+    session.messages,
+    confirmedBooking
   );
   session.quickReplies = initialFallback.quickReplies;
   session.extractedProfile = profile;
 
-  const userTurns = session.messages.filter((message) => message.role === "user").length;
-  if (canOfferScheduling(profile, userTurns)) {
+  if (!confirmedBooking && canOfferScheduling(profile, session.messages)) {
     const bookingChip = "Book an introductory call";
     const replies = session.quickReplies.filter((reply) => reply !== bookingChip);
     session.quickReplies = [bookingChip, ...replies].slice(0, 4);
@@ -410,9 +466,12 @@ export async function* processConversationMessageStream(
     if (isOpenAiConfigured()) {
       const extracted = await extractProfileFromConversation(
         session.messages,
-        profile
+        profileForLlmContext(profile, session.messages)
       );
-      profile = extracted.profile;
+      profile = scrubUnverifiedContactFromProfile(
+        extracted.profile,
+        session.messages
+      );
       session.quickReplies =
         extracted.quickReplies.length > 0
           ? extracted.quickReplies
@@ -421,10 +480,14 @@ export async function* processConversationMessageStream(
 
     session.extractedProfile = profile;
 
-    const userTurnsAfterExtract = session.messages.filter(
-      (message) => message.role === "user"
-    ).length;
-    if (canOfferScheduling(profile, userTurnsAfterExtract)) {
+    const bookingAfterExtract = await findConfirmedBookingForConversation(
+      session.userId,
+      session.id
+    );
+    if (
+      !bookingAfterExtract &&
+      canOfferScheduling(profile, session.messages)
+    ) {
       const bookingChip = "Book an introductory call";
       const replies = session.quickReplies.filter((reply) => reply !== bookingChip);
       session.quickReplies = [bookingChip, ...replies].slice(0, 4);
@@ -569,7 +632,10 @@ export const resumeOrCreateSession = async (
 
   const existing = await getActiveConversationForUser(userId, defaults.email);
   if (existing) {
-    let extractedProfile = existing.extractedProfile;
+    let extractedProfile = scrubUnverifiedContactFromProfile(
+      existing.extractedProfile,
+      existing.messages
+    );
 
     if (options.preselectedService) {
       extractedProfile = mergeExtractedProfile(extractedProfile, {
@@ -603,7 +669,13 @@ export const resumeOrCreateSession = async (
   );
   if (incompleteCompleted) {
     const reopened = await reactivateConversationIfIncomplete(incompleteCompleted);
-    return reopened;
+    return {
+      ...reopened,
+      extractedProfile: scrubUnverifiedContactFromProfile(
+        reopened.extractedProfile,
+        reopened.messages
+      ),
+    };
   }
 
   return createConversationSession(

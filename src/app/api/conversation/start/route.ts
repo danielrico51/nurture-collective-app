@@ -7,8 +7,6 @@ import {
 } from "@/config/carePaths";
 import { resumeOrCreateSession } from "@/lib/conversation/engine";
 import { getConversationSession } from "@/lib/conversation/storage";
-import { createEmptyExtractedProfile } from "@/types/conversation";
-
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
@@ -41,14 +39,13 @@ export async function POST(request: NextRequest) {
           }
         : undefined;
 
+    const lookupEmail = body.email ?? user.email ?? "";
     const session = await resumeOrCreateSession(
       user.sub,
       {
-        ...createEmptyExtractedProfile(),
-        email: body.email ?? user.email,
-        name: body.name ?? user.name ?? "",
-        phone: body.phone ?? "",
         ...(supportInterest ? { supportInterests: [supportInterest] } : {}),
+        // Storage partition lookup only — never seed the LLM profile with auth PII.
+        ...(lookupEmail ? { email: lookupEmail } : {}),
       },
       {
         forceNew: body.forceNew === true || Boolean(preselectedService),
