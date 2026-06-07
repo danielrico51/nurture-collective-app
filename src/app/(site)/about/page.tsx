@@ -1,4 +1,5 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
+import CoverageMap from "@/components/Common/CoverageMap";
 import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { TeamSection } from "@/components/Common/TeamSection";
@@ -98,6 +99,11 @@ export default function AboutPage() {
         </div>
       </section>
       <TeamSection members={teamMembers} className="bg-nurture-sage/5" />
+      <CoverageMap
+        title="Where we serve families"
+        subtitle={brands.nestingPlace.serviceArea}
+        className="border-t border-nurture-sage/10"
+      />
     </>
   );
 }
