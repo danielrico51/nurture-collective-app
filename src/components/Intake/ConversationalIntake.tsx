@@ -62,6 +62,7 @@ const ConversationalIntake = ({
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const initRef = useRef(false);
   const followLatestRef = useRef(false);
+  const stickToBottomRef = useRef(true);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
   const [liveSchedulingEnabled, setLiveSchedulingEnabled] = useState(false);
@@ -81,41 +82,34 @@ const ConversationalIntake = ({
     container.scrollTo({ top: 0, behavior: "auto" });
   }, []);
 
-  const syncScrollPosition = useCallback(() => {
+  const scrollToBottom = useCallback((behavior: ScrollBehavior = "auto") => {
     const container = messagesContainerRef.current;
     if (!container) return;
+    container.scrollTo({ top: container.scrollHeight, behavior });
+  }, []);
 
-    if (followLatestRef.current || hasUserMessages(messages)) {
-      const nearBottom =
-        container.scrollHeight -
-          container.scrollTop -
-          container.clientHeight <
-        120;
-      if (nearBottom || sending) {
-        container.scrollTop = container.scrollHeight;
-      }
-      return;
-    }
-    scrollMessagesToTop();
-  }, [messages, scrollMessagesToTop, sending]);
+  const handleMessagesScroll = useCallback(() => {
+    const container = messagesContainerRef.current;
+    if (!container) return;
+    const distanceFromBottom =
+      container.scrollHeight - container.scrollTop - container.clientHeight;
+    stickToBottomRef.current = distanceFromBottom < 120;
+  }, []);
 
   useEffect(() => {
     if (loading) return;
-    syncScrollPosition();
-  }, [loading, messages, syncScrollPosition]);
+    if (!stickToBottomRef.current && hasUserMessages(messages)) return;
+    if (followLatestRef.current || hasUserMessages(messages)) {
+      scrollToBottom();
+      return;
+    }
+    scrollMessagesToTop();
+  }, [loading, messages, scrollMessagesToTop, scrollToBottom]);
 
   useEffect(() => {
-    if (loading || !streamingText) return;
-    const container = messagesContainerRef.current;
-    if (!container) return;
-    if (!followLatestRef.current && !hasUserMessages(messages)) return;
-
-    const nearBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight < 120;
-    if (nearBottom) {
-      container.scrollTop = container.scrollHeight;
-    }
-  }, [loading, messages, streamingText]);
+    if (loading || !streamingText || !stickToBottomRef.current) return;
+    scrollToBottom();
+  }, [loading, streamingText, scrollToBottom]);
 
   const bootstrap = useCallback(async () => {
     setLoading(true);
@@ -238,6 +232,7 @@ const ConversationalIntake = ({
     if (!trimmed || !session || sending || sessionClosed) return;
 
     followLatestRef.current = true;
+    stickToBottomRef.current = true;
     setSending(true);
     setSendError(null);
     setInput("");
@@ -252,6 +247,31 @@ const ConversationalIntake = ({
     };
     setMessages((current) => [...current, optimisticUser]);
 
+    const recoverFromSendFailure = async (
+      error: string,
+      optimisticId: string
+    ) => {
+      setStreamingText("");
+      try {
+        const { messageSaved } = await syncSessionFromServer(session.id, trimmed);
+        if (!messageSaved) {
+          setMessages((current) =>
+            current.filter((message) => message.id !== optimisticId)
+          );
+        }
+        const friendly = formatConversationStreamError(error, { messageSaved });
+        setSendError(friendly);
+        toast.error(friendly, { id: "concierge-send-error" });
+      } catch {
+        setMessages((current) =>
+          current.filter((message) => message.id !== optimisticId)
+        );
+        const friendly = formatConversationStreamError(error);
+        setSendError(friendly);
+        toast.error(friendly, { id: "concierge-send-error" });
+      }
+    };
+
     try {
       const { doneReceived } = await sendConversationMessage(session.id, trimmed, {
         onToken: (token) => setStreamingText((current) => current + token),
@@ -261,52 +281,21 @@ const ConversationalIntake = ({
           handleComplete(nextSession, intakeSubmitted);
         },
         onError: async (error) => {
-          setStreamingText("");
-          try {
-            const { messageSaved } = await syncSessionFromServer(
-              session.id,
-              trimmed
-            );
-            const friendly = formatConversationStreamError(error, {
-              messageSaved,
-            });
-            setSendError(friendly);
-            toast.error(friendly, { id: "concierge-send-error" });
-          } catch {
-            const friendly = formatConversationStreamError(error);
-            setSendError(friendly);
-            toast.error(friendly, { id: "concierge-send-error" });
-          }
+          await recoverFromSendFailure(error, optimisticUser.id);
         },
       });
 
       if (!doneReceived) {
-        setStreamingText("");
-        try {
-          const { reopened, messageSaved } = await syncSessionFromServer(
-            session.id,
-            trimmed
-          );
-          if (reopened) {
-            const friendly = formatConversationStreamError(
-              "The reply did not finish loading.",
-              { messageSaved }
-            );
-            setSendError(friendly);
-            toast.error(friendly, { id: "concierge-send-error" });
-          }
-        } catch {
-          setSendError(
-            "The reply did not finish loading. Please try sending your message again."
-          );
-        }
+        await recoverFromSendFailure(
+          "The reply did not finish loading.",
+          optimisticUser.id
+        );
       }
     } catch (error) {
-      const friendly = formatConversationStreamError(
-        error instanceof Error ? error.message : "Message failed"
+      await recoverFromSendFailure(
+        error instanceof Error ? error.message : "Message failed",
+        optimisticUser.id
       );
-      setSendError(friendly);
-      toast.error(friendly, { id: "concierge-send-error" });
     } finally {
       setSending(false);
       inputRef.current?.focus({ preventScroll: true });
@@ -387,6 +376,7 @@ const ConversationalIntake = ({
 
   const handleBookingConfirmed = (booking: ConsultBooking) => {
     setConfirmedBooking(booking);
+    stickToBottomRef.current = true;
     toast.success("Your introductory call is booked.");
   };
 
@@ -434,7 +424,8 @@ const ConversationalIntake = ({
 
       <div
         ref={messagesContainerRef}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-2 py-4 sm:px-4 sm:py-6"
+        onScroll={handleMessagesScroll}
+        className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-2 py-4 sm:px-4 sm:py-6"
       >
         {showWelcomeIntro ? (
           <div className="mb-4 text-center sm:mb-6">
@@ -482,10 +473,80 @@ const ConversationalIntake = ({
             />
           ) : null}
           {sending && !streamingText ? <TypingIndicator /> : null}
+
+          {confirmedBooking ? (
+            <div className="rounded-2xl border border-nurture-sage/25 bg-nurture-sage/5 p-4">
+              <p className="text-sm font-medium text-nurture-charcoal">
+                Introductory call confirmed
+              </p>
+              <p className="mt-1 text-xs text-nurture-charcoal/70">
+                {new Date(confirmedBooking.start).toLocaleString(undefined, {
+                  weekday: "long",
+                  month: "long",
+                  day: "numeric",
+                  hour: "numeric",
+                  minute: "2-digit",
+                  timeZone: confirmedBooking.timezone,
+                })}
+              </p>
+              <div className="mt-3 flex flex-wrap gap-3">
+                {confirmedBooking.htmlLink ? (
+                  <a
+                    href={confirmedBooking.htmlLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-nurture-sage-dark underline-offset-2 hover:underline"
+                  >
+                    Add to Google Calendar
+                  </a>
+                ) : null}
+                {confirmedBooking.meetLink ? (
+                  <a
+                    href={confirmedBooking.meetLink}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-xs font-semibold text-nurture-sage-dark underline-offset-2 hover:underline"
+                  >
+                    Open Google Meet link
+                  </a>
+                ) : null}
+              </div>
+            </div>
+          ) : null}
+
+          {canUseLiveScheduling && !confirmedBooking ? (
+            <SchedulingSlotPicker
+              conversationSessionId={session.id}
+              attendee={bookingAttendee}
+              onBooked={handleBookingConfirmed}
+            />
+          ) : null}
+
+          {showBookCallCard ? (
+            <div className="rounded-2xl border border-nurture-sage/20 bg-white/90 p-4 text-center">
+              <p className="text-sm font-medium text-nurture-charcoal">
+                Ready for a human touch?
+              </p>
+              <p className="mt-1 text-xs text-nurture-charcoal/60">
+                Book a follow-up call with our client coordinator.
+              </p>
+              <a
+                href={buildBookingUrlWithPrefill({
+                  name: bookingAttendee.name || undefined,
+                  email: bookingAttendee.email || undefined,
+                }) ?? buildBookingPageHref()}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-block rounded-full bg-nurture-sage px-5 py-2.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
+              >
+                Book a call
+              </a>
+            </div>
+          ) : null}
         </div>
       </div>
 
-      <div className="shrink-0 border-t border-nurture-sage/10 bg-gradient-to-t from-nurture-cream via-nurture-cream/95 to-nurture-cream/80 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3 overscroll-contain">
+      <div className="shrink-0 border-t border-nurture-sage/10 bg-gradient-to-t from-nurture-cream via-nurture-cream/95 to-nurture-cream/80 px-4 pb-[max(1.5rem,env(safe-area-inset-bottom))] pt-3">
         {sendError ? (
           <div
             role="alert"
@@ -552,76 +613,6 @@ const ConversationalIntake = ({
           >
             Complete my care profile
           </button>
-        ) : null}
-
-        {confirmedBooking ? (
-          <div className="mt-3 rounded-2xl border border-nurture-sage/25 bg-nurture-sage/5 p-4">
-            <p className="text-sm font-medium text-nurture-charcoal">
-              Introductory call confirmed
-            </p>
-            <p className="mt-1 text-xs text-nurture-charcoal/70">
-              {new Date(confirmedBooking.start).toLocaleString(undefined, {
-                weekday: "long",
-                month: "long",
-                day: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                timeZone: confirmedBooking.timezone,
-              })}
-            </p>
-            <div className="mt-3 flex flex-wrap gap-3">
-              {confirmedBooking.htmlLink ? (
-                <a
-                  href={confirmedBooking.htmlLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-semibold text-nurture-sage-dark underline-offset-2 hover:underline"
-                >
-                  Add to Google Calendar
-                </a>
-              ) : null}
-              {confirmedBooking.meetLink ? (
-                <a
-                  href={confirmedBooking.meetLink}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-xs font-semibold text-nurture-sage-dark underline-offset-2 hover:underline"
-                >
-                  Open Google Meet link
-                </a>
-              ) : null}
-            </div>
-          </div>
-        ) : null}
-
-        {canUseLiveScheduling && !confirmedBooking ? (
-          <SchedulingSlotPicker
-            conversationSessionId={session.id}
-            attendee={bookingAttendee}
-            onBooked={handleBookingConfirmed}
-          />
-        ) : null}
-
-        {showBookCallCard ? (
-          <div className="mt-3 rounded-2xl border border-nurture-sage/20 bg-white/90 p-4 text-center">
-            <p className="text-sm font-medium text-nurture-charcoal">
-              Ready for a human touch?
-            </p>
-            <p className="mt-1 text-xs text-nurture-charcoal/60">
-              Book a follow-up call with our client coordinator.
-            </p>
-            <a
-              href={buildBookingUrlWithPrefill({
-                name: bookingAttendee.name || undefined,
-                email: bookingAttendee.email || undefined,
-              }) ?? buildBookingPageHref()}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-3 inline-block rounded-full bg-nurture-sage px-5 py-2.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
-            >
-              Book a call
-            </a>
-          </div>
         ) : null}
       </div>
     </div>

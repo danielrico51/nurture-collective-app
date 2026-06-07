@@ -208,6 +208,10 @@ const main = async () => {
   } else {
     console.log("Tip: run with --write-local to refresh .data/blog/posts.json");
   }
+
+  console.log(
+    "Tip: run `npm run sync:legacy-blog` to merge these posts into S3 (production storage)."
+  );
 };
 
 main().catch((error) => {

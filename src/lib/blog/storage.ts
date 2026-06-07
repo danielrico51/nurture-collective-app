@@ -125,6 +125,14 @@ const sortPosts = (posts: BlogPost[]): BlogPost[] =>
       b.slug.localeCompare(a.slug)
   );
 
+/** Placeholder slugs from early blog setup — removed when legacy posts are merged. */
+const SAMPLE_PLACEHOLDER_SLUGS = new Set([
+  "welcome-to-our-blog",
+  "why-prenatal-massage-matters",
+  "what-a-birth-doula-does",
+  "draft-postpartum-checklist",
+]);
+
 /** Seed legacy imported posts when storage is empty (local dev). */
 export const seedBlogSamplesIfEmpty = async (): Promise<boolean> => {
   const doc = await readBlogDocument();
@@ -135,6 +143,34 @@ export const seedBlogSamplesIfEmpty = async (): Promise<boolean> => {
     updatedAt: new Date().toISOString(),
   });
   return true;
+};
+
+/**
+ * Add migrated legacy posts that are missing from storage (e.g. S3 already had samples).
+ * Drops placeholder sample posts once real legacy content is present.
+ */
+export const mergeLegacyImportedPosts = async (): Promise<{
+  added: number;
+  removedSamples: number;
+}> => {
+  const doc = await readBlogDocument();
+  const existingSlugs = new Set(doc.posts.map((post) => post.slug));
+  const missing = LEGACY_IMPORTED_BLOG_POSTS.filter(
+    (post) => !existingSlugs.has(post.slug)
+  );
+
+  if (missing.length === 0) {
+    return { added: 0, removedSamples: 0 };
+  }
+
+  let posts = [...doc.posts, ...missing];
+  const removedSamples = posts.filter((post) =>
+    SAMPLE_PLACEHOLDER_SLUGS.has(post.slug)
+  ).length;
+  posts = posts.filter((post) => !SAMPLE_PLACEHOLDER_SLUGS.has(post.slug));
+
+  await writeBlogDocument({ ...doc, posts });
+  return { added: missing.length, removedSamples };
 };
 
 export const listAllPosts = async (): Promise<BlogPost[]> => {

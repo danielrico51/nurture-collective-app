@@ -104,7 +104,7 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
       {publicMode ? (
         <GuestSaveProgressPrompt variant="banner" className="shrink-0" />
       ) : null}
-      <div className="min-h-0 flex-1">
+      <div className="flex min-h-0 flex-1 flex-col">
         <ConversationalIntake
           userId={userId!}
           defaults={defaults}

@@ -95,7 +95,8 @@ const SchedulingSlotPicker = ({
       ) : null}
 
       {!loading && slots.length > 0 ? (
-        <div className="mt-4 flex flex-wrap gap-2">
+        <div className="mt-4 max-h-40 overflow-y-auto overscroll-y-contain">
+          <div className="flex flex-wrap gap-2 pr-1">
           {slots.map((slot) => (
             <button
               key={slot.start}
@@ -107,6 +108,7 @@ const SchedulingSlotPicker = ({
               {bookingSlot === slot.start ? "Booking…" : slot.label}
             </button>
           ))}
+          </div>
         </div>
       ) : null}
 
