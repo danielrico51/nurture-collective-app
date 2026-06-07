@@ -48,6 +48,9 @@ const isNearBottom = (container: HTMLDivElement, threshold = 120) => {
   return distanceFromBottom < threshold;
 };
 
+const isStaleSessionError = (error: string) =>
+  /session not found|missing or invalid x-guest-session-id/i.test(error);
+
 const ConversationalIntake = ({
   userId,
   defaults,
@@ -275,6 +278,9 @@ const ConversationalIntake = ({
           );
         }
         const friendly = formatConversationStreamError(error, { messageSaved });
+        if (isStaleSessionError(error)) {
+          window.sessionStorage.removeItem(INTAKE_SESSION_STORAGE_KEY);
+        }
         setSendError(friendly);
         toast.error(friendly, { id: "concierge-send-error" });
       } catch {
@@ -282,6 +288,9 @@ const ConversationalIntake = ({
           current.filter((message) => message.id !== optimisticId)
         );
         const friendly = formatConversationStreamError(error);
+        if (isStaleSessionError(error)) {
+          window.sessionStorage.removeItem(INTAKE_SESSION_STORAGE_KEY);
+        }
         setSendError(friendly);
         toast.error(friendly, { id: "concierge-send-error" });
       }

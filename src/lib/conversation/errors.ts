@@ -34,6 +34,30 @@ export const formatConversationStreamError = (
     return "The care coordinator is temporarily offline. Please try again shortly or use the contact form.";
   }
 
+  if (
+    lower.includes("session not found") ||
+    lower.includes("missing or invalid x-guest-session-id")
+  ) {
+    return "This browser session no longer matches your saved chat. Tap Start a new conversation above, then try again.";
+  }
+
+  if (
+    lower.includes("unauthorized") ||
+    lower.includes("not authenticated")
+  ) {
+    return "Your session expired. Refresh the page or start a new conversation.";
+  }
+
+  if (
+    lower.includes("did not finish loading") ||
+    lower.includes("stream failed") ||
+    lower.includes("message failed")
+  ) {
+    return options?.messageSaved
+      ? "We couldn't finish a reply to that message. Your message is saved — please tap Send again."
+      : "The reply didn't finish loading. Please try sending again.";
+  }
+
   if (options?.messageSaved) {
     return "We couldn't finish a reply to that message. Your message is saved — please tap Send again.";
   }
