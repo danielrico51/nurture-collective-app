@@ -1,5 +1,6 @@
 import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
 import { brands } from "@/content/site";
+import Image from "next/image";
 import type { ReactNode } from "react";
 
 interface AuthPageShellProps {
@@ -87,13 +88,22 @@ export function AuthPageShell({
       <div className="relative mx-auto max-w-6xl">
         <div className="grid items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(0,440px)] lg:gap-14 xl:gap-20">
           <div className="hidden lg:block">
-            <NestingPlaceLogo variant="auth" linked={false} className="mx-auto max-h-16 w-auto sm:max-h-[4.5rem]" />
-            <p className="mt-3 font-serif text-lg font-semibold text-nurture-sage-dark">
-              {brands.nestingPlace.name}
-            </p>
-            <p className="mt-1 text-sm text-nurture-charcoal/60">
-              {brands.nestingPlace.byline}
-            </p>
+            <div className="flex flex-col items-start">
+              <Image
+                src={brands.nestingPlace.markSrc}
+                alt=""
+                aria-hidden
+                width={80}
+                height={80}
+                className="h-16 w-16 object-contain sm:h-[4.5rem] sm:w-[4.5rem]"
+              />
+              <p className="mt-3 font-serif text-lg font-semibold text-nurture-sage-dark">
+                {brands.nestingPlace.name}
+              </p>
+              <p className="mt-1 text-sm text-nurture-charcoal/60">
+                {brands.nestingPlace.byline}
+              </p>
+            </div>
             <p className="mt-8 text-xs font-semibold uppercase tracking-[0.2em] text-nurture-sage-dark">
               {eyebrow}
             </p>
@@ -134,8 +144,15 @@ export function AuthPageShell({
           </div>
 
           <div className="mx-auto min-w-0 w-full max-w-md lg:max-w-none">
-            <div className="mb-6 text-center lg:hidden">
-              <NestingPlaceLogo variant="auth" linked={false} className="mx-auto max-h-16 w-auto sm:max-h-[4.5rem]" />
+            <div className="mb-6 flex flex-col items-center text-center lg:hidden">
+              <Image
+                src={brands.nestingPlace.markSrc}
+                alt=""
+                aria-hidden
+                width={80}
+                height={80}
+                className="h-16 w-16 object-contain sm:h-[4.5rem] sm:w-[4.5rem]"
+              />
               <p className="mt-3 font-serif text-lg font-semibold text-nurture-sage-dark">
                 {brands.nestingPlace.name}
               </p>
