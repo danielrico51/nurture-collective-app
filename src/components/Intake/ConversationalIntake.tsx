@@ -1,6 +1,7 @@
 "use client";
 
 import GuestSaveProgressPrompt from "@/components/Intake/GuestSaveProgressPrompt";
+import SchedulingSlotPicker from "@/components/Intake/SchedulingSlotPicker";
 import ChatMessageBubble from "@/components/Intake/chat/ChatMessageBubble";
 import ProfileProgressBar from "@/components/Intake/chat/ProfileProgressBar";
 import QuickReplyChips from "@/components/Intake/chat/QuickReplyChips";
@@ -21,6 +22,8 @@ import {
   sendConversationMessage,
   startConversation,
 } from "@/lib/api/conversationClient";
+import { fetchSchedulingStatus } from "@/lib/api/schedulingClient";
+import type { ConsultBooking } from "@/lib/scheduling/types";
 import { formatConversationStreamError } from "@/lib/conversation/errors";
 import type { ConversationMessage, ConversationSession } from "@/types/conversation";
 import Link from "next/link";
@@ -61,6 +64,16 @@ const ConversationalIntake = ({
   const followLatestRef = useRef(false);
   const [bootstrapError, setBootstrapError] = useState<string | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [liveSchedulingEnabled, setLiveSchedulingEnabled] = useState(false);
+  const [confirmedBooking, setConfirmedBooking] = useState<ConsultBooking | null>(
+    null
+  );
+
+  useEffect(() => {
+    void fetchSchedulingStatus().then((status) => {
+      setLiveSchedulingEnabled(status.enabled);
+    });
+  }, []);
 
   const scrollMessagesToTop = useCallback(() => {
     const container = messagesContainerRef.current;
@@ -358,8 +371,24 @@ const ConversationalIntake = ({
     );
   }
 
+  const profile = session.extractedProfile;
+  const bookingAttendee = {
+    name: profile.name?.trim() || defaults?.name?.trim() || "",
+    email: profile.email?.trim() || defaults?.email?.trim() || "",
+    phone: profile.phone?.trim() || defaults?.phone?.trim() || undefined,
+  };
+  const canUseLiveScheduling =
+    liveSchedulingEnabled &&
+    Boolean(bookingAttendee.name && bookingAttendee.email) &&
+    hasUserMessages(messages) &&
+    !sessionClosed;
   const showBookCallCard =
-    guestMode && hasBooking() && hasUserMessages(messages);
+    hasBooking() && hasUserMessages(messages) && !canUseLiveScheduling;
+
+  const handleBookingConfirmed = (booking: ConsultBooking) => {
+    setConfirmedBooking(booking);
+    toast.success("Your introductory call is booked.");
+  };
 
   return (
     <div className="mx-auto flex h-full w-full max-w-3xl flex-col overflow-hidden px-2 sm:max-w-4xl sm:px-4 lg:max-w-5xl">
@@ -525,6 +554,54 @@ const ConversationalIntake = ({
           </button>
         ) : null}
 
+        {confirmedBooking ? (
+          <div className="mt-3 rounded-2xl border border-nurture-sage/25 bg-nurture-sage/5 p-4">
+            <p className="text-sm font-medium text-nurture-charcoal">
+              Introductory call confirmed
+            </p>
+            <p className="mt-1 text-xs text-nurture-charcoal/70">
+              {new Date(confirmedBooking.start).toLocaleString(undefined, {
+                weekday: "long",
+                month: "long",
+                day: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                timeZone: confirmedBooking.timezone,
+              })}
+            </p>
+            <div className="mt-3 flex flex-wrap gap-3">
+              {confirmedBooking.htmlLink ? (
+                <a
+                  href={confirmedBooking.htmlLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-semibold text-nurture-sage-dark underline-offset-2 hover:underline"
+                >
+                  Add to Google Calendar
+                </a>
+              ) : null}
+              {confirmedBooking.meetLink ? (
+                <a
+                  href={confirmedBooking.meetLink}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-xs font-semibold text-nurture-sage-dark underline-offset-2 hover:underline"
+                >
+                  Open Google Meet link
+                </a>
+              ) : null}
+            </div>
+          </div>
+        ) : null}
+
+        {canUseLiveScheduling && !confirmedBooking ? (
+          <SchedulingSlotPicker
+            conversationSessionId={session.id}
+            attendee={bookingAttendee}
+            onBooked={handleBookingConfirmed}
+          />
+        ) : null}
+
         {showBookCallCard ? (
           <div className="mt-3 rounded-2xl border border-nurture-sage/20 bg-white/90 p-4 text-center">
             <p className="text-sm font-medium text-nurture-charcoal">
@@ -534,7 +611,10 @@ const ConversationalIntake = ({
               Book a follow-up call with our client coordinator.
             </p>
             <a
-              href={buildBookingUrlWithPrefill() ?? buildBookingPageHref()}
+              href={buildBookingUrlWithPrefill({
+                name: bookingAttendee.name || undefined,
+                email: bookingAttendee.email || undefined,
+              }) ?? buildBookingPageHref()}
               target="_blank"
               rel="noopener noreferrer"
               className="mt-3 inline-block rounded-full bg-nurture-sage px-5 py-2.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"

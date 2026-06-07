@@ -1,9 +1,14 @@
 /**
- * Live scheduling (Google Calendar API) — implementation pending credentials.
+ * Live scheduling (Google Calendar API) for concierge booking.
  * Server config: `@/lib/scheduling/config` (server-only).
  * @see docs/platform/google-calendar-concierge-booking.md
  */
 
+export {
+  DEFAULT_GOOGLE_CALENDAR_ID,
+  isGoogleSchedulingActive,
+  isGoogleSchedulingConfigured,
+} from "@/lib/scheduling/config";
 export {
   SchedulingNotConfiguredError,
   SchedulingSlotUnavailableError,
