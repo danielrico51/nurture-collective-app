@@ -5,7 +5,9 @@ import {
   serverGoogleTasksConfig,
 } from "@/config/googleTasks";
 import { requireManagementAuth } from "@/lib/api/routeHelpers";
+import { getRequestOriginFromNextRequest } from "@/lib/http/requestOrigin";
 import {
+  applyGoogleTasksOAuthOriginCookie,
   applyGoogleTasksOAuthStateCookie,
   createGoogleTasksOAuthState,
   resolveGoogleTasksRedirectUri,
@@ -32,7 +34,8 @@ export async function POST(request: NextRequest) {
 
   const state = createGoogleTasksOAuthState();
   const userToken = signGoogleTasksOAuthUser(auth.user!.email);
-  const redirectUri = resolveGoogleTasksRedirectUri(request.nextUrl.origin);
+  const siteOrigin = getRequestOriginFromNextRequest(request);
+  const redirectUri = resolveGoogleTasksRedirectUri(siteOrigin);
   const client = new OAuth2Client(
     serverGoogleTasksConfig.oauthClientId,
     serverGoogleTasksConfig.oauthClientSecret,
@@ -52,6 +55,7 @@ export async function POST(request: NextRequest) {
     redirectUri,
   });
   applyGoogleTasksOAuthStateCookie(response, state);
+  applyGoogleTasksOAuthOriginCookie(response, siteOrigin);
   response.cookies.set("google_tasks_oauth_user", userToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",

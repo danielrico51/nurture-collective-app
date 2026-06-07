@@ -6,26 +6,83 @@ export const formatAssignees = (assignees: string[]) => {
   return assignees.join(", ");
 };
 
+const normalizeAssigneeToken = (value: string): string =>
+  value.trim().toLowerCase();
+
+/** Collapse dotted email locals and usernames for cross-format matching. */
+export const normalizeAssigneeIdentity = (value: string): string => {
+  const normalized = normalizeAssigneeToken(value);
+  const local = normalized.includes("@")
+    ? (normalized.split("@")[0] ?? normalized)
+    : normalized;
+  return local.replace(/\./g, "");
+};
+
+export const findTeamMemberForUser = (
+  members: TeamMember[],
+  options: {
+    email?: string;
+    loginId?: string;
+    displayName?: string;
+  }
+): TeamMember | null => {
+  const email = options.email?.trim().toLowerCase();
+  const loginId = options.loginId?.trim().toLowerCase();
+  const displayName = options.displayName?.trim().toLowerCase();
+
+  return (
+    members.find((member) => {
+      const memberEmail = member.email.trim().toLowerCase();
+      const memberUsername = member.username.trim().toLowerCase();
+      const memberLabel = member.label.trim().toLowerCase();
+      const emailLocal = memberEmail.split("@")[0] ?? memberEmail;
+      const normalizedEmailLocal = normalizeAssigneeIdentity(memberEmail);
+
+      if (email && memberEmail === email) return true;
+      if (email && memberUsername === email) return true;
+      if (loginId && memberUsername === loginId) return true;
+      if (loginId && emailLocal === loginId) return true;
+      if (
+        loginId &&
+        normalizeAssigneeIdentity(loginId) === normalizedEmailLocal
+      ) {
+        return true;
+      }
+      if (displayName && memberLabel === displayName) return true;
+      if (displayName && memberUsername === displayName) return true;
+      return false;
+    }) ?? null
+  );
+};
+
 export const getUserAssigneeMatchers = (
   userEmail?: string,
   userDisplayName?: string,
-  member?: TeamMember | null
+  member?: TeamMember | null,
+  userLoginId?: string
 ): string[] => {
   const matchers = new Set<string>();
   const add = (value?: string) => {
-    if (value?.trim()) matchers.add(value.trim().toLowerCase());
+    if (value?.trim()) matchers.add(normalizeAssigneeToken(value));
   };
 
   add(userEmail);
   add(userDisplayName);
+  add(userLoginId);
   add(userEmail?.split("@")[0]);
+  add(userLoginId?.split("@")[0]);
 
   if (member) {
     add(member.label);
     add(member.username);
     add(member.email);
     add(member.label.split(/\s+/)[0]);
+    add(member.email.split("@")[0]);
+    add(normalizeAssigneeIdentity(member.email));
   }
+
+  if (userEmail) add(normalizeAssigneeIdentity(userEmail));
+  if (userLoginId) add(normalizeAssigneeIdentity(userLoginId));
 
   return Array.from(matchers);
 };
@@ -55,9 +112,16 @@ export const taskAssignedToUser = (
     if (!normalizedAssignee) return false;
 
     return matchers.some((matcher) => {
-      const normalizedMatcher = matcher.trim().toLowerCase();
+      const normalizedMatcher = normalizeAssigneeToken(matcher);
       if (!normalizedMatcher) return false;
       if (normalizedAssignee === normalizedMatcher) return true;
+
+      if (
+        normalizeAssigneeIdentity(normalizedAssignee) ===
+        normalizeAssigneeIdentity(normalizedMatcher)
+      ) {
+        return true;
+      }
 
       const assigneeFirst = normalizedAssignee.split(/\s+/)[0];
       const matcherFirst = normalizedMatcher.split(/\s+/)[0];

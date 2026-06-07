@@ -4,8 +4,11 @@ import {
   isPersonalGoogleTasksOAuthConfigured,
   serverGoogleTasksConfig,
 } from "@/config/googleTasks";
+import { getRequestOriginFromNextRequest } from "@/lib/http/requestOrigin";
 import {
   GOOGLE_TASKS_OAUTH_STATE_COOKIE,
+  clearGoogleTasksOAuthCookies,
+  resolveGoogleTasksPostAuthRedirect,
   resolveGoogleTasksRedirectUri,
   verifyGoogleTasksOAuthUser,
 } from "@/lib/integrations/google/oauthSession";
@@ -30,10 +33,13 @@ export async function GET(request: NextRequest) {
   const email = userToken ? verifyGoogleTasksOAuthUser(userToken) : null;
 
   if (oauthError) {
-    const redirectUrl = new URL("/admin/tasks", request.nextUrl.origin);
-    redirectUrl.searchParams.set("google", "error");
-    redirectUrl.searchParams.set("message", oauthError);
-    return NextResponse.redirect(redirectUrl);
+    const redirectUrl = resolveGoogleTasksPostAuthRedirect(request, {
+      google: "error",
+      message: oauthError,
+    });
+    const response = NextResponse.redirect(redirectUrl);
+    clearGoogleTasksOAuthCookies(response);
+    return response;
   }
 
   if (!code || !state || !expectedState || state !== expectedState || !email) {
@@ -44,7 +50,9 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const redirectUri = resolveGoogleTasksRedirectUri(request.nextUrl.origin);
+    const redirectUri = resolveGoogleTasksRedirectUri(
+      getRequestOriginFromNextRequest(request)
+    );
     const client = new OAuth2Client(
       serverGoogleTasksConfig.oauthClientId,
       serverGoogleTasksConfig.oauthClientSecret,
@@ -65,19 +73,22 @@ export async function GET(request: NextRequest) {
       connectedAt: new Date().toISOString(),
     });
 
-    const redirectUrl = new URL("/admin/tasks", request.nextUrl.origin);
-    redirectUrl.searchParams.set("google", "connected");
+    const redirectUrl = resolveGoogleTasksPostAuthRedirect(request, {
+      google: "connected",
+    });
     const response = NextResponse.redirect(redirectUrl);
-    response.cookies.delete(GOOGLE_TASKS_OAUTH_STATE_COOKIE);
-    response.cookies.delete("google_tasks_oauth_user");
+    clearGoogleTasksOAuthCookies(response);
     return response;
   } catch (error) {
     console.error("[tasks/google/callback] failed:", error);
     const message =
       error instanceof Error ? error.message : "Google Tasks OAuth exchange failed";
-    const redirectUrl = new URL("/admin/tasks", request.nextUrl.origin);
-    redirectUrl.searchParams.set("google", "error");
-    redirectUrl.searchParams.set("message", message);
-    return NextResponse.redirect(redirectUrl);
+    const redirectUrl = resolveGoogleTasksPostAuthRedirect(request, {
+      google: "error",
+      message,
+    });
+    const response = NextResponse.redirect(redirectUrl);
+    clearGoogleTasksOAuthCookies(response);
+    return response;
   }
 }

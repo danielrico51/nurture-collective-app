@@ -19,6 +19,7 @@ import {
   formatAssignees,
   getDueStatus,
   getInitials,
+  findTeamMemberForUser,
   getUserAssigneeMatchers,
   taskAssignedToUser,
 } from "@/lib/tasks/utils";
@@ -48,6 +49,7 @@ import UrgentFlag from "./UrgentFlag";
 
 interface TaskBoardProps {
   userEmail?: string;
+  userLoginId?: string;
   userDisplayName?: string;
 }
 
@@ -68,7 +70,11 @@ const viewModes: { id: TaskViewMode; label: string }[] = [
   { id: "calendar", label: "Calendar" },
 ];
 
-const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
+const TaskBoard = ({
+  userEmail,
+  userLoginId,
+  userDisplayName,
+}: TaskBoardProps) => {
   const [tasks, setTasks] = useState<ManagementTask[]>([]);
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [membersLoading, setMembersLoading] = useState(true);
@@ -249,13 +255,12 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
 
   const currentMember = useMemo(
     () =>
-      members.find(
-        (member) =>
-          member.email === userEmail ||
-          member.username === userDisplayName ||
-          member.label === userDisplayName
-      ) ?? null,
-    [members, userEmail, userDisplayName]
+      findTeamMemberForUser(members, {
+        email: userEmail,
+        loginId: userLoginId,
+        displayName: userDisplayName,
+      }),
+    [members, userEmail, userLoginId, userDisplayName]
   );
 
   const defaultAssignees = useMemo(() => {
@@ -265,8 +270,14 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
   }, [currentMember, members, userEmail, userDisplayName]);
 
   const userAssigneeMatchers = useMemo(
-    () => getUserAssigneeMatchers(userEmail, userDisplayName, currentMember),
-    [userEmail, userDisplayName, currentMember]
+    () =>
+      getUserAssigneeMatchers(
+        userEmail,
+        userDisplayName,
+        currentMember,
+        userLoginId
+      ),
+    [userEmail, userDisplayName, currentMember, userLoginId]
   );
 
   const ownershipScopedTasks = useMemo(() => {
