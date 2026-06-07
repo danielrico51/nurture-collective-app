@@ -76,6 +76,7 @@
     },
     {
       "parameters": {
+        "toEmail": "={{ $json.send_to || $json.team_notification_email || 'info@nesting-place.com' }}",
         "subject": "New Lead Received",
         "text": "Name: {{ $json.first_name }} {{ $json.last_name }}\nPhone: {{ $json.phone }}\nEmail: {{ $json.email }}\nService: {{ $json.service_requested }}\nLead ID: {{ $json.lead_id }}\nMessage:\n{{ $json.message }}",
         "options": {}

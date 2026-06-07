@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { intakeSubmitConfig } from "@/config/intakeSubmit";
+import { buildN8nPayload } from "@/lib/webhooks/n8n";
 import {
   storeCrmLeadSnapshot,
   storeDeadLetterIntakeLead,
@@ -162,7 +163,7 @@ export const sendToN8n = async (
     const response = await fetch(webhookUrl, {
       method: "POST",
       headers,
-      body: JSON.stringify(payload),
+      body: JSON.stringify(buildN8nPayload(payload)),
       signal: controller.signal,
     });
     if (!response.ok) {

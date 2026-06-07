@@ -137,11 +137,13 @@ Twilio requires proof that customers **opt in** before you text them on **(844) 
 
 **Important:** Mom confirmation texts in n8n run only when `sms_consent` is `true` in the webhook payload.
 
-### Gmail
+### Gmail / team email
 
-1. **Gmail Notification** → OAuth as `danielrico51@gmail.com`
-2. **To:** `danielrico51@gmail.com`
-3. No `$env.FROM_EMAIL` — use Gmail OAuth only
+The app sends `team_notification_email`, `send_to`, and `notification_email` on every n8n webhook payload (default `info@nesting-place.com`, override with `N8N_TEAM_NOTIFICATION_EMAIL` on Amplify).
+
+1. **Gmail Notification** → OAuth as `info@nesting-place.com` (or a shared ops inbox that forwards there)
+2. **To:** `={{ $json.send_to || $json.team_notification_email || 'info@nesting-place.com' }}`
+3. No `$env.FROM_EMAIL` — use Gmail OAuth only; do not hardcode personal addresses in the workflow
 
 ### n8n Cloud: “access to env vars denied”
 

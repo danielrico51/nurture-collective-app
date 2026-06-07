@@ -14,6 +14,11 @@ export const serverIntegrations = {
   n8nWebhookSecret: process.env.N8N_WEBHOOK_SECRET?.trim() ?? "",
   n8nTaskSyncWebhookUrl: process.env.N8N_TASK_SYNC_WEBHOOK_URL?.trim() ?? "",
   n8nBillingWebhookUrl: process.env.N8N_BILLING_WEBHOOK_URL?.trim() ?? "",
+  /** Team inbox n8n should notify (Gmail/SES nodes). */
+  n8nTeamNotificationEmail:
+    process.env.N8N_TEAM_NOTIFICATION_EMAIL?.trim() ||
+    process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() ||
+    brands.nestingPlace.email,
 } as const;
 
 export { serverBookingConfig } from "@/config/bookings";
