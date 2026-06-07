@@ -2,10 +2,12 @@
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import { isIntakeChatPath } from "@/config/intakeAccess";
 import { configureAmplify } from "@/utils/amplifyConfig";
 import "@aws-amplify/ui-react/styles.css";
 import { Hub } from "aws-amplify/utils";
 import { getCurrentUser } from "aws-amplify/auth";
+import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Toaster } from "react-hot-toast";
 
@@ -14,6 +16,8 @@ export default function RootLayoutClient({
 }: {
   children: React.ReactNode;
 }) {
+  const pathname = usePathname();
+  const isIntakeChat = isIntakeChatPath(pathname);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -45,6 +49,15 @@ export default function RootLayoutClient({
     return () => unsubscribe();
   }, []);
 
+  useEffect(() => {
+    if (!isIntakeChat) return;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [isIntakeChat]);
+
   if (!ready) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -57,8 +70,16 @@ export default function RootLayoutClient({
     <>
       <Toaster position="top-center" />
       <Header isAuthenticated={isAuthenticated} />
-      <main className="min-h-screen pt-20">{children}</main>
-      <Footer />
+      <main
+        className={
+          isIntakeChat
+            ? "fixed inset-x-0 bottom-0 top-20 overflow-hidden"
+            : "min-h-screen pt-20"
+        }
+      >
+        {children}
+      </main>
+      {isIntakeChat ? null : <Footer />}
     </>
   );
 }

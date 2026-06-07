@@ -43,6 +43,12 @@ const SESSION_STORAGE_KEY = "nurture-intake-session-id";
 const hasUserMessages = (items: ConversationMessage[]) =>
   items.some((message) => message.role === "user");
 
+const isNearBottom = (container: HTMLDivElement, threshold = 120) => {
+  const distanceFromBottom =
+    container.scrollHeight - container.scrollTop - container.clientHeight;
+  return distanceFromBottom < threshold;
+};
+
 const ConversationalIntake = ({
   userId,
   defaults,
@@ -59,6 +65,7 @@ const ConversationalIntake = ({
   const [streamingText, setStreamingText] = useState("");
   const [sessionClosed, setSessionClosed] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const initRef = useRef(false);
   const followLatestRef = useRef(false);
@@ -88,28 +95,37 @@ const ConversationalIntake = ({
     container.scrollTo({ top: container.scrollHeight, behavior });
   }, []);
 
-  const handleMessagesScroll = useCallback(() => {
+  const syncStickToBottom = useCallback(() => {
     const container = messagesContainerRef.current;
-    if (!container) return;
-    const distanceFromBottom =
-      container.scrollHeight - container.scrollTop - container.clientHeight;
-    stickToBottomRef.current = distanceFromBottom < 120;
+    if (!container) return true;
+    const nearBottom = isNearBottom(container);
+    stickToBottomRef.current = nearBottom;
+    return nearBottom;
   }, []);
+
+  const handleMessagesScroll = useCallback(() => {
+    syncStickToBottom();
+  }, [syncStickToBottom]);
 
   useEffect(() => {
     if (loading) return;
-    if (!stickToBottomRef.current && hasUserMessages(messages)) return;
-    if (followLatestRef.current || hasUserMessages(messages)) {
+    if (hasUserMessages(messages)) {
+      if (!syncStickToBottom()) return;
+      scrollToBottom();
+      return;
+    }
+    if (followLatestRef.current) {
       scrollToBottom();
       return;
     }
     scrollMessagesToTop();
-  }, [loading, messages, scrollMessagesToTop, scrollToBottom]);
+  }, [loading, messages, scrollMessagesToTop, scrollToBottom, syncStickToBottom]);
 
   useEffect(() => {
-    if (loading || !streamingText || !stickToBottomRef.current) return;
+    if (loading || !streamingText) return;
+    if (!syncStickToBottom()) return;
     scrollToBottom();
-  }, [loading, streamingText, scrollToBottom]);
+  }, [loading, streamingText, scrollToBottom, syncStickToBottom]);
 
   const bootstrap = useCallback(async () => {
     setLoading(true);
@@ -336,7 +352,7 @@ const ConversationalIntake = ({
 
   if (loading) {
     return (
-      <div className="flex h-full items-center justify-center px-6 text-center">
+      <div className="flex min-h-0 flex-1 items-center justify-center px-6 text-center">
         <p className="text-nurture-charcoal/60">{careCoordinator.intake.connecting}</p>
       </div>
     );
@@ -344,7 +360,7 @@ const ConversationalIntake = ({
 
   if (!session) {
     return (
-      <div className="flex h-full flex-col items-center justify-center gap-4 px-6 text-center">
+      <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-4 px-6 text-center">
         <p className="text-sm text-nurture-charcoal/70">
           {bootstrapError ??
             "We couldn't start your conversation. Check your connection and try again."}
@@ -380,11 +396,26 @@ const ConversationalIntake = ({
     toast.success("Your introductory call is booked.");
   };
 
+  const showStartFresh =
+    hasUserMessages(messages) && !sessionClosed && !sending;
+
   return (
-    <div className="mx-auto flex h-full w-full max-w-3xl flex-col overflow-hidden px-2 sm:max-w-4xl sm:px-4 lg:max-w-5xl">
+    <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden px-2 sm:max-w-4xl sm:px-4 lg:max-w-5xl">
       {(session?.extractedProfile.completionScore ?? 0) > 0 &&
       hasUserMessages(messages) ? (
         <ProfileProgressBar score={session.extractedProfile.completionScore} />
+      ) : null}
+
+      {showStartFresh ? (
+        <div className="flex shrink-0 justify-end px-2 pt-2 sm:px-0">
+          <button
+            type="button"
+            onClick={() => void startFreshSession()}
+            className="text-xs font-medium text-nurture-charcoal/55 underline-offset-2 hover:text-nurture-sage-dark hover:underline"
+          >
+            Start a new conversation
+          </button>
+        </div>
       ) : null}
 
       {sessionClosed ? (
@@ -425,7 +456,7 @@ const ConversationalIntake = ({
       <div
         ref={messagesContainerRef}
         onScroll={handleMessagesScroll}
-        className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-2 py-4 sm:px-4 sm:py-6"
+        className="min-h-0 flex-1 overflow-y-auto overscroll-y-contain px-2 py-4 [-webkit-overflow-scrolling:touch] sm:px-4 sm:py-6"
       >
         {showWelcomeIntro ? (
           <div className="mb-4 text-center sm:mb-6">
@@ -543,6 +574,7 @@ const ConversationalIntake = ({
               </a>
             </div>
           ) : null}
+          <div ref={messagesEndRef} aria-hidden className="h-px shrink-0" />
         </div>
       </div>
 

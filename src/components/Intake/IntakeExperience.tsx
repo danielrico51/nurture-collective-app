@@ -100,7 +100,7 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
   }
 
   return (
-    <div className="flex min-h-[calc(100dvh-4.5rem)] flex-col overflow-hidden bg-gradient-to-b from-nurture-cream via-white to-nurture-cream/50 sm:min-h-[calc(100dvh-5rem)]">
+    <div className="flex h-full min-h-0 flex-col overflow-hidden bg-gradient-to-b from-nurture-cream via-white to-nurture-cream/50">
       {publicMode ? (
         <GuestSaveProgressPrompt variant="banner" className="shrink-0" />
       ) : null}
