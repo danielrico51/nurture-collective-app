@@ -67,6 +67,19 @@ export const computeMissingFields = (
 export const hasContactInfo = (profile: ExtractedMaternalProfile): boolean =>
   Boolean(profile.phone.trim() || profile.email.trim());
 
+/** Name + email are required to book an introductory call (phone optional). */
+export const hasBookingContact = (profile: ExtractedMaternalProfile): boolean =>
+  Boolean(profile.name.trim() && profile.email.trim());
+
+export const canOfferScheduling = (
+  profile: ExtractedMaternalProfile,
+  userMessageCount = 0
+): boolean =>
+  userMessageCount >= 2 &&
+  Boolean(profile.maternalStage) &&
+  profile.supportInterests.length > 0 &&
+  hasBookingContact(profile);
+
 export const computeCompletionScore = (
   profile: ExtractedMaternalProfile
 ): number => {
@@ -186,6 +199,34 @@ export const parseQuickReplyToPatch = (
     /\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b/
   );
   if (emailMatch) patch.email = emailMatch[0];
+
+  const nameFromPhrase = reply.match(
+    /(?:my name is|name is|i am|i'?m|this is|call me)\s+(.+)/i
+  );
+  if (nameFromPhrase) {
+    const candidate = nameFromPhrase[1]
+      .replace(/\[.*?\]/g, "")
+      .replace(/[.!?].*$/, "")
+      .trim();
+    if (candidate && !candidate.includes("@") && candidate.length >= 2) {
+      patch.name = candidate.slice(0, 80);
+    }
+  } else if (
+    !emailMatch &&
+    !phoneMatch &&
+    !zipMatch &&
+    !patch.maternalStage &&
+    !patch.supportInterests?.length
+  ) {
+    const trimmed = reply.trim();
+    if (
+      /^[A-Za-z][A-Za-z\s'-]{0,60}$/.test(trimmed) &&
+      trimmed.split(/\s+/).length <= 4 &&
+      trimmed.length >= 2
+    ) {
+      patch.name = trimmed;
+    }
+  }
 
   return patch;
 };

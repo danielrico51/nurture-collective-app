@@ -23,7 +23,10 @@
     "list:google-tasks": "tsx scripts/list-google-task-lists.ts",
     "import:legacy-blog": "tsx scripts/import-legacy-blog.ts",
     "sync:legacy-blog": "tsx scripts/sync-legacy-blog-to-storage.ts",
-    "setup:personal-google-tasks": "bash infrastructure/google/setup-personal-tasks-sync.sh"
+    "setup:personal-google-tasks": "bash infrastructure/google/setup-personal-tasks-sync.sh",
+    "setup:concierge-scheduling": "bash infrastructure/google/setup-concierge-scheduling.sh",
+    "amplify:concierge-scheduling": "bash infrastructure/aws/scripts/set-amplify-google-calendar-env.sh",
+    "share:intro-calendar": "bash infrastructure/google/share-intro-calendar-with-sa.sh"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.0.0",

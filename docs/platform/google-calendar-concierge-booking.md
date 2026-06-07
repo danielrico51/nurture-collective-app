@@ -60,7 +60,7 @@ sequenceDiagram
 
 Complete in Google Cloud Console + Workspace **before** coding:
 
-1. **GCP project** with Calendar API enabled.
+1. **GCP project** with Workspace **Calendar API** enabled (`calendar-json.googleapis.com` — not `calendar.googleapis.com` or Calendar MCP). One-command setup: `npm run setup:concierge-scheduling`.
 2. **Service account** (recommended for server-side booking):
    - JSON key downloaded → store in Amplify secret / `.env.local` (never commit).
    - **Domain-wide delegation** if booking on a human calendar (`user@thenestingplacenj.com`): admin grants `https://www.googleapis.com/auth/calendar` (+ `calendar.events` scope) to the SA client ID.

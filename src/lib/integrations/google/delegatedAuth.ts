@@ -1,34 +1,43 @@
 import { GoogleAuth, OAuth2Client } from "google-auth-library";
 import { serverGoogleTasksConfig } from "@/config/googleTasks";
 
-const TASKS_SCOPE = "https://www.googleapis.com/auth/tasks";
 const CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
+
+export interface DelegatedGoogleAuthOptions {
+  scope: string;
+  subject?: string;
+  serviceAccount?: string;
+  adcJson?: string;
+}
 
 /**
  * Domain-wide delegation via IAM signJwt (no JSON keys).
  * Requires Workspace Admin to authorize the service account client ID.
  */
-export const createDelegatedUserOAuthClient = async (): Promise<OAuth2Client> => {
+export const createDelegatedGoogleAuthClient = async (
+  options: DelegatedGoogleAuthOptions
+): Promise<OAuth2Client> => {
   const subject =
-    serverGoogleTasksConfig.delegatedUser || "admin@nesting-place.com";
-  const serviceAccount = serverGoogleTasksConfig.impersonateServiceAccount;
+    options.subject ||
+    serverGoogleTasksConfig.delegatedUser ||
+    "admin@nesting-place.com";
+  const serviceAccount =
+    options.serviceAccount || serverGoogleTasksConfig.impersonateServiceAccount;
+  const adcJson = options.adcJson || serverGoogleTasksConfig.adcJson;
   const now = Math.floor(Date.now() / 1000);
 
   const payload = JSON.stringify({
     iss: serviceAccount,
     sub: subject,
-    scope: TASKS_SCOPE,
+    scope: options.scope,
     aud: "https://oauth2.googleapis.com/token",
     iat: now,
     exp: now + 3600,
   });
 
-  const sourceAuth = serverGoogleTasksConfig.adcJson
+  const sourceAuth = adcJson
     ? new GoogleAuth({
-        credentials: JSON.parse(serverGoogleTasksConfig.adcJson) as Record<
-          string,
-          unknown
-        >,
+        credentials: JSON.parse(adcJson) as Record<string, unknown>,
         scopes: [CLOUD_PLATFORM_SCOPE],
       })
     : new GoogleAuth({ scopes: [CLOUD_PLATFORM_SCOPE] });
@@ -63,7 +72,7 @@ export const createDelegatedUserOAuthClient = async (): Promise<OAuth2Client> =>
     throw new Error(
       tokens.error_description ||
         tokens.error ||
-        "Domain-wide delegation failed. Add the service account client ID in Google Workspace Admin → Security → API controls → Domain-wide delegation. Scope: https://www.googleapis.com/auth/tasks"
+        `Domain-wide delegation failed. Add the service account client ID in Google Workspace Admin → Security → API controls → Domain-wide delegation. Scope: ${options.scope}`
     );
   }
 
@@ -76,3 +85,9 @@ export const createDelegatedUserOAuthClient = async (): Promise<OAuth2Client> =>
 
   return client;
 };
+
+/** @deprecated Use createDelegatedGoogleAuthClient({ scope: TASKS_SCOPE }) */
+export const createDelegatedUserOAuthClient = async (): Promise<OAuth2Client> =>
+  createDelegatedGoogleAuthClient({
+    scope: "https://www.googleapis.com/auth/tasks",
+  });

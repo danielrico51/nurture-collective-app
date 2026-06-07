@@ -10,6 +10,7 @@ import {
   buildGuestAccountSignupHref,
   INTAKE_SESSION_STORAGE_KEY,
   PUBLIC_INTAKE_PATH,
+  resolveIntakeSessionStorageKey,
 } from "@/config/intakeAccess";
 import type { CareServiceContext } from "@/config/carePaths";
 import { careCoordinator } from "@/content/site";
@@ -26,9 +27,11 @@ import {
 import { fetchSchedulingStatus } from "@/lib/api/schedulingClient";
 import type { ConsultBooking } from "@/lib/scheduling/types";
 import { formatConversationStreamError } from "@/lib/conversation/errors";
+import { canOfferScheduling } from "@/lib/conversation/profileMapper";
+import { isGuestLead } from "@/lib/leads/workflow";
+import { INTAKE_START_FRESH_EVENT } from "@/lib/intake/startFresh";
 import type { ConversationMessage, ConversationSession } from "@/types/conversation";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { FormEvent, useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -51,13 +54,28 @@ const isNearBottom = (container: HTMLDivElement, threshold = 120) => {
 const isStaleSessionError = (error: string) =>
   /session not found|missing or invalid x-guest-session-id/i.test(error);
 
+const applyProfileDefaults = (
+  nextSession: ConversationSession,
+  _defaults?: { name?: string; email?: string; phone?: string }
+): ConversationSession => nextSession;
+
+const isValidStoredSession = (
+  stored: ConversationSession,
+  userId: string,
+  guestMode: boolean
+) => {
+  if (stored.userId !== userId) return false;
+  if (!guestMode && isGuestLead(stored.userId)) return false;
+  if (guestMode && !isGuestLead(stored.userId)) return false;
+  return true;
+};
+
 const ConversationalIntake = ({
   userId,
   defaults,
   guestMode = false,
   initialService = null,
 }: ConversationalIntakeProps) => {
-  const router = useRouter();
   const [session, setSession] = useState<ConversationSession | null>(null);
   const [messages, setMessages] = useState<ConversationMessage[]>([]);
   const [quickReplies, setQuickReplies] = useState<string[]>([]);
@@ -133,29 +151,43 @@ const ConversationalIntake = ({
     setLoading(true);
     setBootstrapError(null);
 
+    const sessionStorageKey = resolveIntakeSessionStorageKey(guestMode, userId);
+
     try {
+      if (typeof window !== "undefined") {
+        // Guest and member intake used to share one key — never reuse a guest id on member routes.
+        if (!guestMode) {
+          window.sessionStorage.removeItem(INTAKE_SESSION_STORAGE_KEY);
+        }
+      }
+
       const storedSessionId =
         typeof window !== "undefined"
-          ? window.sessionStorage.getItem(INTAKE_SESSION_STORAGE_KEY)
+          ? window.sessionStorage.getItem(sessionStorageKey)
           : null;
 
       if (storedSessionId && !initialService) {
         try {
           const stored = await fetchConversation(storedSessionId);
-          followLatestRef.current = hasUserMessages(stored.messages);
-          setSession(stored);
-          setMessages(stored.messages);
-          setQuickReplies(stored.quickReplies);
-          setSessionClosed(stored.status === "completed");
-          if (stored.status === "completed") {
+          if (!isValidStoredSession(stored, userId, guestMode)) {
+            window.sessionStorage.removeItem(sessionStorageKey);
+            throw new Error("stale session");
+          }
+          const hydrated = applyProfileDefaults(stored, defaults);
+          followLatestRef.current = hasUserMessages(hydrated.messages);
+          setSession(hydrated);
+          setMessages(hydrated.messages);
+          setQuickReplies(hydrated.quickReplies);
+          setSessionClosed(hydrated.status === "completed");
+          if (hydrated.status === "completed") {
             followLatestRef.current = true;
           }
           return;
         } catch {
-          window.sessionStorage.removeItem(INTAKE_SESSION_STORAGE_KEY);
+          window.sessionStorage.removeItem(sessionStorageKey);
         }
       } else if (initialService) {
-        window.sessionStorage.removeItem(INTAKE_SESSION_STORAGE_KEY);
+        window.sessionStorage.removeItem(sessionStorageKey);
       }
 
       const { session: nextSession, quickReplies: replies } =
@@ -166,10 +198,11 @@ const ConversationalIntake = ({
           },
           { forceNew: Boolean(initialService) }
         );
+      const hydrated = applyProfileDefaults(nextSession, defaults);
       followLatestRef.current = false;
-      window.sessionStorage.setItem(INTAKE_SESSION_STORAGE_KEY, nextSession.id);
-      setSession(nextSession);
-      setMessages(nextSession.messages);
+      window.sessionStorage.setItem(sessionStorageKey, hydrated.id);
+      setSession(hydrated);
+      setMessages(hydrated.messages);
       setQuickReplies(replies);
     } catch (error) {
       const message =
@@ -179,7 +212,7 @@ const ConversationalIntake = ({
     } finally {
       setLoading(false);
     }
-  }, [defaults, initialService]);
+  }, [defaults, guestMode, initialService, userId]);
 
   useEffect(() => {
     if (!userId || initRef.current) return;
@@ -192,37 +225,55 @@ const ConversationalIntake = ({
     void bootstrap();
   };
 
+  const syncProfileAfterReply = useCallback(
+    (sessionId: string) => {
+      // Extraction finishes after the first stream "done" — refresh so booking UI can appear.
+      window.setTimeout(() => {
+        void fetchConversation(sessionId)
+          .then((refreshed) => {
+            const synced = applyProfileDefaults(refreshed, defaults);
+            setSession(synced);
+            setMessages(synced.messages);
+            setQuickReplies(synced.quickReplies);
+          })
+          .catch(() => undefined);
+      }, 1500);
+    },
+    [defaults]
+  );
+
   const handleComplete = useCallback(
     (nextSession: ConversationSession, intakeSubmitted?: boolean) => {
-      setSession(nextSession);
-      setMessages(nextSession.messages);
-      setQuickReplies(nextSession.quickReplies);
+      const hydrated = applyProfileDefaults(nextSession, defaults);
+      const sessionStorageKey = resolveIntakeSessionStorageKey(guestMode, userId);
+
+      setSession(hydrated);
+      setMessages(hydrated.messages);
+      setQuickReplies(hydrated.quickReplies);
       followLatestRef.current = true;
-      window.sessionStorage.setItem(INTAKE_SESSION_STORAGE_KEY, nextSession.id);
+      stickToBottomRef.current = true;
+      window.sessionStorage.setItem(sessionStorageKey, hydrated.id);
+      syncProfileAfterReply(hydrated.id);
 
       if (intakeSubmitted) {
-        setSessionClosed(true);
         toast.success(
           guestMode
-            ? "Your care profile is saved — create a free account to keep it, or book a follow-up call."
-            : "Your care profile is ready — welcome!"
+            ? "Your care profile is saved — book an introductory call below, or create a free account to keep your plan."
+            : "Your care profile is ready — book an introductory call below when you're ready."
         );
-        if (!guestMode) {
-          router.push("/apps");
-        }
         return;
       }
 
-      if (nextSession.status === "completed") {
+      if (hydrated.status === "completed") {
         setSessionClosed(true);
         toast(
           guestMode
             ? "This conversation is complete. Create a free account to save your plan, or book a call below."
-            : "This conversation was marked complete. You can review it below or continue in your apps."
+            : "This conversation is complete. You can book a call below or continue in your apps."
         );
       }
     },
-    [guestMode, router]
+    [defaults, guestMode, syncProfileAfterReply, userId]
   );
 
   const syncSessionFromServer = useCallback(
@@ -271,7 +322,21 @@ const ConversationalIntake = ({
     ) => {
       setStreamingText("");
       try {
-        const { messageSaved } = await syncSessionFromServer(session.id, trimmed);
+        const { refreshed, messageSaved } = await syncSessionFromServer(
+          session.id,
+          trimmed
+        );
+        const assistantReplied = refreshed.messages.some(
+          (message, index, items) =>
+            message.role === "assistant" &&
+            index > 0 &&
+            items[index - 1]?.role === "user" &&
+            items[index - 1]?.content.trim() === trimmed
+        );
+        if (assistantReplied) {
+          setSendError(null);
+          return;
+        }
         if (!messageSaved) {
           setMessages((current) =>
             current.filter((message) => message.id !== optimisticId)
@@ -279,7 +344,9 @@ const ConversationalIntake = ({
         }
         const friendly = formatConversationStreamError(error, { messageSaved });
         if (isStaleSessionError(error)) {
-          window.sessionStorage.removeItem(INTAKE_SESSION_STORAGE_KEY);
+          window.sessionStorage.removeItem(
+            resolveIntakeSessionStorageKey(guestMode, userId)
+          );
         }
         setSendError(friendly);
         toast.error(friendly, { id: "concierge-send-error" });
@@ -289,7 +356,9 @@ const ConversationalIntake = ({
         );
         const friendly = formatConversationStreamError(error);
         if (isStaleSessionError(error)) {
-          window.sessionStorage.removeItem(INTAKE_SESSION_STORAGE_KEY);
+          window.sessionStorage.removeItem(
+            resolveIntakeSessionStorageKey(guestMode, userId)
+          );
         }
         setSendError(friendly);
         toast.error(friendly, { id: "concierge-send-error" });
@@ -331,27 +400,46 @@ const ConversationalIntake = ({
     sendMessage(input);
   };
 
-  const startFreshSession = async () => {
+  const startFreshSession = useCallback(async () => {
+    const sessionStorageKey = resolveIntakeSessionStorageKey(guestMode, userId);
+
     setLoading(true);
     setBootstrapError(null);
     setSessionClosed(false);
+    setSending(false);
+    setSendError(null);
+    setStreamingText("");
+    setInput("");
+    setConfirmedBooking(null);
     followLatestRef.current = false;
+    stickToBottomRef.current = true;
+    window.sessionStorage.removeItem(sessionStorageKey);
     window.sessionStorage.removeItem(INTAKE_SESSION_STORAGE_KEY);
-    initRef.current = false;
+    initRef.current = true;
     try {
       const { session: nextSession, quickReplies: replies } =
         await startConversation(defaults, { forceNew: true });
-      initRef.current = true;
-      window.sessionStorage.setItem(INTAKE_SESSION_STORAGE_KEY, nextSession.id);
-      setSession(nextSession);
-      setMessages(nextSession.messages);
+      const hydrated = applyProfileDefaults(nextSession, defaults);
+      window.sessionStorage.setItem(sessionStorageKey, hydrated.id);
+      setSession(hydrated);
+      setMessages(hydrated.messages);
       setQuickReplies(replies);
+      toast.success("Started a new conversation");
     } catch (error) {
+      initRef.current = false;
       toast.error(error instanceof Error ? error.message : "Could not start chat");
     } finally {
       setLoading(false);
     }
-  };
+  }, [defaults, guestMode, userId]);
+
+  useEffect(() => {
+    const onStartFresh = () => {
+      void startFreshSession();
+    };
+    window.addEventListener(INTAKE_START_FRESH_EVENT, onStartFresh);
+    return () => window.removeEventListener(INTAKE_START_FRESH_EVENT, onStartFresh);
+  }, [startFreshSession]);
 
   const showWelcomeIntro =
     !sessionClosed && messages.length === 1 && messages[0]?.role === "assistant";
@@ -390,13 +478,12 @@ const ConversationalIntake = ({
     email: profile.email?.trim() || defaults?.email?.trim() || "",
     phone: profile.phone?.trim() || defaults?.phone?.trim() || undefined,
   };
+  const userMessageCount = messages.filter((message) => message.role === "user").length;
+  const canOfferBooking = canOfferScheduling(profile, userMessageCount);
   const canUseLiveScheduling =
-    liveSchedulingEnabled &&
-    Boolean(bookingAttendee.name && bookingAttendee.email) &&
-    hasUserMessages(messages) &&
-    !sessionClosed;
+    liveSchedulingEnabled && canOfferBooking && !confirmedBooking;
   const showBookCallCard =
-    hasBooking() && hasUserMessages(messages) && !canUseLiveScheduling;
+    hasBooking() && canOfferBooking && !confirmedBooking;
 
   const handleBookingConfirmed = (booking: ConsultBooking) => {
     setConfirmedBooking(booking);
@@ -405,7 +492,7 @@ const ConversationalIntake = ({
   };
 
   const showStartFresh =
-    hasUserMessages(messages) && !sessionClosed && !sending;
+    !sessionClosed && !sending && (hasUserMessages(messages) || !guestMode);
 
   return (
     <div className="mx-auto flex min-h-0 w-full max-w-3xl flex-1 flex-col overflow-hidden px-2 sm:max-w-4xl sm:px-4 lg:max-w-5xl">
@@ -432,7 +519,7 @@ const ConversationalIntake = ({
           <p className="mt-1">
             {guestMode
               ? "Create a free account to save this conversation and your care profile for next time."
-              : "Your messages are saved. If your profile was submitted, head to your apps for next steps."}
+              : "Your messages are saved. You can still book an introductory call below or head to your apps."}
           </p>
           <div className="mt-3 flex flex-wrap gap-2">
             {guestMode ? (
@@ -564,10 +651,12 @@ const ConversationalIntake = ({
           {showBookCallCard ? (
             <div className="rounded-2xl border border-nurture-sage/20 bg-white/90 p-4 text-center">
               <p className="text-sm font-medium text-nurture-charcoal">
-                Ready for a human touch?
+                Book your introductory call
               </p>
               <p className="mt-1 text-xs text-nurture-charcoal/60">
-                Book a follow-up call with our client coordinator.
+                {canUseLiveScheduling
+                  ? "Prefer the full calendar? Open our booking page to see every open time."
+                  : "Pick a time that works for you — our care coordinator will confirm by email."}
               </p>
               <a
                 href={buildBookingUrlWithPrefill({

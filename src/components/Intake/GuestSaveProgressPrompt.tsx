@@ -3,9 +3,9 @@
 import {
   buildGuestAccountSigninHref,
   buildGuestAccountSignupHref,
-  INTAKE_SESSION_STORAGE_KEY,
   PUBLIC_INTAKE_PATH,
 } from "@/config/intakeAccess";
+import { requestIntakeStartFresh } from "@/lib/intake/startFresh";
 import { canCreateMemberAccount } from "@/config/publicAccess";
 import { storeAuthReturnTo } from "@/config/socialAuth";
 
@@ -37,11 +37,6 @@ const GuestSaveProgressPrompt = ({
     storeAuthReturnTo(returnTo);
   };
 
-  const startFreshConversation = () => {
-    sessionStorage.removeItem(INTAKE_SESSION_STORAGE_KEY);
-    window.location.assign(returnTo);
-  };
-
   if (variant === "banner") {
     return (
       <div
@@ -67,7 +62,7 @@ const GuestSaveProgressPrompt = ({
           <div className="mt-2 flex justify-center">
             <button
               type="button"
-              onClick={startFreshConversation}
+              onClick={requestIntakeStartFresh}
               className="rounded-full border border-nurture-sage/30 bg-white/90 px-3 py-1 text-xs font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
             >
               Start a new conversation
@@ -101,7 +96,7 @@ const GuestSaveProgressPrompt = ({
             {" · "}
             <button
               type="button"
-              onClick={startFreshConversation}
+              onClick={requestIntakeStartFresh}
               className="font-medium text-nurture-sage-dark underline underline-offset-2 hover:text-nurture-charcoal"
             >
               Start a new conversation
@@ -143,7 +138,7 @@ const GuestSaveProgressPrompt = ({
         {showStartFresh ? (
           <button
             type="button"
-            onClick={startFreshConversation}
+            onClick={requestIntakeStartFresh}
             className="rounded-full border border-nurture-sage/30 px-4 py-2 text-xs font-medium text-nurture-charcoal/70 hover:bg-nurture-sage/10"
           >
             Start a new conversation

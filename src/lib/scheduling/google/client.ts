@@ -1,6 +1,12 @@
-import { JWT, type AuthClient } from "google-auth-library";
+import {
+  GoogleAuth,
+  Impersonated,
+  JWT,
+  type AuthClient,
+} from "google-auth-library";
 import { google } from "googleapis";
 import { serverGoogleTasksConfig } from "@/config/googleTasks";
+import { createDelegatedGoogleAuthClient } from "@/lib/integrations/google/delegatedAuth";
 import {
   isGoogleSchedulingConfigured,
   serverSchedulingConfig,
@@ -8,6 +14,7 @@ import {
 import { SchedulingNotConfiguredError } from "@/lib/scheduling/errors";
 
 const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar";
+const CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 
 const readServiceAccountCredentials = (): {
   client_email: string;
@@ -48,20 +55,50 @@ const readServiceAccountCredentials = (): {
   return { client_email: email, private_key: key };
 };
 
+const createUserAdcClient = async (): Promise<AuthClient> => {
+  const auth = new GoogleAuth({ scopes: [CALENDAR_SCOPE] });
+  return auth.getClient();
+};
+
+const createImpersonatedClient = async (): Promise<AuthClient> => {
+  const sourceAuth = new GoogleAuth({ scopes: [CLOUD_PLATFORM_SCOPE] });
+  const sourceClient = await sourceAuth.getClient();
+
+  return new Impersonated({
+    sourceClient,
+    targetPrincipal: serverSchedulingConfig.impersonateServiceAccount,
+    targetScopes: [CALENDAR_SCOPE],
+    lifetime: 3600,
+  });
+};
+
 export const createGoogleCalendarAuthClient = async (): Promise<AuthClient> => {
   if (!isGoogleSchedulingConfigured()) {
     throw new SchedulingNotConfiguredError();
   }
 
-  const credentials = readServiceAccountCredentials();
-  const subject = serverSchedulingConfig.delegatedUser || undefined;
-
-  return new JWT({
-    email: credentials.client_email,
-    key: credentials.private_key,
-    scopes: [CALENDAR_SCOPE],
-    subject,
-  });
+  switch (serverSchedulingConfig.authMode) {
+    case "delegated":
+      return createDelegatedGoogleAuthClient({
+        scope: CALENDAR_SCOPE,
+        subject: serverSchedulingConfig.delegatedUser,
+        serviceAccount: serverSchedulingConfig.impersonateServiceAccount,
+        adcJson: serverSchedulingConfig.adcJson,
+      });
+    case "adc":
+      return createUserAdcClient();
+    case "impersonate":
+      return createImpersonatedClient();
+    default: {
+      const credentials = readServiceAccountCredentials();
+      return new JWT({
+        email: credentials.client_email,
+        key: credentials.private_key,
+        scopes: [CALENDAR_SCOPE],
+        subject: serverSchedulingConfig.delegatedUser || undefined,
+      });
+    }
+  }
 };
 
 export const getCalendarApi = async () => {

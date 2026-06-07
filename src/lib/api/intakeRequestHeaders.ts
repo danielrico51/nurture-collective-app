@@ -1,5 +1,6 @@
 import { fetchAuthSession } from "aws-amplify/auth";
 import {
+  isMemberIntakePath,
   isPublicIntakeEnabled,
   PUBLIC_INTAKE_PATH,
 } from "@/config/intakeAccess";
@@ -15,10 +16,24 @@ export const intakeRequestHeaders = async (): Promise<HeadersInit> => {
     "Content-Type": "application/json",
   };
 
+  const memberIntakeRoute =
+    typeof window !== "undefined" && isMemberIntakePath(window.location.pathname);
+
   // Public /intake must always use the guest session id — even if Cognito tokens
   // exist in the browser, or saved conversations won't match on send.
   if (isPublicIntakeEnabled() && isPublicIntakeRoute()) {
     headers["X-Guest-Session-Id"] = getOrCreateGuestSessionId();
+    return headers;
+  }
+
+  // Signed-in member intake must never fall back to guest auth.
+  if (memberIntakeRoute) {
+    const session = await fetchAuthSession();
+    const token = session.tokens?.idToken?.toString();
+    if (!token) {
+      throw new Error("Not authenticated");
+    }
+    headers.Authorization = `Bearer ${token}`;
     return headers;
   }
 

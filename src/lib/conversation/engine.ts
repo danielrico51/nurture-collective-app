@@ -3,7 +3,9 @@ import {
   extractProfileFromConversation,
 } from "@/lib/conversation/extraction";
 import {
+  canOfferScheduling,
   extractedProfileToIntakeDraft,
+  hasBookingContact,
   mergeExtractedProfile,
 } from "@/lib/conversation/profileMapper";
 import { NESTING_PLACE_CONCIERGE_QUICK_REPLIES } from "@/content/nestingPlaceServices";
@@ -88,7 +90,7 @@ export const createConversationSession = async (
         ? [preselectedService.supportInterest]
         : [];
 
-  const extractedProfile = mergeExtractedProfile(createEmptyExtractedProfile(defaults), {
+  const extractedProfile = mergeExtractedProfile(createEmptyExtractedProfile(), {
     ...(initialInterests.length ? { supportInterests: initialInterests } : {}),
   });
 
@@ -128,8 +130,11 @@ const buildChatMessages = async (
   options: ConversationChannelOptions = {}
 ) => {
   const profile = session.extractedProfile;
-  const needsContact =
-    !profile.name.trim() || (!profile.phone.trim() && !profile.email.trim());
+  const userMessageCount = session.messages.filter(
+    (message) => message.role === "user"
+  ).length;
+  const needsContact = !profile.name.trim() || !profile.email.trim();
+  const offerScheduling = canOfferScheduling(profile, userMessageCount);
 
   const serviceAreaPrompt = formatServiceAreaForConcierge(profile.locationZip);
 
@@ -142,11 +147,25 @@ const buildChatMessages = async (
     },
   ];
 
+  if (!offerScheduling) {
+    messages.push({
+      role: "system",
+      content:
+        "Do NOT invite the user to book a call or mention the scheduler below yet. Focus on understanding their stage, support needs, and (when appropriate) collecting name and email. Phone is optional. Booking is only offered after maternal stage, support interests, name, and email are collected through the conversation.",
+    });
+  }
+
   if (needsContact) {
     messages.push({
       role: "system",
       content:
-        "PRIORITY: Contact info is still missing for coordinator follow-up. Before completing intake, warmly collect the user's name and at least one contact method (email or phone). Explain that our care coordinator uses this to follow up with personalized recommendations.",
+        "PRIORITY: Before booking or completing intake, collect the user's name and email address (phone optional). Ask one piece at a time. Email is required for calendar invites.",
+    });
+  } else if (offerScheduling) {
+    messages.push({
+      role: "system",
+      content:
+        'SCHEDULING (required next step): Name, email, stage, and support interests are on file. Invite the user to book an introductory call using the scheduler directly below this chat — e.g. "pick a time below" or "tap Book a call below." Do NOT say we will email them to schedule or that someone will reach out to schedule.',
     });
   }
 
@@ -185,7 +204,8 @@ const buildChatMessages = async (
 
 const fallbackAssistantReply = (
   profile: ExtractedMaternalProfile,
-  userMessage: string
+  userMessage: string,
+  userMessageCount = 1
 ): { content: string; quickReplies: string[] } => {
   const lower = userMessage.toLowerCase();
   if (!profile.maternalStage) {
@@ -225,33 +245,49 @@ const fallbackAssistantReply = (
       quickReplies: FALLBACK_REPLIES.challenges,
     };
   }
-  if (!profile.name || (!profile.phone && !profile.email)) {
-    const missingName = !profile.name;
-    const missingContact = !profile.phone && !profile.email;
+  if (!hasBookingContact(profile)) {
+    const missingName = !profile.name.trim();
+    const missingEmail = !profile.email.trim();
     let content =
-      "Almost there — so our care coordinator can follow up with personalized recommendations, ";
-    if (missingName && missingContact) {
-      content +=
-        "could you share your name and the best email or phone number to reach you?";
+      "Almost there — so we can send your calendar invite and follow up, ";
+    if (missingName && missingEmail) {
+      content += "could you share your name and email address?";
     } else if (missingName) {
       content += "what name should we use for you?";
     } else {
-      content +=
-        "what's the best email or phone number for your care coordinator to reach you?";
+      content += "what email address should we use for your calendar invite?";
     }
     return { content, quickReplies: [] };
+  }
+  if (!canOfferScheduling(profile, userMessageCount)) {
+    return {
+      content:
+        "Thank you — I have your details saved. Is there anything else you'd like your care coordinator to know?",
+      quickReplies: ["That's everything", "Add one more thing"],
+    };
   }
   if (lower.includes("done") || lower.includes("complete") || profile.readyToComplete) {
     return {
       content:
-        "Thank you — I have what I need to personalize your care plan. I'll finalize your intake now.",
+        "Thank you — I have what I need to personalize your care plan. I'll finalize your intake now. You can also book an introductory call using the scheduling options below whenever you're ready.",
+      quickReplies: ["Book an introductory call"],
+    };
+  }
+  if (/book|schedule|introductory call|set up a call/i.test(lower)) {
+    return {
+      content:
+        "Absolutely — use the scheduling options just below this chat to pick an open time for your introductory call. We'll send a calendar invite to the email you provided.",
       quickReplies: [],
     };
   }
   return {
     content:
-      "Thank you. Is there anything else you'd like your care coordinator to know before we wrap up?",
-    quickReplies: ["That's everything", "Add one more thing"],
+      "Thank you — I have your contact details saved. When you're ready, book a free introductory call with our team using the scheduling options below. Is there anything else you'd like your care coordinator to know before we wrap up?",
+    quickReplies: [
+      "Book an introductory call",
+      "That's everything",
+      "Add one more thing",
+    ],
   };
 };
 
@@ -262,7 +298,8 @@ async function* generateAssistantStream(
   if (!isOpenAiConfigured()) {
     const { content } = fallbackAssistantReply(
       session.extractedProfile,
-      session.messages.at(-1)?.content ?? ""
+      session.messages.at(-1)?.content ?? "",
+      session.messages.filter((message) => message.role === "user").length
     );
     yield content;
     return content;
@@ -331,7 +368,11 @@ export async function* processConversationMessageStream(
   }
 
   if (!assistantContent) {
-    const fallback = fallbackAssistantReply(profile, userMessage);
+    const fallback = fallbackAssistantReply(
+      profile,
+      userMessage,
+      session.messages.filter((message) => message.role === "user").length
+    );
     assistantContent = fallback.content;
     session.quickReplies = fallback.quickReplies;
   }
@@ -344,93 +385,124 @@ export async function* processConversationMessageStream(
   };
   session.messages.push(assistantMsg);
 
-  if (isOpenAiConfigured()) {
-    const extracted = await extractProfileFromConversation(
-      session.messages,
-      profile
-    );
-    profile = extracted.profile;
-    session.quickReplies =
-      extracted.quickReplies.length > 0
-        ? extracted.quickReplies
-        : fallbackAssistantReply(profile, userMessage).quickReplies;
-  } else {
-    const fallback = fallbackAssistantReply(profile, userMessage);
-    session.quickReplies = fallback.quickReplies;
-  }
-
+  const initialFallback = fallbackAssistantReply(
+    profile,
+    userMessage,
+    session.messages.filter((message) => message.role === "user").length
+  );
+  session.quickReplies = initialFallback.quickReplies;
   session.extractedProfile = profile;
-  try {
-    await upsertProfileDraft(
-      session.userId,
-      extractedProfileToIntakeDraft(profile)
-    );
-  } catch (draftError) {
-    console.error("[conversation] profile draft sync failed:", draftError);
+
+  const userTurns = session.messages.filter((message) => message.role === "user").length;
+  if (canOfferScheduling(profile, userTurns)) {
+    const bookingChip = "Book an introductory call";
+    const replies = session.quickReplies.filter((reply) => reply !== bookingChip);
+    session.quickReplies = [bookingChip, ...replies].slice(0, 4);
   }
 
-  try {
-    const { getIntakeForUser } = await import("@/lib/intake/storage");
-    const intake = await getIntakeForUser(session.userId);
-    await syncLeadFromIntake({
-      userId: session.userId,
-      intake: intake.profile,
-      extracted: profile,
-      conversationSessionId: session.id,
-      hasSubmittedIntake: false,
-    });
-  } catch (leadError) {
-    console.error("[conversation] lead sync failed:", leadError);
-  }
+  // Finish the visible reply before profile extraction / lead sync so the stream
+  // closes promptly (post-processing can exceed hosting timeouts).
+  session = await saveConversationSession(session);
+  yield { type: "done", session, intakeSubmitted: false };
 
   let intakeSubmitted = false;
-  const wantsComplete = userWantsToCompleteIntake(userMessage);
+  try {
+    if (isOpenAiConfigured()) {
+      const extracted = await extractProfileFromConversation(
+        session.messages,
+        profile
+      );
+      profile = extracted.profile;
+      session.quickReplies =
+        extracted.quickReplies.length > 0
+          ? extracted.quickReplies
+          : initialFallback.quickReplies;
+    }
 
-  if (
-    wantsComplete &&
-    profile.maternalStage &&
-    profile.name &&
-    (profile.phone || profile.email) &&
-    profile.supportInterests.length > 0
-  ) {
+    session.extractedProfile = profile;
+
+    const userTurnsAfterExtract = session.messages.filter(
+      (message) => message.role === "user"
+    ).length;
+    if (canOfferScheduling(profile, userTurnsAfterExtract)) {
+      const bookingChip = "Book an introductory call";
+      const replies = session.quickReplies.filter((reply) => reply !== bookingChip);
+      session.quickReplies = [bookingChip, ...replies].slice(0, 4);
+    }
+
     try {
-      const draft = extractedProfileToIntakeDraft(profile);
-      await submitProfile(session.userId, {
-        ...draft,
-        maternalStage: profile.maternalStage,
-        supportInterests: profile.supportInterests,
+      await upsertProfileDraft(
+        session.userId,
+        extractedProfileToIntakeDraft(profile)
+      );
+    } catch (draftError) {
+      console.error("[conversation] profile draft sync failed:", draftError);
+    }
+
+    try {
+      const { getIntakeForUser } = await import("@/lib/intake/storage");
+      const intake = await getIntakeForUser(session.userId);
+      await syncLeadFromIntake({
+        userId: session.userId,
+        intake: intake.profile,
+        extracted: profile,
+        conversationSessionId: session.id,
+        hasSubmittedIntake: false,
       });
+    } catch (leadError) {
+      console.error("[conversation] lead sync failed:", leadError);
+    }
+
+    const wantsComplete = userWantsToCompleteIntake(userMessage);
+
+    if (
+      wantsComplete &&
+      profile.maternalStage &&
+      profile.name &&
+      (profile.phone || profile.email) &&
+      profile.supportInterests.length > 0
+    ) {
       try {
-        const { getIntakeForUser } = await import("@/lib/intake/storage");
-        const intake = await getIntakeForUser(session.userId);
-        await syncLeadFromIntake({
-          userId: session.userId,
-          intake: intake.profile,
-          extracted: profile,
-          conversationSessionId: session.id,
-          hasSubmittedIntake: true,
+        const draft = extractedProfileToIntakeDraft(profile);
+        await submitProfile(session.userId, {
+          ...draft,
+          maternalStage: profile.maternalStage,
+          supportInterests: profile.supportInterests,
         });
-      } catch (leadError) {
-        console.error("[conversation] lead sync on submit failed:", leadError);
+        try {
+          const { getIntakeForUser } = await import("@/lib/intake/storage");
+          const intake = await getIntakeForUser(session.userId);
+          await syncLeadFromIntake({
+            userId: session.userId,
+            intake: intake.profile,
+            extracted: profile,
+            conversationSessionId: session.id,
+            hasSubmittedIntake: true,
+          });
+        } catch (leadError) {
+          console.error("[conversation] lead sync on submit failed:", leadError);
+        }
+        session.status = "completed";
+        intakeSubmitted = true;
+      } catch (submitError) {
+        console.error("[conversation] intake submit failed:", submitError);
+        session.quickReplies = [
+          "Try completing again",
+          ...(session.quickReplies.length ? session.quickReplies : ["Keep chatting"]),
+        ];
       }
-      session.status = "completed";
-      intakeSubmitted = true;
-    } catch (submitError) {
-      console.error("[conversation] intake submit failed:", submitError);
+    } else if (wantsComplete) {
       session.quickReplies = [
-        "Try completing again",
-        ...(session.quickReplies.length ? session.quickReplies : ["Keep chatting"]),
+        ...(session.quickReplies.length ? session.quickReplies : []),
+        "Keep chatting",
       ];
     }
-  } else if (wantsComplete) {
-    session.quickReplies = [
-      ...(session.quickReplies.length ? session.quickReplies : []),
-      "Keep chatting",
-    ];
-  }
 
-  session = await saveConversationSession(session);
-  yield { type: "done", session, intakeSubmitted };
+    session = await saveConversationSession(session);
+    yield { type: "done", session, intakeSubmitted };
+  } catch (postProcessError) {
+    console.error("[conversation] post-reply enrichment failed:", postProcessError);
+  }
 }
 
 export const processConversationMessage = async (
@@ -497,11 +569,7 @@ export const resumeOrCreateSession = async (
 
   const existing = await getActiveConversationForUser(userId, defaults.email);
   if (existing) {
-    let extractedProfile = mergeExtractedProfile(existing.extractedProfile, {
-      name: existing.extractedProfile.name || defaults.name || "",
-      email: existing.extractedProfile.email || defaults.email || "",
-      phone: existing.extractedProfile.phone || defaults.phone || "",
-    });
+    let extractedProfile = existing.extractedProfile;
 
     if (options.preselectedService) {
       extractedProfile = mergeExtractedProfile(extractedProfile, {
@@ -535,14 +603,7 @@ export const resumeOrCreateSession = async (
   );
   if (incompleteCompleted) {
     const reopened = await reactivateConversationIfIncomplete(incompleteCompleted);
-    return {
-      ...reopened,
-      extractedProfile: mergeExtractedProfile(reopened.extractedProfile, {
-        name: reopened.extractedProfile.name || defaults.name || "",
-        email: reopened.extractedProfile.email || defaults.email || "",
-        phone: reopened.extractedProfile.phone || defaults.phone || "",
-      }),
-    };
+    return reopened;
   }
 
   return createConversationSession(

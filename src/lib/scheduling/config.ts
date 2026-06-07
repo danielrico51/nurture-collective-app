@@ -9,6 +9,33 @@ import "server-only";
 export const DEFAULT_GOOGLE_CALENDAR_ID =
   "c_2d5a066a46512e1ec02b55c8c92e83e00a9a8e77655de2e712a347fbb969552c@group.calendar.google.com";
 
+export type GoogleSchedulingAuthMode =
+  | "service_account"
+  | "adc"
+  | "impersonate"
+  | "delegated";
+
+const readAuthMode = (): GoogleSchedulingAuthMode => {
+  const raw =
+    process.env.GOOGLE_CALENDAR_AUTH_MODE?.trim().toLowerCase() ||
+    process.env.GOOGLE_TASKS_AUTH_MODE?.trim().toLowerCase();
+  if (
+    raw === "adc" ||
+    raw === "impersonate" ||
+    raw === "delegated" ||
+    raw === "service_account"
+  ) {
+    return raw;
+  }
+  return "delegated";
+};
+
+const defaultImpersonateServiceAccount = () =>
+  process.env.GOOGLE_CALENDAR_IMPERSONATE_SERVICE_ACCOUNT?.trim() ||
+  process.env.GOOGLE_TASKS_IMPERSONATE_SERVICE_ACCOUNT?.trim() ||
+  process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim() ||
+  "nurture-tasks-sync@boxwood-magnet-498623-n4.iam.gserviceaccount.com";
+
 const parseWorkDays = (raw: string | undefined): number[] => {
   if (!raw?.trim()) return [1, 2, 3, 4, 5];
   return raw
@@ -26,6 +53,7 @@ const readEnabledFlag = (): boolean => {
 
 export const serverSchedulingConfig = {
   enabled: readEnabledFlag(),
+  authMode: readAuthMode(),
   calendarId:
     process.env.GOOGLE_CALENDAR_ID?.trim() ||
     process.env.GOOGLE_BOOKINGS_CALENDAR_ID?.trim() ||
@@ -34,6 +62,11 @@ export const serverSchedulingConfig = {
     process.env.GOOGLE_CALENDAR_DELEGATED_USER?.trim() ||
     process.env.GOOGLE_TASKS_DELEGATED_USER?.trim() ||
     "admin@nesting-place.com",
+  impersonateServiceAccount: defaultImpersonateServiceAccount(),
+  adcJson:
+    process.env.GOOGLE_CALENDAR_ADC_JSON?.trim() ||
+    process.env.GOOGLE_TASKS_ADC_JSON?.trim() ||
+    "",
   serviceAccountEmail:
     process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL?.trim() ??
     process.env.GOOGLE_BOOKINGS_SERVICE_ACCOUNT_EMAIL?.trim() ??
@@ -73,11 +106,15 @@ export const serverSchedulingConfig = {
 export const isGoogleSchedulingConfigured = (): boolean => {
   const {
     calendarId,
+    authMode,
     serviceAccountEmail,
     serviceAccountPrivateKey,
     serviceAccountJson,
   } = serverSchedulingConfig;
   if (!calendarId) return false;
+  if (authMode === "adc" || authMode === "impersonate" || authMode === "delegated") {
+    return true;
+  }
   if (serviceAccountJson) return true;
   return Boolean(serviceAccountEmail && serviceAccountPrivateKey);
 };
