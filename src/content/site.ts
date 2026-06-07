@@ -90,6 +90,11 @@ export const socialLinks = [
     href: "https://www.facebook.com/thenestingplacenjny",
   },
   {
+    id: "phone",
+    label: "Call The Nesting Place at (201) 623-3629",
+    href: "tel:+12016233629",
+  },
+  {
     id: "sms",
     label: "Text The Nesting Place",
     href: "sms:+18449262867",

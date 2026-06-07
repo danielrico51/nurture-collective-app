@@ -92,7 +92,7 @@ const Footer = () => {
             <a
               key={link.id}
               href={link.href}
-              {...(link.id === "sms"
+              {...(link.id === "sms" || link.id === "phone"
                 ? {}
                 : { target: "_blank", rel: "noopener noreferrer" })}
               aria-label={link.label}

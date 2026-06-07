@@ -833,10 +833,10 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
                   </button>
 
                   <div className="min-w-0 flex-1">
-                    <div className="flex flex-wrap items-start justify-between gap-2">
-                      <div className="flex min-w-0 flex-1 items-start gap-2">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                         <h3
-                          className={`font-medium text-nurture-charcoal ${
+                          className={`min-w-0 font-medium text-nurture-charcoal ${
                             task.completed
                               ? "line-through decoration-nurture-sage/50"
                               : ""
@@ -859,18 +859,18 @@ const TaskBoard = ({ userEmail, userDisplayName }: TaskBoardProps) => {
                           </span>
                         ) : null}
                       </div>
-                      <div className="flex shrink-0 gap-2">
+                      <div className="flex shrink-0 flex-row flex-nowrap items-center justify-end gap-2 border-t border-nurture-sage/10 pt-2 sm:border-0 sm:pt-0">
                         <button
                           type="button"
                           onClick={() => openEdit(task)}
-                          className="rounded-lg px-2 py-1 text-xs font-medium text-nurture-sage-dark opacity-100 transition hover:bg-nurture-sage/10 sm:opacity-0 sm:group-hover:opacity-100"
+                          className="rounded-lg px-3 py-1.5 text-xs font-medium text-nurture-sage-dark transition hover:bg-nurture-sage/10 sm:px-2 sm:py-1 sm:opacity-0 sm:group-hover:opacity-100"
                         >
                           Edit
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDelete(task)}
-                          className="rounded-lg px-2 py-1 text-xs font-medium text-red-600/80 opacity-100 transition hover:bg-red-50 sm:opacity-0 sm:group-hover:opacity-100"
+                          className="rounded-lg px-3 py-1.5 text-xs font-medium text-red-600/80 transition hover:bg-red-50 sm:px-2 sm:py-1 sm:opacity-0 sm:group-hover:opacity-100"
                         >
                           Delete
                         </button>

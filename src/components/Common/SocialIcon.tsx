@@ -1,4 +1,4 @@
-type SocialNetwork = "instagram" | "facebook" | "sms";
+type SocialNetwork = "instagram" | "facebook" | "phone" | "sms";
 
 interface SocialIconProps {
   network: SocialNetwork;
@@ -43,8 +43,31 @@ const PhoneIcon = ({ className }: { className?: string }) => (
   </svg>
 );
 
+const SmsIcon = ({ className }: { className?: string }) => (
+  <svg
+    aria-hidden
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    strokeWidth={1.75}
+    className={className}
+  >
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M8 10h8M8 14h5"
+    />
+    <path
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      d="M5 5.5h14a2 2 0 012 2v8.5a2 2 0 01-2 2H9l-4.5 3V7.5a2 2 0 012-2z"
+    />
+  </svg>
+);
+
 export function SocialIcon({ network, className = "h-6 w-6" }: SocialIconProps) {
   if (network === "instagram") return <InstagramIcon className={className} />;
-  if (network === "sms") return <PhoneIcon className={className} />;
+  if (network === "phone") return <PhoneIcon className={className} />;
+  if (network === "sms") return <SmsIcon className={className} />;
   return <FacebookIcon className={className} />;
 }
