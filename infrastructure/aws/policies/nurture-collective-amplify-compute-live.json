@@ -27,7 +27,11 @@
     {
       "Sid": "CognitoListUsers",
       "Effect": "Allow",
-      "Action": ["cognito-idp:ListUsers", "cognito-idp:ListUsersInGroup"],
+      "Action": [
+        "cognito-idp:ListUsers",
+        "cognito-idp:ListUsersInGroup",
+        "cognito-idp:AdminGetUser"
+      ],
       "Resource": "arn:aws:cognito-idp:us-east-1:886436941204:userpool/us-east-1_rUfTimytf"
     },
     {

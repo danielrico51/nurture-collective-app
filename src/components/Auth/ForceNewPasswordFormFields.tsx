@@ -2,6 +2,7 @@
 
 import {
   POOL_ATTRIBUTE_LABELS,
+  POOL_REQUIRED_ATTRIBUTE_NAMES,
   type PoolRequiredAttributeName,
 } from "@/lib/auth/poolAttributes";
 import { useAuthenticator } from "@aws-amplify/ui-react";
@@ -53,9 +54,12 @@ export function ForceNewPasswordFormFields() {
         setExisting(data.attributes ?? {});
         setMissing(data.missing ?? []);
       })
-      .catch((err) => {
-        setError(
-          err instanceof Error ? err.message : "Could not load profile"
+      .catch(() => {
+        setExisting({});
+        setMissing(
+          POOL_REQUIRED_ATTRIBUTE_NAMES.filter(
+            (field) => field !== "custom:username" && field !== "email"
+          )
         );
       })
       .finally(() => setLoading(false));

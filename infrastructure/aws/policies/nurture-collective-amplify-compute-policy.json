@@ -44,7 +44,11 @@
     {
       "Sid": "CognitoListUsers",
       "Effect": "Allow",
-      "Action": ["cognito-idp:ListUsers", "cognito-idp:ListUsersInGroup"],
+      "Action": [
+        "cognito-idp:ListUsers",
+        "cognito-idp:ListUsersInGroup",
+        "cognito-idp:AdminGetUser"
+      ],
       "Resource": "arn:aws:cognito-idp:REGION:ACCOUNT_ID:userpool/USER_POOL_ID"
     },
     {
