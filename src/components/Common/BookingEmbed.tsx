@@ -7,6 +7,9 @@ import {
   hasBooking,
   LEGACY_CALENDLY_ANCHOR_ID,
 } from "@/config/bookings";
+import { brands } from "@/content/site";
+
+const defaultBookingSubtitle = `Pick a time that works for you — we'll learn about your needs and answer your questions. Calendar invites come from ${brands.nestingPlace.email}.`;
 
 interface BookingEmbedProps {
   title?: string;
@@ -16,7 +19,7 @@ interface BookingEmbedProps {
 
 const BookingEmbed = ({
   title = "Maternal Support Introductory Call",
-  subtitle = "Pick a time that works for you — we'll learn about your needs and answer your questions. Calendar invites come from Daniel Rico.",
+  subtitle = defaultBookingSubtitle,
   className = "",
 }: BookingEmbedProps) => {
   const url = getActiveBookingUrl();

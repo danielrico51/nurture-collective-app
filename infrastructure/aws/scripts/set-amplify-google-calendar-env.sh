@@ -12,7 +12,7 @@
 #
 # Optional overrides:
 #   GOOGLE_CALENDAR_ADC_JSON_FILE=~/.config/gcloud/application_default_credentials.json
-#   GOOGLE_CALENDAR_DELEGATED_USER=admin@nesting-place.com
+#   GOOGLE_CALENDAR_DELEGATED_USER=info@nesting-place.com
 #   GOOGLE_CALENDAR_ID=c_2d5a066a...@group.calendar.google.com
 #   GOOGLE_TASKS_IMPERSONATE_SERVICE_ACCOUNT=nurture-tasks-sync@...
 #   AMPLIFY_APP_ID=d9588bqvrp5xs
@@ -21,7 +21,7 @@ set -euo pipefail
 
 APP_ID="${AMPLIFY_APP_ID:-d9588bqvrp5xs}"
 ADC_FILE="${GOOGLE_CALENDAR_ADC_JSON_FILE:-${GOOGLE_TASKS_ADC_JSON_FILE:-${HOME}/.config/gcloud/application_default_credentials.json}}"
-DELEGATED_USER="${GOOGLE_CALENDAR_DELEGATED_USER:-admin@nesting-place.com}"
+DELEGATED_USER="${GOOGLE_CALENDAR_DELEGATED_USER:-info@nesting-place.com}"
 IMPERSONATE_SA="${GOOGLE_TASKS_IMPERSONATE_SERVICE_ACCOUNT:-nurture-tasks-sync@boxwood-magnet-498623-n4.iam.gserviceaccount.com}"
 CALENDAR_ID="${GOOGLE_CALENDAR_ID:-c_2d5a066a46512e1ec02b55c8c92e83e00a9a8e77655de2e712a347fbb969552c@group.calendar.google.com}"
 BOOKING_TIMEZONE="${GOOGLE_BOOKING_TIMEZONE:-America/New_York}"

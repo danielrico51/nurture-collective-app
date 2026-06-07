@@ -1,4 +1,5 @@
 import "server-only";
+import { brands } from "@/content/site";
 
 /**
  * Server scheduling config — Google Calendar API for concierge booking.
@@ -60,8 +61,7 @@ export const serverSchedulingConfig = {
     DEFAULT_GOOGLE_CALENDAR_ID,
   delegatedUser:
     process.env.GOOGLE_CALENDAR_DELEGATED_USER?.trim() ||
-    process.env.GOOGLE_TASKS_DELEGATED_USER?.trim() ||
-    "admin@nesting-place.com",
+    brands.nestingPlace.email,
   impersonateServiceAccount: defaultImpersonateServiceAccount(),
   adcJson:
     process.env.GOOGLE_CALENDAR_ADC_JSON?.trim() ||

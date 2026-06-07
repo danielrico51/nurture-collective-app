@@ -1,4 +1,5 @@
 import ContactOptions from "@/components/Common/ContactOptions";
+import { brands } from "@/content/site";
 
 const CallToAction = () => {
   return (
@@ -8,7 +9,7 @@ const CallToAction = () => {
           variant="contact"
           formHref="/contact?audience=mom"
           bookingTitle="Maternal Support Introductory Call"
-          bookingDescription="Pick a time that works for you — we'll learn about your needs and answer your questions. Calendar invites come from Daniel Rico."
+          bookingDescription={`Pick a time that works for you — we'll learn about your needs and answer your questions. Calendar invites come from ${brands.nestingPlace.email}.`}
         />
       </div>
     </section>
