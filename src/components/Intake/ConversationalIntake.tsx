@@ -54,6 +54,20 @@ const isNearBottom = (container: HTMLDivElement, threshold = 120) => {
 const isStaleSessionError = (error: string) =>
   /session not found|missing or invalid x-guest-session-id/i.test(error);
 
+const hasAssistantReplyAfterUserMessage = (
+  items: ConversationMessage[],
+  userContent: string
+): boolean => {
+  const trimmed = userContent.trim();
+  const userIndex = items.findIndex(
+    (message) => message.role === "user" && message.content.trim() === trimmed
+  );
+  if (userIndex < 0) return false;
+  return items
+    .slice(userIndex + 1)
+    .some((message) => message.role === "assistant" && message.content.trim());
+};
+
 const applyProfileDefaults = (
   nextSession: ConversationSession,
   _defaults?: { name?: string; email?: string; phone?: string }
@@ -324,19 +338,39 @@ const ConversationalIntake = ({
     ) => {
       setStreamingText("");
       try {
-        const { refreshed, messageSaved } = await syncSessionFromServer(
+        let { refreshed, messageSaved } = await syncSessionFromServer(
           session.id,
           trimmed
         );
-        const assistantReplied = refreshed.messages.some(
-          (message, index, items) =>
-            message.role === "assistant" &&
-            index > 0 &&
-            items[index - 1]?.role === "user" &&
-            items[index - 1]?.content.trim() === trimmed
+        let assistantReplied = hasAssistantReplyAfterUserMessage(
+          refreshed.messages,
+          trimmed
         );
+
+        if (!assistantReplied && messageSaved) {
+          for (let attempt = 0; attempt < 4; attempt += 1) {
+            await new Promise((resolve) => window.setTimeout(resolve, 750));
+            const polled = await fetchConversation(session.id);
+            refreshed = polled.session;
+            setSession(refreshed);
+            setMessages(refreshed.messages);
+            setQuickReplies(refreshed.quickReplies);
+            setConfirmedBooking(polled.confirmedBooking);
+            assistantReplied = hasAssistantReplyAfterUserMessage(
+              refreshed.messages,
+              trimmed
+            );
+            if (assistantReplied) break;
+          }
+        }
+
         if (assistantReplied) {
+          const hydrated = applyProfileDefaults(refreshed, defaults);
+          setSession(hydrated);
+          setMessages(hydrated.messages);
+          setQuickReplies(hydrated.quickReplies);
           setSendError(null);
+          syncProfileAfterReply(hydrated.id);
           return;
         }
         if (!messageSaved) {
@@ -368,19 +402,23 @@ const ConversationalIntake = ({
     };
 
     try {
-      const { doneReceived } = await sendConversationMessage(session.id, trimmed, {
-        onToken: (token) => setStreamingText((current) => current + token),
-        onDone: ({ session: nextSession, intakeSubmitted }) => {
-          setStreamingText("");
-          setSendError(null);
-          handleComplete(nextSession, intakeSubmitted);
-        },
-        onError: async (error) => {
-          await recoverFromSendFailure(error, optimisticUser.id);
-        },
-      });
+      const { doneReceived, errorHandled } = await sendConversationMessage(
+        session.id,
+        trimmed,
+        {
+          onToken: (token) => setStreamingText((current) => current + token),
+          onDone: ({ session: nextSession, intakeSubmitted }) => {
+            setStreamingText("");
+            setSendError(null);
+            handleComplete(nextSession, intakeSubmitted);
+          },
+          onError: async (error) => {
+            await recoverFromSendFailure(error, optimisticUser.id);
+          },
+        }
+      );
 
-      if (!doneReceived) {
+      if (!doneReceived && !errorHandled) {
         await recoverFromSendFailure(
           "The reply did not finish loading.",
           optimisticUser.id

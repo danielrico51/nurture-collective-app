@@ -343,30 +343,60 @@ const fallbackAssistantReply = (
   };
 };
 
+const CONVERSATION_STREAM_TIMEOUT_MS = Number(
+  process.env.CONVERSATION_STREAM_TIMEOUT_MS ?? 50_000
+);
+
 async function* generateAssistantStream(
   session: ConversationSession,
   options: ConversationChannelOptions = {},
   confirmedBooking: ConsultBooking | null = null
 ): AsyncGenerator<string, string, unknown> {
-  if (!isOpenAiConfigured()) {
+  const userMessage = session.messages.at(-1)?.content ?? "";
+  const runFallback = function* (reason: string) {
+    console.warn(`[conversation] assistant stream fallback: ${reason}`);
     const { content } = fallbackAssistantReply(
       session.extractedProfile,
-      session.messages.at(-1)?.content ?? "",
+      userMessage,
       session.messages,
       confirmedBooking
     );
     yield content;
     return content;
+  };
+
+  if (!isOpenAiConfigured()) {
+    return yield* runFallback("openai not configured");
   }
 
+  const messages = await buildChatMessages(session, options, confirmedBooking);
+  const controller = new AbortController();
+  const timeout = setTimeout(
+    () => controller.abort(),
+    CONVERSATION_STREAM_TIMEOUT_MS
+  );
+
   let full = "";
-  for await (const token of streamChatCompletion(
-    await buildChatMessages(session, options, confirmedBooking)
-  )) {
-    full += token;
-    yield token;
+  try {
+    for await (const token of streamChatCompletion(messages, {
+      signal: controller.signal,
+    })) {
+      full += token;
+      yield token;
+    }
+    return full;
+  } catch (error) {
+    if (full.trim()) return full;
+    const reason =
+      error instanceof Error && error.name === "AbortError"
+        ? "stream timeout"
+        : error instanceof Error
+          ? error.message
+          : "stream failed";
+    return yield* runFallback(reason);
+  } finally {
+    clearTimeout(timeout);
   }
-  return full;
 }
 
 export async function* processConversationMessageStream(

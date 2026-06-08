@@ -11,8 +11,13 @@ export interface ChatMessage {
   content: string;
 }
 
+export interface StreamChatCompletionOptions {
+  signal?: AbortSignal;
+}
+
 export async function* streamChatCompletion(
-  messages: ChatMessage[]
+  messages: ChatMessage[],
+  options: StreamChatCompletionOptions = {}
 ): AsyncGenerator<string, void, unknown> {
   const apiKey = getOpenAiApiKey();
   if (!apiKey) throw new Error("OPENAI_API_KEY is not configured");
@@ -29,6 +34,7 @@ export async function* streamChatCompletion(
       stream: true,
       temperature: 0.65,
     }),
+    signal: options.signal,
   });
 
   if (!response.ok) {

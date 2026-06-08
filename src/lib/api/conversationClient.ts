@@ -39,9 +39,15 @@ export const sendConversationMessage = async (
       session: ConversationSession;
       intakeSubmitted?: boolean;
     }) => void;
-    onError: (error: string) => void;
+    onError: (error: string) => void | Promise<void>;
   }
-): Promise<{ doneReceived: boolean }> => {
+): Promise<{ doneReceived: boolean; errorHandled: boolean }> => {
+  let errorHandled = false;
+  const handleError = async (error: string) => {
+    errorHandled = true;
+    await handlers.onError(error);
+  };
+
   const response = await fetch("/api/conversation/message", {
     method: "POST",
     headers: await intakeRequestHeaders(),
@@ -50,10 +56,10 @@ export const sendConversationMessage = async (
 
   if (!response.ok || !response.body) {
     const data = await response.json().catch(() => ({}));
-    handlers.onError(
+    await handleError(
       typeof data.error === "string" ? data.error : "Message failed"
     );
-    return { doneReceived: false };
+    return { doneReceived: false, errorHandled };
   }
 
   const reader = response.body.getReader();
@@ -73,7 +79,7 @@ export const sendConversationMessage = async (
       if (!line.startsWith("data:")) continue;
       const payload = line.slice(5).trim();
       if (payload === "[DONE]") {
-        return { doneReceived };
+        return { doneReceived, errorHandled };
       }
       try {
         const event = JSON.parse(payload) as {
@@ -91,14 +97,16 @@ export const sendConversationMessage = async (
             intakeSubmitted: event.intakeSubmitted,
           });
         }
-        if (event.type === "error") handlers.onError(event.error ?? "Stream error");
+        if (event.type === "error") {
+          await handleError(event.error ?? "Stream error");
+        }
       } catch {
         /* ignore */
       }
     }
   }
 
-  return { doneReceived };
+  return { doneReceived, errorHandled };
 };
 
 export const fetchConversation = async (
