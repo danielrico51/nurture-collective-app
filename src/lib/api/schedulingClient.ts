@@ -44,7 +44,7 @@ export const fetchSchedulingStatus =
         durationMinutes: 30,
       };
     }
-    return data as SchedulingStatusResponse;
+    return data as unknown as SchedulingStatusResponse;
   };
 
 export const fetchSchedulingAvailability = async (options?: {
@@ -76,7 +76,7 @@ export const fetchSchedulingAvailability = async (options?: {
     );
   }
 
-  return data as SchedulingAvailabilityResponse;
+  return data as unknown as SchedulingAvailabilityResponse;
 };
 
 export const bookSchedulingSlot = async (input: {
