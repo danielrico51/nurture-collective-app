@@ -23,6 +23,7 @@
     "list:google-tasks": "tsx scripts/list-google-task-lists.ts",
     "import:legacy-blog": "tsx scripts/import-legacy-blog.ts",
     "sync:legacy-blog": "tsx scripts/sync-legacy-blog-to-storage.ts",
+    "sync:coverage": "tsx scripts/sync-coverage-to-storage.ts",
     "setup:personal-google-tasks": "bash infrastructure/google/setup-personal-tasks-sync.sh",
     "setup:concierge-scheduling": "bash infrastructure/google/setup-concierge-scheduling.sh",
     "amplify:concierge-scheduling": "bash infrastructure/aws/scripts/set-amplify-google-calendar-env.sh",

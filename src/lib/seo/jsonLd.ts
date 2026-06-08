@@ -1,6 +1,6 @@
 import { DEFAULT_OG_IMAGE_PATH, SERVICE_STATES } from "@/config/seo";
 import { getSiteUrl, toAbsoluteUrl } from "@/config/siteUrl";
-import { buildCareStartHref } from "@/config/carePaths";
+import { buildServiceSectionHref } from "@/config/carePaths";
 import type { CoreService } from "@/content/site";
 import { brands, socialLinks } from "@/content/site";
 import type { TeamMemberProfile } from "@/content/team";
@@ -104,7 +104,7 @@ export const buildServiceJsonLd = (service: CoreService) => ({
   description: [service.description, service.benefit].filter(Boolean).join(" "),
   provider: { "@id": ORGANIZATION_ID },
   areaServed: areaServedStates,
-  url: toAbsoluteUrl(buildCareStartHref(service.slug)),
+  url: toAbsoluteUrl(buildServiceSectionHref(service.slug)),
   serviceType: service.tag,
 });
 

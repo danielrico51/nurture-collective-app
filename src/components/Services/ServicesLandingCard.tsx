@@ -9,7 +9,7 @@ import type { SourceCitation } from "@/content/sources";
 import type { CoreService } from "@/content/site";
 import type { RelatedBlogPost } from "@/lib/blog/serviceTags";
 import Link from "next/link";
-import { useId, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 interface ServicesLandingCardProps {
   service: CoreService;
@@ -42,7 +42,21 @@ const ServicesLandingCard = ({
   relatedPosts = [],
 }: ServicesLandingCardProps) => {
   const [expanded, setExpanded] = useState(false);
+  const [hashActive, setHashActive] = useState(false);
   const panelId = useId();
+
+  useEffect(() => {
+    const syncFromHash = () => {
+      const active = window.location.hash === `#${service.slug}`;
+      setExpanded(active);
+      setHashActive(active);
+    };
+
+    syncFromHash();
+    window.addEventListener("hashchange", syncFromHash);
+    return () => window.removeEventListener("hashchange", syncFromHash);
+  }, [service.slug]);
+
   const hasExpandableContent = Boolean(
     service.benefit ||
       detail?.whatToExpect.length ||
@@ -53,9 +67,12 @@ const ServicesLandingCard = ({
 
   return (
     <article
-      className={`group relative flex min-h-full flex-col overflow-hidden rounded-2xl border border-nurture-sage/15 bg-white shadow-[0_14px_35px_rgba(45,52,54,0.07)] transition hover:border-nurture-rose/30 hover:shadow-[0_18px_45px_rgba(45,52,54,0.1)] ${
-        featured ? "p-4 sm:p-5" : "p-4"
-      }`}
+      id={service.slug}
+      className={`group relative flex min-h-full scroll-mt-28 flex-col overflow-hidden rounded-2xl border bg-white shadow-[0_14px_35px_rgba(45,52,54,0.07)] transition hover:border-nurture-rose/30 hover:shadow-[0_18px_45px_rgba(45,52,54,0.1)] ${
+        hashActive
+          ? "border-nurture-sage/45 ring-2 ring-nurture-sage/25"
+          : "border-nurture-sage/15"
+      } ${featured ? "p-4 sm:p-5" : "p-4"}`}
     >
       <div className="flex min-h-0 flex-1">
         <div className="w-[40%] shrink-0 self-center overflow-hidden rounded-[1.35rem] bg-nurture-cream/70">

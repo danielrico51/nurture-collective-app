@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { buildCareStartHref } from "@/config/carePaths";
+import { buildCareStartHref, buildServiceSectionHref } from "@/config/carePaths";
 import { featuredServiceStats } from "@/content/serviceStats";
 
 const ServiceStatsSection = () => {
@@ -29,12 +29,20 @@ const ServiceStatsSection = () => {
                 <p className="mt-4 text-base leading-relaxed text-nurture-charcoal/75">
                   {service.description}
                 </p>
-                <Link
-                  href={buildCareStartHref(service.slug)}
-                  className="mt-6 inline-flex rounded-full bg-nurture-sage px-6 py-2.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
-                >
-                  Request support
-                </Link>
+                <div className="mt-6 flex flex-wrap items-center gap-3">
+                  <Link
+                    href={buildServiceSectionHref(service.slug)}
+                    className="inline-flex rounded-full border border-nurture-sage/30 px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+                  >
+                    Explore this service
+                  </Link>
+                  <Link
+                    href={buildCareStartHref(service.slug)}
+                    className="inline-flex rounded-full bg-nurture-sage px-6 py-2.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
+                  >
+                    Request support
+                  </Link>
+                </div>
               </div>
 
               <ul className="space-y-4 rounded-2xl border border-nurture-sage/10 bg-white p-6 shadow-sm sm:p-8">

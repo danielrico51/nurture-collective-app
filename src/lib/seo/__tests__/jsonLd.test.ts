@@ -57,6 +57,7 @@ describe("buildServicesPageJsonLd", () => {
     expect(schema.itemListElement[0]?.item).toMatchObject({
       "@type": "Service",
       provider: { "@id": ORGANIZATION_ID },
+      url: `https://www.nesting-place.com/services#${publishedCoreServices[0]?.slug}`,
     });
   });
 });

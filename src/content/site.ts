@@ -65,7 +65,7 @@ export const brands = {
     wordmarkCreamSrc: "/branding/nesting-place-wordmark-cream.png",
     markSrc: "/branding/nesting-place-baby-mark.png",
     serviceArea:
-      "Based in Northern New Jersey & the Lower Hudson Valley — serving families across NJ, NY, CT, and PA",
+      "Serving North, Central, and South Jersey plus New York's Lower Hudson Valley — welcoming families across NJ, NY, CT, and PA",
     description:
       "An experienced maternal wellness and postpartum support practice offering birth doula support, overnight newborn care, postpartum support, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of motherhood.",
     phone: "(844) 926-2867",
@@ -111,18 +111,32 @@ export const socialLinks = [
 /** Regions where in-person or local provider matching is live today. Add rows as you expand. */
 export const coverageRegions: CoverageRegion[] = [
   {
-    id: "northern-nj",
-    name: "Northern New Jersey",
+    id: "north-jersey",
+    name: "North Jersey",
     status: "active",
     services:
-      "Bergen, Essex, Hudson, Passaic, Morris, Union, Middlesex, Somerset, Monmouth, and surrounding counties — birth doula, postpartum support, overnight newborn support, lactation, prenatal massage, childbirth education",
+      "Bergen, Essex, Hudson, Passaic, and Morris Counties — birth doula, postpartum support, overnight newborn support, lactation, prenatal massage, childbirth education",
+  },
+  {
+    id: "central-jersey",
+    name: "Central Jersey",
+    status: "active",
+    services:
+      "Union, Middlesex, Somerset, and Monmouth Counties — birth doula, postpartum support, overnight newborn support, lactation, prenatal massage, childbirth education",
+  },
+  {
+    id: "south-jersey",
+    name: "South Jersey",
+    status: "active",
+    services:
+      "Burlington, Camden, Gloucester, and Atlantic Counties — birth doula, postpartum support, overnight newborn support, lactation, prenatal massage, childbirth education",
   },
   {
     id: "lower-hudson-valley",
     name: "Lower Hudson Valley, NY",
     status: "active",
     services:
-      "Birth doula, postpartum support, overnight newborn support, lactation support, and prenatal massage",
+      "Westchester, Rockland, Putnam, Orange, and Dutchess Counties — birth doula, postpartum support, overnight newborn support, lactation support, and prenatal massage",
   },
 ];
 
@@ -133,7 +147,7 @@ export const coverageStatusLabels: Record<CoverageStatus, string> = {
 };
 
 export const coverageIntro =
-  "These are the regions where our team and provider network support families today.";
+  "Our team and provider network support families across North Jersey, Central Jersey, South Jersey, and New York's Lower Hudson Valley.";
 
 /** Core maternal wellness services offered through the network. */
 export const coreServices: CoreService[] = [
@@ -290,7 +304,7 @@ export const providerHowItWorks = [
 export const momFaqs = [
   {
     q: "Where is The Nesting Place available?",
-    a: "We welcome families from anywhere. Our team is based in Northern New Jersey and the Lower Hudson Valley, and we work with families in person, virtually, and through coordinated support nationwide. Reach out — we'll discuss what works best for your situation.",
+    a: "We welcome families from anywhere. Our in-person network spans North Jersey, Central Jersey, South Jersey, and New York's Lower Hudson Valley — and we also work with families virtually and through coordinated support nationwide. Reach out — we'll discuss what works best for your situation.",
   },
   {
     q: "What services are available today?",

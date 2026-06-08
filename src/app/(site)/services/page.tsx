@@ -2,6 +2,7 @@ import BookingEmbed from "@/components/Common/BookingEmbed";
 import JsonLd from "@/components/Seo/JsonLd";
 import ServicesCtaBanner from "@/components/Services/ServicesCtaBanner";
 import ServicesHero from "@/components/Services/ServicesHero";
+import ServicesJumpNav from "@/components/Services/ServicesJumpNav";
 import ServicesLandingCard from "@/components/Services/ServicesLandingCard";
 import { buildPageMetadata } from "@/config/seo";
 import { publishedCoreServices } from "@/content/site";
@@ -54,7 +55,9 @@ export default async function ServicesPage() {
 
       <section className="relative -mt-8 pb-16 sm:-mt-10 sm:pb-20">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <div className="grid gap-4 md:grid-cols-3">
+          <ServicesJumpNav services={publishedCoreServices} />
+
+          <div className="mt-6 grid gap-4 md:grid-cols-3">
             {featured.map((service) => {
               const cardData = buildServiceCardData(service.slug, blogPosts);
               return (

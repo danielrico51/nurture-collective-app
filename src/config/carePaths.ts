@@ -5,7 +5,13 @@ import type { SupportInterest } from "@/types/intake";
 
 export const CARE_START_PATH = "/care/start";
 
+export const SERVICES_PATH = "/services";
+
 export const INTAKE_PATH = resolveIntakePath();
+
+/** Deep link to a service section on the services hub (e.g. /services#birth-doula). */
+export const buildServiceSectionHref = (slug: string) =>
+  `${SERVICES_PATH}#${encodeURIComponent(slug)}`;
 
 export const CARE_SERVICE_STORAGE_KEY = "nurture-care-service";
 

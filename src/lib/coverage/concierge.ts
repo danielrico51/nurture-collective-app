@@ -11,7 +11,7 @@ export const formatServiceAreaForConcierge = (
 - ${zipNote}
 - Never say we are "outside your area," "not in your region," or on a waitlist because of location.
 - If they ask about in-person vs virtual support, explain our team will discuss what works for their situation on follow-up — stay welcoming and helpful.
-- Our home base is Northern New Jersey and the Lower Hudson Valley, but inquiries from anywhere are valued.`;
+- Our in-person network spans North Jersey, Central Jersey, South Jersey, and New York's Lower Hudson Valley (Westchester, Rockland, Putnam, Orange, and Dutchess Counties). Inquiries from anywhere are valued.`;
 };
 
 /** @deprecated Concierge no longer gates on admin coverage map — kept for reference/tests. */
