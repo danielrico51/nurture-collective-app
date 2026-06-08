@@ -10,14 +10,21 @@ import {
   providerHowItWorks,
   providerSpecialties,
 } from "@/content/site";
+import { buildPageMetadata } from "@/config/seo";
 import Link from "next/link";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "For Service Providers | The Nesting Place",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Join Our Provider Network | The Nesting Place",
   description:
-    "Join The Nesting Place provider network. We're recruiting doulas, lactation consultants, newborn care specialists, and more.",
-};
+    "Join The Nesting Place provider network in NJ, NY, CT, and PA. We're recruiting birth doulas, lactation consultants, newborn care specialists, and maternal wellness professionals.",
+  path: "/for-providers",
+  keywords: [
+    "doula jobs New Jersey",
+    "lactation consultant network NY",
+    "postpartum doula opportunities",
+  ],
+});
 
 export default function ForProvidersPage() {
   return (

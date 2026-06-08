@@ -1,16 +1,13 @@
-"use client";
+import AuthRouteLayout from "@/components/Auth/AuthRouteLayout";
+import { noIndexMetadata } from "@/config/seo";
+import type { Metadata } from "next";
 
-import { configureAmplify } from "@/utils/amplifyConfig";
-import { useEffect } from "react";
+export const metadata: Metadata = noIndexMetadata;
 
 export default function AuthLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  useEffect(() => {
-    configureAmplify();
-  }, []);
-
-  return <>{children}</>;
+  return <AuthRouteLayout>{children}</AuthRouteLayout>;
 }

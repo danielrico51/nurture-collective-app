@@ -1,15 +1,8 @@
+import { buildRootSiteMetadata } from "@/config/seo";
 import type { Metadata } from "next";
-import { brands } from "@/content/site";
-
-const siteName = brands.nestingPlace.name;
-const siteDescription = brands.nestingPlace.description;
 
 export const siteMetadata: Metadata = {
-  title: {
-    default: siteName,
-    template: `%s | ${siteName}`,
-  },
-  description: siteDescription,
+  ...buildRootSiteMetadata(),
   icons: {
     icon: [
       { url: "/favicons/favicon-16x16.png", sizes: "16x16", type: "image/png" },

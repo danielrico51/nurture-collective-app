@@ -9,16 +9,23 @@ import {
 } from "@/lib/events/format";
 import { fetchPublishedEvents } from "@/lib/events/public";
 import { brands } from "@/content/site";
+import { buildPageMetadata } from "@/config/seo";
 import Link from "next/link";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Events & Classes | The Nesting Place",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Events & Childbirth Classes in NJ & NY",
   description:
-    "Workshops, childbirth education, and community gatherings from The Nesting Place in Northern New Jersey.",
-};
+    "Workshops, childbirth education, and community gatherings from The Nesting Place for families in Northern New Jersey, New York, Connecticut, and Pennsylvania.",
+  path: "/events-and-classes",
+  keywords: [
+    "childbirth education New Jersey",
+    "prenatal classes Northern NJ",
+    "new mom support groups NY",
+  ],
+});
 
 export default async function EventsAndClassesPage() {
   const items = await fetchPublishedEvents();

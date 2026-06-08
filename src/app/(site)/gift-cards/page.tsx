@@ -7,14 +7,21 @@ import {
   giftCardsIntro,
 } from "@/content/giftCards";
 import { integrations } from "@/config/integrations";
+import { buildPageMetadata } from "@/config/seo";
 import Link from "next/link";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Gift Cards | The Nesting Place",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Maternal Wellness Gift Cards",
   description:
-    "Purchase a digital eGift card for birth doula support, postpartum care, lactation, massage, and maternal wellness services at The Nesting Place.",
-};
+    "Give a digital eGift card for birth doula support, postpartum care, lactation consulting, massage, and maternal wellness services at The Nesting Place.",
+  path: "/gift-cards",
+  keywords: [
+    "doula gift card",
+    "postpartum support gift",
+    "new mom gift New Jersey",
+  ],
+});
 
 export default function GiftCardsPage() {
   return (

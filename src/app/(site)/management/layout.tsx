@@ -1,13 +1,12 @@
-import MemberAppsRouteLayout from "@/components/Member/MemberAppsRouteLayout";
 import { noIndexMetadata } from "@/config/seo";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = noIndexMetadata;
 
-export default function MemberAppsLayout({
+export default function ManagementLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  return <MemberAppsRouteLayout>{children}</MemberAppsRouteLayout>;
+  return children;
 }

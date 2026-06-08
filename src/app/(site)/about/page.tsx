@@ -3,17 +3,26 @@ import CoverageMap from "@/components/Common/CoverageMap";
 import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { TeamSection } from "@/components/Common/TeamSection";
+import JsonLd from "@/components/Seo/JsonLd";
+import { buildCareStartHref } from "@/config/carePaths";
+import { buildPageMetadata } from "@/config/seo";
 import { brands } from "@/content/site";
 import { teamMembers } from "@/content/team";
-import { buildCareStartHref } from "@/config/carePaths";
+import { buildAboutPageJsonLd } from "@/lib/seo/jsonLd";
 import Link from "next/link";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "About | The Nesting Place",
+export const metadata: Metadata = buildPageMetadata({
+  title: "About The Nesting Place | Maternal Wellness Team",
   description:
-    "Our mission, values, and leadership team at The Nesting Place — operated by Nurture Collective LLC.",
-};
+    "Meet The Nesting Place team — experienced birth doulas, postpartum professionals, and lactation consultants supporting families across Northern New Jersey, New York, Connecticut, and Pennsylvania.",
+  path: "/about",
+  keywords: [
+    "The Nesting Place team",
+    "maternal wellness Ridgewood NJ",
+    "birth doula practice Northern NJ",
+  ],
+});
 
 const values = [
   {
@@ -35,6 +44,7 @@ const values = [
 export default function AboutPage() {
   return (
     <>
+      <JsonLd data={buildAboutPageJsonLd(teamMembers)} />
       <Breadcrumb pageName="About us" />
       <section className="py-16">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">

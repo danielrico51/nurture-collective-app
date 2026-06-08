@@ -55,13 +55,17 @@ export const brands = {
     /** Brand slogan — use as byline wherever Nesting Place is presented. */
     tagline: "Every Mother Deserves A Team",
     byline: "Every Mother Deserves A Team",
+    /** Short marketing line under the byline on homepage banners. */
+    bylineDescription:
+      "The Nesting Place connects families with trusted maternal wellness support — with a dedicated coordinator by your side from your first call through every stage of motherhood.",
     /** Legal operator shown where entity attribution is required. */
     operatorLine: "by Nurture Collective LLC",
     logoSrc: "/branding/nesting-place-wordmark.png",
     wordmarkSrc: "/branding/nesting-place-wordmark.png",
     wordmarkCreamSrc: "/branding/nesting-place-wordmark-cream.png",
     markSrc: "/branding/nesting-place-baby-mark.png",
-    serviceArea: "Based in Northern New Jersey & the Lower Hudson Valley — welcoming families everywhere",
+    serviceArea:
+      "Based in Northern New Jersey & the Lower Hudson Valley — serving families across NJ, NY, CT, and PA",
     description:
       "An experienced maternal wellness and postpartum support practice offering birth doula support, overnight newborn care, postpartum support, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of motherhood.",
     phone: "(844) 926-2867",
@@ -309,8 +313,8 @@ export const momFaqs = [
     a: "We provide wellness and support services. We do not replace care from your OB, midwife, or pediatrician. Always consult your healthcare provider for clinical concerns.",
   },
   {
-    q: "What is the relationship between The Nesting Place and Nurture Collective LLC?",
-    a: "The Nesting Place is our Maternal Wellness practice — operated by Nurture Collective LLC, which also builds the provider network and support coordination platform families rely on.",
+    q: "What is The Nesting Place?",
+    a: "The Nesting Place is our maternal wellness practice — connecting families with trusted birth doulas, postpartum support, lactation consultants, and wellness professionals, with real people guiding you from your first call through every stage of motherhood.",
   },
 ] as const;
 

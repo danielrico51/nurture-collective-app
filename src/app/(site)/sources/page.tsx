@@ -1,12 +1,19 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
+import { buildPageMetadata } from "@/config/seo";
 import { sourceCitations } from "@/content/sources";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Sources | The Nesting Place",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Research Sources for Maternal Wellness Outcomes",
   description:
-    "Research sources cited for maternal wellness outcome statistics on The Nesting Place website.",
-};
+    "Published research and clinical sources cited for birth doula, postpartum, and newborn care statistics shared by The Nesting Place.",
+  path: "/sources",
+  keywords: [
+    "birth doula research",
+    "postpartum depression statistics sources",
+    "doula outcomes evidence",
+  ],
+});
 
 export default function SourcesPage() {
   return (

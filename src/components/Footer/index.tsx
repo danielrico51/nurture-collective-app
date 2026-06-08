@@ -111,7 +111,7 @@ const Footer = () => {
           {brands.nestingPlace.name} provides maternal wellness and support
           services — not medical advice. Always consult your healthcare provider
           for clinical concerns. © {new Date().getFullYear()}{" "}
-          {brands.nurtureCollective.name}.
+          {brands.nestingPlace.name}.
         </p>
       </div>
     </footer>

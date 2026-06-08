@@ -4,16 +4,23 @@ import SectionTitle from "@/components/Common/SectionTitle";
 import { formatBlogDate } from "@/lib/blog/format";
 import { fetchPublishedBlogPosts } from "@/lib/blog/public";
 import { brands } from "@/content/site";
+import { buildPageMetadata } from "@/config/seo";
 import Link from "next/link";
 import type { Metadata } from "next";
 
 export const dynamic = "force-dynamic";
 
-export const metadata: Metadata = {
-  title: "Blog | The Nesting Place",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Pregnancy, Birth & Postpartum Blog",
   description:
-    "Articles on pregnancy, birth, postpartum, and family wellness from The Nesting Place team.",
-};
+    "Practical guidance on pregnancy, birth, postpartum recovery, lactation, and family wellness from The Nesting Place for moms in NJ, NY, CT, and PA.",
+  path: "/blog",
+  keywords: [
+    "pregnancy blog New Jersey",
+    "postpartum advice for new moms",
+    "birth doula tips",
+  ],
+});
 
 export default async function BlogIndexPage() {
   const posts = await fetchPublishedBlogPosts();

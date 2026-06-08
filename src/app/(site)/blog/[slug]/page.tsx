@@ -1,7 +1,10 @@
 import { BlogPostBody } from "@/components/Blog/BlogPostBody";
 import Breadcrumb from "@/components/Common/Breadcrumb";
+import JsonLd from "@/components/Seo/JsonLd";
+import { buildPageMetadata } from "@/config/seo";
 import { formatBlogDate } from "@/lib/blog/format";
 import { fetchPublishedBlogPost, fetchPublishedBlogPosts } from "@/lib/blog/public";
+import { buildArticleJsonLd } from "@/lib/seo/jsonLd";
 import Link from "next/link";
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
@@ -16,11 +19,20 @@ export async function generateMetadata({
   params,
 }: BlogPostPageProps): Promise<Metadata> {
   const post = await fetchPublishedBlogPost(params.slug);
-  if (!post) return { title: "Blog | The Nesting Place" };
-  return {
-    title: `${post.title} | The Nesting Place`,
+  if (!post) {
+    return buildPageMetadata({
+      title: "Blog Article",
+      description: "Articles on pregnancy, birth, and postpartum from The Nesting Place.",
+      path: "/blog",
+    });
+  }
+  return buildPageMetadata({
+    title: post.title,
     description: post.excerpt,
-  };
+    path: `/blog/${post.slug}`,
+    openGraphType: "article",
+    keywords: ["pregnancy", "postpartum", "birth", "maternal wellness"],
+  });
 }
 
 export default async function BlogPostPage({ params }: BlogPostPageProps) {
@@ -32,6 +44,16 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <>
+      <JsonLd
+        data={buildArticleJsonLd({
+          title: post.title,
+          description: post.excerpt,
+          slug: post.slug,
+          date: post.date,
+          updatedAt: post.updatedAt,
+          author: post.author,
+        })}
+      />
       <Breadcrumb pageName="Blog" />
       <article className="py-16">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">

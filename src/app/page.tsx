@@ -6,18 +6,39 @@ import FaqList from "@/components/Common/FaqList";
 import Hero from "@/components/Home/Hero";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
 import GoogleReviewsSection from "@/components/Reviews/GoogleReviewsSection";
+import JsonLd from "@/components/Seo/JsonLd";
+import { buildPageMetadata } from "@/config/seo";
 import { momFaqs, momHowItWorks } from "@/content/site";
+import {
+  buildFaqPageJsonLd,
+  buildLocalBusinessJsonLd,
+  buildOrganizationJsonLd,
+} from "@/lib/seo/jsonLd";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "The Nesting Place | Maternal Wellness & Postpartum Support",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Birth Doula & Postpartum Support in NJ, NY, CT & PA",
   description:
-    "The Nesting Place — birth doula, postpartum, lactation, and newborn support with real people guiding you every step of the way.",
-};
+    "The Nesting Place offers birth doula support, overnight newborn care, postpartum help, lactation consulting, and prenatal massage for families in Northern New Jersey, New York, Connecticut, and Pennsylvania.",
+  path: "/",
+  keywords: [
+    "birth doula NJ NY CT PA",
+    "postpartum doula near me",
+    "overnight newborn care tri-state",
+    "maternal wellness Northern New Jersey",
+  ],
+});
 
 export default function HomePage() {
   return (
     <>
+      <JsonLd
+        data={[
+          buildOrganizationJsonLd(),
+          buildLocalBusinessJsonLd(),
+          buildFaqPageJsonLd(momFaqs),
+        ]}
+      />
       <Hero />
       <TeamBylineBanner />
       <ServiceStatsSection />

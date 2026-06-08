@@ -7,6 +7,7 @@ import {
   listingStatusBadgeClass,
   LISTING_STATUS_LABELS,
 } from "@/lib/events/format";
+import { buildPageMetadata } from "@/config/seo";
 import { fetchPublishedEvent, fetchPublishedEvents } from "@/lib/events/public";
 import Link from "next/link";
 import type { Metadata } from "next";
@@ -22,11 +23,22 @@ export async function generateMetadata({
   params,
 }: EventDetailPageProps): Promise<Metadata> {
   const item = await fetchPublishedEvent(params.slug);
-  if (!item) return { title: "Events & Classes | The Nesting Place" };
-  return {
-    title: `${item.title} | The Nesting Place`,
+  if (!item) {
+    return buildPageMetadata({
+      title: "Events & Classes",
+      description: "Events and classes from The Nesting Place.",
+      path: "/events-and-classes",
+    });
+  }
+  return buildPageMetadata({
+    title: item.title,
     description: item.excerpt,
-  };
+    path: `/events-and-classes/${item.slug}`,
+    keywords: [
+      item.kind === "class" ? "childbirth class" : "maternal wellness event",
+      "The Nesting Place events",
+    ],
+  });
 }
 
 export default async function EventDetailPage({ params }: EventDetailPageProps) {

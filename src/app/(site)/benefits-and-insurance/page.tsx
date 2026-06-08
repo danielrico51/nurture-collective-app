@@ -6,14 +6,21 @@ import {
   benefitsEmployerNote,
   benefitsIntro,
 } from "@/content/benefits";
+import { buildPageMetadata } from "@/config/seo";
 import { brands } from "@/content/site";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "Benefits & Insurance | The Nesting Place",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Benefits & Insurance for Doula & Postpartum Support",
   description:
-    "How to pay for doula and postpartum support — employer benefits, insurance reimbursement, and FSA/HSA at The Nesting Place.",
-};
+    "Learn how to pay for birth doula and postpartum support through employer benefits, insurance reimbursement, and FSA/HSA at The Nesting Place in NJ, NY, CT, and PA.",
+  path: "/benefits-and-insurance",
+  keywords: [
+    "doula insurance reimbursement",
+    "FSA HSA birth doula",
+    "Carrot Maven doula benefits",
+  ],
+});
 
 export default function BenefitsAndInsurancePage() {
   return (

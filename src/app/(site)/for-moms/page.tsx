@@ -5,7 +5,9 @@ import FaqList from "@/components/Common/FaqList";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
 import GoogleReviewsSection from "@/components/Reviews/GoogleReviewsSection";
 import SectionTitle from "@/components/Common/SectionTitle";
+import JsonLd from "@/components/Seo/JsonLd";
 import { buildCareStartHref } from "@/config/carePaths";
+import { buildPageMetadata } from "@/config/seo";
 import {
   brands,
   careCoordinator,
@@ -13,18 +15,28 @@ import {
   momHowItWorks,
   publishedCoreServices,
 } from "@/content/site";
+import { buildFaqPageJsonLd, buildOrganizationJsonLd } from "@/lib/seo/jsonLd";
 import Link from "next/link";
 import type { Metadata } from "next";
 
-export const metadata: Metadata = {
-  title: "For Moms | The Nesting Place",
+export const metadata: Metadata = buildPageMetadata({
+  title: "Maternal Support for Moms in NJ, NY, CT & PA",
   description:
-    `Birth doula support, postpartum support, lactation, and newborn support through The Nesting Place — ${brands.nestingPlace.byline}.`,
-};
+    `Birth doula support, postpartum care, lactation help, and overnight newborn support for moms through The Nesting Place — ${brands.nestingPlace.byline}.`,
+  path: "/for-moms",
+  keywords: [
+    "maternal support for moms",
+    "postpartum help New Jersey",
+    "new mom support Hudson Valley",
+  ],
+});
 
 export default function ForMomsPage() {
   return (
     <>
+      <JsonLd
+        data={[buildOrganizationJsonLd(), buildFaqPageJsonLd(momFaqs)]}
+      />
       <Breadcrumb pageName="For moms" />
       <section className="py-16">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
