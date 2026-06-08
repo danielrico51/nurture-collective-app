@@ -2,7 +2,9 @@
 
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
+import SiteArtworkBackground from "@/components/Common/SiteArtworkBackground";
 import { isIntakeChatPath } from "@/config/intakeAccess";
+import { shouldShowSiteArtwork } from "@/config/siteArtwork";
 import { configureAmplify } from "@/utils/amplifyConfig";
 import "@aws-amplify/ui-react/styles.css";
 import { Hub } from "aws-amplify/utils";
@@ -18,6 +20,7 @@ export default function RootLayoutClient({
 }) {
   const pathname = usePathname();
   const isIntakeChat = isIntakeChatPath(pathname);
+  const showSiteArtwork = shouldShowSiteArtwork(pathname);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [ready, setReady] = useState(false);
 
@@ -77,7 +80,15 @@ export default function RootLayoutClient({
             : "min-h-screen pt-20"
         }
       >
-        {children}
+        {showSiteArtwork ? (
+          <SiteArtworkBackground
+            intensity={pathname === "/services" ? "medium" : "subtle"}
+          >
+            {children}
+          </SiteArtworkBackground>
+        ) : (
+          children
+        )}
       </main>
       {isIntakeChat ? null : <Footer />}
     </>

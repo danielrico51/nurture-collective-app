@@ -18,6 +18,7 @@ import {
   SAFETY_ESCALATION_REPLY,
 } from "@/lib/conversation/safety";
 import { userWantsToCompleteIntake } from "@/lib/conversation/completion";
+import { sanitizeQuickReplies } from "@/lib/conversation/quickReplies";
 import { isGuestLead } from "@/lib/leads/workflow";
 import { syncLeadFromIntake } from "@/lib/leads/storage";
 import { saveConversationSession } from "@/lib/conversation/storage";
@@ -75,6 +76,13 @@ const FALLBACK_REPLIES: Record<string, string[]> = {
 
 const GUEST_WELCOME_SUFFIX =
   " You're welcome to chat without an account — create a free member account anytime if you'd like to save this conversation and continue later.";
+
+const setQuickReplies = (
+  session: ConversationSession,
+  replies: string[]
+): void => {
+  session.quickReplies = sanitizeQuickReplies(replies);
+};
 
 export interface PreselectedService {
   title: string;
@@ -271,8 +279,8 @@ const fallbackAssistantReply = (
     }
     return {
       content:
-        "If you're comfortable sharing your ZIP code, it helps our team with scheduling — but it's completely optional.",
-      quickReplies: ["Prefer not to share ZIP"],
+        "If you're comfortable sharing your ZIP code, it helps our team with scheduling — but it's completely optional. You can share it here or let me know you'd like to skip.",
+      quickReplies: [],
     };
   }
   if (!profile.supportInterests.length) {
@@ -397,7 +405,7 @@ export async function* processConversationMessageStream(
       timestamp: new Date().toISOString(),
     };
     session.messages.push(assistantMsg);
-    session.quickReplies = ["I understand", "Contact care team"];
+    setQuickReplies(session, ["I understand", "Contact care team"]);
     session = await saveConversationSession(session);
     await upsertProfileDraft(
       session.userId,
@@ -430,7 +438,7 @@ export async function* processConversationMessageStream(
       confirmedBooking
     );
     assistantContent = fallback.content;
-    session.quickReplies = fallback.quickReplies;
+    setQuickReplies(session, fallback.quickReplies);
   }
 
   const assistantMsg: ConversationMessage = {
@@ -447,13 +455,13 @@ export async function* processConversationMessageStream(
     session.messages,
     confirmedBooking
   );
-  session.quickReplies = initialFallback.quickReplies;
+  setQuickReplies(session, initialFallback.quickReplies);
   session.extractedProfile = profile;
 
   if (!confirmedBooking && canOfferScheduling(profile, session.messages)) {
     const bookingChip = "Book an introductory call";
     const replies = session.quickReplies.filter((reply) => reply !== bookingChip);
-    session.quickReplies = [bookingChip, ...replies].slice(0, 4);
+    setQuickReplies(session, [bookingChip, ...replies]);
   }
 
   // Finish the visible reply before profile extraction / lead sync so the stream
@@ -472,10 +480,12 @@ export async function* processConversationMessageStream(
         extracted.profile,
         session.messages
       );
-      session.quickReplies =
+      setQuickReplies(
+        session,
         extracted.quickReplies.length > 0
           ? extracted.quickReplies
-          : initialFallback.quickReplies;
+          : initialFallback.quickReplies
+      );
     }
 
     session.extractedProfile = profile;
@@ -490,7 +500,7 @@ export async function* processConversationMessageStream(
     ) {
       const bookingChip = "Book an introductory call";
       const replies = session.quickReplies.filter((reply) => reply !== bookingChip);
-      session.quickReplies = [bookingChip, ...replies].slice(0, 4);
+      setQuickReplies(session, [bookingChip, ...replies]);
     }
 
     try {
@@ -549,16 +559,16 @@ export async function* processConversationMessageStream(
         intakeSubmitted = true;
       } catch (submitError) {
         console.error("[conversation] intake submit failed:", submitError);
-        session.quickReplies = [
+        setQuickReplies(session, [
           "Try completing again",
           ...(session.quickReplies.length ? session.quickReplies : ["Keep chatting"]),
-        ];
+        ]);
       }
     } else if (wantsComplete) {
-      session.quickReplies = [
+      setQuickReplies(session, [
         ...(session.quickReplies.length ? session.quickReplies : []),
         "Keep chatting",
-      ];
+      ]);
     }
 
     session = await saveConversationSession(session);

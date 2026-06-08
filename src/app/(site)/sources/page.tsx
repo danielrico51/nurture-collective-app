@@ -1,5 +1,5 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
-import { sourceSections } from "@/content/sources";
+import { sourceCitations } from "@/content/sources";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -21,38 +21,26 @@ export default function SourcesPage() {
               sources in a new tab.
             </p>
 
-            <div className="mt-12 space-y-12">
-              {sourceSections.map((section) => (
-                <div key={section.id}>
-                  <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
-                    {section.title}
-                  </h2>
-                  <ul className="mt-5 space-y-4">
-                    {section.citations.map((citation) => (
-                      <li
-                        key={citation.url}
-                        className="rounded-2xl border border-nurture-sage/15 bg-white p-5 shadow-sm"
-                      >
-                        <p className="font-medium text-nurture-charcoal">
-                          {citation.label}
-                        </p>
-                        <p className="mt-1 text-sm text-nurture-charcoal/65">
-                          {citation.publication}
-                        </p>
-                        <a
-                          href={citation.url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="mt-2 inline-block text-sm font-medium text-nurture-sage-dark hover:underline"
-                        >
-                          View source →
-                        </a>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
+            <ul className="mt-12 space-y-4">
+              {sourceCitations.map((citation) => (
+                <li
+                  key={citation.url}
+                  className="rounded-2xl border border-nurture-sage/15 bg-white p-5 shadow-sm"
+                >
+                  <p className="font-medium text-nurture-charcoal">
+                    {citation.publication}
+                  </p>
+                  <a
+                    href={citation.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-2 inline-block break-all text-sm font-medium text-nurture-sage-dark hover:underline"
+                  >
+                    {citation.url}
+                  </a>
+                </li>
               ))}
-            </div>
+            </ul>
           </div>
         </div>
       </section>

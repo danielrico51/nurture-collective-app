@@ -1,5 +1,6 @@
 import { chatCompletionJson } from "@/lib/openai/client";
 import { EXTRACTION_SYSTEM_PROMPT } from "@/lib/conversation/prompts";
+import { sanitizeQuickReplies } from "@/lib/conversation/quickReplies";
 import {
   mergeExtractedProfile,
   parseQuickReplyToPatch,
@@ -58,7 +59,7 @@ export const extractProfileFromConversation = async (
       { role: "system", content: EXTRACTION_SYSTEM_PROMPT },
       {
         role: "user",
-        content: `Current profile JSON:\n${JSON.stringify(current)}\n\nConversation:\n${transcript}\n\nReturn JSON with fields to merge into profile plus quickReplies (2-4 short options for next user reply).`,
+        content: `Current profile JSON:\n${JSON.stringify(current)}\n\nConversation:\n${transcript}\n\nReturn JSON with fields to merge into profile plus quickReplies (0-4 tap chips). Each chip must be a complete user message — no placeholders, templates, or "prefer not to share" opt-outs. Use [] when asking for name, email, phone, or ZIP.`,
       },
     ]);
 
@@ -95,7 +96,7 @@ export const extractProfileFromConversation = async (
 
     return {
       profile,
-      quickReplies: result.quickReplies ?? [],
+      quickReplies: sanitizeQuickReplies(result.quickReplies ?? []),
     };
   } catch {
     return { profile: current, quickReplies: [] };

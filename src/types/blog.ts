@@ -1,3 +1,5 @@
+import type { ServiceSlug } from "@/content/site";
+
 export type BlogPostStatus = "draft" | "published";
 
 export interface BlogPost {
@@ -10,6 +12,8 @@ export interface BlogPost {
   status: BlogPostStatus;
   author?: string;
   externalUrl?: string;
+  /** Services this article relates to (shown on service cards and used for filtering). */
+  serviceSlugs?: ServiceSlug[];
   createdAt: string;
   updatedAt: string;
 }
@@ -28,6 +32,7 @@ export type CreateBlogPostInput = {
   status?: BlogPostStatus;
   author?: string;
   externalUrl?: string;
+  serviceSlugs?: ServiceSlug[];
   slug?: string;
 };
 

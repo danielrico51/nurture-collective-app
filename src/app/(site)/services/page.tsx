@@ -1,8 +1,11 @@
-import Breadcrumb from "@/components/Common/Breadcrumb";
 import BookingEmbed from "@/components/Common/BookingEmbed";
-import ContactOptions from "@/components/Common/ContactOptions";
-import SectionTitle from "@/components/Common/SectionTitle";
-import { brands, publishedCoreServices } from "@/content/site";
+import ServicesCtaBanner from "@/components/Services/ServicesCtaBanner";
+import ServicesHero from "@/components/Services/ServicesHero";
+import ServicesLandingCard from "@/components/Services/ServicesLandingCard";
+import { publishedCoreServices } from "@/content/site";
+import type { ServiceSlug } from "@/content/site";
+import { fetchPublishedBlogPosts } from "@/lib/blog/public";
+import { buildServiceCardData } from "@/lib/services/cardData";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
@@ -11,53 +14,65 @@ export const metadata: Metadata = {
     "Birth doula support, overnight newborn support, postpartum support, lactation support, and prenatal massage through The Nesting Place.",
 };
 
-export default function ServicesPage() {
+const FEATURED_SLUGS: ServiceSlug[] = [
+  "birth-doula",
+  "overnight-newborn",
+  "postpartum-care",
+];
+
+export default async function ServicesPage() {
+  const blogPosts = await fetchPublishedBlogPosts();
+  const featured = publishedCoreServices.filter((service) =>
+    FEATURED_SLUGS.includes(service.slug)
+  );
+  const additional = publishedCoreServices.filter(
+    (service) => !FEATURED_SLUGS.includes(service.slug)
+  );
+
   return (
     <>
-      <Breadcrumb pageName="Services" />
-      <section className="py-16">
+      <ServicesHero />
+
+      <section className="relative -mt-8 pb-16 sm:-mt-10 sm:pb-20">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <SectionTitle
-            title="Maternal Wellness — available now"
-            subtitle={`Experienced, evidence-based support through ${brands.nestingPlace.name}. Reach out — our team is here to help.`}
-          />
-          <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-            {publishedCoreServices.map((service) => (
-              <article
-                key={service.slug}
-                className="flex flex-col rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm"
-              >
-                <span className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
-                  {service.tag}
-                </span>
-                <h2 className="mt-3 font-serif text-xl font-semibold">
-                  {service.title}
-                </h2>
-                <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
-                  {service.description}
-                </p>
-                {service.availabilityNote ? (
-                  <p className="mt-3 text-xs text-nurture-charcoal/55">
-                    {service.availabilityNote}
-                  </p>
-                ) : null}
-              </article>
-            ))}
+          <div className="grid gap-4 md:grid-cols-3">
+            {featured.map((service) => {
+              const cardData = buildServiceCardData(service.slug, blogPosts);
+              return (
+                <ServicesLandingCard
+                  key={service.slug}
+                  service={service}
+                  featured
+                  detail={cardData.detail}
+                  researchPoints={cardData.researchPoints}
+                  sources={cardData.sources}
+                  relatedPosts={cardData.relatedPosts}
+                />
+              );
+            })}
           </div>
 
-          <div className="mt-20">
-            <SectionTitle
-              title="Ready to get started?"
-              subtitle="Reach out by phone, message, or schedule a call with our team."
-            />
-            <ContactOptions
-              className="mt-10"
-              variant="contact"
-              formHref="/contact?audience=mom"
-            />
-          </div>
+          {additional.length > 0 ? (
+            <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+              {additional.map((service) => {
+                const cardData = buildServiceCardData(service.slug, blogPosts);
+                return (
+                  <ServicesLandingCard
+                    key={service.slug}
+                    service={service}
+                    detail={cardData.detail}
+                    researchPoints={cardData.researchPoints}
+                    sources={cardData.sources}
+                    relatedPosts={cardData.relatedPosts}
+                  />
+                );
+              })}
+            </div>
+          ) : null}
         </div>
       </section>
+
+      <ServicesCtaBanner />
       <BookingEmbed />
     </>
   );

@@ -33,5 +33,8 @@ export const buildWhatsAppUrl = (prefilledMessage?: string): string | null => {
 
 export const hasWhatsApp = (): boolean => Boolean(integrations.whatsappNumber);
 
+/** Contact page / CTA WhatsApp card — off until we re-enable chat outreach. */
+export const WHATSAPP_CONTACT_CARD_ENABLED = false;
+
 /** @deprecated Use hasBooking from @/config/bookings */
 export { hasBooking as hasCalendly } from "@/config/bookings";

@@ -12,7 +12,9 @@ import {
 import {
   buildWhatsAppUrl,
   hasWhatsApp,
+  WHATSAPP_CONTACT_CARD_ENABLED,
 } from "@/config/integrations";
+import { brands } from "@/content/site";
 import Link from "next/link";
 
 interface ContactOptionsProps {
@@ -44,17 +46,23 @@ const ContactOptions = ({
   bookingTitle = "Maternal Support Introductory Call",
   bookingDescription = "Pick a time that works for you — we'll learn about your needs and answer your questions.",
 }: ContactOptionsProps) => {
-  const whatsappUrl = buildWhatsAppUrl(whatsappMessage);
-  const showWhatsApp = hasWhatsApp() && whatsappUrl;
+  const whatsappUrl = WHATSAPP_CONTACT_CARD_ENABLED
+    ? buildWhatsAppUrl(whatsappMessage)
+    : null;
+  const showWhatsApp =
+    WHATSAPP_CONTACT_CARD_ENABLED && hasWhatsApp() && Boolean(whatsappUrl);
   const showBooking = hasBooking();
   const bookingUrl = buildBookingUrlWithPrefill();
   const bookingLabel = getBookingProviderLabel();
   const isIntake = variant === "intake";
+  const { localPhone, localPhoneE164 } = brands.nestingPlace;
+  const callHref = `tel:${localPhoneE164}`;
+  const textHref = `sms:${localPhoneE164}`;
 
   return (
     <div className={className}>
       <div
-        className="grid gap-6 md:grid-cols-3"
+        className="grid gap-6 md:grid-cols-2 xl:grid-cols-4"
         aria-label={isIntake ? "Ways to start support" : "Contact options"}
       >
         <article className={cardClassName}>
@@ -77,30 +85,59 @@ const ContactOptions = ({
           </Link>
         </article>
 
+        {WHATSAPP_CONTACT_CARD_ENABLED ? (
+          <article className={cardClassName}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+              WhatsApp
+            </p>
+            <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
+              Chat with us
+            </h3>
+            <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
+              Message our team directly — we want to be easily available to you.
+            </p>
+            {showWhatsApp ? (
+              <a
+                href={whatsappUrl!}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-6 inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+              >
+                Open WhatsApp
+              </a>
+            ) : (
+              <p className="mt-6 text-sm text-nurture-charcoal/50">
+                WhatsApp coming soon
+              </p>
+            )}
+          </article>
+        ) : null}
+
         <article className={cardClassName}>
           <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
-            WhatsApp
+            Phone
           </p>
           <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
-            Chat with us
+            Call or Text {localPhone}
           </h3>
           <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
-            Message our team directly — we want to be easily available to you.
+            Reach our team directly by phone or text — we&apos;re here when you
+            need a real person.
           </p>
-          {showWhatsApp ? (
+          <div className="mt-6 flex flex-wrap gap-3">
             <a
-              href={whatsappUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-6 inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+              href={callHref}
+              className="inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
             >
-              Open WhatsApp
+              Call us
             </a>
-          ) : (
-            <p className="mt-6 text-sm text-nurture-charcoal/50">
-              WhatsApp coming soon
-            </p>
-          )}
+            <a
+              href={textHref}
+              className="inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+            >
+              Text us
+            </a>
+          </div>
         </article>
 
         <article className={cardClassName}>

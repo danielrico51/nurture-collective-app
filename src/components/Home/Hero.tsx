@@ -1,3 +1,4 @@
+import BotanicalAccent from "@/components/Art/BotanicalAccent";
 import Link from "next/link";
 import Image from "next/image";
 import { buildCareStartHref } from "@/config/carePaths";
@@ -8,8 +9,9 @@ const heroDescription =
 
 const Hero = () => {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-nurture-blush/30 to-nurture-cream pb-16 pt-8 sm:pb-20 sm:pt-10">
-      <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden bg-gradient-to-b from-nurture-rose-light/50 via-nurture-blush/30 to-nurture-cream pb-16 pt-8 sm:pb-20 sm:pt-10">
+      <BotanicalAccent position="top-right" variant="leaf" className="opacity-30" />
+      <div className="relative mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
           <div className="text-left">
             <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
@@ -32,14 +34,28 @@ const Hero = () => {
           </div>
 
           <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
-            <div className="overflow-hidden rounded-[2rem] border border-nurture-sage/15 bg-nurture-cream shadow-lg shadow-nurture-sage/10">
-              <Image
-                src="/images/hero-maternal-team.jpg"
-                alt="Three women sharing ultrasound photos together on a couch"
-                width={1200}
-                height={900}
-                priority
-                className="h-auto w-full object-cover"
+            <div
+              aria-hidden
+              className="absolute inset-6 rounded-[2.75rem] bg-nurture-rose-light/50 blur-3xl"
+            />
+            <div className="relative px-2 py-3 sm:px-4 sm:py-4">
+              <div className="hero-image-blend overflow-hidden">
+                <Image
+                  src="/images/hero-home.jpg"
+                  alt="Two caregivers gently supporting a newborn baby together in a bright, welcoming home"
+                  width={1024}
+                  height={681}
+                  priority
+                  className="h-auto w-full object-cover"
+                />
+              </div>
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-2 bg-gradient-to-r from-nurture-rose-light/50 via-transparent to-nurture-rose-light/40 sm:inset-4"
+              />
+              <div
+                aria-hidden
+                className="pointer-events-none absolute inset-2 bg-gradient-to-b from-nurture-rose-light/35 via-transparent to-nurture-cream/55 sm:inset-4"
               />
             </div>
           </div>

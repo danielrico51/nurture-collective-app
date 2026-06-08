@@ -33,14 +33,16 @@ export default function BenefitsAndInsurancePage() {
             </p>
           </div>
 
-          <div className="mx-auto mt-16 max-w-3xl rounded-2xl border border-nurture-sage/20 bg-nurture-sage/5 p-8">
-            <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
-              Employer family benefits
-            </h2>
-            <p className="mt-4 text-nurture-charcoal/80">{benefitsEmployerNote}</p>
-          </div>
-
           <div className="mx-auto mt-12 max-w-3xl space-y-8">
+            <article className="rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm">
+              <h3 className="font-serif text-xl font-semibold text-nurture-charcoal">
+                Employer family benefits
+              </h3>
+              <p className="mt-4 text-sm leading-relaxed text-nurture-charcoal/75">
+                {benefitsEmployerNote}
+              </p>
+            </article>
+
             {benefitSections.map((section) => (
               <article
                 key={section.id}
@@ -59,7 +61,7 @@ export default function BenefitsAndInsurancePage() {
             ))}
           </div>
 
-          <div className="mx-auto mt-16 max-w-3xl rounded-2xl border border-nurture-blush/40 bg-white p-8 text-center shadow-sm">
+          <div className="mx-auto mt-16 max-w-3xl rounded-2xl border border-nurture-sage/15 bg-white p-8 text-center shadow-sm">
             <p className="text-nurture-charcoal/80">
               Questions about your plan? Tell us which benefit platform or insurer
               you have — we&apos;ll help you understand typical next steps for{" "}

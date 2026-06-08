@@ -37,30 +37,30 @@ const ServiceStatsSection = () => {
                 </Link>
               </div>
 
-              <div className="grid gap-4 sm:grid-cols-2">
-                {service.stats.map((stat) => (
-                  <article
-                    key={`${service.slug}-${stat.label}`}
-                    className="rounded-2xl border border-nurture-sage/10 bg-white p-6 shadow-sm"
+              <ul className="space-y-4 rounded-2xl border border-nurture-sage/10 bg-white p-6 shadow-sm sm:p-8">
+                {service.points.map((point) => (
+                  <li
+                    key={`${service.slug}-${point}`}
+                    className="flex gap-3 text-base leading-relaxed text-nurture-charcoal/80"
                   >
-                    <p className="font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl">
-                      {stat.value}
-                    </p>
-                    <p className="mt-2 text-sm leading-relaxed text-nurture-charcoal/70">
-                      {stat.label}
-                    </p>
-                  </article>
+                    <span
+                      aria-hidden
+                      className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nurture-sage"
+                    />
+                    <span>{point}</span>
+                  </li>
                 ))}
-              </div>
+              </ul>
             </div>
           ))}
         </div>
 
         <p className="mt-10 text-center text-xs text-nurture-charcoal/55">
-          *see{" "}
+          Statistics are drawn from published research. See our{" "}
           <Link href="/sources" className="font-medium text-nurture-sage-dark hover:underline">
-            sources below
-          </Link>
+            Sources
+          </Link>{" "}
+          page for citations.
         </p>
       </div>
     </section>

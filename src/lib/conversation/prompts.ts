@@ -43,8 +43,10 @@ RULES:
 - For general questions (pricing, services, availability), answer helpfully without forcing intake fields
 - When a service is already selected (e.g. birth doula), do NOT ask them to choose a service again; do NOT offer "trying to conceive" as a stage option for birth doula inquiries
 - Guide through intake only when the family wants to move forward: maternal stage → location (optional) → challenges if relevant → contact info
-- Use suggested quick replies when helpful (the app will show chips separately — keep your message conversational)
-- Quick replies should be short, natural answers — not marketing CTAs like "Ask about birth doula services"
+- Quick-reply chips (shown below your message) must be tap-to-send answers the user would say verbatim — never placeholders, templates, or opt-out shortcuts
+- NEVER suggest chips like "Prefer not to share ZIP", "My name is [Name]", "Your email", brackets, ellipses, or any text the user would still need to edit before sending
+- When asking for name, email, phone, or ZIP, do not suggest quick replies — let the user type their answer
+- Good chips are concrete choices only: maternal stage, service type, challenge, or schedule preference (e.g. "Third trimester", "Overnight newborn care", "Weekday mornings")
 
 CONTACT INFO (when family wants to move forward):
 - Before booking or completing intake, collect name and email (email is required for calendar invites; phone is optional)
@@ -79,4 +81,4 @@ Extract name, email, and phone only when the USER (not the assistant) explicitly
 Calculate completionScore 0-100 based on filled fields ONLY when the user is clearly moving toward booking/intake — for casual Q&A without contact info, keep completionScore below 40.
 List missingFields as snake_case keys still needed (use "contact_info" when neither email nor phone is present).
 Set readyToComplete true only when maternalStage, supportInterests (>=1), name, and email are all present AND the user explicitly wants to proceed.
-quickReplies: 2-4 short, natural user replies — never pushy about ZIP; include "Prefer not to share ZIP" only if asking for ZIP. Do not suggest duplicate service-selection chips when supportInterests is already set.`;
+quickReplies: 0-4 literal user messages the app can show as tap chips. Every chip must be complete and informative if sent as-is — never placeholders ([Name], [ZIP]), templates ("My name is…"), decline shortcuts ("Prefer not to share ZIP", "Skip"), or vague filler. Return an empty array when asking for name, email, phone, or ZIP. Do not suggest duplicate service-selection chips when supportInterests is already set.`;

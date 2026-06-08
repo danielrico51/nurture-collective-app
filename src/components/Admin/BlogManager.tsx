@@ -8,10 +8,18 @@ import {
 } from "@/lib/api/blogClient";
 import { formatBlogDate } from "@/lib/blog/format";
 import { slugifyTitle } from "@/lib/blog/slug";
+import { publishedCoreServices } from "@/content/site";
+import type { ServiceSlug } from "@/content/site";
+import { resolvePostServiceSlugs } from "@/lib/blog/serviceTags";
 import type { BlogPost, BlogPostStatus } from "@/types/blog";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
+
+const SERVICE_TAG_OPTIONS = publishedCoreServices.map((service) => ({
+  slug: service.slug,
+  title: service.title,
+}));
 
 const emptyDraft = (): Partial<BlogPost> => ({
   title: "",
@@ -22,6 +30,7 @@ const emptyDraft = (): Partial<BlogPost> => ({
   status: "draft",
   author: "The Nesting Place Team",
   externalUrl: "",
+  serviceSlugs: [],
 });
 
 const BlogManager = () => {
@@ -51,7 +60,7 @@ const BlogManager = () => {
   const selectPost = (post: BlogPost) => {
     setIsNew(false);
     setSelectedSlug(post.slug);
-    setForm({ ...post });
+    setForm({ ...post, serviceSlugs: resolvePostServiceSlugs(post) });
   };
 
   const startNew = () => {
@@ -67,6 +76,16 @@ const BlogManager = () => {
         next.slug = slugifyTitle(String(value));
       }
       return next;
+    });
+  };
+
+  const toggleServiceTag = (slug: ServiceSlug) => {
+    setForm((prev) => {
+      const current = prev.serviceSlugs ?? [];
+      const next = current.includes(slug)
+        ? current.filter((entry) => entry !== slug)
+        : [...current, slug];
+      return { ...prev, serviceSlugs: next };
     });
   };
 
@@ -86,6 +105,7 @@ const BlogManager = () => {
           status: form.status as BlogPostStatus,
           author: form.author,
           externalUrl: form.externalUrl || undefined,
+          serviceSlugs: form.serviceSlugs,
           slug: form.slug?.trim() || undefined,
         });
         toast.success("Post created");
@@ -100,6 +120,7 @@ const BlogManager = () => {
           status: form.status as BlogPostStatus,
           author: form.author,
           externalUrl: form.externalUrl || undefined,
+          serviceSlugs: form.serviceSlugs,
         });
         toast.success("Post saved");
         await loadPosts();
@@ -299,6 +320,33 @@ const BlogManager = () => {
                     className="mt-1 w-full rounded-lg border border-nurture-sage/25 px-3 py-2 font-mono text-sm leading-relaxed"
                   />
                 </label>
+                <fieldset className="block sm:col-span-2">
+                  <legend className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/55">
+                    Related services
+                  </legend>
+                  <p className="mt-1 text-xs text-nurture-charcoal/55">
+                    Tagged articles appear in service &quot;Learn more&quot; panels.
+                  </p>
+                  <div className="mt-2 flex flex-wrap gap-2">
+                    {SERVICE_TAG_OPTIONS.map((service) => {
+                      const selected = (form.serviceSlugs ?? []).includes(service.slug);
+                      return (
+                        <button
+                          key={service.slug}
+                          type="button"
+                          onClick={() => toggleServiceTag(service.slug)}
+                          className={`rounded-full border px-3 py-1.5 text-xs font-medium transition ${
+                            selected
+                              ? "border-nurture-sage bg-nurture-sage/15 text-nurture-sage-dark"
+                              : "border-nurture-sage/25 text-nurture-charcoal/70 hover:border-nurture-sage/45"
+                          }`}
+                        >
+                          {service.title}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </fieldset>
                 <label className="block sm:col-span-2">
                   <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/55">
                     External URL (optional)

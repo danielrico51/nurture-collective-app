@@ -13,7 +13,11 @@ const config: Config = {
         nurture: {
           sage: "#B8A9C9",
           "sage-dark": "#8B7BA8",
+          "sage-light": "#D4E5D0",
           blush: "#E8D8F0",
+          rose: "#C4A4B5",
+          "rose-dark": "#A67F91",
+          "rose-light": "#F0E0E8",
           cream: "#FAF7F2",
           charcoal: "#2D3436",
         },

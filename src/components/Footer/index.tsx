@@ -54,6 +54,11 @@ const Footer = () => {
                   Terms of Use
                 </Link>
               </li>
+              <li>
+                <Link href="/sources" className="hover:text-nurture-sage-dark">
+                  Sources
+                </Link>
+              </li>
             </ul>
             <p className="mt-6 text-sm font-semibold uppercase tracking-wide text-nurture-charcoal/60">
               Account
