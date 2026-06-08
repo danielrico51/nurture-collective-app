@@ -36,7 +36,7 @@ if command -v gcloud >/dev/null 2>&1; then
   if CLIENT_ID="$(
     gcloud iam service-accounts describe "$SERVICE_ACCOUNT_EMAIL" \
       --project="$GCP_PROJECT" \
-      --format='value(uniqueId)' 2>/dev/null
+      --format='value(oauth2ClientId)' 2>/dev/null
   )" && [[ -n "$CLIENT_ID" ]]; then
     SERVICE_ACCOUNT_CLIENT_ID="$CLIENT_ID"
     echo "Resolved service account Client ID via gcloud: ${SERVICE_ACCOUNT_CLIENT_ID}"

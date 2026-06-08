@@ -19,15 +19,19 @@ export const handleSchedulingError = (error: unknown) => {
   const message = error instanceof Error ? error.message : "Scheduling failed";
   console.error("[scheduling]", error);
 
+  const lower = message.toLowerCase();
   if (
-    message.includes("invalid_grant") ||
-    message.includes("unauthorized_client") ||
-    message.includes("Not Authorized")
+    lower.includes("invalid_grant") ||
+    lower.includes("unauthorized_client") ||
+    lower.includes("unauthorized to retrieve access tokens") ||
+    lower.includes("not authorized for any of the scopes") ||
+    lower.includes("domain-wide delegation") ||
+    lower.includes("not authorized")
   ) {
     return NextResponse.json(
       {
         error:
-          "Google Calendar scheduling credentials need to be refreshed or granted calendar access for the delegated account.",
+          "Google Calendar access is not authorized yet. In Google Workspace Admin, authorize domain-wide delegation for the nurture-tasks-sync service account with the Calendar scope (https://www.googleapis.com/auth/calendar), then redeploy.",
       },
       { status: 503 }
     );
