@@ -11,12 +11,31 @@ export interface SchedulingStatusResponse {
   durationMinutes: number;
 }
 
+const parseApiResponse = async (
+  response: Response
+): Promise<Record<string, unknown>> => {
+  const text = await response.text();
+  if (!text.trim()) return {};
+
+  try {
+    return JSON.parse(text) as Record<string, unknown>;
+  } catch {
+    const trimmed = text.trim();
+    const isHtmlError =
+      trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html");
+    const message = isHtmlError
+      ? `Scheduling is temporarily unavailable (server error ${response.status}). Wait a moment and try again, or use Book a call below.`
+      : trimmed.slice(0, 200) || `Request failed (${response.status})`;
+    throw new Error(message);
+  }
+};
+
 export const fetchSchedulingStatus =
   async (): Promise<SchedulingStatusResponse> => {
     const response = await fetch("/api/scheduling/status", {
       cache: "no-store",
     });
-    const data = await response.json();
+    const data = await parseApiResponse(response);
     if (!response.ok) {
       return {
         enabled: false,
@@ -42,9 +61,15 @@ export const fetchSchedulingAvailability = async (options?: {
     }
   );
 
-  if (response.status === 503) return null;
+  const data = await parseApiResponse(response);
 
-  const data = await response.json();
+  if (response.status === 503) {
+    if (typeof data.error === "string" && data.error.trim()) {
+      throw new Error(data.error);
+    }
+    return null;
+  }
+
   if (!response.ok) {
     throw new Error(
       typeof data.error === "string" ? data.error : "Could not load availability"
@@ -82,7 +107,7 @@ export const bookSchedulingSlot = async (input: {
     }),
   });
 
-  const data = await response.json();
+  const data = await parseApiResponse(response);
   if (!response.ok) {
     throw new Error(
       typeof data.error === "string" ? data.error : "Could not book that time"

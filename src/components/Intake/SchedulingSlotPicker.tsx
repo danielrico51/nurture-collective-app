@@ -27,6 +27,7 @@ const SchedulingSlotPicker = ({
   const [loading, setLoading] = useState(true);
   const [bookingSlot, setBookingSlot] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [refreshing, setRefreshing] = useState(false);
 
   const loadSlots = useCallback(async () => {
     setLoading(true);
@@ -119,10 +120,15 @@ const SchedulingSlotPicker = ({
       {!loading ? (
         <button
           type="button"
-          onClick={() => void loadSlots()}
-          className="mt-3 text-xs font-medium text-nurture-sage-dark underline-offset-2 hover:underline"
+          disabled={refreshing}
+          onClick={() => {
+            if (refreshing) return;
+            setRefreshing(true);
+            void loadSlots().finally(() => setRefreshing(false));
+          }}
+          className="mt-3 text-xs font-medium text-nurture-sage-dark underline-offset-2 hover:underline disabled:opacity-50"
         >
-          Refresh times
+          {refreshing ? "Refreshing…" : "Refresh times"}
         </button>
       ) : null}
     </div>
