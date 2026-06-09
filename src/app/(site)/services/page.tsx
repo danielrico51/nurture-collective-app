@@ -6,7 +6,7 @@ import ServicesJumpNav from "@/components/Services/ServicesJumpNav";
 import ServicesLandingCard from "@/components/Services/ServicesLandingCard";
 import { buildPageMetadata } from "@/config/seo";
 import { publishedCoreServices } from "@/content/site";
-import type { ServiceSlug } from "@/content/site";
+import type { CoreService } from "@/content/site";
 import { fetchPublishedBlogPosts } from "@/lib/blog/public";
 import {
   buildOrganizationJsonLd,
@@ -28,20 +28,19 @@ export const metadata: Metadata = buildPageMetadata({
   ],
 });
 
-const FEATURED_SLUGS: ServiceSlug[] = [
-  "birth-doula",
-  "overnight-newborn",
-  "postpartum-care",
-];
+const SERVICE_ROW_SIZE = 3;
+
+const chunkServices = (services: CoreService[]): CoreService[][] => {
+  const rows: CoreService[][] = [];
+  for (let index = 0; index < services.length; index += SERVICE_ROW_SIZE) {
+    rows.push(services.slice(index, index + SERVICE_ROW_SIZE));
+  }
+  return rows;
+};
 
 export default async function ServicesPage() {
   const blogPosts = await fetchPublishedBlogPosts();
-  const featured = publishedCoreServices.filter((service) =>
-    FEATURED_SLUGS.includes(service.slug)
-  );
-  const additional = publishedCoreServices.filter(
-    (service) => !FEATURED_SLUGS.includes(service.slug)
-  );
+  const serviceRows = chunkServices(publishedCoreServices);
 
   return (
     <>
@@ -57,40 +56,28 @@ export default async function ServicesPage() {
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <ServicesJumpNav services={publishedCoreServices} />
 
-          <div className="mt-6 grid gap-4 md:grid-cols-3">
-            {featured.map((service) => {
-              const cardData = buildServiceCardData(service.slug, blogPosts);
-              return (
-                <ServicesLandingCard
-                  key={service.slug}
-                  service={service}
-                  featured
-                  detail={cardData.detail}
-                  researchPoints={cardData.researchPoints}
-                  sources={cardData.sources}
-                  relatedPosts={cardData.relatedPosts}
-                />
-              );
-            })}
+          <div className="mt-6 space-y-4">
+            {serviceRows.map((row, rowIndex) => (
+              <div
+                key={`service-row-${rowIndex}`}
+                className="grid gap-4 md:grid-cols-3"
+              >
+                {row.map((service) => {
+                  const cardData = buildServiceCardData(service.slug, blogPosts);
+                  return (
+                    <ServicesLandingCard
+                      key={service.slug}
+                      service={service}
+                      detail={cardData.detail}
+                      researchPoints={cardData.researchPoints}
+                      sources={cardData.sources}
+                      relatedPosts={cardData.relatedPosts}
+                    />
+                  );
+                })}
+              </div>
+            ))}
           </div>
-
-          {additional.length > 0 ? (
-            <div className="mt-4 grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-              {additional.map((service) => {
-                const cardData = buildServiceCardData(service.slug, blogPosts);
-                return (
-                  <ServicesLandingCard
-                    key={service.slug}
-                    service={service}
-                    detail={cardData.detail}
-                    researchPoints={cardData.researchPoints}
-                    sources={cardData.sources}
-                    relatedPosts={cardData.relatedPosts}
-                  />
-                );
-              })}
-            </div>
-          ) : null}
         </div>
       </section>
 
