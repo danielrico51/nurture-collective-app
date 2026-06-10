@@ -72,8 +72,9 @@ const ServicesLandingCard = ({
           : "border-nurture-sage/15"
       } p-4 sm:p-5`}
     >
+      <LeafMark className="pointer-events-none absolute bottom-3 right-3 h-4 w-4 opacity-45 transition group-hover:opacity-70 sm:bottom-4 sm:right-4" />
       <div className="flex min-h-0 flex-1 items-start gap-3 sm:gap-4">
-        <div className="w-28 shrink-0 sm:w-32">
+        <div className="w-[42%] max-w-[10.5rem] shrink-0 sm:max-w-[11rem]">
           <ServiceIllustration slug={service.slug} />
         </div>
 
@@ -135,11 +136,7 @@ const ServicesLandingCard = ({
             relatedPosts={relatedPosts}
           />
         </div>
-      ) : (
-        <div className="mt-3 flex justify-end">
-          <LeafMark className="h-4 w-4 opacity-65 transition group-hover:opacity-100" />
-        </div>
-      )}
+      ) : null}
     </article>
   );
 };

@@ -5,10 +5,10 @@ export const serviceIllustrationSrc: Partial<Record<ServiceSlug, string>> = {
   "birth-doula": "/images/services/birth-doula.png",
   "overnight-newborn": "/images/services/overnight-newborn.png",
   "postpartum-care": "/images/services/postpartum-care.png",
-  lactation: "/images/services/lactation.png",
-  "prenatal-massage": "/images/services/prenatal-massage.png",
-  "postpartum-massage": "/images/services/postpartum-massage.png",
-  "childbirth-education": "/images/services/childbirth-education.png",
+  lactation: "/images/services/lactation.png?v=2",
+  "prenatal-massage": "/images/services/prenatal-massage.png?v=2",
+  "postpartum-massage": "/images/services/postpartum-massage.png?v=2",
+  "childbirth-education": "/images/services/childbirth-education.png?v=2",
 };
 
 export const serviceIllustrationAlt: Partial<Record<ServiceSlug, string>> = {

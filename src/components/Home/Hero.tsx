@@ -41,10 +41,10 @@ const Hero = () => {
             <div className="relative px-2 py-3 sm:px-4 sm:py-4">
               <div className="hero-image-blend overflow-hidden">
                 <Image
-                  src="/images/hero-home.jpg"
+                  src="/images/hero-home.png"
                   alt="Two caregivers gently supporting a newborn baby together in a bright, welcoming home"
                   width={1024}
-                  height={681}
+                  height={682}
                   priority
                   className="h-auto w-full object-cover"
                 />

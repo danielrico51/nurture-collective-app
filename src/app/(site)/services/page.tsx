@@ -52,7 +52,7 @@ export default async function ServicesPage() {
       />
       <ServicesHero />
 
-      <section className="relative -mt-8 pb-16 sm:-mt-10 sm:pb-20">
+      <section className="relative -mt-8 bg-gradient-to-b from-transparent via-nurture-rose-light/15 to-nurture-sage-light/10 pb-16 sm:-mt-10 sm:pb-20">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <ServicesJumpNav services={publishedCoreServices} />
 

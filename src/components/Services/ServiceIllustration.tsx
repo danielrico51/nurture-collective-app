@@ -5,8 +5,11 @@ import {
 import type { ServiceSlug } from "@/content/site";
 import Image from "next/image";
 
-/** All service art exports share this canvas (1024×708). */
-export const SERVICE_ILLUSTRATION_ASPECT = "aspect-[1024/708]";
+/**
+ * Card art frame — square-ish to match the services mockup (~40% of card width).
+ * Source files may be 1024×708; they scale with object-contain inside this frame.
+ */
+export const SERVICE_ILLUSTRATION_ASPECT = "aspect-square";
 
 interface ServiceIllustrationProps {
   slug: ServiceSlug;
@@ -28,8 +31,8 @@ const ServiceIllustration = ({ slug, className = "" }: ServiceIllustrationProps)
         src={src}
         alt={serviceIllustrationAlt[slug] ?? ""}
         fill
-        className="object-contain object-center p-1.5 sm:p-2"
-        sizes="(max-width: 640px) 112px, 128px"
+        className="object-contain object-center p-0.5 sm:p-1"
+        sizes="(max-width: 640px) 38vw, 168px"
       />
     </div>
   );

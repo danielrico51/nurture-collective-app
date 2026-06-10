@@ -40,7 +40,7 @@ export const BASE_SEO_KEYWORDS = [
   "The Nesting Place",
 ] as const;
 
-export const DEFAULT_OG_IMAGE_PATH = "/images/hero-home.jpg";
+export const DEFAULT_OG_IMAGE_PATH = "/images/hero-home.png";
 
 export const PUBLIC_MARKETING_ROUTES = [
   { path: "/", changeFrequency: "weekly" as const, priority: 1 },

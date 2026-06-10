@@ -75,7 +75,7 @@ export const serviceDetails: ServiceDetail[] = [
     slug: "postpartum-massage",
     whatToExpect: [
       "Gentle therapeutic massage focused on postpartum recovery",
-      "Relief for tension from feeding, carrying, and sleep disruption",
+      "Relief from tension caused by feeding, carrying, and sleep disruption",
       "Time set aside to rest and heal in a supportive setting",
     ],
     sourceUrls: [
