@@ -57,12 +57,21 @@ export async function POST(request: NextRequest) {
 
   const from = params.From ?? "";
   const body = params.Body ?? "";
+  const startedAt = Date.now();
 
   try {
     const result = await handleInboundSms({
       from,
       body,
       messageSid: params.MessageSid,
+    });
+
+    console.info("[twilio/sms] handled", {
+      from,
+      ms: Date.now() - startedAt,
+      skipped: result.skipped,
+      reason: result.reason,
+      replyLength: result.reply.length,
     });
 
     if (result.skipped || !result.reply.trim()) {
@@ -75,7 +84,10 @@ export async function POST(request: NextRequest) {
       headers: { "Content-Type": "text/xml; charset=utf-8" },
     });
   } catch (error) {
-    console.error("[twilio/sms] handler failed:", error);
+    console.error("[twilio/sms] handler failed:", error, {
+      from,
+      ms: Date.now() - startedAt,
+    });
     return new Response(
       buildTwimlMessageResponse(
         "Sorry — we're having trouble right now. Please try again in a moment or call (844) 926-2867."

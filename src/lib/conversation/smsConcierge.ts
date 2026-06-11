@@ -1,4 +1,5 @@
 import {
+  createConversationSession,
   processConversationMessage,
   resumeOrCreateSession,
 } from "@/lib/conversation/engine";
@@ -64,30 +65,46 @@ export const handleInboundSms = async (
   }
 
   const userId = phoneToSmsGuestUserId(fromPhone);
-  let session = await resumeOrCreateSession(
-    userId,
-    {
-      phone: fromPhone,
-      smsConsent: true,
-    },
-    { skipWelcome: true }
-  );
+  const sessionDefaults = {
+    phone: fromPhone,
+    smsConsent: true,
+  };
 
-  if (session.status === "completed") {
-    session = await resumeOrCreateSession(
+  let session: Awaited<ReturnType<typeof resumeOrCreateSession>>;
+  try {
+    session = await resumeOrCreateSession(userId, sessionDefaults, {
+      skipWelcome: true,
+    });
+
+    if (session.status === "completed") {
+      session = await resumeOrCreateSession(
+        userId,
+        {
+          ...sessionDefaults,
+          name: session.extractedProfile.name,
+          email: session.extractedProfile.email,
+        },
+        { forceNew: true, skipWelcome: true }
+      );
+    }
+  } catch (error) {
+    console.error("[smsConcierge] session resume failed, starting fresh:", error);
+    session = await createConversationSession(
       userId,
-      {
-        phone: fromPhone,
-        smsConsent: true,
-        name: session.extractedProfile.name,
-        email: session.extractedProfile.email,
-      },
-      { forceNew: true, skipWelcome: true }
+      sessionDefaults,
+      undefined,
+      true
     );
   }
 
+  const startedAt = Date.now();
   const { session: updatedSession, assistantReply, intakeSubmitted } =
     await processConversationMessage(session, body, { smsMode: true });
+  console.info("[smsConcierge] reply ready", {
+    userId,
+    ms: Date.now() - startedAt,
+    replyLength: assistantReply.length,
+  });
 
   let reply = formatAssistantReplyForSms(assistantReply);
 

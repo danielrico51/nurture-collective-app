@@ -22,7 +22,11 @@ import { sanitizeQuickReplies } from "@/lib/conversation/quickReplies";
 import { isGuestLead } from "@/lib/leads/workflow";
 import { syncLeadFromIntake } from "@/lib/leads/storage";
 import { saveConversationSession } from "@/lib/conversation/storage";
-import { isOpenAiConfigured, streamChatCompletion } from "@/lib/openai/client";
+import {
+  chatCompletionText,
+  isOpenAiConfigured,
+  streamChatCompletion,
+} from "@/lib/openai/client";
 import { upsertProfileDraft, submitProfile } from "@/lib/intake/storage";
 import { formatConsultBookingSummary } from "@/lib/scheduling/bookingSummary";
 import { findConfirmedBookingForConversation } from "@/lib/scheduling/storage";
@@ -347,6 +351,10 @@ const CONVERSATION_STREAM_TIMEOUT_MS = Number(
   process.env.CONVERSATION_STREAM_TIMEOUT_MS ?? 50_000
 );
 
+const SMS_CONVERSATION_TIMEOUT_MS = Number(
+  process.env.SMS_CONVERSATION_TIMEOUT_MS ?? 10_000
+);
+
 async function* generateAssistantStream(
   session: ConversationSession,
   options: ConversationChannelOptions = {},
@@ -371,13 +379,25 @@ async function* generateAssistantStream(
 
   const messages = await buildChatMessages(session, options, confirmedBooking);
   const controller = new AbortController();
-  const timeout = setTimeout(
-    () => controller.abort(),
-    CONVERSATION_STREAM_TIMEOUT_MS
-  );
+  const timeoutMs = options.smsMode
+    ? SMS_CONVERSATION_TIMEOUT_MS
+    : CONVERSATION_STREAM_TIMEOUT_MS;
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
 
   let full = "";
   try {
+    if (options.smsMode) {
+      const text = await chatCompletionText(messages, {
+        signal: controller.signal,
+        maxTokens: 300,
+      });
+      if (text) {
+        yield text;
+        return text;
+      }
+      return yield* runFallback("empty sms completion");
+    }
+
     for await (const token of streamChatCompletion(messages, {
       signal: controller.signal,
     })) {
@@ -423,7 +443,13 @@ export async function* processConversationMessageStream(
     session.messages
   );
   session.extractedProfile = profile;
-  session = await saveConversationSession(session);
+  if (options.smsMode) {
+    void saveConversationSession(session).catch((error) => {
+      console.error("[conversation] sms pre-reply save failed:", error);
+    });
+  } else {
+    session = await saveConversationSession(session);
+  }
 
   if (detectSafetyEscalation(userMessage)) {
     session.safetyEscalation = true;
@@ -445,10 +471,9 @@ export async function* processConversationMessageStream(
     return;
   }
 
-  const confirmedBooking = await findConfirmedBookingForConversation(
-    session.userId,
-    session.id
-  );
+  const confirmedBooking = options.smsMode
+    ? null
+    : await findConfirmedBookingForConversation(session.userId, session.id);
 
   let assistantContent = "";
   for await (const token of generateAssistantStream(
@@ -496,13 +521,22 @@ export async function* processConversationMessageStream(
 
   // Finish the visible reply before profile extraction / lead sync so the stream
   // closes promptly (post-processing can exceed hosting timeouts).
+  if (options.smsMode) {
+    void saveConversationSession(session).catch((error) => {
+      console.error("[conversation] sms post-reply save failed:", error);
+    });
+    yield { type: "done", session, intakeSubmitted: false };
+    void enrichAfterReply();
+    return;
+  }
+
   session = await saveConversationSession(session);
   yield { type: "done", session, intakeSubmitted: false };
 
-  const enrichAfterReply = async (): Promise<{
+  async function enrichAfterReply(): Promise<{
     session: ConversationSession;
     intakeSubmitted: boolean;
-  }> => {
+  }> {
     let intakeSubmitted = false;
     try {
       if (isOpenAiConfigured()) {
@@ -611,12 +645,6 @@ export async function* processConversationMessageStream(
       console.error("[conversation] post-reply enrichment failed:", postProcessError);
       return { session, intakeSubmitted };
     }
-  };
-
-  // Twilio webhooks time out around 15s — return TwiML before enrichment finishes.
-  if (options.smsMode) {
-    void enrichAfterReply();
-    return;
   }
 
   const enriched = await enrichAfterReply();

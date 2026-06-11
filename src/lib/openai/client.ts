@@ -15,6 +15,47 @@ export interface StreamChatCompletionOptions {
   signal?: AbortSignal;
 }
 
+export interface ChatCompletionTextOptions {
+  signal?: AbortSignal;
+  maxTokens?: number;
+  temperature?: number;
+}
+
+/** Non-streaming completion — faster for SMS webhooks that need the full reply at once. */
+export async function chatCompletionText(
+  messages: ChatMessage[],
+  options: ChatCompletionTextOptions = {}
+): Promise<string> {
+  const apiKey = getOpenAiApiKey();
+  if (!apiKey) throw new Error("OPENAI_API_KEY is not configured");
+
+  const response = await fetch("https://api.openai.com/v1/chat/completions", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${apiKey}`,
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({
+      model: getOpenAiModel(),
+      messages,
+      temperature: options.temperature ?? 0.65,
+      max_tokens: options.maxTokens ?? 320,
+      stream: false,
+    }),
+    signal: options.signal,
+  });
+
+  if (!response.ok) {
+    const error = await response.text();
+    throw new Error(`OpenAI completion failed: ${response.status} ${error}`);
+  }
+
+  const payload = (await response.json()) as {
+    choices?: { message?: { content?: string } }[];
+  };
+  return payload.choices?.[0]?.message?.content?.trim() ?? "";
+}
+
 export async function* streamChatCompletion(
   messages: ChatMessage[],
   options: StreamChatCompletionOptions = {}
