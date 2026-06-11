@@ -20,6 +20,15 @@ export const buildCareStartHref = (service?: string) =>
     ? `${CARE_START_PATH}?service=${encodeURIComponent(service)}`
     : CARE_START_PATH;
 
+/** Opens concierge intake with scheduling surfaced (SMS / email deep links). */
+export const buildCareBookingHref = (service?: string) => {
+  const params = new URLSearchParams({ book: "1" });
+  if (service?.trim()) {
+    params.set("service", service.trim());
+  }
+  return `${CARE_START_PATH}?${params.toString()}`;
+};
+
 export const buildIntakeHref = (service?: string) =>
   service
     ? `${INTAKE_PATH}?service=${encodeURIComponent(service)}`

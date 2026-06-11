@@ -100,7 +100,9 @@ const ConversationalIntake = ({
   const [sessionClosed, setSessionClosed] = useState(false);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const bookingSectionRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const [focusBookingFromLink, setFocusBookingFromLink] = useState(false);
   const initRef = useRef(false);
   const followLatestRef = useRef(false);
   const stickToBottomRef = useRef(true);
@@ -116,6 +118,19 @@ const ConversationalIntake = ({
       setLiveSchedulingEnabled(status.enabled);
     });
   }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("book") === "1") {
+      setFocusBookingFromLink(true);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!focusBookingFromLink || !bookingSectionRef.current) return;
+    bookingSectionRef.current.scrollIntoView({ behavior: "smooth", block: "start" });
+    stickToBottomRef.current = false;
+  }, [focusBookingFromLink, messages, liveSchedulingEnabled, confirmedBooking]);
 
   const scrollMessagesToTop = useCallback(() => {
     const container = messagesContainerRef.current;
@@ -680,16 +695,24 @@ const ConversationalIntake = ({
             </div>
           ) : null}
 
-          {canUseLiveScheduling && !confirmedBooking ? (
-            <SchedulingSlotPicker
-              conversationSessionId={session.id}
-              attendee={bookingAttendee}
-              onBooked={handleBookingConfirmed}
-            />
-          ) : null}
+          <div ref={bookingSectionRef}>
+            {focusBookingFromLink && canOfferBooking && !confirmedBooking ? (
+              <div className="mb-3 rounded-2xl border border-nurture-sage/25 bg-nurture-sage/5 px-4 py-3 text-sm text-nurture-charcoal/80">
+                Pick an open time below for your introductory call — we&apos;ll
+                send a calendar invite to your email.
+              </div>
+            ) : null}
 
-          {showBookCallCard ? (
-            <div className="rounded-2xl border border-nurture-sage/20 bg-white/90 p-4 text-center">
+            {canUseLiveScheduling && !confirmedBooking ? (
+              <SchedulingSlotPicker
+                conversationSessionId={session.id}
+                attendee={bookingAttendee}
+                onBooked={handleBookingConfirmed}
+              />
+            ) : null}
+
+            {showBookCallCard ? (
+              <div className="rounded-2xl border border-nurture-sage/20 bg-white/90 p-4 text-center">
               <p className="text-sm font-medium text-nurture-charcoal">
                 Book your introductory call
               </p>
@@ -710,7 +733,8 @@ const ConversationalIntake = ({
                 Book a call
               </a>
             </div>
-          ) : null}
+            ) : null}
+          </div>
           <div ref={messagesEndRef} aria-hidden className="h-px shrink-0" />
         </div>
       </div>

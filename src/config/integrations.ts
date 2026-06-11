@@ -1,5 +1,29 @@
 import { brands } from "@/content/site";
 
+/** Twilio toll-free SMS concierge — public for `sms:` links on the site. */
+export const getSmsPhoneE164 = (): string =>
+  process.env.NEXT_PUBLIC_TWILIO_PHONE_NUMBER?.trim() ||
+  brands.nestingPlace.phoneE164;
+
+export const getSmsPhoneDisplay = (): string => {
+  const configured = process.env.NEXT_PUBLIC_TWILIO_PHONE_NUMBER?.trim();
+  if (!configured || configured === brands.nestingPlace.phoneE164) {
+    return brands.nestingPlace.phone;
+  }
+
+  const digits = configured.replace(/\D/g, "");
+  if (digits.length === 11 && digits.startsWith("1")) {
+    return `(${digits.slice(1, 4)}) ${digits.slice(4, 7)}-${digits.slice(7)}`;
+  }
+  return configured;
+};
+
+export const buildSmsHref = (body?: string): string => {
+  const base = `sms:${getSmsPhoneE164()}`;
+  if (!body?.trim()) return base;
+  return `${base}?body=${encodeURIComponent(body.trim())}`;
+};
+
 /** Public integration URLs — safe for client components. */
 export const integrations = {
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.trim() ?? "",

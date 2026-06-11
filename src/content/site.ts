@@ -68,9 +68,10 @@ export const brands = {
       "Serving North, Central, and South Jersey plus New York's Lower Hudson Valley — welcoming families across NJ, NY, CT, and PA",
     description:
       "An experienced maternal wellness and postpartum support practice offering birth doula support, overnight newborn care, postpartum support, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of motherhood.",
+    /** Twilio toll-free SMS concierge — use for all `sms:` links on the site. */
     phone: "(844) 926-2867",
     phoneE164: "+18449262867",
-    /** Local line for call and text outreach on the website. */
+    /** Local NJ line for phone calls. */
     localPhone: "(201) 623-3629",
     localPhoneE164: "+12016233629",
     email: "info@nesting-place.com",
@@ -103,8 +104,8 @@ export const socialLinks = [
   },
   {
     id: "sms",
-    label: "Text The Nesting Place at (201) 623-3629",
-    href: "sms:+12016233629",
+    label: `Text The Nesting Place at ${brands.nestingPlace.phone}`,
+    href: `sms:${brands.nestingPlace.phoneE164}`,
   },
 ] as const;
 

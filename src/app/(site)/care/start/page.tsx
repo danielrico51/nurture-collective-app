@@ -20,17 +20,27 @@ export default function CareStartPage() {
     if (!ready || authStatus === "configuring") return;
 
     let service: string | undefined;
+    let book = false;
     if (typeof window !== "undefined") {
-      service =
-        new URLSearchParams(window.location.search).get("service")?.trim() ||
-        undefined;
+      const params = new URLSearchParams(window.location.search);
+      service = params.get("service")?.trim() || undefined;
+      book = params.get("book") === "1";
       if (service) {
         sessionStorage.setItem(CARE_SERVICE_STORAGE_KEY, service);
       }
     }
 
+    const intakeHref = (() => {
+      const params = new URLSearchParams();
+      if (service) params.set("service", service);
+      if (book) params.set("book", "1");
+      const query = params.toString();
+      const base = buildIntakeHref();
+      return query ? `${base}?${query}` : base;
+    })();
+
     if (publicIntake) {
-      router.replace(buildIntakeHref(service));
+      router.replace(intakeHref);
       return;
     }
 
@@ -45,10 +55,10 @@ export default function CareStartPage() {
           router.replace("/apps");
           return;
         }
-        router.replace(buildIntakeHref(service));
+        router.replace(intakeHref);
       })
       .catch(() => {
-        router.replace(buildIntakeHref(service));
+        router.replace(intakeHref);
       });
   }, [authStatus, publicIntake, ready, router]);
 

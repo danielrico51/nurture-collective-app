@@ -22,6 +22,7 @@ import { sanitizeQuickReplies } from "@/lib/conversation/quickReplies";
 import { isGuestLead } from "@/lib/leads/workflow";
 import { syncLeadFromIntake } from "@/lib/leads/storage";
 import { saveConversationSession } from "@/lib/conversation/storage";
+import { buildSmsBookingUrl } from "@/lib/conversation/smsBooking";
 import {
   chatCompletionText,
   isOpenAiConfigured,
@@ -193,8 +194,9 @@ const buildChatMessages = async (
   } else if (offerScheduling) {
     messages.push({
       role: "system",
-      content:
-        'SCHEDULING (required next step): Name, email, stage, and support interests are on file. Invite the user to book an introductory call using the scheduler directly below this chat — e.g. "pick a time below" or "tap Book a call below." Do NOT say we will email them to schedule or that someone will reach out to schedule.',
+      content: options.smsMode
+        ? `SCHEDULING (required next step): Name, email, stage, and support interests are on file. Send this booking link so they can pick an open time on the website: ${buildSmsBookingUrl()}. Do NOT say "below the chat" or mention an on-screen calendar.`
+        : 'SCHEDULING (required next step): Name, email, stage, and support interests are on file. Invite the user to book an introductory call using the scheduler directly below this chat — e.g. "pick a time below" or "tap Book a call below." Do NOT say we will email them to schedule or that someone will reach out to schedule.',
     });
   }
 
@@ -210,7 +212,7 @@ const buildChatMessages = async (
     messages.push({
       role: "system",
       content:
-        "The user is texting via SMS. Keep replies concise (under 320 characters when possible). Use plain text only — no markdown, bullets, or links unless essential. On the first reply, briefly introduce yourself as their Nesting Place support coordinator.",
+        "The user is texting via SMS. Keep replies concise (under 320 characters when possible). Use plain text only — no markdown or bullets. Include a booking URL when offering scheduling. Never reference UI below the chat. On the first reply, briefly introduce yourself as their Nesting Place support coordinator.",
     });
   } else if (isGuestLead(session.userId)) {
     messages.push({
@@ -235,9 +237,11 @@ const fallbackAssistantReply = (
   profile: ExtractedMaternalProfile,
   userMessage: string,
   messages: ConversationMessage[] = [],
-  confirmedBooking: ConsultBooking | null = null
+  confirmedBooking: ConsultBooking | null = null,
+  options: ConversationChannelOptions = {}
 ): { content: string; quickReplies: string[] } => {
   const lower = userMessage.toLowerCase();
+  const bookingUrl = buildSmsBookingUrl();
   if (confirmedBooking) {
     const when = new Date(confirmedBooking.start).toLocaleString(undefined, {
       weekday: "long",
@@ -324,26 +328,27 @@ const fallbackAssistantReply = (
   }
   if (lower.includes("done") || lower.includes("complete") || profile.readyToComplete) {
     return {
-      content:
-        "Thank you — I have what I need to personalize your care plan. I'll finalize your intake now. You can also book an introductory call using the scheduling options below whenever you're ready.",
-      quickReplies: ["Book an introductory call"],
+      content: options.smsMode
+        ? `Thank you — I have what I need. Book your introductory call here: ${bookingUrl}`
+        : "Thank you — I have what I need to personalize your care plan. I'll finalize your intake now. You can also book an introductory call using the scheduling options below whenever you're ready.",
+      quickReplies: options.smsMode ? [] : ["Book an introductory call"],
     };
   }
   if (/book|schedule|introductory call|set up a call/i.test(lower)) {
     return {
-      content:
-        "Absolutely — use the scheduling options just below this chat to pick an open time for your introductory call. We'll send a calendar invite to the email you provided.",
+      content: options.smsMode
+        ? `Pick an open time for your introductory call here: ${bookingUrl} We'll send a calendar invite to the email you provided.`
+        : "Absolutely — use the scheduling options just below this chat to pick an open time for your introductory call. We'll send a calendar invite to the email you provided.",
       quickReplies: [],
     };
   }
   return {
-    content:
-      "Thank you — I have your contact details saved. When you're ready, book a free introductory call with our team using the scheduling options below. Is there anything else you'd like your care coordinator to know before we wrap up?",
-    quickReplies: [
-      "Book an introductory call",
-      "That's everything",
-      "Add one more thing",
-    ],
+    content: options.smsMode
+      ? `Thank you — I have your contact details saved. Book your free introductory call here: ${bookingUrl} Is there anything else you'd like your care coordinator to know?`
+      : "Thank you — I have your contact details saved. When you're ready, book a free introductory call with our team using the scheduling options below. Is there anything else you'd like your care coordinator to know before we wrap up?",
+    quickReplies: options.smsMode
+      ? []
+      : ["Book an introductory call", "That's everything", "Add one more thing"],
   };
 };
 
@@ -367,7 +372,8 @@ async function* generateAssistantStream(
       session.extractedProfile,
       userMessage,
       session.messages,
-      confirmedBooking
+      confirmedBooking,
+      options
     );
     yield content;
     return content;
@@ -490,7 +496,8 @@ export async function* processConversationMessageStream(
       profile,
       userMessage,
       session.messages,
-      confirmedBooking
+      confirmedBooking,
+      options
     );
     assistantContent = fallback.content;
     setQuickReplies(session, fallback.quickReplies);
@@ -508,12 +515,17 @@ export async function* processConversationMessageStream(
     profile,
     userMessage,
     session.messages,
-    confirmedBooking
+    confirmedBooking,
+    options
   );
   setQuickReplies(session, initialFallback.quickReplies);
   session.extractedProfile = profile;
 
-  if (!confirmedBooking && canOfferScheduling(profile, session.messages)) {
+  if (
+    !options.smsMode &&
+    !confirmedBooking &&
+    canOfferScheduling(profile, session.messages)
+  ) {
     const bookingChip = "Book an introductory call";
     const replies = session.quickReplies.filter((reply) => reply !== bookingChip);
     setQuickReplies(session, [bookingChip, ...replies]);

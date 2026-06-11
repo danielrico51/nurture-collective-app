@@ -10,7 +10,9 @@ import {
   hasBooking,
 } from "@/config/bookings";
 import {
+  buildSmsHref,
   buildWhatsAppUrl,
+  getSmsPhoneDisplay,
   hasWhatsApp,
   WHATSAPP_CONTACT_CARD_ENABLED,
 } from "@/config/integrations";
@@ -56,8 +58,11 @@ const ContactOptions = ({
   const bookingLabel = getBookingProviderLabel();
   const isIntake = variant === "intake";
   const { localPhone, localPhoneE164 } = brands.nestingPlace;
+  const smsPhone = getSmsPhoneDisplay();
   const callHref = `tel:${localPhoneE164}`;
-  const textHref = `sms:${localPhoneE164}`;
+  const textHref = buildSmsHref(
+    "Hi! I'd like to learn more about support from The Nesting Place."
+  );
 
   return (
     <div className={className}>
@@ -118,11 +123,11 @@ const ContactOptions = ({
             Phone
           </p>
           <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
-            Call or Text {localPhone}
+            Call {localPhone} or text {smsPhone}
           </h3>
           <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
-            Reach our team directly by phone or text — we&apos;re here when you
-            need a real person.
+            Call our local line or text our toll-free number to reach our support
+            concierge — we&apos;re here when you need a real person.
           </p>
           <div className="mt-6 flex flex-wrap gap-3">
             <a

@@ -3,6 +3,8 @@ import {
   processConversationMessage,
   resumeOrCreateSession,
 } from "@/lib/conversation/engine";
+import { canOfferScheduling } from "@/lib/conversation/profileMapper";
+import { attachSmsBookingLinkIfNeeded } from "@/lib/conversation/smsBooking";
 import { formatAssistantReplyForSms } from "@/lib/conversation/smsFormatting";
 import {
   detectSmsKeywordAction,
@@ -107,6 +109,15 @@ export const handleInboundSms = async (
   });
 
   let reply = formatAssistantReplyForSms(assistantReply);
+
+  if (
+    canOfferScheduling(
+      updatedSession.extractedProfile,
+      updatedSession.messages
+    )
+  ) {
+    reply = attachSmsBookingLinkIfNeeded(reply, body);
+  }
 
   if (intakeSubmitted) {
     reply =
