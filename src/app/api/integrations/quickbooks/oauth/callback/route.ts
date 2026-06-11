@@ -5,6 +5,7 @@ import {
 } from "@/config/quickbooks";
 import { exchangeQuickBooksAuthCode } from "@/lib/integrations/quickbooks";
 import { QBO_OAUTH_STATE_COOKIE } from "@/lib/integrations/quickbooks/constants";
+import { verifyQuickBooksOAuthState } from "@/lib/integrations/quickbooks/oauthSession";
 
 export const dynamic = "force-dynamic";
 
@@ -29,8 +30,13 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  const expectedState = request.cookies.get(QBO_OAUTH_STATE_COOKIE)?.value;
-  if (!code || !state || !realmId || !expectedState || state !== expectedState) {
+  const cookieState = request.cookies.get(QBO_OAUTH_STATE_COOKIE)?.value;
+  const stateValid =
+    Boolean(state) &&
+    (verifyQuickBooksOAuthState(state!) ||
+      (Boolean(cookieState) && cookieState === state));
+
+  if (!code || !state || !realmId || !stateValid) {
     return NextResponse.json(
       { error: "Invalid OAuth callback — missing or mismatched state" },
       { status: 400 }
