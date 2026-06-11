@@ -24,12 +24,13 @@ export const buildSmsHref = (body?: string): string => {
   return `${base}?body=${encodeURIComponent(body.trim())}`;
 };
 
+/** Public contact email — always the Nesting Place inbox (not legacy Nurture Collective env values). */
+export const nestingPlaceContactEmail = brands.nestingPlace.email;
+
 /** Public integration URLs — safe for client components. */
 export const integrations = {
   whatsappNumber: process.env.NEXT_PUBLIC_WHATSAPP_NUMBER?.trim() ?? "",
-  contactEmail:
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() ??
-    brands.nestingPlace.email,
+  contactEmail: nestingPlaceContactEmail,
 } as const;
 
 /** Server-only webhook config — use only in API routes. */
@@ -41,8 +42,7 @@ export const serverIntegrations = {
   /** Team inbox n8n should notify (Gmail/SES nodes). */
   n8nTeamNotificationEmail:
     process.env.N8N_TEAM_NOTIFICATION_EMAIL?.trim() ||
-    process.env.NEXT_PUBLIC_CONTACT_EMAIL?.trim() ||
-    brands.nestingPlace.email,
+    nestingPlaceContactEmail,
 } as const;
 
 export { serverBookingConfig } from "@/config/bookings";

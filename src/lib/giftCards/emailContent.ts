@@ -1,4 +1,4 @@
-import { integrations } from "@/config/integrations";
+import { nestingPlaceContactEmail } from "@/config/integrations";
 import { getGiftCardDesign, giftCardDesignEmailStyles } from "@/lib/giftCards/designs";
 import { centsToDollars } from "@/lib/giftCards/validateOrder";
 import type { GiftCardOrder } from "@/types/giftCard";
@@ -18,7 +18,7 @@ export const buildGiftCardRecipientEmail = (order: GiftCardOrder) => {
     personalMessage ? `\nPersonal message:\n"${personalMessage}"\n` : "",
     "You can use this gift toward birth doula support, postpartum care, lactation consulting, prenatal massage, and other eligible services.",
     "",
-    `To redeem or ask questions, contact us at ${integrations.contactEmail} or visit our website.`,
+    `To redeem or ask questions, contact us at ${nestingPlaceContactEmail} or visit our website.`,
     "",
     "With care,",
     "The Nesting Place",
@@ -53,7 +53,7 @@ export const buildGiftCardPurchaserCopyEmail = (order: GiftCardOrder) => {
     `Thank you for your ${amount} eGift card purchase for ${order.recipient.name} (${order.recipient.email}).`,
     "We've emailed them their gift card details.",
     "",
-    `Questions? Contact ${integrations.contactEmail}.`,
+    `Questions? Contact ${nestingPlaceContactEmail}.`,
   ].join("\n");
 
   const html = `
@@ -61,7 +61,7 @@ export const buildGiftCardPurchaserCopyEmail = (order: GiftCardOrder) => {
     <p>Thank you for your <strong>${escapeHtml(amount)}</strong> eGift card purchase for
     ${escapeHtml(order.recipient.name)} (${escapeHtml(order.recipient.email)}).</p>
     <p>We've emailed them their gift card details.</p>
-    <p>Questions? Contact <a href="mailto:${escapeHtml(integrations.contactEmail)}">${escapeHtml(integrations.contactEmail)}</a>.</p>
+    <p>Questions? Contact <a href="mailto:${escapeHtml(nestingPlaceContactEmail)}">${escapeHtml(nestingPlaceContactEmail)}</a>.</p>
   `.trim();
 
   return {
@@ -115,7 +115,7 @@ export const buildGiftCardRecipientHtml = (input: {
   designLabel: string;
   designId: GiftCardOrder["designId"];
 }): string => {
-  const contact = escapeHtml(integrations.contactEmail);
+  const contact = escapeHtml(nestingPlaceContactEmail);
   const styles = giftCardDesignEmailStyles[input.designId];
   return `
 <!DOCTYPE html>
