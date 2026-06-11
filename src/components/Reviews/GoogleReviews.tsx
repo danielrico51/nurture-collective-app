@@ -31,18 +31,29 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
   useEffect(() => {
     fetch("/api/reviews")
       .then(async (response) => {
-        const payload = await response.json();
+        const contentType = response.headers.get("content-type") ?? "";
+        if (!contentType.includes("application/json")) {
+          throw new Error("Could not load reviews");
+        }
+
+        const payload = (await response.json()) as
+          | GoogleReviewsPayload
+          | { error?: string; fallback?: GoogleReviewsPayload };
+
         if (!response.ok) {
-          if (payload.fallback) {
-            setData(payload.fallback as GoogleReviewsPayload);
+          if ("fallback" in payload && payload.fallback) {
+            setData(payload.fallback);
             return;
           }
-          throw new Error(payload.error ?? "Could not load reviews");
+          throw new Error(
+            ("error" in payload && payload.error) || "Could not load reviews"
+          );
         }
+
         setData(payload as GoogleReviewsPayload);
       })
-      .catch((err) => {
-        setError(err instanceof Error ? err.message : "Could not load reviews");
+      .catch(() => {
+        setError("Could not load reviews");
       })
       .finally(() => setLoading(false));
   }, []);

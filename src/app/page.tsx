@@ -5,7 +5,6 @@ import TeamBylineBanner from "@/components/Home/TeamBylineBanner";
 import FaqList from "@/components/Common/FaqList";
 import Hero from "@/components/Home/Hero";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
-import GoogleReviewsSection from "@/components/Reviews/GoogleReviewsSection";
 import JsonLd from "@/components/Seo/JsonLd";
 import { buildPageMetadata } from "@/config/seo";
 import { momFaqs, momHowItWorks } from "@/content/site";
@@ -42,7 +41,6 @@ export default function HomePage() {
       <Hero />
       <TeamBylineBanner />
       <ServiceStatsSection />
-      <GoogleReviewsSection className="bg-nurture-sage/5" />
       <HowItWorksSteps
         title="How it works for moms"
         subtitle="From first inquiry to ongoing support."
