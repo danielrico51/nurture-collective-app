@@ -1,4 +1,12 @@
-import { CARE_START_PATH } from "@/config/carePaths";
+export const BOOK_INTRO_PATH = "/book";
+
+export type SmsBookingLinkOptions = {
+  service?: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  conversationSessionId?: string;
+};
 
 /** Public site origin for absolute links in SMS replies. */
 export const getPublicAppOrigin = (): string => {
@@ -9,12 +17,23 @@ export const getPublicAppOrigin = (): string => {
   return configured.replace(/\/$/, "");
 };
 
-/** Deep link to concierge intake with live scheduling surfaced (Phase 1 SMS booking). */
-export const buildSmsBookingUrl = (options?: { service?: string }): string => {
-  const url = new URL(CARE_START_PATH, getPublicAppOrigin());
-  url.searchParams.set("book", "1");
+/** Deep link to the standalone intro-call booking page (SMS / email). */
+export const buildSmsBookingUrl = (options?: SmsBookingLinkOptions): string => {
+  const url = new URL(BOOK_INTRO_PATH, getPublicAppOrigin());
   if (options?.service?.trim()) {
     url.searchParams.set("service", options.service.trim());
+  }
+  if (options?.name?.trim()) {
+    url.searchParams.set("name", options.name.trim());
+  }
+  if (options?.email?.trim()) {
+    url.searchParams.set("email", options.email.trim());
+  }
+  if (options?.phone?.trim()) {
+    url.searchParams.set("phone", options.phone.trim());
+  }
+  if (options?.conversationSessionId?.trim()) {
+    url.searchParams.set("session", options.conversationSessionId.trim());
   }
   return url.toString();
 };
@@ -30,7 +49,7 @@ export const shouldAttachSmsBookingLink = (
 /** Append the booking deep link when scheduling is ready and the reply omits it. */
 export const ensureSmsBookingLink = (
   reply: string,
-  options?: { service?: string }
+  options?: SmsBookingLinkOptions
 ): string => {
   const bookingUrl = buildSmsBookingUrl(options);
   if (reply.includes(bookingUrl)) {
@@ -42,7 +61,7 @@ export const ensureSmsBookingLink = (
 export const attachSmsBookingLinkIfNeeded = (
   reply: string,
   userMessage: string,
-  options?: { service?: string }
+  options?: SmsBookingLinkOptions
 ): string => {
   const bookingUrl = buildSmsBookingUrl(options);
   if (reply.includes(bookingUrl)) {

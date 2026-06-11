@@ -20,13 +20,17 @@ export const buildCareStartHref = (service?: string) =>
     ? `${CARE_START_PATH}?service=${encodeURIComponent(service)}`
     : CARE_START_PATH;
 
-/** Opens concierge intake with scheduling surfaced (SMS / email deep links). */
+/** Standalone intro-call booking page (SMS / email deep links). */
+export const BOOK_INTRO_PATH = "/book";
+
+/** @deprecated Prefer BOOK_INTRO_PATH — kept for legacy book=1 redirects. */
 export const buildCareBookingHref = (service?: string) => {
-  const params = new URLSearchParams({ book: "1" });
+  const params = new URLSearchParams();
   if (service?.trim()) {
     params.set("service", service.trim());
   }
-  return `${CARE_START_PATH}?${params.toString()}`;
+  const query = params.toString();
+  return query ? `${BOOK_INTRO_PATH}?${query}` : BOOK_INTRO_PATH;
 };
 
 export const buildIntakeHref = (service?: string) =>

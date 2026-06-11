@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  BOOK_INTRO_PATH,
   CARE_SERVICE_STORAGE_KEY,
   buildIntakeHref,
 } from "@/config/carePaths";
@@ -30,14 +31,15 @@ export default function CareStartPage() {
       }
     }
 
-    const intakeHref = (() => {
+    if (book) {
       const params = new URLSearchParams();
       if (service) params.set("service", service);
-      if (book) params.set("book", "1");
       const query = params.toString();
-      const base = buildIntakeHref();
-      return query ? `${base}?${query}` : base;
-    })();
+      router.replace(query ? `${BOOK_INTRO_PATH}?${query}` : BOOK_INTRO_PATH);
+      return;
+    }
+
+    const intakeHref = buildIntakeHref(service);
 
     if (publicIntake) {
       router.replace(intakeHref);

@@ -116,7 +116,13 @@ export const handleInboundSms = async (
       updatedSession.messages
     )
   ) {
-    reply = ensureSmsBookingLink(reply);
+    const profile = updatedSession.extractedProfile;
+    reply = ensureSmsBookingLink(reply, {
+      name: profile.name,
+      email: profile.email,
+      phone: profile.phone,
+      conversationSessionId: updatedSession.id,
+    });
   }
 
   if (intakeSubmitted) {

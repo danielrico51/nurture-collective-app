@@ -11,17 +11,22 @@ describe("buildSmsBookingUrl", () => {
     vi.unstubAllEnvs();
   });
 
-  it("builds care start deep link with book=1", () => {
+  it("builds standalone booking page deep link", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://example.com");
-    expect(buildSmsBookingUrl()).toBe(
-      "https://example.com/care/start?book=1"
-    );
+    expect(buildSmsBookingUrl()).toBe("https://example.com/book");
   });
 
-  it("includes service slug when provided", () => {
+  it("includes prefill params when provided", () => {
     vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://example.com");
-    expect(buildSmsBookingUrl({ service: "birth-doula" })).toBe(
-      "https://example.com/care/start?book=1&service=birth-doula"
+    expect(
+      buildSmsBookingUrl({
+        service: "birth-doula",
+        name: "Alex Burleigh",
+        email: "alex@example.com",
+        conversationSessionId: "sess-123",
+      })
+    ).toBe(
+      "https://example.com/book?service=birth-doula&name=Alex+Burleigh&email=alex%40example.com&session=sess-123"
     );
   });
 });
@@ -56,7 +61,7 @@ describe("ensureSmsBookingLink", () => {
     const reply = ensureSmsBookingLink(
       "Now let's get you set up for a call. Please give me a moment to check for available times."
     );
-    expect(reply).toContain("https://example.com/care/start?book=1");
+    expect(reply).toContain("https://example.com/book");
     expect(reply).toContain("Book your intro call:");
   });
 });
@@ -72,7 +77,7 @@ describe("attachSmsBookingLinkIfNeeded", () => {
       "Great — you're all set.",
       "Can I schedule a call?"
     );
-    expect(reply).toContain("https://example.com/care/start?book=1");
+    expect(reply).toContain("https://example.com/book");
     expect(reply).toContain("Book your intro call:");
   });
 

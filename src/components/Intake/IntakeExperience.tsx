@@ -3,6 +3,7 @@
 import ConversationalIntake from "@/components/Intake/ConversationalIntake";
 import GuestSaveProgressPrompt from "@/components/Intake/GuestSaveProgressPrompt";
 import {
+  BOOK_INTRO_PATH,
   resolveCareServiceContext,
   type CareServiceContext,
 } from "@/config/carePaths";
@@ -37,6 +38,16 @@ const IntakeExperience = ({ allowGuest = false }: IntakeExperienceProps) => {
     if (typeof window === "undefined") return null;
     return resolveCareServiceContext();
   });
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    if (new URLSearchParams(window.location.search).get("book") === "1") {
+      const params = new URLSearchParams(window.location.search);
+      params.delete("book");
+      const query = params.toString();
+      router.replace(query ? `${BOOK_INTRO_PATH}?${query}` : BOOK_INTRO_PATH);
+    }
+  }, [router]);
 
   useEffect(() => {
     if (publicMode) {

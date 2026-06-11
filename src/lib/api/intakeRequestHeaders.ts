@@ -6,9 +6,14 @@ import {
 } from "@/config/intakeAccess";
 import { getOrCreateGuestSessionId } from "@/lib/auth/guestSession";
 
-const isPublicIntakeRoute = (): boolean => {
+const GUEST_BOOKING_PATH = "/book";
+
+const isGuestApiRoute = (): boolean => {
   if (typeof window === "undefined") return false;
-  return window.location.pathname === PUBLIC_INTAKE_PATH;
+  return (
+    window.location.pathname === PUBLIC_INTAKE_PATH ||
+    window.location.pathname === GUEST_BOOKING_PATH
+  );
 };
 
 export const intakeRequestHeaders = async (): Promise<HeadersInit> => {
@@ -21,7 +26,7 @@ export const intakeRequestHeaders = async (): Promise<HeadersInit> => {
 
   // Public /intake must always use the guest session id — even if Cognito tokens
   // exist in the browser, or saved conversations won't match on send.
-  if (isPublicIntakeEnabled() && isPublicIntakeRoute()) {
+  if (isPublicIntakeEnabled() && isGuestApiRoute()) {
     headers["X-Guest-Session-Id"] = getOrCreateGuestSessionId();
     return headers;
   }
