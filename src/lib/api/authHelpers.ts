@@ -22,23 +22,9 @@ export const requireAuthUser = async (
   return { user, error: null, isGuest: false };
 };
 
-/** Cognito JWT or guest session header when public intake is enabled. */
-export const requireAuthUserOrGuest = async (
+const resolveGuestSessionUser = (
   request: NextRequest
-): Promise<{ user: AuthUser | null; error: NextResponse | null; isGuest: boolean }> => {
-  const authed = await verifyRequest(request);
-  if (authed?.sub) {
-    return { user: authed, error: null, isGuest: false };
-  }
-
-  if (!isPublicIntakeEnabled()) {
-    return {
-      user: null,
-      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
-      isGuest: false,
-    };
-  }
-
+): { user: AuthUser | null; error: NextResponse | null; isGuest: boolean } => {
   const guestId = request.headers.get("X-Guest-Session-Id")?.trim() ?? "";
   if (!isGuestSessionId(guestId)) {
     return {
@@ -60,4 +46,36 @@ export const requireAuthUserOrGuest = async (
     error: null,
     isGuest: true,
   };
+};
+
+/** Cognito JWT or guest session for standalone /book scheduling (prod-safe). */
+export const requireAuthUserOrGuestForScheduling = async (
+  request: NextRequest
+): Promise<{ user: AuthUser | null; error: NextResponse | null; isGuest: boolean }> => {
+  const authed = await verifyRequest(request);
+  if (authed?.sub) {
+    return { user: authed, error: null, isGuest: false };
+  }
+
+  return resolveGuestSessionUser(request);
+};
+
+/** Cognito JWT or guest session header when public intake is enabled. */
+export const requireAuthUserOrGuest = async (
+  request: NextRequest
+): Promise<{ user: AuthUser | null; error: NextResponse | null; isGuest: boolean }> => {
+  const authed = await verifyRequest(request);
+  if (authed?.sub) {
+    return { user: authed, error: null, isGuest: false };
+  }
+
+  if (!isPublicIntakeEnabled()) {
+    return {
+      user: null,
+      error: NextResponse.json({ error: "Unauthorized" }, { status: 401 }),
+      isGuest: false,
+    };
+  }
+
+  return resolveGuestSessionUser(request);
 };

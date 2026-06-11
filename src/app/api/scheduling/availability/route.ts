@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuthUserOrGuest } from "@/lib/api/authHelpers";
+import { requireAuthUserOrGuestForScheduling } from "@/lib/api/authHelpers";
 import { isGoogleSchedulingActive } from "@/lib/scheduling/config";
 import { listAvailableSlots } from "@/lib/scheduling/google/availability";
 import { handleSchedulingError } from "@/lib/scheduling/handleSchedulingError";
@@ -8,7 +8,7 @@ import { SchedulingNotConfiguredError } from "@/lib/scheduling/errors";
 export const dynamic = "force-dynamic";
 
 export async function GET(request: NextRequest) {
-  const auth = await requireAuthUserOrGuest(request);
+  const auth = await requireAuthUserOrGuestForScheduling(request);
   if (auth.error) return auth.error;
 
   if (!isGoogleSchedulingActive()) {

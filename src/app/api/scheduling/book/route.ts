@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { requireAuthUserOrGuest } from "@/lib/api/authHelpers";
+import { requireAuthUserOrGuestForScheduling } from "@/lib/api/authHelpers";
 import { runConsultBookingIntegrations } from "@/lib/scheduling/bookingIntegrations";
 import { isGoogleSchedulingActive } from "@/lib/scheduling/config";
 import {
@@ -17,7 +17,7 @@ import type { SchedulingBookRequest } from "@/lib/scheduling/types";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
-  const auth = await requireAuthUserOrGuest(request);
+  const auth = await requireAuthUserOrGuestForScheduling(request);
   if (auth.error) return auth.error;
 
   if (!isGoogleSchedulingActive()) {

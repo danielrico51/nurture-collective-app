@@ -24,6 +24,16 @@ export const intakeRequestHeaders = async (): Promise<HeadersInit> => {
   const memberIntakeRoute =
     typeof window !== "undefined" && isMemberIntakePath(window.location.pathname);
 
+  const onStandaloneBookingPage =
+    typeof window !== "undefined" &&
+    window.location.pathname === GUEST_BOOKING_PATH;
+
+  // /book is public in all environments (SMS links, standalone scheduling).
+  if (onStandaloneBookingPage) {
+    headers["X-Guest-Session-Id"] = getOrCreateGuestSessionId();
+    return headers;
+  }
+
   // Public /intake must always use the guest session id — even if Cognito tokens
   // exist in the browser, or saved conversations won't match on send.
   if (isPublicIntakeEnabled() && isGuestApiRoute()) {
