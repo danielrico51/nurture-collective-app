@@ -3,7 +3,21 @@ import {
   SchedulingNotConfiguredError,
   SchedulingSlotUnavailableError,
 } from "@/lib/scheduling/errors";
+import { buildSchedulingAuthErrorMessage } from "@/lib/scheduling/calendarDeployGuards";
 import { serverSchedulingConfig } from "@/lib/scheduling/config";
+
+const isGoogleAuthFailure = (message: string): boolean => {
+  const lower = message.toLowerCase();
+  return (
+    lower.includes("invalid_grant") ||
+    lower.includes("invalid_rapt") ||
+    lower.includes("unauthorized_client") ||
+    lower.includes("unauthorized to retrieve access tokens") ||
+    lower.includes("not authorized for any of the scopes") ||
+    lower.includes("domain-wide delegation") ||
+    lower.includes("not authorized")
+  );
+};
 
 export const handleSchedulingError = (error: unknown) => {
   if (error instanceof SchedulingNotConfiguredError) {
@@ -20,23 +34,13 @@ export const handleSchedulingError = (error: unknown) => {
   const message = error instanceof Error ? error.message : "Scheduling failed";
   console.error("[scheduling]", error);
 
-  const lower = message.toLowerCase();
-  if (
-    lower.includes("invalid_grant") ||
-    lower.includes("unauthorized_client") ||
-    lower.includes("unauthorized to retrieve access tokens") ||
-    lower.includes("not authorized for any of the scopes") ||
-    lower.includes("domain-wide delegation") ||
-    lower.includes("not authorized")
-  ) {
-    const delegatedUser = serverSchedulingConfig.delegatedUser;
+  if (isGoogleAuthFailure(message)) {
     return NextResponse.json(
       {
-        error:
-          `Google Calendar access is not authorized yet for ${delegatedUser}. ` +
-          "Use GOOGLE_CALENDAR_DELEGATED_USER=admin@nesting-place.com (not info@ — the intro calendar lives under admin). " +
-          "In Google Workspace Admin, authorize domain-wide delegation for nurture-tasks-sync with scope https://www.googleapis.com/auth/calendar, " +
-          "then refresh Amplify ADC with: ./infrastructure/aws/scripts/set-amplify-google-calendar-env.sh and redeploy.",
+        error: buildSchedulingAuthErrorMessage(
+          serverSchedulingConfig.delegatedUser,
+          message
+        ),
       },
       { status: 503 }
     );

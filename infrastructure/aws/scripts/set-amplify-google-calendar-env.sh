@@ -1,11 +1,14 @@
 #!/usr/bin/env bash
 # Push concierge scheduling env vars to Amplify (delegated mode + ADC JSON).
 #
-# Same pattern as set-amplify-google-tasks-env.sh — reuses nurture-tasks-sync SA.
+# Safeguards (refuses to push broken credentials):
+#   - Blocks info@nesting-place.com as delegated user
+#   - Validates ADC JSON structure
+#   - Runs live Calendar delegation test before upload (unless SKIP_CALENDAR_LIVE_TEST=1)
 #
 # Prerequisites:
 #   gcloud auth application-default login
-#   Workspace domain-wide delegation (Calendar scope)
+#   npm run verify:calendar-deploy   # same gate, can run standalone
 #
 # Usage:
 #   ./infrastructure/aws/scripts/set-amplify-google-calendar-env.sh
@@ -13,12 +16,12 @@
 # Optional overrides:
 #   GOOGLE_CALENDAR_ADC_JSON_FILE=~/.config/gcloud/application_default_credentials.json
 #   GOOGLE_CALENDAR_DELEGATED_USER=admin@nesting-place.com
-#   GOOGLE_CALENDAR_ID=c_2d5a066a...@group.calendar.google.com
-#   GOOGLE_TASKS_IMPERSONATE_SERVICE_ACCOUNT=nurture-tasks-sync@...
+#   SKIP_CALENDAR_LIVE_TEST=1        # emergency only — skips live token test
 #   AMPLIFY_APP_ID=d9588bqvrp5xs
 
 set -euo pipefail
 
+ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 APP_ID="${AMPLIFY_APP_ID:-d9588bqvrp5xs}"
 ADC_FILE="${GOOGLE_CALENDAR_ADC_JSON_FILE:-${GOOGLE_TASKS_ADC_JSON_FILE:-${HOME}/.config/gcloud/application_default_credentials.json}}"
 DELEGATED_USER="${GOOGLE_CALENDAR_DELEGATED_USER:-admin@nesting-place.com}"
@@ -44,6 +47,21 @@ if ! command -v aws >/dev/null 2>&1 || ! command -v jq >/dev/null 2>&1; then
   exit 1
 fi
 
+DELEGATED_LOWER="$(printf '%s' "$DELEGATED_USER" | tr '[:upper:]' '[:lower:]')"
+if [[ "$DELEGATED_LOWER" == "info@nesting-place.com" ]]; then
+  echo "Refusing to push: GOOGLE_CALENDAR_DELEGATED_USER must be admin@nesting-place.com (intro calendar owner), not info@." >&2
+  exit 1
+fi
+
+echo "Running Calendar deploy credential checks before pushing to Amplify..."
+(
+  cd "$ROOT"
+  GOOGLE_CALENDAR_ADC_JSON_FILE="$ADC_FILE" \
+  GOOGLE_CALENDAR_DELEGATED_USER="$DELEGATED_USER" \
+  GOOGLE_TASKS_IMPERSONATE_SERVICE_ACCOUNT="$IMPERSONATE_SA" \
+  npm run verify:calendar-deploy
+)
+
 ADC_JSON="$(jq -c . "$ADC_FILE")"
 
 TMP="${TMPDIR:-/tmp}/amplify-google-calendar-$$.json"
@@ -53,6 +71,7 @@ jq \
   --arg enabled "true" \
   --arg authMode "delegated" \
   --arg delegatedUser "$DELEGATED_USER" \
+  --arg tasksDelegatedUser "$DELEGATED_USER" \
   --arg impersonateSa "$IMPERSONATE_SA" \
   --arg calendarId "$CALENDAR_ID" \
   --arg adcJson "$ADC_JSON" \
@@ -69,6 +88,7 @@ jq \
     "GOOGLE_CALENDAR_ENABLED": $enabled,
     "GOOGLE_CALENDAR_AUTH_MODE": $authMode,
     "GOOGLE_CALENDAR_DELEGATED_USER": $delegatedUser,
+    "GOOGLE_TASKS_DELEGATED_USER": $tasksDelegatedUser,
     "GOOGLE_CALENDAR_ID": $calendarId,
     "GOOGLE_CALENDAR_ADC_JSON": $adcJson,
     "GOOGLE_TASKS_IMPERSONATE_SERVICE_ACCOUNT": $impersonateSa,
@@ -87,13 +107,15 @@ jq \
 aws amplify update-app --app-id "$APP_ID" --environment-variables "file://${TMP}" >/dev/null
 rm -f "${TMP}.before" "$TMP"
 
+echo ""
 echo "Concierge scheduling env updated on Amplify app ${APP_ID}."
 echo "  GOOGLE_CALENDAR_ENABLED=true"
 echo "  GOOGLE_CALENDAR_AUTH_MODE=delegated"
 echo "  GOOGLE_CALENDAR_DELEGATED_USER=${DELEGATED_USER}"
+echo "  GOOGLE_TASKS_DELEGATED_USER=${DELEGATED_USER}"
 echo "  GOOGLE_CALENDAR_ID=${CALENDAR_ID}"
 echo "  GOOGLE_TASKS_IMPERSONATE_SERVICE_ACCOUNT=${IMPERSONATE_SA}"
-echo "  GOOGLE_TASKS_ADC_JSON + GOOGLE_CALENDAR_ADC_JSON (from ADC)"
+echo "  GOOGLE_TASKS_ADC_JSON + GOOGLE_CALENDAR_ADC_JSON (verified before upload)"
 echo ""
 echo "Redeploy the dev branch so the site picks up live scheduling:"
 echo "  aws amplify start-job --app-id ${APP_ID} --branch-name dev --job-type RELEASE"

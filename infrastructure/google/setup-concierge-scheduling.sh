@@ -183,9 +183,12 @@ Next steps:
   1. Finish domain-wide delegation in Workspace Admin (browser step above).
   2. Restart local dev:
        npm run dev
-  3. Verify:
+  3. Verify credentials BEFORE pushing to Amplify:
+       npm run verify:calendar-deploy
+     Expect: OK [delegation]: Calendar access token received...
+  4. Verify runtime:
        curl -s http://localhost:3000/api/scheduling/status
      Expect: "enabled":true,"configured":true
-  4. Fresh concierge chat with name + email → "Pick an open introductory call time"
+  5. Fresh concierge chat with name + email → "Pick an open introductory call time"
 
 EOF

@@ -26,6 +26,8 @@
     "sync:coverage": "tsx scripts/sync-coverage-to-storage.ts",
     "setup:personal-google-tasks": "bash infrastructure/google/setup-personal-tasks-sync.sh",
     "setup:concierge-scheduling": "bash infrastructure/google/setup-concierge-scheduling.sh",
+    "verify:calendar-deploy": "tsx scripts/verify-calendar-deploy-credentials.ts",
+    "test:calendar-delegation": "tsx scripts/test-google-calendar-delegation.ts",
     "amplify:concierge-scheduling": "bash infrastructure/aws/scripts/set-amplify-google-calendar-env.sh",
     "share:intro-calendar": "bash infrastructure/google/share-intro-calendar-with-sa.sh"
   },
