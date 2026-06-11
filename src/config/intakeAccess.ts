@@ -1,7 +1,23 @@
-/** Dev/demo: allow intake chat without Cognito sign-in. Never enable in production. */
-export const isPublicIntakeEnabled = (): boolean =>
-  process.env.NEXT_PUBLIC_INTAKE_PUBLIC === "true" ||
-  process.env.INTAKE_PUBLIC === "true";
+const readPublicIntakeEnv = (value: string | undefined): boolean | null => {
+  const normalized = value?.trim().toLowerCase();
+  if (!normalized) return null;
+  if (normalized === "true" || normalized === "1" || normalized === "yes") {
+    return true;
+  }
+  if (normalized === "false" || normalized === "0" || normalized === "no") {
+    return false;
+  }
+  return null;
+};
+
+/** Public concierge intake without sign-in (default on for marketing CTAs). */
+export const isPublicIntakeEnabled = (): boolean => {
+  const fromClient = readPublicIntakeEnv(process.env.NEXT_PUBLIC_INTAKE_PUBLIC);
+  if (fromClient !== null) return fromClient;
+  const fromServer = readPublicIntakeEnv(process.env.INTAKE_PUBLIC);
+  if (fromServer !== null) return fromServer;
+  return true;
+};
 
 export const PUBLIC_INTAKE_PATH = "/intake";
 

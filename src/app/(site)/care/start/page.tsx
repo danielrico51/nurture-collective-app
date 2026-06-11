@@ -4,6 +4,7 @@ import {
   BOOK_INTRO_PATH,
   CARE_SERVICE_STORAGE_KEY,
   buildIntakeHref,
+  buildPublicIntakeHref,
 } from "@/config/carePaths";
 import { isPublicIntakeEnabled } from "@/config/intakeAccess";
 import { fetchIntake } from "@/lib/api/intakeClient";
@@ -39,17 +40,23 @@ export default function CareStartPage() {
       return;
     }
 
-    const intakeHref = buildIntakeHref(service);
-
-    if (publicIntake) {
-      router.replace(intakeHref);
-      return;
-    }
+    const publicIntakeHref = buildPublicIntakeHref(service);
 
     if (authStatus === "unauthenticated") {
-      router.replace("/signin");
+      if (publicIntake) {
+        router.replace(publicIntakeHref);
+      } else {
+        router.replace("/signin");
+      }
       return;
     }
+
+    if (publicIntake) {
+      router.replace(publicIntakeHref);
+      return;
+    }
+
+    const intakeHref = buildIntakeHref(service);
 
     fetchIntake()
       .then((data) => {

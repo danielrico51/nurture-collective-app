@@ -6,7 +6,7 @@ import {
   buildBookingUrlWithPrefill,
   hasBooking,
 } from "@/config/bookings";
-import { INTAKE_PATH } from "@/config/carePaths";
+import { buildPublicIntakeHref } from "@/config/carePaths";
 import { careCoordinator } from "@/content/site";
 import { getOrCreateGuestSessionId } from "@/lib/auth/guestSession";
 import { fetchSchedulingStatus } from "@/lib/api/schedulingClient";
@@ -110,7 +110,7 @@ const IntroCallBookingPage = () => {
               </a>
             ) : null}
             <Link
-              href={INTAKE_PATH}
+              href={buildPublicIntakeHref()}
               className="text-xs font-semibold text-nurture-sage-dark underline-offset-2 hover:underline"
             >
               Chat with our concierge
@@ -185,7 +185,7 @@ const IntroCallBookingPage = () => {
       <p className="mt-10 text-center text-xs text-nurture-charcoal/55">
         Questions first?{" "}
         <Link
-          href={INTAKE_PATH}
+          href={buildPublicIntakeHref()}
           className="font-medium text-nurture-sage-dark underline-offset-2 hover:underline"
         >
           {careCoordinator.intake.title}

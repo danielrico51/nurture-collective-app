@@ -1,5 +1,8 @@
 /** Smart entry point — auth-aware redirect to intake or sign-in. */
-import { resolveIntakePath } from "@/config/intakeAccess";
+import {
+  PUBLIC_INTAKE_PATH,
+  resolveIntakePath,
+} from "@/config/intakeAccess";
 import { SERVICE_SLUGS } from "@/content/site";
 import type { SupportInterest } from "@/types/intake";
 
@@ -7,7 +10,8 @@ export const CARE_START_PATH = "/care/start";
 
 export const SERVICES_PATH = "/services";
 
-export const INTAKE_PATH = resolveIntakePath();
+/** @deprecated Use resolveIntakePath() or buildIntakeHref() — path depends on runtime env. */
+export const getIntakePath = (): string => resolveIntakePath();
 
 /** Deep link to a service section on the services hub (e.g. /services#birth-doula). */
 export const buildServiceSectionHref = (slug: string) =>
@@ -33,10 +37,18 @@ export const buildCareBookingHref = (service?: string) => {
   return query ? `${BOOK_INTRO_PATH}?${query}` : BOOK_INTRO_PATH;
 };
 
-export const buildIntakeHref = (service?: string) =>
+/** Marketing / guest intake — always the public concierge route. */
+export const buildPublicIntakeHref = (service?: string) =>
   service
-    ? `${INTAKE_PATH}?service=${encodeURIComponent(service)}`
-    : INTAKE_PATH;
+    ? `${PUBLIC_INTAKE_PATH}?service=${encodeURIComponent(service)}`
+    : PUBLIC_INTAKE_PATH;
+
+export const buildIntakeHref = (service?: string) => {
+  const path = resolveIntakePath();
+  return service
+    ? `${path}?service=${encodeURIComponent(service)}`
+    : path;
+};
 
 /** Maps marketing service slugs to intake support interests. */
 const SERVICE_SLUG_TO_INTEREST: Record<string, SupportInterest> = {
