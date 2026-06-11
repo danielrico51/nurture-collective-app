@@ -1,10 +1,14 @@
-import { PUBLIC_MARKETING_ROUTES } from "@/config/seo";
+import { isSearchIndexingBlocked, PUBLIC_MARKETING_ROUTES } from "@/config/seo";
 import { getSiteUrl } from "@/config/siteUrl";
 import { listPublishedEvents } from "@/lib/events/storage";
 import { listPublishedPosts } from "@/lib/blog/storage";
 import type { MetadataRoute } from "next";
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
+  if (isSearchIndexingBlocked()) {
+    return [];
+  }
+
   const siteUrl = getSiteUrl();
   const [posts, events] = await Promise.all([
     listPublishedPosts().catch(() => []),

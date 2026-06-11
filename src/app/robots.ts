@@ -1,8 +1,14 @@
-import { ROBOTS_DISALLOW_PATHS } from "@/config/seo";
+import { isSearchIndexingBlocked, ROBOTS_DISALLOW_PATHS } from "@/config/seo";
 import { getSiteUrl } from "@/config/siteUrl";
 import type { MetadataRoute } from "next";
 
 export default function robots(): MetadataRoute.Robots {
+  if (isSearchIndexingBlocked()) {
+    return {
+      rules: [{ userAgent: "*", disallow: "/" }],
+    };
+  }
+
   const siteUrl = getSiteUrl();
 
   return {

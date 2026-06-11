@@ -71,6 +71,30 @@ export const ROBOTS_DISALLOW_PATHS = [
   "/oauth",
 ] as const;
 
+/** When true, block crawlers site-wide (robots.txt, sitemap, meta, X-Robots-Tag). */
+export const isSearchIndexingBlocked = (): boolean =>
+  process.env.NEXT_PUBLIC_BLOCK_SEARCH_INDEXING?.trim().toLowerCase() === "true";
+
+const indexableRobotsMetadata: Metadata["robots"] = {
+  index: true,
+  follow: true,
+  googleBot: {
+    index: true,
+    follow: true,
+    "max-image-preview": "large",
+    "max-snippet": -1,
+  },
+};
+
+export const getSearchIndexingRobotsMetadata = (): Metadata["robots"] =>
+  isSearchIndexingBlocked()
+    ? {
+        index: false,
+        follow: false,
+        googleBot: { index: false, follow: false },
+      }
+    : indexableRobotsMetadata;
+
 interface BuildPageMetadataInput {
   title: string;
   description: string;
@@ -129,6 +153,7 @@ export const buildPageMetadata = ({
       description: buildRegionalDescription(description),
       images: [imageUrl],
     },
+    robots: getSearchIndexingRobotsMetadata(),
   };
 };
 
@@ -171,16 +196,7 @@ export const buildRootSiteMetadata = (): Metadata => {
       description,
       images: [imageUrl],
     },
-    robots: {
-      index: true,
-      follow: true,
-      googleBot: {
-        index: true,
-        follow: true,
-        "max-image-preview": "large",
-        "max-snippet": -1,
-      },
-    },
+    robots: getSearchIndexingRobotsMetadata(),
   };
 };
 

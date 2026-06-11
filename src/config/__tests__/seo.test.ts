@@ -1,8 +1,11 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   BASE_SEO_KEYWORDS,
   buildPageMetadata,
   buildRegionalDescription,
+  buildRootSiteMetadata,
+  getSearchIndexingRobotsMetadata,
+  isSearchIndexingBlocked,
   ROBOTS_DISALLOW_PATHS,
 } from "@/config/seo";
 import { getSiteUrl, toAbsoluteUrl } from "@/config/siteUrl";
@@ -64,5 +67,37 @@ describe("ROBOTS_DISALLOW_PATHS", () => {
     expect(ROBOTS_DISALLOW_PATHS).toEqual(
       expect.arrayContaining(["/admin", "/apps", "/intake", "/care/start"])
     );
+  });
+});
+
+describe("search indexing block", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("is off by default", () => {
+    vi.stubEnv("NEXT_PUBLIC_BLOCK_SEARCH_INDEXING", "");
+    expect(isSearchIndexingBlocked()).toBe(false);
+    expect(getSearchIndexingRobotsMetadata()).toMatchObject({ index: true, follow: true });
+  });
+
+  it("blocks indexing when env is true", () => {
+    vi.stubEnv("NEXT_PUBLIC_BLOCK_SEARCH_INDEXING", "true");
+    expect(isSearchIndexingBlocked()).toBe(true);
+    expect(getSearchIndexingRobotsMetadata()).toMatchObject({ index: false, follow: false });
+  });
+
+  it("applies noindex to root and page metadata when blocked", () => {
+    vi.stubEnv("NEXT_PUBLIC_BLOCK_SEARCH_INDEXING", "true");
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.nesting-place.com");
+
+    expect(buildRootSiteMetadata().robots).toMatchObject({ index: false, follow: false });
+    expect(
+      buildPageMetadata({
+        title: "Services",
+        description: "Support services.",
+        path: "/services",
+      }).robots
+    ).toMatchObject({ index: false, follow: false });
   });
 });
