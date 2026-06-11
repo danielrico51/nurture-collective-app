@@ -18,11 +18,15 @@
 #   GOOGLE_CALENDAR_DELEGATED_USER=admin@nesting-place.com
 #   SKIP_CALENDAR_LIVE_TEST=1        # emergency only — skips live token test
 #   AMPLIFY_APP_ID=d9588bqvrp5xs
+#   AMPLIFY_BRANCH=main              # also sync branch overrides (required for prod)
+#   REDEPLOY=true                    # start Amplify RELEASE after update
 
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 APP_ID="${AMPLIFY_APP_ID:-d9588bqvrp5xs}"
+BRANCH="${AMPLIFY_BRANCH:-}"
+REDEPLOY="${REDEPLOY:-false}"
 ADC_FILE="${GOOGLE_CALENDAR_ADC_JSON_FILE:-${GOOGLE_TASKS_ADC_JSON_FILE:-${HOME}/.config/gcloud/application_default_credentials.json}}"
 DELEGATED_USER="${GOOGLE_CALENDAR_DELEGATED_USER:-admin@nesting-place.com}"
 IMPERSONATE_SA="${GOOGLE_TASKS_IMPERSONATE_SERVICE_ACCOUNT:-nurture-tasks-sync@boxwood-magnet-498623-n4.iam.gserviceaccount.com}"
@@ -105,10 +109,66 @@ jq \
   ' "${TMP}.before" >"$TMP"
 
 aws amplify update-app --app-id "$APP_ID" --environment-variables "file://${TMP}" >/dev/null
+
+if [[ -n "$BRANCH" ]]; then
+  echo "Syncing verified Calendar credentials to Amplify branch ${BRANCH}..."
+  BRANCH_BEFORE="${TMP}.branch.before"
+  aws amplify get-branch --app-id "$APP_ID" --branch-name "$BRANCH" \
+    --query 'branch.environmentVariables' --output json >"$BRANCH_BEFORE"
+
+  jq \
+    --arg enabled "true" \
+    --arg authMode "delegated" \
+    --arg delegatedUser "$DELEGATED_USER" \
+    --arg tasksDelegatedUser "$DELEGATED_USER" \
+    --arg impersonateSa "$IMPERSONATE_SA" \
+    --arg calendarId "$CALENDAR_ID" \
+    --arg adcJson "$ADC_JSON" \
+    --arg timezone "$BOOKING_TIMEZONE" \
+    --arg duration "$BOOKING_DURATION" \
+    --arg buffer "$BOOKING_BUFFER" \
+    --arg workStart "$BOOKING_WORK_START" \
+    --arg workEnd "$BOOKING_WORK_END" \
+    --arg workDays "$BOOKING_WORK_DAYS" \
+    --arg horizon "$BOOKING_HORIZON" \
+    --arg minLead "$BOOKING_MIN_LEAD" \
+    '
+    . + {
+      "GOOGLE_CALENDAR_ENABLED": $enabled,
+      "GOOGLE_CALENDAR_AUTH_MODE": $authMode,
+      "GOOGLE_CALENDAR_DELEGATED_USER": $delegatedUser,
+      "GOOGLE_TASKS_DELEGATED_USER": $tasksDelegatedUser,
+      "GOOGLE_CALENDAR_ID": $calendarId,
+      "GOOGLE_CALENDAR_ADC_JSON": $adcJson,
+      "GOOGLE_TASKS_IMPERSONATE_SERVICE_ACCOUNT": $impersonateSa,
+      "GOOGLE_TASKS_ADC_JSON": $adcJson,
+      "GOOGLE_BOOKING_TIMEZONE": $timezone,
+      "GOOGLE_BOOKING_DURATION_MINUTES": $duration,
+      "GOOGLE_BOOKING_BUFFER_MINUTES": $buffer,
+      "GOOGLE_BOOKING_WORK_HOURS_START": $workStart,
+      "GOOGLE_BOOKING_WORK_HOURS_END": $workEnd,
+      "GOOGLE_BOOKING_WORK_DAYS": $workDays,
+      "GOOGLE_BOOKING_HORIZON_DAYS": $horizon,
+      "GOOGLE_BOOKING_MIN_LEAD_HOURS": $minLead
+    }
+    ' "$BRANCH_BEFORE" >"${TMP}.branch"
+
+  aws amplify update-branch \
+    --app-id "$APP_ID" \
+    --branch-name "$BRANCH" \
+    --environment-variables "file://${TMP}.branch" >/dev/null
+  rm -f "$BRANCH_BEFORE" "${TMP}.branch"
+fi
+
 rm -f "${TMP}.before" "$TMP"
 
+TARGET="app ${APP_ID}"
+if [[ -n "$BRANCH" ]]; then
+  TARGET="app ${APP_ID}, branch ${BRANCH}"
+fi
+
 echo ""
-echo "Concierge scheduling env updated on Amplify app ${APP_ID}."
+echo "Concierge scheduling env updated on Amplify ${TARGET}."
 echo "  GOOGLE_CALENDAR_ENABLED=true"
 echo "  GOOGLE_CALENDAR_AUTH_MODE=delegated"
 echo "  GOOGLE_CALENDAR_DELEGATED_USER=${DELEGATED_USER}"
@@ -117,5 +177,15 @@ echo "  GOOGLE_CALENDAR_ID=${CALENDAR_ID}"
 echo "  GOOGLE_TASKS_IMPERSONATE_SERVICE_ACCOUNT=${IMPERSONATE_SA}"
 echo "  GOOGLE_TASKS_ADC_JSON + GOOGLE_CALENDAR_ADC_JSON (verified before upload)"
 echo ""
-echo "Redeploy the dev branch so the site picks up live scheduling:"
-echo "  aws amplify start-job --app-id ${APP_ID} --branch-name dev --job-type RELEASE"
+
+if [[ "$REDEPLOY" == "true" && -n "$BRANCH" ]]; then
+  echo "Starting Amplify RELEASE on branch ${BRANCH}..."
+  aws amplify start-job --app-id "$APP_ID" --branch-name "$BRANCH" --job-type RELEASE >/dev/null
+  echo "Redeploy started for ${BRANCH}."
+elif [[ -n "$BRANCH" ]]; then
+  echo "Redeploy branch ${BRANCH} so the site picks up live scheduling:"
+  echo "  aws amplify start-job --app-id ${APP_ID} --branch-name ${BRANCH} --job-type RELEASE"
+else
+  echo "Redeploy the dev branch so the site picks up live scheduling:"
+  echo "  aws amplify start-job --app-id ${APP_ID} --branch-name dev --job-type RELEASE"
+fi
