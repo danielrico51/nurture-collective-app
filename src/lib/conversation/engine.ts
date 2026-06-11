@@ -195,7 +195,7 @@ const buildChatMessages = async (
     messages.push({
       role: "system",
       content: options.smsMode
-        ? `SCHEDULING (required next step): Name, email, stage, and support interests are on file. Send this booking link so they can pick an open time on the website: ${buildSmsBookingUrl()}. Do NOT say "below the chat" or mention an on-screen calendar.`
+        ? `SCHEDULING (required next step): Name, email, stage, and support interests are on file. In this same SMS, send this booking link so they can pick an open time on the website: ${buildSmsBookingUrl()}. Do NOT say "below the chat," mention an on-screen calendar, promise to check availability, say "give me a moment," or imply you will follow up with times later — you cannot look up slots over SMS.`
         : 'SCHEDULING (required next step): Name, email, stage, and support interests are on file. Invite the user to book an introductory call using the scheduler directly below this chat — e.g. "pick a time below" or "tap Book a call below." Do NOT say we will email them to schedule or that someone will reach out to schedule.',
     });
   }
@@ -212,7 +212,7 @@ const buildChatMessages = async (
     messages.push({
       role: "system",
       content:
-        "The user is texting via SMS. Keep replies concise (under 320 characters when possible). Use plain text only — no markdown or bullets. Include a booking URL when offering scheduling. Never reference UI below the chat. On the first reply, briefly introduce yourself as their Nesting Place support coordinator.",
+        "The user is texting via SMS. Keep replies concise (under 320 characters when possible). Use plain text only — no markdown or bullets. When offering scheduling, include the booking URL in the same message. Never reference UI below the chat, never say you are checking the calendar, and never promise to send times later. On the first reply, briefly introduce yourself as their Nesting Place support coordinator.",
     });
   } else if (isGuestLead(session.userId)) {
     messages.push({

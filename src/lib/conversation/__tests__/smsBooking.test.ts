@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   attachSmsBookingLinkIfNeeded,
   buildSmsBookingUrl,
+  ensureSmsBookingLink,
   shouldAttachSmsBookingLink,
 } from "@/lib/conversation/smsBooking";
 
@@ -33,9 +34,30 @@ describe("shouldAttachSmsBookingLink", () => {
     expect(
       shouldAttachSmsBookingLink("Sounds good", "Pick a time for your call")
     ).toBe(true);
+    expect(
+      shouldAttachSmsBookingLink(
+        "No phone",
+        "Let's get you set up for a call. Please give me a moment to check for available times."
+      )
+    ).toBe(true);
     expect(shouldAttachSmsBookingLink("Third trimester", "Tell me more")).toBe(
       false
     );
+  });
+});
+
+describe("ensureSmsBookingLink", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("always appends the booking URL when missing", () => {
+    vi.stubEnv("NEXT_PUBLIC_APP_URL", "https://example.com");
+    const reply = ensureSmsBookingLink(
+      "Now let's get you set up for a call. Please give me a moment to check for available times."
+    );
+    expect(reply).toContain("https://example.com/care/start?book=1");
+    expect(reply).toContain("Book your intro call:");
   });
 });
 

@@ -20,12 +20,24 @@ export const buildSmsBookingUrl = (options?: { service?: string }): string => {
 };
 
 const BOOKING_INTENT_PATTERN =
-  /book|schedule|introductory call|pick a time|calendar|set up a call/i;
+  /book|schedule|introductory call|pick a time|calendar|set up (?:for )?a call|available times|get you set up|check for available|moment to check/i;
 
 export const shouldAttachSmsBookingLink = (
   userMessage: string,
   assistantReply: string
 ): boolean => BOOKING_INTENT_PATTERN.test(`${userMessage}\n${assistantReply}`);
+
+/** Append the booking deep link when scheduling is ready and the reply omits it. */
+export const ensureSmsBookingLink = (
+  reply: string,
+  options?: { service?: string }
+): string => {
+  const bookingUrl = buildSmsBookingUrl(options);
+  if (reply.includes(bookingUrl)) {
+    return reply;
+  }
+  return `${reply.trim()}\n\nBook your intro call: ${bookingUrl}`.trim();
+};
 
 export const attachSmsBookingLinkIfNeeded = (
   reply: string,
@@ -33,11 +45,11 @@ export const attachSmsBookingLinkIfNeeded = (
   options?: { service?: string }
 ): string => {
   const bookingUrl = buildSmsBookingUrl(options);
-  if (reply.includes(bookingUrl) || reply.includes("http")) {
+  if (reply.includes(bookingUrl)) {
     return reply;
   }
   if (!shouldAttachSmsBookingLink(userMessage, reply)) {
     return reply;
   }
-  return `${reply.trim()}\n\nBook your intro call: ${bookingUrl}`.trim();
+  return ensureSmsBookingLink(reply, options);
 };
