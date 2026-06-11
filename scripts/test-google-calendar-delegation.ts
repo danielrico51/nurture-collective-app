@@ -42,7 +42,7 @@ const serviceAccount =
 const delegatedUser =
   process.env.GOOGLE_CALENDAR_DELEGATED_USER?.trim() ||
   process.env.GOOGLE_TASKS_DELEGATED_USER?.trim() ||
-  "info@nesting-place.com";
+  "admin@nesting-place.com";
 const adcJson =
   process.env.GOOGLE_CALENDAR_ADC_JSON?.trim() ||
   process.env.GOOGLE_TASKS_ADC_JSON?.trim() ||

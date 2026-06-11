@@ -44,6 +44,25 @@ const parseWorkDays = (raw: string | undefined): number[] => {
     .filter((day) => day >= 0 && day <= 6);
 };
 
+const CALENDAR_OWNER_EMAIL = "admin@nesting-place.com";
+
+/** info@ is a public alias; Google delegation requires the calendar owner's mailbox. */
+export const resolveCalendarDelegatedUser = (): string => {
+  const configured =
+    process.env.GOOGLE_CALENDAR_DELEGATED_USER?.trim() ||
+    process.env.GOOGLE_TASKS_DELEGATED_USER?.trim() ||
+    CALENDAR_OWNER_EMAIL;
+
+  if (configured.toLowerCase() === "info@nesting-place.com") {
+    console.warn(
+      "[scheduling] GOOGLE_CALENDAR_DELEGATED_USER is info@nesting-place.com — using admin@nesting-place.com instead (intro calendar owner)."
+    );
+    return CALENDAR_OWNER_EMAIL;
+  }
+
+  return configured;
+};
+
 const readEnabledFlag = (): boolean => {
   const raw = process.env.GOOGLE_CALENDAR_ENABLED?.trim().toLowerCase();
   if (raw === "true") return true;
@@ -58,11 +77,8 @@ export const serverSchedulingConfig = {
     process.env.GOOGLE_CALENDAR_ID?.trim() ||
     process.env.GOOGLE_BOOKINGS_CALENDAR_ID?.trim() ||
     DEFAULT_GOOGLE_CALENDAR_ID,
-  /** Must be a real Workspace user with calendar access — aliases like info@ often fail delegation. */
-  delegatedUser:
-    process.env.GOOGLE_CALENDAR_DELEGATED_USER?.trim() ||
-    process.env.GOOGLE_TASKS_DELEGATED_USER?.trim() ||
-    "admin@nesting-place.com",
+  /** Must be a real Workspace user who owns the intro-call calendar — not info@ (alias). */
+  delegatedUser: resolveCalendarDelegatedUser(),
   impersonateServiceAccount: defaultImpersonateServiceAccount(),
   adcJson:
     process.env.GOOGLE_CALENDAR_ADC_JSON?.trim() ||

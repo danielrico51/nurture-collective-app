@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Concierge live scheduling — same CLI pattern as Google Tasks (no JSON keys).
 #
-# Uses domain-wide delegation: the app acts as info@nesting-place.com via
+# Uses domain-wide delegation: the app acts as admin@nesting-place.com via
 # nurture-tasks-sync service account + gcloud ADC + IAM signJwt.
 #
 # Automates via CLI:

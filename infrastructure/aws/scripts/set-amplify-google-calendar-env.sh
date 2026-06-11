@@ -12,7 +12,7 @@
 #
 # Optional overrides:
 #   GOOGLE_CALENDAR_ADC_JSON_FILE=~/.config/gcloud/application_default_credentials.json
-#   GOOGLE_CALENDAR_DELEGATED_USER=info@nesting-place.com
+#   GOOGLE_CALENDAR_DELEGATED_USER=admin@nesting-place.com
 #   GOOGLE_CALENDAR_ID=c_2d5a066a...@group.calendar.google.com
 #   GOOGLE_TASKS_IMPERSONATE_SERVICE_ACCOUNT=nurture-tasks-sync@...
 #   AMPLIFY_APP_ID=d9588bqvrp5xs
