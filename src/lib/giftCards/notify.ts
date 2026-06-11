@@ -63,9 +63,10 @@ export const notifyGiftCardFulfillment = async (
       updatedAt: new Date().toISOString(),
     };
     await writeGiftCardOrder(updated);
-    console.info("[gift-cards] SES email results", {
+    console.info("[gift-cards] email delivery results", {
       orderId: order.id,
       recipientEmail: order.recipient.email,
+      provider: serverGiftCardConfig.emailProvider,
       ...emailResult,
     });
     if (emailResult.errors.length > 0) {
@@ -73,7 +74,7 @@ export const notifyGiftCardFulfillment = async (
     }
   } else {
     console.info(
-      "[gift-cards] GIFT_CARD_EMAIL_ENABLED or GIFT_CARD_EMAIL_FROM not set — skipping SES"
+      "[gift-cards] GIFT_CARD_EMAIL_ENABLED or GIFT_CARD_EMAIL_FROM not set — skipping email delivery"
     );
   }
 

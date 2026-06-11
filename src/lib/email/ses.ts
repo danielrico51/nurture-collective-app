@@ -7,16 +7,9 @@ const getSesClient = () =>
     credentials: getServerCredentials(),
   });
 
-export type SendSesEmailInput = {
-  from: string;
-  to: string[];
-  subject: string;
-  text: string;
-  html?: string;
-  replyTo?: string[];
-};
+import type { SendEmailInput } from "@/lib/email/types";
 
-export const sendSesEmail = async (input: SendSesEmailInput): Promise<void> => {
+export const sendSesEmail = async (input: SendEmailInput): Promise<void> => {
   const client = getSesClient();
   const command = new SendEmailCommand({
     Source: input.from,

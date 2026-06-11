@@ -1,10 +1,17 @@
 import { brands } from "@/content/site";
+import type { GiftCardEmailProviderMode } from "@/lib/email/types";
 import type { PaymentProviderId } from "@/lib/payments/types";
 
 const readProvider = (): PaymentProviderId => {
   const value = process.env.GIFT_CARD_PAYMENT_PROVIDER?.trim().toLowerCase();
   if (value === "stripe" || value === "square") return value;
   return "stub";
+};
+
+const readEmailProvider = (): GiftCardEmailProviderMode => {
+  const value = process.env.GIFT_CARD_EMAIL_PROVIDER?.trim().toLowerCase();
+  if (value === "ses" || value === "resend" || value === "auto") return value;
+  return "auto";
 };
 
 const readGiftCardEmailFrom = () => {
@@ -24,6 +31,9 @@ export const serverGiftCardConfig = {
   stripeWebhookSecret: process.env.STRIPE_WEBHOOK_SECRET?.trim() ?? "",
   /** Interim: verified personal (or any) address in SES — see docs/platform/gift-cards-payments.md */
   emailEnabled: process.env.GIFT_CARD_EMAIL_ENABLED?.trim() === "true",
+  /** ses | resend | auto (try SES, fall back to Resend when RESEND_API_KEY is set) */
+  emailProvider: readEmailProvider(),
+  resendApiKey: process.env.RESEND_API_KEY?.trim() ?? "",
   emailFrom: readGiftCardEmailFrom(),
   emailReplyTo:
     process.env.GIFT_CARD_EMAIL_REPLY_TO?.trim() ||
@@ -35,8 +45,18 @@ export const serverGiftCardConfig = {
     "",
 } as const;
 
-export const hasGiftCardEmailDelivery = () =>
-  serverGiftCardConfig.emailEnabled && Boolean(serverGiftCardConfig.emailFrom);
+export const hasGiftCardEmailDelivery = () => {
+  if (!serverGiftCardConfig.emailEnabled || !serverGiftCardConfig.emailFrom) {
+    return false;
+  }
+  if (
+    serverGiftCardConfig.emailProvider === "resend" &&
+    !serverGiftCardConfig.resendApiKey
+  ) {
+    return false;
+  }
+  return true;
+};
 
 /** Public hints for the gift card checkout UI. */
 export const giftCardCheckoutConfig = {

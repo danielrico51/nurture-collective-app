@@ -42,3 +42,6 @@ amplifyconfiguration.json
 #amplify-do-not-edit-end
 
 next-env.d.ts
+
+# Local dev scripts (not for the repo)
+scripts/test-twilio-webhook.mjs

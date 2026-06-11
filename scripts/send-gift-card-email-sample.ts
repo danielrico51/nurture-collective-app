@@ -20,7 +20,7 @@
 import { readFileSync, existsSync } from "fs";
 import { resolve } from "path";
 import { serverGiftCardConfig } from "../src/config/giftCards";
-import { sendSesEmail } from "../src/lib/email/ses";
+import { sendEmail } from "../src/lib/email/sendEmail";
 import {
   buildGiftCardFulfillmentAlertEmail,
   buildGiftCardPurchaserCopyEmail,
@@ -62,7 +62,7 @@ const prefixSubject = (subject: string) => `[SAMPLE] ${subject}`;
 const main = async () => {
   if (!serverGiftCardConfig.emailEnabled || !serverGiftCardConfig.emailFrom) {
     console.error(
-      "Set GIFT_CARD_EMAIL_ENABLED=true and GIFT_CARD_EMAIL_FROM (verified in SES)."
+      "Set GIFT_CARD_EMAIL_ENABLED=true and GIFT_CARD_EMAIL_FROM (verified sender)."
     );
     process.exit(1);
   }
@@ -94,12 +94,13 @@ const main = async () => {
   const sendFulfillment = truthy(process.env.TEST_SEND_FULFILLMENT, true);
 
   console.log(`From: ${from}`);
+  console.log(`Provider: ${serverGiftCardConfig.emailProvider}`);
   console.log(`To: ${inbox}`);
   console.log("");
 
   if (sendRecipient) {
     const email = buildGiftCardRecipientEmail(order);
-    await sendSesEmail({
+    const sent = await sendEmail({
       from,
       to: [inbox],
       subject: prefixSubject(email.subject),
@@ -107,12 +108,12 @@ const main = async () => {
       html: email.html,
       replyTo,
     });
-    console.log("✓ Sent recipient eGift / receipt-style email");
+    console.log(`✓ Sent recipient eGift via ${sent.provider}`);
   }
 
   if (sendPurchaser) {
     const copy = buildGiftCardPurchaserCopyEmail(order);
-    await sendSesEmail({
+    const sent = await sendEmail({
       from,
       to: [inbox],
       subject: prefixSubject(copy.subject),
@@ -120,12 +121,12 @@ const main = async () => {
       html: copy.html,
       replyTo,
     });
-    console.log("✓ Sent purchaser copy email");
+    console.log(`✓ Sent purchaser copy via ${sent.provider}`);
   }
 
   if (sendFulfillment) {
     const alert = buildGiftCardFulfillmentAlertEmail(order);
-    await sendSesEmail({
+    const sent = await sendEmail({
       from,
       to: [inbox],
       subject: prefixSubject(alert.subject),
@@ -133,7 +134,7 @@ const main = async () => {
       html: alert.html,
       replyTo,
     });
-    console.log("✓ Sent fulfillment / order summary email");
+    console.log(`✓ Sent fulfillment summary via ${sent.provider}`);
   }
 
   console.log("\nDone. Check your inbox (and spam) for [SAMPLE] messages.");

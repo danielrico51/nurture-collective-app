@@ -1,5 +1,6 @@
 import { serverGiftCardConfig } from "@/config/giftCards";
-import { sendSesEmail } from "@/lib/email/ses";
+import { sendEmail } from "@/lib/email/sendEmail";
+import type { SendEmailInput } from "@/lib/email/types";
 import {
   buildGiftCardFulfillmentAlertEmail,
   buildGiftCardPurchaserCopyEmail,
@@ -17,15 +18,18 @@ export type GiftCardEmailSendResult = {
   recipient: boolean;
   purchaserCopy: boolean;
   errors: string[];
+  providers: string[];
 };
 
 const sendOne = async (
   label: string,
-  input: Parameters<typeof sendSesEmail>[0],
-  errors: string[]
+  input: SendEmailInput,
+  errors: string[],
+  providers: string[]
 ): Promise<boolean> => {
   try {
-    await sendSesEmail(input);
+    const result = await sendEmail(input);
+    providers.push(`${label}:${result.provider}`);
     return true;
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -35,7 +39,7 @@ const sendOne = async (
   }
 };
 
-/** Send interim eGift emails via SES from a verified personal address. */
+/** Send eGift emails via SES with optional Resend failover (Plan B). */
 export const sendGiftCardEmails = async (
   order: GiftCardOrder
 ): Promise<GiftCardEmailSendResult> => {
@@ -45,6 +49,7 @@ export const sendGiftCardEmails = async (
     recipient: false,
     purchaserCopy: false,
     errors: [],
+    providers: [],
   };
 
   if (!serverGiftCardConfig.emailEnabled || !from) {
@@ -54,7 +59,6 @@ export const sendGiftCardEmails = async (
   const reply = replyTo();
   const fulfillmentTo = serverGiftCardConfig.fulfillmentEmail;
 
-  // Ops inbox first — always attempt (verified address); survives SES sandbox on recipient.
   if (fulfillmentTo) {
     const alert = buildGiftCardFulfillmentAlertEmail(order);
     result.fulfillment = await sendOne(
@@ -67,7 +71,8 @@ export const sendGiftCardEmails = async (
         html: alert.html,
         replyTo: reply,
       },
-      result.errors
+      result.errors,
+      result.providers
     );
   }
 
@@ -82,7 +87,8 @@ export const sendGiftCardEmails = async (
       html: recipientEmail.html,
       replyTo: reply,
     },
-    result.errors
+    result.errors,
+    result.providers
   );
 
   if (order.sendCopyToPurchaser) {
@@ -97,7 +103,8 @@ export const sendGiftCardEmails = async (
         html: copy.html,
         replyTo: reply,
       },
-      result.errors
+      result.errors,
+      result.providers
     );
   }
 
