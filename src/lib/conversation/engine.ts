@@ -499,113 +499,132 @@ export async function* processConversationMessageStream(
   session = await saveConversationSession(session);
   yield { type: "done", session, intakeSubmitted: false };
 
-  let intakeSubmitted = false;
-  try {
-    if (isOpenAiConfigured()) {
-      const extracted = await extractProfileFromConversation(
-        session.messages,
-        profileForLlmContext(profile, session.messages)
-      );
-      profile = scrubUnverifiedContactFromProfile(
-        extracted.profile,
-        session.messages
-      );
-      setQuickReplies(
-        session,
-        extracted.quickReplies.length > 0
-          ? extracted.quickReplies
-          : initialFallback.quickReplies
-      );
-    }
-
-    session.extractedProfile = profile;
-
-    const bookingAfterExtract = await findConfirmedBookingForConversation(
-      session.userId,
-      session.id
-    );
-    if (
-      !bookingAfterExtract &&
-      canOfferScheduling(profile, session.messages)
-    ) {
-      const bookingChip = "Book an introductory call";
-      const replies = session.quickReplies.filter((reply) => reply !== bookingChip);
-      setQuickReplies(session, [bookingChip, ...replies]);
-    }
-
+  const enrichAfterReply = async (): Promise<{
+    session: ConversationSession;
+    intakeSubmitted: boolean;
+  }> => {
+    let intakeSubmitted = false;
     try {
-      await upsertProfileDraft(
+      if (isOpenAiConfigured()) {
+        const extracted = await extractProfileFromConversation(
+          session.messages,
+          profileForLlmContext(profile, session.messages)
+        );
+        profile = scrubUnverifiedContactFromProfile(
+          extracted.profile,
+          session.messages
+        );
+        setQuickReplies(
+          session,
+          extracted.quickReplies.length > 0
+            ? extracted.quickReplies
+            : initialFallback.quickReplies
+        );
+      }
+
+      session.extractedProfile = profile;
+
+      const bookingAfterExtract = await findConfirmedBookingForConversation(
         session.userId,
-        extractedProfileToIntakeDraft(profile)
+        session.id
       );
-    } catch (draftError) {
-      console.error("[conversation] profile draft sync failed:", draftError);
-    }
+      if (
+        !bookingAfterExtract &&
+        canOfferScheduling(profile, session.messages)
+      ) {
+        const bookingChip = "Book an introductory call";
+        const replies = session.quickReplies.filter((reply) => reply !== bookingChip);
+        setQuickReplies(session, [bookingChip, ...replies]);
+      }
 
-    try {
-      const { getIntakeForUser } = await import("@/lib/intake/storage");
-      const intake = await getIntakeForUser(session.userId);
-      await syncLeadFromIntake({
-        userId: session.userId,
-        intake: intake.profile,
-        extracted: profile,
-        conversationSessionId: session.id,
-        hasSubmittedIntake: false,
-      });
-    } catch (leadError) {
-      console.error("[conversation] lead sync failed:", leadError);
-    }
-
-    const wantsComplete = userWantsToCompleteIntake(userMessage);
-
-    if (
-      wantsComplete &&
-      profile.maternalStage &&
-      profile.name &&
-      (profile.phone || profile.email) &&
-      profile.supportInterests.length > 0
-    ) {
       try {
-        const draft = extractedProfileToIntakeDraft(profile);
-        await submitProfile(session.userId, {
-          ...draft,
-          maternalStage: profile.maternalStage,
-          supportInterests: profile.supportInterests,
+        await upsertProfileDraft(
+          session.userId,
+          extractedProfileToIntakeDraft(profile)
+        );
+      } catch (draftError) {
+        console.error("[conversation] profile draft sync failed:", draftError);
+      }
+
+      try {
+        const { getIntakeForUser } = await import("@/lib/intake/storage");
+        const intake = await getIntakeForUser(session.userId);
+        await syncLeadFromIntake({
+          userId: session.userId,
+          intake: intake.profile,
+          extracted: profile,
+          conversationSessionId: session.id,
+          hasSubmittedIntake: false,
         });
+      } catch (leadError) {
+        console.error("[conversation] lead sync failed:", leadError);
+      }
+
+      const wantsComplete = userWantsToCompleteIntake(userMessage);
+
+      if (
+        wantsComplete &&
+        profile.maternalStage &&
+        profile.name &&
+        (profile.phone || profile.email) &&
+        profile.supportInterests.length > 0
+      ) {
         try {
-          const { getIntakeForUser } = await import("@/lib/intake/storage");
-          const intake = await getIntakeForUser(session.userId);
-          await syncLeadFromIntake({
-            userId: session.userId,
-            intake: intake.profile,
-            extracted: profile,
-            conversationSessionId: session.id,
-            hasSubmittedIntake: true,
+          const draft = extractedProfileToIntakeDraft(profile);
+          await submitProfile(session.userId, {
+            ...draft,
+            maternalStage: profile.maternalStage,
+            supportInterests: profile.supportInterests,
           });
-        } catch (leadError) {
-          console.error("[conversation] lead sync on submit failed:", leadError);
+          try {
+            const { getIntakeForUser } = await import("@/lib/intake/storage");
+            const intake = await getIntakeForUser(session.userId);
+            await syncLeadFromIntake({
+              userId: session.userId,
+              intake: intake.profile,
+              extracted: profile,
+              conversationSessionId: session.id,
+              hasSubmittedIntake: true,
+            });
+          } catch (leadError) {
+            console.error("[conversation] lead sync on submit failed:", leadError);
+          }
+          session.status = "completed";
+          intakeSubmitted = true;
+        } catch (submitError) {
+          console.error("[conversation] intake submit failed:", submitError);
+          setQuickReplies(session, [
+            "Try completing again",
+            ...(session.quickReplies.length ? session.quickReplies : ["Keep chatting"]),
+          ]);
         }
-        session.status = "completed";
-        intakeSubmitted = true;
-      } catch (submitError) {
-        console.error("[conversation] intake submit failed:", submitError);
+      } else if (wantsComplete) {
         setQuickReplies(session, [
-          "Try completing again",
-          ...(session.quickReplies.length ? session.quickReplies : ["Keep chatting"]),
+          ...(session.quickReplies.length ? session.quickReplies : []),
+          "Keep chatting",
         ]);
       }
-    } else if (wantsComplete) {
-      setQuickReplies(session, [
-        ...(session.quickReplies.length ? session.quickReplies : []),
-        "Keep chatting",
-      ]);
-    }
 
-    session = await saveConversationSession(session);
-    yield { type: "done", session, intakeSubmitted };
-  } catch (postProcessError) {
-    console.error("[conversation] post-reply enrichment failed:", postProcessError);
+      session = await saveConversationSession(session);
+      return { session, intakeSubmitted };
+    } catch (postProcessError) {
+      console.error("[conversation] post-reply enrichment failed:", postProcessError);
+      return { session, intakeSubmitted };
+    }
+  };
+
+  // Twilio webhooks time out around 15s — return TwiML before enrichment finishes.
+  if (options.smsMode) {
+    void enrichAfterReply();
+    return;
   }
+
+  const enriched = await enrichAfterReply();
+  yield {
+    type: "done",
+    session: enriched.session,
+    intakeSubmitted: enriched.intakeSubmitted,
+  };
 }
 
 export const processConversationMessage = async (
