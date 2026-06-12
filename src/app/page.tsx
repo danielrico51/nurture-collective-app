@@ -12,6 +12,7 @@ import {
   buildFaqPageJsonLd,
   buildLocalBusinessJsonLd,
   buildOrganizationJsonLd,
+  buildWebSiteJsonLd,
 } from "@/lib/seo/jsonLd";
 import type { Metadata } from "next";
 
@@ -33,6 +34,7 @@ export default function HomePage() {
     <>
       <JsonLd
         data={[
+          buildWebSiteJsonLd(),
           buildOrganizationJsonLd(),
           buildLocalBusinessJsonLd(),
           buildFaqPageJsonLd(momFaqs),

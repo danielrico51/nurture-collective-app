@@ -7,6 +7,7 @@ import {
   buildFaqPageJsonLd,
   buildLocalBusinessJsonLd,
   buildServicesPageJsonLd,
+  buildWebSiteJsonLd,
   ORGANIZATION_ID,
 } from "@/lib/seo/jsonLd";
 
@@ -24,6 +25,21 @@ describe("buildFaqPageJsonLd", () => {
         "@type": "Answer",
         text: "Birth doula and postpartum support.",
       },
+    });
+  });
+});
+
+describe("buildWebSiteJsonLd", () => {
+  it("uses the canonical site URL and organization publisher", () => {
+    vi.stubEnv("NEXT_PUBLIC_SITE_URL", "https://www.nesting-place.com");
+    const schema = buildWebSiteJsonLd();
+
+    expect(schema).toMatchObject({
+      "@type": "WebSite",
+      url: "https://www.nesting-place.com",
+      name: "The Nesting Place",
+      publisher: { "@id": ORGANIZATION_ID },
+      inLanguage: "en-US",
     });
   });
 });

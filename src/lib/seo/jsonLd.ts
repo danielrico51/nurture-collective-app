@@ -30,6 +30,16 @@ const areaServedStates = SERVICE_STATES.map((state) => ({
   name: state,
 }));
 
+export const buildWebSiteJsonLd = () => ({
+  "@type": "WebSite",
+  "@id": `${getSiteUrl()}/#website`,
+  url: getSiteUrl(),
+  name: brands.nestingPlace.name,
+  description: brands.nestingPlace.description,
+  publisher: { "@id": ORGANIZATION_ID },
+  inLanguage: "en-US",
+});
+
 export const buildOrganizationJsonLd = () => ({
   "@type": "Organization",
   "@id": ORGANIZATION_ID,

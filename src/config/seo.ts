@@ -65,6 +65,7 @@ export const ROBOTS_DISALLOW_PATHS = [
   "/management",
   "/intake",
   "/care/start",
+  "/book",
   "/account",
   "/signin",
   "/signup",

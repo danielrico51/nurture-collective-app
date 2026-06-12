@@ -1,5 +1,6 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import SectionTitle from "@/components/Common/SectionTitle";
+import JsonLd from "@/components/Seo/JsonLd";
 import {
   formatEventDate,
   formatLabel,
@@ -8,8 +9,10 @@ import {
   LISTING_STATUS_LABELS,
 } from "@/lib/events/format";
 import { fetchPublishedEvents } from "@/lib/events/public";
+import { classRefundPolicy } from "@/content/events";
 import { brands } from "@/content/site";
 import { buildPageMetadata } from "@/config/seo";
+import { buildOrganizationJsonLd } from "@/lib/seo/jsonLd";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -79,6 +82,7 @@ export default async function EventsAndClassesPage() {
 
   return (
     <>
+      <JsonLd data={buildOrganizationJsonLd()} />
       <Breadcrumb pageName="Events & Classes" />
       <section className="py-16">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
@@ -113,7 +117,18 @@ export default async function EventsAndClassesPage() {
             </div>
           )}
 
-          <div className="mt-16 rounded-2xl border border-nurture-sage/20 bg-nurture-sage/5 p-8 text-center">
+          <div className="mt-16 rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm">
+            <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
+              {classRefundPolicy.title}
+            </h2>
+            <div className="mt-4 space-y-3 text-sm leading-relaxed text-nurture-charcoal/75">
+              {classRefundPolicy.paragraphs.map((paragraph) => (
+                <p key={paragraph}>{paragraph}</p>
+              ))}
+            </div>
+          </div>
+
+          <div className="mt-10 rounded-2xl border border-nurture-sage/20 bg-nurture-sage/5 p-8 text-center">
             <p className="text-nurture-charcoal/80">
               Don&apos;t see what you need? We&apos;re adding sessions regularly.
             </p>

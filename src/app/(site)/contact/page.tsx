@@ -1,5 +1,10 @@
 import ContactPageContent from "@/components/Contact/ContactPageContent";
+import JsonLd from "@/components/Seo/JsonLd";
 import { buildPageMetadata } from "@/config/seo";
+import {
+  buildLocalBusinessJsonLd,
+  buildOrganizationJsonLd,
+} from "@/lib/seo/jsonLd";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = buildPageMetadata({
@@ -16,5 +21,12 @@ export const metadata: Metadata = buildPageMetadata({
 });
 
 export default function ContactPage() {
-  return <ContactPageContent />;
+  return (
+    <>
+      <JsonLd
+        data={[buildOrganizationJsonLd(), buildLocalBusinessJsonLd()]}
+      />
+      <ContactPageContent />
+    </>
+  );
 }
