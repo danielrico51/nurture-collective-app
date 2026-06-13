@@ -1,3 +1,8 @@
+import {
+  AdminGetUserCommand,
+  CognitoIdentityProviderClient,
+} from "@aws-sdk/client-cognito-identity-provider";
+
 const PLACEHOLDER_PHONE = "+12025550100";
 const PLACEHOLDER_ADDRESS = "Pending profile completion";
 const LEGACY_PLACEHOLDER_PHONES = ["+10000000000"];
@@ -53,86 +58,111 @@ const readIdpAttributes = (event) => {
   };
 };
 
-const applyFederatedPlaceholders = (attrs) => {
-  const email = attrs.email || "";
-
-  if (!isValidCognitoPhoneNumber(attrs.phone_number || "")) {
-    attrs.phone_number = PLACEHOLDER_PHONE;
+const attributesFromCognitoUser = (user) => {
+  const attrs = {};
+  for (const { Name, Value } of user.UserAttributes || []) {
+    attrs[Name] = Value;
   }
-
-  if (isPlaceholderAddress(attrs.address, email)) {
-    attrs.address = PLACEHOLDER_ADDRESS;
-  }
-
-  if (!attrs.name?.trim()) {
-    const given = attrs.given_name?.trim() || "";
-    const family = attrs.family_name?.trim() || "";
-    const combined = [given, family].filter(Boolean).join(" ").trim();
-    if (combined) attrs.name = combined;
-  }
-
   return attrs;
 };
 
-const buildInboundFederationAttributes = (event) => {
+const federatedUsernameCandidates = (event) => {
+  const candidates = [];
+  const userName = event.userName?.trim();
+  if (userName) candidates.push(userName);
+
+  const idpSub = readIdpAttributes(event).sub?.trim();
+  const providerName = event.request.providerName?.trim();
+  if (providerName && idpSub) {
+    candidates.push(`${providerName}_${idpSub}`);
+    candidates.push(`${providerName.toLowerCase()}_${idpSub}`);
+  }
+
+  return [...new Set(candidates.filter(Boolean))];
+};
+
+export const buildNewFederatedUserAttributes = (event) => {
   const idpAttributes = readIdpAttributes(event);
-  const existing = event.request.userAttributes || {};
-  const email = idpAttributes.email || existing.email || "";
+  const email = idpAttributes.email || "";
   const mapped = {};
 
-  // Cognito maps username=sub; userAttributesToMap must include the IdP sub claim.
   const idpSub = idpAttributes.sub;
   if (typeof idpSub === "string" && idpSub.trim()) {
     mapped.sub = idpSub.trim();
   }
 
   for (const key of ["email", "given_name", "family_name", "name", "picture"]) {
-    const value = idpAttributes[key] || existing[key];
+    const value = idpAttributes[key];
     if (typeof value === "string" && value.trim()) {
       mapped[key] = value.trim();
     }
   }
 
-  const existingPhone = existing.phone_number;
-  if (isValidCognitoPhoneNumber(existingPhone) && !isPlaceholderPhone(existingPhone)) {
-    mapped.phone_number = existingPhone;
-  } else if (isValidCognitoPhoneNumber(idpAttributes.phone_number || "")) {
+  if (isValidCognitoPhoneNumber(idpAttributes.phone_number || "")) {
     mapped.phone_number = idpAttributes.phone_number;
   } else {
     mapped.phone_number = PLACEHOLDER_PHONE;
   }
 
-  const existingAddress = existing.address;
-  if (!isPlaceholderAddress(existingAddress, email)) {
-    mapped.address = existingAddress;
-  } else if (!isPlaceholderAddress(idpAttributes.address, email)) {
+  if (!isPlaceholderAddress(idpAttributes.address, email)) {
     mapped.address = idpAttributes.address;
   } else {
     mapped.address = PLACEHOLDER_ADDRESS;
-  }
-
-  const existingUsername = existing["custom:username"]?.trim();
-  if (existingUsername) {
-    mapped["custom:username"] = existingUsername;
   }
 
   return mapped;
 };
 
 /**
+ * InboundFederation does not include saved Cognito profile attributes in the event.
+ * Returning users must no-op so Cognito keeps stored phone/address; only new users
+ * receive placeholder required attributes.
+ */
+export const resolveInboundFederationAttributes = (event, storedAttributes) => {
+  if (storedAttributes && Object.keys(storedAttributes).length > 0) {
+    return {};
+  }
+  return buildNewFederatedUserAttributes(event);
+};
+
+const loadStoredUserAttributes = async (event) => {
+  const client = new CognitoIdentityProviderClient({ region: event.region });
+  for (const username of federatedUsernameCandidates(event)) {
+    try {
+      const user = await client.send(
+        new AdminGetUserCommand({
+          UserPoolId: event.userPoolId,
+          Username: username,
+        })
+      );
+      return attributesFromCognitoUser(user);
+    } catch (error) {
+      if (error?.name === "UserNotFoundException") continue;
+      throw error;
+    }
+  }
+  return null;
+};
+
+/**
  * Cognito user pools cannot relax required attributes after creation.
  * Google does not send phone_number. InboundFederation runs before Cognito
  * validates mapped attributes on sign-up; PreSignUp finalizes custom:username.
- *
- * IMPORTANT: InboundFederation also runs on every returning Google sign-in.
- * Only placeholders for brand-new users — preserve saved phone/address.
  */
 export const handler = async (event) => {
   console.log("Federated auth trigger:", event.triggerSource, event.userName);
 
   if (event.triggerSource === "InboundFederation_ExternalProvider") {
     event.response = event.response || {};
-    event.response.userAttributesToMap = buildInboundFederationAttributes(event);
+    const storedAttributes = await loadStoredUserAttributes(event);
+    event.response.userAttributesToMap = resolveInboundFederationAttributes(
+      event,
+      storedAttributes
+    );
+    console.log(
+      "InboundFederation mapped attributes:",
+      JSON.stringify(event.response.userAttributesToMap)
+    );
     return event;
   }
 

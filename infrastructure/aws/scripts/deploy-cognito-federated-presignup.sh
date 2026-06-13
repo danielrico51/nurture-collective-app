@@ -17,29 +17,42 @@ log() { printf '→ %s\n' "$*"; }
 ensure_lambda_role() {
   if aws iam get-role --role-name "$ROLE_NAME" --region "$REGION" >/dev/null 2>&1; then
     log "IAM role exists: $ROLE_NAME"
-    return
+  else
+    log "Creating IAM role: $ROLE_NAME"
+    aws iam create-role \
+      --role-name "$ROLE_NAME" \
+      --assume-role-policy-document '{
+        "Version": "2012-10-17",
+        "Statement": [{
+          "Effect": "Allow",
+          "Principal": { "Service": "lambda.amazonaws.com" },
+          "Action": "sts:AssumeRole"
+        }]
+      }' \
+      --region "$REGION" >/dev/null
+
+    aws iam attach-role-policy \
+      --role-name "$ROLE_NAME" \
+      --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole \
+      --region "$REGION"
+
+    log "Waiting for IAM role to propagate…"
+    sleep 10
   fi
 
-  log "Creating IAM role: $ROLE_NAME"
-  aws iam create-role \
+  local pool_arn="arn:aws:cognito-idp:${REGION}:${ACCOUNT_ID}:userpool/${POOL_ID}"
+  aws iam put-role-policy \
     --role-name "$ROLE_NAME" \
-    --assume-role-policy-document '{
-      "Version": "2012-10-17",
-      "Statement": [{
-        "Effect": "Allow",
-        "Principal": { "Service": "lambda.amazonaws.com" },
-        "Action": "sts:AssumeRole"
+    --policy-name "cognito-admin-get-user-${POOL_ID}" \
+    --policy-document "{
+      \"Version\": \"2012-10-17\",
+      \"Statement\": [{
+        \"Effect\": \"Allow\",
+        \"Action\": [\"cognito-idp:AdminGetUser\"],
+        \"Resource\": \"${pool_arn}\"
       }]
-    }' \
+    }" \
     --region "$REGION" >/dev/null
-
-  aws iam attach-role-policy \
-    --role-name "$ROLE_NAME" \
-    --policy-arn arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole \
-    --region "$REGION"
-
-  log "Waiting for IAM role to propagate…"
-  sleep 10
 }
 
 package_lambda() {

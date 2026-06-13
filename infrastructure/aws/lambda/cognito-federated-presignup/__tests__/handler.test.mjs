@@ -1,53 +1,55 @@
 import { describe, expect, it } from "vitest";
-import { handler } from "../index.mjs";
+import {
+  buildNewFederatedUserAttributes,
+  resolveInboundFederationAttributes,
+} from "../index.mjs";
 
-describe("InboundFederation_ExternalProvider", () => {
-  const baseEvent = {
-    triggerSource: "InboundFederation_ExternalProvider",
-    request: {
-      providerType: "Google",
-      attributes: {
-        userInfo: {
-          email: "danielrico51@gmail.com",
-          given_name: "Daniel",
-          family_name: "Rico",
-        },
-        idToken: {
-          sub: "118280321789996478223",
-          email: "danielrico51@gmail.com",
-        },
+const baseEvent = {
+  triggerSource: "InboundFederation_ExternalProvider",
+  userName: "google_118280321789996478223",
+  request: {
+    providerName: "Google",
+    providerType: "Google",
+    attributes: {
+      userInfo: {
+        email: "danielrico51@gmail.com",
+        given_name: "Daniel",
+        family_name: "Rico",
       },
-      userAttributes: {
-        phone_number: "+12018928961",
-        address: "215 Country Route 1",
-        "custom:username": "rico1987",
+      idToken: {
+        sub: "118280321789996478223",
         email: "danielrico51@gmail.com",
       },
     },
-    response: {},
-  };
+  },
+  response: {},
+};
 
-  it("preserves saved phone and address on returning Google sign-in", async () => {
-    const result = await handler(baseEvent);
-    expect(result.response.userAttributesToMap.sub).toBe("118280321789996478223");
-    expect(result.response.userAttributesToMap.phone_number).toBe("+12018928961");
-    expect(result.response.userAttributesToMap.address).toBe("215 Country Route 1");
-    expect(result.response.userAttributesToMap["custom:username"]).toBe("rico1987");
+describe("resolveInboundFederationAttributes", () => {
+  it("no-ops for returning users so Cognito keeps saved phone and address", () => {
+    expect(
+      resolveInboundFederationAttributes(baseEvent, {
+        email: "danielrico51@gmail.com",
+        phone_number: "+12018928961",
+        address: "215 Country Route 1",
+        "custom:username": "rico1987",
+      })
+    ).toEqual({});
   });
 
-  it("applies placeholders for brand-new federated users", async () => {
-    const result = await handler({
-      ...baseEvent,
-      request: {
-        ...baseEvent.request,
-        userAttributes: {},
-      },
-    });
+  it("applies placeholders for brand-new federated users", () => {
+    const mapped = resolveInboundFederationAttributes(baseEvent, null);
+    expect(mapped.phone_number).toBe("+12025550100");
+    expect(mapped.sub).toBe("118280321789996478223");
+    expect(mapped.address).toBe("Pending profile completion");
+    expect(mapped.email).toBe("danielrico51@gmail.com");
+  });
+});
 
-    expect(result.response.userAttributesToMap.phone_number).toBe("+12025550100");
-    expect(result.response.userAttributesToMap.sub).toBe("118280321789996478223");
-    expect(result.response.userAttributesToMap.address).toBe(
-      "Pending profile completion"
+describe("buildNewFederatedUserAttributes", () => {
+  it("includes Google sub for username mapping", () => {
+    expect(buildNewFederatedUserAttributes(baseEvent).sub).toBe(
+      "118280321789996478223"
     );
   });
 });
