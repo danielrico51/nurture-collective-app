@@ -1,8 +1,10 @@
 "use client";
 
 import { resolvePostAuthPath } from "@/lib/auth/postAuthNavigation";
+import { resolveMemberHomePath } from "@/lib/intake/memberNavigation";
 import {
   FEDERATED_PLACEHOLDER_ADDRESS,
+  describeProfileCompletionGaps,
   isPlaceholderAddress,
   isPlaceholderPhone,
   needsFederatedProfileCompletion,
@@ -102,8 +104,21 @@ export function FederatedProfileCompletionForm({
       }
 
       await saveProfileAttributes(userAttributes);
-      const path = await resolvePostAuthPath(returnTo);
-      router.replace(path);
+      const refreshed = await loadProfileAttributes();
+      if (needsFederatedProfileCompletion(refreshed)) {
+        const gaps = describeProfileCompletionGaps(refreshed);
+        throw new Error(
+          gaps.length > 0
+            ? `Still missing: ${gaps.join(", ")}. Please try again.`
+            : "Could not finish your profile. Please try again."
+        );
+      }
+
+      if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+        router.replace(returnTo);
+        return;
+      }
+      router.replace(await resolveMemberHomePath());
     } catch (submitError) {
       setError(
         submitError instanceof Error
@@ -122,8 +137,8 @@ export function FederatedProfileCompletionForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
       <p className="text-sm text-nurture-charcoal/70">
-        Google sign-in does not share your phone or mailing address. Add them
-        below to finish creating your account.
+        Google sign-in shares your email only. Add a phone number and mailing
+        address below once to finish creating your account.
       </p>
 
       {showUsername ? (

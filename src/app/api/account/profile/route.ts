@@ -67,7 +67,11 @@ export async function PATCH(request: NextRequest) {
       sub: user.sub,
       attributes,
     });
-    return NextResponse.json({ ok: true });
+    const saved = await getMemberProfileAttributes({
+      cognitoUsername: user.cognitoUsername ?? user.sub,
+      sub: user.sub,
+    });
+    return NextResponse.json({ ok: true, attributes: saved });
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
     console.error("[account/profile] update failed:", error);

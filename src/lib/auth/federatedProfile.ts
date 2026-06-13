@@ -32,3 +32,21 @@ export const needsFederatedProfileCompletion = (
   isFederatedPlaceholderPhone(attributes.phone_number) ||
   isPlaceholderAddress(attributes.address, attributes.email) ||
   !isValidCustomUsername(attributes["custom:username"]);
+
+export const describeProfileCompletionGaps = (
+  attributes: Record<string, string | undefined>
+): string[] => {
+  const gaps: string[] = [];
+
+  if (isFederatedPlaceholderPhone(attributes.phone_number)) {
+    gaps.push("phone number");
+  }
+  if (isPlaceholderAddress(attributes.address, attributes.email)) {
+    gaps.push("mailing address");
+  }
+  if (!isValidCustomUsername(attributes["custom:username"])) {
+    gaps.push("username");
+  }
+
+  return gaps;
+};

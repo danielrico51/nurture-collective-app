@@ -22,7 +22,24 @@ def parse_lambda_config(shorthand: str) -> dict:
     if not shorthand:
         return config
 
-    for part in shorthand.split(","):
+    parts: list[str] = []
+    current = []
+    depth = 0
+    for char in shorthand:
+        if char == "{":
+            depth += 1
+        elif char == "}":
+            depth = max(depth - 1, 0)
+        if char == "," and depth == 0:
+            parts.append("".join(current).strip())
+            current = []
+            continue
+        current.append(char)
+    tail = "".join(current).strip()
+    if tail:
+        parts.append(tail)
+
+    for part in parts:
         if part.startswith("PreSignUp="):
             config["PreSignUp"] = part.split("=", 1)[1]
         elif part.startswith("InboundFederation="):
@@ -79,6 +96,10 @@ def main() -> int:
     lambda_config = parse_lambda_config(shorthand)
     client = boto3.client("cognito-idp", region_name=args.region)
     current = client.describe_user_pool(UserPoolId=args.pool_id)["UserPool"]
+    current_lambda = dict(current.get("LambdaConfig") or {})
+    # Merge so partial shorthand updates never drop triggers the AWS CLI cannot describe.
+    current_lambda.update(lambda_config)
+    lambda_config = current_lambda
     auto_verified = [item.strip() for item in args.auto_verified_attributes.split(",") if item.strip()]
 
     client.update_user_pool(

@@ -121,8 +121,26 @@ export const resolveCognitoPoolUsername = async ({
   cognitoUsername: string;
   sub: string;
 }) => {
+  const bySub = await findPoolUsernameBySub(sub);
+  if (bySub) return bySub;
+
+  const normalizeProviderUsername = (value: string) => {
+    const trimmed = value.trim();
+    const providerMatch = trimmed.match(/^(google|facebook|signinwithapple)_(\d+)$/i);
+    if (providerMatch) {
+      return `${providerMatch[1].toLowerCase()}_${providerMatch[2]}`;
+    }
+    return trimmed;
+  };
+
   const candidates = Array.from(
-    new Set([cognitoUsername.trim(), sub.trim()].filter(Boolean))
+    new Set(
+      [
+        normalizeProviderUsername(cognitoUsername),
+        cognitoUsername.trim(),
+        sub.trim(),
+      ].filter(Boolean)
+    )
   );
 
   for (const candidate of candidates) {
@@ -138,9 +156,6 @@ export const resolveCognitoPoolUsername = async ({
       /* try next candidate */
     }
   }
-
-  const bySub = await findPoolUsernameBySub(sub);
-  if (bySub) return bySub;
 
   throw new Error("User not found");
 };

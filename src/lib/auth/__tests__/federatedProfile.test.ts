@@ -53,6 +53,17 @@ describe("needsFederatedProfileCompletion", () => {
     ).toBe(false);
   });
 
+  it("flags the current Google account placeholder phone and address", () => {
+    expect(
+      needsFederatedProfileCompletion({
+        email: "danielrico51@gmail.com",
+        phone_number: "+12025550100",
+        address: "danielrico51@gmail.com",
+        "custom:username": "rico1987",
+      })
+    ).toBe(true);
+  });
+
   it("flags placeholder phone and address from federated PreSignUp", () => {
     expect(
       needsFederatedProfileCompletion({

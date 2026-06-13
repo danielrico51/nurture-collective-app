@@ -34,10 +34,12 @@ LOGOUT_URLS=(
   "https://d84l1y8p4kdic.cloudfront.net/"
 )
 
-# Cognito requires phone_number + address in the IdP mapping. Google does not send phone.
+# Cognito requires phone_number in the IdP mapping. Google does not send phone.
 # Never map phone_number=sub — Google's numeric sub fails Cognito E.164 validation before PreSignUp runs.
-# Map phone_number=phone_number (empty OIDC claim); PreSignUp Lambda injects a valid placeholder.
-ATTRIBUTE_MAPPING='email=email,given_name=given_name,family_name=family_name,name=name,username=sub,phone_number=phone_number,address=email'
+# Map phone_number=phone_number (empty OIDC claim); InboundFederation/PreSignUp inject placeholders.
+# Do NOT map address=email — that overwrites user-saved addresses on every Google sign-in.
+# Map address=address (empty OIDC claim); InboundFederation preserves saved values on return visits.
+ATTRIBUTE_MAPPING='email=email,given_name=given_name,family_name=family_name,name=name,username=sub,phone_number=phone_number,address=address'
 
 log() { printf '→ %s\n' "$*"; }
 warn() { printf '⚠ %s\n' "$*" >&2; }

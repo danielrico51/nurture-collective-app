@@ -94,19 +94,13 @@ attach_to_user_pool() {
     "InboundFederationArn=${function_arn}")"
 
   log "Attaching PreSignUp + InboundFederation triggers to user pool $POOL_ID (preserving other Lambda triggers)"
-  if python3 "$ROOT/infrastructure/aws/scripts/lib/update-cognito-lambda-config.py" \
+  if ! python3 "$ROOT/infrastructure/aws/scripts/lib/update-cognito-lambda-config.py" \
     --pool-id "$POOL_ID" \
     --region "$REGION" \
     "PreSignUp=${function_arn}" \
-    "InboundFederationArn=${function_arn}" >/dev/null 2>&1; then
-    :
-  else
-    log "Falling back to aws cli update-user-pool (InboundFederation may require newer CLI)"
-    aws cognito-idp update-user-pool \
-      --user-pool-id "$POOL_ID" \
-      --auto-verified-attributes email \
-      --lambda-config "$lambda_config" \
-      --region "$REGION" >/dev/null
+    "InboundFederationArn=${function_arn}"; then
+    warn "Failed to attach Cognito Lambda triggers via boto3 (InboundFederation requires boto3; do not use aws cli fallback)"
+    return 1
   fi
 }
 
@@ -119,12 +113,12 @@ sync_google_attribute_mapping() {
     return
   fi
 
-  log "Syncing Google attribute mapping (phone_number=phone_number; PreSignUp injects placeholder)"
+  log "Syncing Google attribute mapping (address/phone set by InboundFederation Lambda; do not map address=email)"
   aws cognito-idp update-identity-provider \
     --user-pool-id "$POOL_ID" \
     --provider-name Google \
     --region "$REGION" \
-    --attribute-mapping email=email,given_name=given_name,family_name=family_name,name=name,username=sub,phone_number=phone_number,address=email \
+    --attribute-mapping email=email,given_name=given_name,family_name=family_name,name=name,username=sub,phone_number=phone_number,address=address \
     >/dev/null
 }
 

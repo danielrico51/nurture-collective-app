@@ -1,5 +1,6 @@
 const PLACEHOLDER_PHONE = "+12025550100";
 const PLACEHOLDER_ADDRESS = "Pending profile completion";
+const LEGACY_PLACEHOLDER_PHONES = ["+10000000000"];
 
 const isValidCognitoPhoneNumber = (value) => {
   if (!/^\+\d{10,15}$/.test(value)) return false;
@@ -7,6 +8,18 @@ const isValidCognitoPhoneNumber = (value) => {
     return /^\+1[2-9]\d{9}$/.test(value);
   }
   return true;
+};
+
+const isPlaceholderPhone = (value) => {
+  const trimmed = value?.trim() ?? "";
+  if (!trimmed) return true;
+  if (trimmed === PLACEHOLDER_PHONE || LEGACY_PLACEHOLDER_PHONES.includes(trimmed)) {
+    return true;
+  }
+  if (!trimmed.startsWith("+") && /^\d{8,}$/.test(trimmed)) {
+    return true;
+  }
+  return false;
 };
 
 const isPlaceholderAddress = (value, email) => {
@@ -61,18 +74,59 @@ const applyFederatedPlaceholders = (attrs) => {
   return attrs;
 };
 
+const buildInboundFederationAttributes = (event) => {
+  const idpAttributes = readIdpAttributes(event);
+  const existing = event.request.userAttributes || {};
+  const email = idpAttributes.email || existing.email || "";
+  const mapped = {};
+
+  for (const key of ["email", "given_name", "family_name", "name", "picture"]) {
+    const value = idpAttributes[key] || existing[key];
+    if (typeof value === "string" && value.trim()) {
+      mapped[key] = value.trim();
+    }
+  }
+
+  const existingPhone = existing.phone_number;
+  if (isValidCognitoPhoneNumber(existingPhone) && !isPlaceholderPhone(existingPhone)) {
+    mapped.phone_number = existingPhone;
+  } else if (isValidCognitoPhoneNumber(idpAttributes.phone_number || "")) {
+    mapped.phone_number = idpAttributes.phone_number;
+  } else {
+    mapped.phone_number = PLACEHOLDER_PHONE;
+  }
+
+  const existingAddress = existing.address;
+  if (!isPlaceholderAddress(existingAddress, email)) {
+    mapped.address = existingAddress;
+  } else if (!isPlaceholderAddress(idpAttributes.address, email)) {
+    mapped.address = idpAttributes.address;
+  } else {
+    mapped.address = PLACEHOLDER_ADDRESS;
+  }
+
+  const existingUsername = existing["custom:username"]?.trim();
+  if (existingUsername) {
+    mapped["custom:username"] = existingUsername;
+  }
+
+  return mapped;
+};
+
 /**
  * Cognito user pools cannot relax required attributes after creation.
  * Google does not send phone_number. InboundFederation runs before Cognito
- * validates mapped attributes; PreSignUp finalizes custom:username + auto-confirm.
+ * validates mapped attributes on sign-up; PreSignUp finalizes custom:username.
+ *
+ * IMPORTANT: InboundFederation also runs on every returning Google sign-in.
+ * Only placeholders for brand-new users — preserve saved phone/address.
  */
 export const handler = async (event) => {
   console.log("Federated auth trigger:", event.triggerSource, event.userName);
 
   if (event.triggerSource === "InboundFederation_ExternalProvider") {
-    const idpAttributes = applyFederatedPlaceholders(readIdpAttributes(event));
     event.response = event.response || {};
-    event.response.userAttributesToMap = idpAttributes;
+    event.response.userAttributesToMap = buildInboundFederationAttributes(event);
     return event;
   }
 
