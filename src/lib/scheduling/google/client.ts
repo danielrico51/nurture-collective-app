@@ -79,6 +79,7 @@ export const createGoogleCalendarAuthClient = async (): Promise<AuthClient> => {
 
   switch (serverSchedulingConfig.authMode) {
     case "delegated":
+    case "wif":
       return createDelegatedGoogleAuthClient({
         scope: CALENDAR_SCOPE,
         subject: serverSchedulingConfig.delegatedUser,

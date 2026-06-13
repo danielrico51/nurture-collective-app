@@ -71,6 +71,7 @@ export const createGoogleTasksAuthClient = async (): Promise<AuthClient> => {
     case "oauth":
       return createOAuthUserClient();
     case "delegated":
+    case "wif":
       return createDelegatedUserOAuthClient();
     case "adc":
       return createUserAdcClient();
