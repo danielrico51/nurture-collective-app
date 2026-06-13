@@ -10,7 +10,7 @@ export interface AuthUser {
   familyName?: string;
   name?: string;
   username?: string;
-  cognitoUsername: string;
+  cognitoUsername?: string;
 }
 
 const getVerifier = () => {

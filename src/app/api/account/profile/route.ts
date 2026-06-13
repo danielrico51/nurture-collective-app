@@ -32,7 +32,7 @@ export async function PATCH(request: NextRequest) {
 
   try {
     await updateMemberProfileAttributes({
-      cognitoUsername: user.cognitoUsername,
+      cognitoUsername: user.cognitoUsername ?? user.sub,
       sub: user.sub,
       attributes,
     });
