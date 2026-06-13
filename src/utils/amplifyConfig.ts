@@ -66,7 +66,12 @@ export const configureAmplify = () => {
   if (oauthDomain && socialProviders.length > 0) {
     loginWith.oauth = {
       domain: oauthDomain,
-      scopes: ["openid", "email", "profile"],
+      scopes: [
+        "openid",
+        "email",
+        "profile",
+        "aws.cognito.signin.user.admin",
+      ],
       redirectSignIn: callbackUrls,
       redirectSignOut: [getOAuthSignOutUrl()],
       responseType: "code",

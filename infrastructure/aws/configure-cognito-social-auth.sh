@@ -150,7 +150,7 @@ update_app_client() {
     --callback-urls "${CALLBACK_URLS[@]}" \
     --logout-urls "${LOGOUT_URLS[@]}" \
     --allowed-o-auth-flows code \
-    --allowed-o-auth-scopes openid email profile phone \
+    --allowed-o-auth-scopes openid email profile phone aws.cognito.signin.user.admin \
     --allowed-o-auth-flows-user-pool-client \
     --supported-identity-providers "${providers[@]}" \
     --explicit-auth-flows ALLOW_REFRESH_TOKEN_AUTH ALLOW_USER_AUTH ALLOW_USER_SRP_AUTH

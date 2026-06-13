@@ -62,7 +62,7 @@ In **Cognito → App integration → App client → Hosted UI**, add:
 | Sign-out | `https://<your-amplify-domain>/` |
 
 Allowed OAuth flows: **Authorization code grant**.  
-Scopes: `openid`, `email`, `profile` (and `phone` if needed).
+Scopes: `openid`, `email`, `profile`, `phone`, and **`aws.cognito.signin.user.admin`** (required for `updateUserAttributes` / profile save after Google sign-in).
 
 ### 2. Identity providers
 
