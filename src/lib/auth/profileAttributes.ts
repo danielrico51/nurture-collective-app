@@ -21,7 +21,7 @@ export const profileFormToUserAttributes = (form: ProfileFormData) => {
     family_name: familyName,
     name: fullName,
     address: form.address.trim(),
-    phone_number: form.phoneNumber.trim(),
+    phone_number: formatCognitoPhoneAttribute(form.phoneNumber),
     "custom:username": form.username.trim(),
   };
 };

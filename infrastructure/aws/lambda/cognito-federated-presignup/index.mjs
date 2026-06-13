@@ -1,14 +1,17 @@
-const PLACEHOLDER_PHONE = "+10000000000";
+const PLACEHOLDER_PHONE = "+12025550100";
 const PLACEHOLDER_ADDRESS = "Pending profile completion";
 
-const isValidE164Phone = (value) => /^\+\d{10,15}$/.test(value);
-
-const isPlaceholderPhone = (value) => !value || !isValidE164Phone(value);
+const isValidCognitoPhoneNumber = (value) => {
+  if (!/^\+\d{10,15}$/.test(value)) return false;
+  if (value.startsWith("+1")) {
+    return /^\+1[2-9]\d{9}$/.test(value);
+  }
+  return true;
+};
 
 const isPlaceholderAddress = (value, email) => {
   if (!value) return true;
   if (value === PLACEHOLDER_ADDRESS) return true;
-  // Cognito maps address=email when Google does not provide address.
   if (email && value === email) return true;
   return false;
 };
@@ -38,9 +41,11 @@ export const handler = async (event) => {
     const attrs = event.request.userAttributes;
     const email = attrs.email || "";
 
-    if (isPlaceholderPhone(attrs.phone_number)) {
+    // Always replace Google sub / invalid interim values with valid Cognito E.164.
+    if (!isValidCognitoPhoneNumber(attrs.phone_number || "")) {
       event.request.userAttributes.phone_number = PLACEHOLDER_PHONE;
     }
+
     if (isPlaceholderAddress(attrs.address, email)) {
       event.request.userAttributes.address = PLACEHOLDER_ADDRESS;
     }

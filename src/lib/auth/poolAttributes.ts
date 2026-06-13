@@ -23,7 +23,7 @@ export const POOL_ATTRIBUTE_LABELS: Record<PoolRequiredAttributeName, string> =
   };
 
 import {
-  isValidE164Phone,
+  isValidCognitoPhoneNumber,
   normalizePhoneNumber,
 } from "@/utils/signUpAttributes";
 
@@ -35,7 +35,7 @@ export const sanitizePoolAttributes = (
 
   if (sanitized.phone_number) {
     const normalized = normalizePhoneNumber(sanitized.phone_number);
-    if (isValidE164Phone(normalized)) {
+    if (isValidCognitoPhoneNumber(normalized)) {
       sanitized.phone_number = normalized;
     } else {
       delete sanitized.phone_number;

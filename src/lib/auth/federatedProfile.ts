@@ -1,20 +1,13 @@
 import {
-  isValidE164Phone,
-  normalizePhoneNumber,
+  FEDERATED_PLACEHOLDER_PHONE,
+  isFederatedPlaceholderPhone,
 } from "@/utils/signUpAttributes";
 
-/** Placeholders set by Cognito PreSignUp for federated sign-ups (see infrastructure/aws/lambda). */
-export const FEDERATED_PLACEHOLDER_PHONE = "+10000000000";
+export { FEDERATED_PLACEHOLDER_PHONE };
+
 export const FEDERATED_PLACEHOLDER_ADDRESS = "Pending profile completion";
 
-export const isPlaceholderPhone = (value?: string | null): boolean => {
-  const normalized = normalizePhoneNumber(value ?? "");
-  return (
-    !normalized ||
-    normalized === FEDERATED_PLACEHOLDER_PHONE ||
-    !isValidE164Phone(normalized)
-  );
-};
+export const isPlaceholderPhone = isFederatedPlaceholderPhone;
 
 export const isPlaceholderAddress = (value?: string | null, email?: string | null): boolean => {
   const trimmed = value?.trim() ?? "";
@@ -36,6 +29,6 @@ const isValidCustomUsername = (value?: string | null): boolean => {
 export const needsFederatedProfileCompletion = (
   attributes: Record<string, string | undefined>
 ): boolean =>
-  isPlaceholderPhone(attributes.phone_number) ||
+  isFederatedPlaceholderPhone(attributes.phone_number) ||
   isPlaceholderAddress(attributes.address, attributes.email) ||
   !isValidCustomUsername(attributes["custom:username"]);

@@ -1,9 +1,35 @@
 import { describe, expect, it } from "vitest";
 import {
-  FEDERATED_PLACEHOLDER_ADDRESS,
-  FEDERATED_PLACEHOLDER_PHONE,
   needsFederatedProfileCompletion,
 } from "@/lib/auth/federatedProfile";
+import {
+  FEDERATED_PLACEHOLDER_PHONE,
+  isFederatedPlaceholderPhone,
+  isValidCognitoPhoneNumber,
+} from "@/utils/signUpAttributes";
+
+describe("isValidCognitoPhoneNumber", () => {
+  it("accepts valid US E.164 numbers", () => {
+    expect(isValidCognitoPhoneNumber("+12065550100")).toBe(true);
+    expect(isValidCognitoPhoneNumber("+12025550100")).toBe(true);
+  });
+
+  it("rejects invalid US numbers", () => {
+    expect(isValidCognitoPhoneNumber("+10000000000")).toBe(false);
+    expect(isValidCognitoPhoneNumber("+10626139986")).toBe(false);
+  });
+});
+
+describe("isFederatedPlaceholderPhone", () => {
+  it("flags Google sub mapped as phone_number", () => {
+    expect(isFederatedPlaceholderPhone("117369829384756728901")).toBe(true);
+  });
+
+  it("flags legacy and current placeholders", () => {
+    expect(isFederatedPlaceholderPhone(FEDERATED_PLACEHOLDER_PHONE)).toBe(true);
+    expect(isFederatedPlaceholderPhone("+10000000000")).toBe(true);
+  });
+});
 
 describe("needsFederatedProfileCompletion", () => {
   const complete = {
@@ -26,7 +52,13 @@ describe("needsFederatedProfileCompletion", () => {
     expect(
       needsFederatedProfileCompletion({
         ...complete,
-        address: FEDERATED_PLACEHOLDER_ADDRESS,
+        phone_number: "+10000000000",
+      })
+    ).toBe(true);
+    expect(
+      needsFederatedProfileCompletion({
+        ...complete,
+        phone_number: "117369829384756728901",
       })
     ).toBe(true);
   });

@@ -8,8 +8,10 @@ import {
   needsFederatedProfileCompletion,
 } from "@/lib/auth/federatedProfile";
 import {
-  normalizePhoneNumber,
+  formatCognitoPhoneAttribute,
+  formatPhoneInputForAmplify,
   resolveCognitoUsername,
+  splitPhoneForAmplifyForm,
 } from "@/utils/signUpAttributes";
 import { fetchUserAttributes, updateUserAttributes } from "aws-amplify/auth";
 import { FormEvent, useEffect, useState } from "react";
@@ -30,7 +32,7 @@ export function FederatedProfileCompletionForm({
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [username, setUsername] = useState("");
-  const [phoneNumber, setPhoneNumber] = useState("");
+  const [phoneLocal, setPhoneLocal] = useState("");
   const [address, setAddress] = useState("");
   const [showUsername, setShowUsername] = useState(false);
   const [showPhone, setShowPhone] = useState(false);
@@ -49,7 +51,10 @@ export function FederatedProfileCompletionForm({
         setShowUsername(customUsername.length < 3);
 
         const phone = attributes.phone_number ?? "";
-        setPhoneNumber(isPlaceholderPhone(phone) ? "" : phone);
+        const splitPhone = splitPhoneForAmplifyForm(
+          isPlaceholderPhone(phone) ? "" : phone
+        );
+        setPhoneLocal(splitPhone.phone_number);
         setShowPhone(isPlaceholderPhone(phone));
 
         const addr = attributes.address ?? "";
@@ -70,11 +75,9 @@ export function FederatedProfileCompletionForm({
       const userAttributes: Record<string, string> = {};
 
       if (showPhone) {
-        const normalized = normalizePhoneNumber(phoneNumber);
-        if (!/^\+\d{10,15}$/.test(normalized)) {
-          throw new Error("Phone must use +1 and digits, e.g. +12065550100");
-        }
-        userAttributes.phone_number = normalized;
+        userAttributes.phone_number = formatCognitoPhoneAttribute(
+          phoneLocal.startsWith("+") ? phoneLocal : `+1${phoneLocal}`
+        );
       }
 
       if (showAddress) {
@@ -146,16 +149,28 @@ export function FederatedProfileCompletionForm({
           <label htmlFor="phone_number" className="block text-sm font-medium">
             Phone
           </label>
-          <input
-            id="phone_number"
-            name="phone_number"
-            required
-            value={phoneNumber}
-            onChange={(event) => setPhoneNumber(event.target.value)}
-            className={inputClassName}
-            placeholder="+12065550100"
-            autoComplete="tel"
-          />
+          <div className="mt-1.5 flex gap-2">
+            <span className="inline-flex items-center rounded-xl border border-nurture-sage/30 bg-nurture-cream/50 px-3 text-sm text-nurture-charcoal/70">
+              +1
+            </span>
+            <input
+              id="phone_number"
+              name="phone_number"
+              required
+              type="tel"
+              inputMode="tel"
+              autoComplete="tel-national"
+              value={phoneLocal}
+              onChange={(event) =>
+                setPhoneLocal(formatPhoneInputForAmplify(event.target.value))
+              }
+              className={inputClassName}
+              placeholder="2626139986"
+            />
+          </div>
+          <p className="mt-1 text-xs text-nurture-charcoal/55">
+            US number only — 10 digits without the +1 country code.
+          </p>
         </div>
       ) : null}
 

@@ -4,7 +4,7 @@ import {
   attributesToProfileForm,
   profileFormToUserAttributes,
 } from "@/lib/auth/profileAttributes";
-import { normalizePhoneNumber } from "@/utils/signUpAttributes";
+import { formatCognitoPhoneAttribute } from "@/utils/signUpAttributes";
 import type { ProfileFormData } from "@/types/profile";
 import { emptyProfileForm } from "@/types/profile";
 import { fetchUserAttributes, updateUserAttributes } from "aws-amplify/auth";
@@ -39,10 +39,7 @@ const ProfileForm = () => {
     setSaving(true);
 
     try {
-      const phoneNumber = normalizePhoneNumber(form.phoneNumber);
-      if (phoneNumber && !/^\+\d{10,15}$/.test(phoneNumber)) {
-        throw new Error("Phone must use +1 and digits, e.g. +12065550100");
-      }
+      const phoneNumber = formatCognitoPhoneAttribute(form.phoneNumber);
       if (form.username.trim().length > 0 && form.username.trim().length < 3) {
         throw new Error("Username must be at least 3 characters");
       }
