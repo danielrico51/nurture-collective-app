@@ -42,7 +42,7 @@ export const fetchLiveGoogleReviews = async (): Promise<GoogleReviewsPayload> =>
         "Content-Type": "application/json",
         "X-Goog-Api-Key": apiKey,
         "X-Goog-FieldMask":
-          "rating,userRatingCount,reviews,googleMapsUri,reviews.authorAttribution,reviews.rating,reviews.text,reviews.relativePublishTimeDescription",
+          "rating,userRatingCount,reviews,googleMapsUri",
       },
       next: { revalidate: 86400 },
     }
