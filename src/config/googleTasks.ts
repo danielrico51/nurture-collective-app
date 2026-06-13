@@ -21,7 +21,8 @@ const readAuthMode = (): GoogleTasksAuthMode => {
     raw === "impersonate" ||
     raw === "service_account" ||
     raw === "delegated" ||
-    raw === "oauth"
+    raw === "oauth" ||
+    raw === "wif"
   ) {
     return raw;
   }
