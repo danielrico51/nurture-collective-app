@@ -14,7 +14,7 @@ import {
   splitPhoneForAmplifyForm,
 } from "@/utils/signUpAttributes";
 import { loadProfileAttributes } from "@/lib/auth/loadProfileAttributes";
-import { updateUserAttributes } from "aws-amplify/auth";
+import { saveProfileAttributes } from "@/lib/auth/saveProfileAttributes";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -101,7 +101,7 @@ export function FederatedProfileCompletionForm({
         return;
       }
 
-      await updateUserAttributes({ userAttributes });
+      await saveProfileAttributes(userAttributes);
       const path = await resolvePostAuthPath(returnTo);
       router.replace(path);
     } catch (submitError) {

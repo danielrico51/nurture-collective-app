@@ -10,6 +10,7 @@ export interface AuthUser {
   familyName?: string;
   name?: string;
   username?: string;
+  cognitoUsername: string;
 }
 
 const getVerifier = () => {
@@ -56,9 +57,13 @@ export const verifyRequest = async (
         ? [String(groupsRaw)]
         : [];
 
+    const cognitoUsername = String(
+      payload["cognito:username"] ?? payload.sub ?? ""
+    );
+
     return {
       sub: String(payload.sub ?? ""),
-      email: String(payload.email ?? payload["cognito:username"] ?? ""),
+      email: String(payload.email ?? cognitoUsername),
       groups,
       givenName: payload.given_name ? String(payload.given_name) : undefined,
       familyName: payload.family_name ? String(payload.family_name) : undefined,
@@ -68,6 +73,7 @@ export const verifyRequest = async (
         : payload.preferred_username
           ? String(payload.preferred_username)
           : undefined,
+      cognitoUsername,
     };
   } catch {
     return null;

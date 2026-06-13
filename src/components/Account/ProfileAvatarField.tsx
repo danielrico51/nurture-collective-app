@@ -6,7 +6,7 @@ import {
   uploadProfileAvatar,
   validateAvatarImageFile,
 } from "@/lib/account/profileAvatarClient";
-import { updateUserAttributes } from "aws-amplify/auth";
+import { saveProfileAttributes } from "@/lib/auth/saveProfileAttributes";
 import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -45,7 +45,7 @@ export function ProfileAvatarField({ displayName }: ProfileAvatarFieldProps) {
       const { url, optimized } = await uploadProfileAvatar(file);
       setAvatarUrl(url);
       try {
-        await updateUserAttributes({ userAttributes: { picture: url } });
+        await saveProfileAttributes({ picture: url });
       } catch {
         /* picture attribute optional */
       }

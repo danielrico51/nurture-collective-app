@@ -47,7 +47,8 @@
       "Action": [
         "cognito-idp:ListUsers",
         "cognito-idp:ListUsersInGroup",
-        "cognito-idp:AdminGetUser"
+        "cognito-idp:AdminGetUser",
+        "cognito-idp:AdminUpdateUserAttributes"
       ],
       "Resource": "arn:aws:cognito-idp:REGION:ACCOUNT_ID:userpool/USER_POOL_ID"
     },

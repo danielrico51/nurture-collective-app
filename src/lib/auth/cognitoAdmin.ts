@@ -1,5 +1,6 @@
 import {
   AdminGetUserCommand,
+  AdminUpdateUserAttributesCommand,
   ListUsersCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import { getMissingRequiredAttributes } from "@/lib/auth/poolAttributes";
@@ -90,4 +91,82 @@ export const getUserAttributesByUsername = async (username: string) => {
 export const getProfileForPasswordChallenge = async (username: string) => {
   const attributes = await getUserAttributesByUsername(username);
   return getMissingRequiredAttributes(attributes, username);
+};
+
+const findPoolUsernameBySub = async (sub: string) => {
+  const normalized = sub.trim();
+  if (!normalized) return null;
+
+  try {
+    const response = await getCognitoClient().send(
+      new ListUsersCommand({
+        UserPoolId: getUserPoolId(),
+        Filter: `sub = "${normalized}"`,
+        Limit: 1,
+      })
+    );
+    const username = response.Users?.[0]?.Username;
+    return typeof username === "string" && username.trim() ? username : null;
+  } catch (error) {
+    console.warn("[auth] Cognito ListUsers sub lookup failed:", error);
+    return null;
+  }
+};
+
+export const resolveCognitoPoolUsername = async ({
+  cognitoUsername,
+  sub,
+}: {
+  cognitoUsername: string;
+  sub: string;
+}) => {
+  const candidates = Array.from(
+    new Set([cognitoUsername.trim(), sub.trim()].filter(Boolean))
+  );
+
+  for (const candidate of candidates) {
+    try {
+      await getCognitoClient().send(
+        new AdminGetUserCommand({
+          UserPoolId: getUserPoolId(),
+          Username: candidate,
+        })
+      );
+      return candidate;
+    } catch {
+      /* try next candidate */
+    }
+  }
+
+  const bySub = await findPoolUsernameBySub(sub);
+  if (bySub) return bySub;
+
+  throw new Error("User not found");
+};
+
+export const updateMemberProfileAttributes = async ({
+  cognitoUsername,
+  sub,
+  attributes,
+}: {
+  cognitoUsername: string;
+  sub: string;
+  attributes: Record<string, string>;
+}) => {
+  const username = await resolveCognitoPoolUsername({ cognitoUsername, sub });
+  const userAttributes = Object.entries(attributes)
+    .filter(([, value]) => value.trim().length > 0)
+    .map(([Name, Value]) => ({ Name, Value: Value.trim() }));
+
+  if (userAttributes.length === 0) {
+    return;
+  }
+
+  await getCognitoClient().send(
+    new AdminUpdateUserAttributesCommand({
+      UserPoolId: getUserPoolId(),
+      Username: username,
+      UserAttributes: userAttributes,
+    })
+  );
 };

@@ -8,7 +8,7 @@ import { loadProfileAttributes } from "@/lib/auth/loadProfileAttributes";
 import { formatCognitoPhoneAttribute } from "@/utils/signUpAttributes";
 import type { ProfileFormData } from "@/types/profile";
 import { emptyProfileForm } from "@/types/profile";
-import { updateUserAttributes } from "aws-amplify/auth";
+import { saveProfileAttributes } from "@/lib/auth/saveProfileAttributes";
 import { ProfileAvatarField } from "@/components/Account/ProfileAvatarField";
 import { FormEvent, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -49,12 +49,12 @@ const ProfileForm = () => {
         throw new Error("Username must be at least 3 characters");
       }
 
-      await updateUserAttributes({
-        userAttributes: profileFormToUserAttributes({
+      await saveProfileAttributes(
+        profileFormToUserAttributes({
           ...form,
           phoneNumber,
-        }),
-      });
+        })
+      );
 
       const fullName = [form.givenName, form.familyName]
         .filter(Boolean)
