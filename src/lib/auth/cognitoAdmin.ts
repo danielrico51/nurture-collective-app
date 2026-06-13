@@ -4,6 +4,7 @@ import {
   ListUsersCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import { getMissingRequiredAttributes } from "@/lib/auth/poolAttributes";
+import { buildFederatedVerificationAttributes } from "@/lib/auth/federatedVerification";
 import { getCognitoClient } from "@/lib/tasks/cognitoClient";
 
 const getUserPoolId = () => {
@@ -154,7 +155,18 @@ export const updateMemberProfileAttributes = async ({
   attributes: Record<string, string>;
 }) => {
   const username = await resolveCognitoPoolUsername({ cognitoUsername, sub });
-  const userAttributes = Object.entries(attributes)
+  const existingResponse = await getCognitoClient().send(
+    new AdminGetUserCommand({
+      UserPoolId: getUserPoolId(),
+      Username: username,
+    })
+  );
+  const existing = attributesFromCognito(existingResponse.UserAttributes);
+  const merged = {
+    ...attributes,
+    ...buildFederatedVerificationAttributes(attributes, existing),
+  };
+  const userAttributes = Object.entries(merged)
     .filter(([, value]) => value.trim().length > 0)
     .map(([Name, Value]) => ({ Name, Value: Value.trim() }));
 
@@ -169,6 +181,29 @@ export const updateMemberProfileAttributes = async ({
       UserAttributes: userAttributes,
     })
   );
+};
+
+const syncFederatedVerificationFlags = async (
+  username: string,
+  attributes: Record<string, string>
+): Promise<Record<string, string>> => {
+  const verification = buildFederatedVerificationAttributes({}, attributes);
+  if (Object.keys(verification).length === 0) {
+    return attributes;
+  }
+
+  await getCognitoClient().send(
+    new AdminUpdateUserAttributesCommand({
+      UserPoolId: getUserPoolId(),
+      Username: username,
+      UserAttributes: Object.entries(verification).map(([Name, Value]) => ({
+        Name,
+        Value,
+      })),
+    })
+  );
+
+  return { ...attributes, ...verification };
 };
 
 export const getMemberProfileAttributes = async ({
@@ -186,5 +221,6 @@ export const getMemberProfileAttributes = async ({
     })
   );
 
-  return attributesFromCognito(response.UserAttributes);
+  const attributes = attributesFromCognito(response.UserAttributes);
+  return syncFederatedVerificationFlags(username, attributes);
 };

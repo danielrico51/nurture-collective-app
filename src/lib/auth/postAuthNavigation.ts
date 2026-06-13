@@ -1,4 +1,4 @@
-import { fetchUserAttributes } from "aws-amplify/auth";
+import { loadProfileAttributes } from "@/lib/auth/loadProfileAttributes";
 import { needsFederatedProfileCompletion } from "@/lib/auth/federatedProfile";
 import { resolveMemberHomePath } from "@/lib/intake/memberNavigation";
 
@@ -15,7 +15,7 @@ export const resolvePostAuthPath = async (
   returnTo: string | null | undefined
 ): Promise<string> => {
   try {
-    const attributes = await fetchUserAttributes();
+    const attributes = await loadProfileAttributes();
     if (needsFederatedProfileCompletion(attributes)) {
       return buildCompleteProfilePath(returnTo);
     }
