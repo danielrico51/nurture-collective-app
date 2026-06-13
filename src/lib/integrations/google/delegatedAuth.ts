@@ -15,20 +15,19 @@ export interface DelegatedGoogleAuthOptions {
 }
 
 const createSourceAuth = async (adcJson?: string, forceAdc = false) => {
-  if (adcJson || forceAdc) {
-    if (adcJson) {
+  if (!forceAdc) {
+    const wifConfig = getGoogleWorkloadIdentityConfig();
+    if (wifConfig) {
       return new GoogleAuth({
-        credentials: JSON.parse(adcJson) as Record<string, unknown>,
+        credentials: buildWorkloadIdentityCredentials(wifConfig),
         scopes: [CLOUD_PLATFORM_SCOPE],
       });
     }
-    return new GoogleAuth({ scopes: [CLOUD_PLATFORM_SCOPE] });
   }
 
-  const wifConfig = getGoogleWorkloadIdentityConfig();
-  if (wifConfig) {
+  if (adcJson) {
     return new GoogleAuth({
-      credentials: buildWorkloadIdentityCredentials(wifConfig),
+      credentials: JSON.parse(adcJson) as Record<string, unknown>,
       scopes: [CLOUD_PLATFORM_SCOPE],
     });
   }
