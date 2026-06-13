@@ -186,7 +186,11 @@ Next steps:
   3. Verify credentials BEFORE pushing to Amplify:
        npm run verify:calendar-deploy
      Expect: OK [delegation]: Calendar access token received...
-  4. Verify runtime:
+     Uses ~/.config/gcloud/legacy_credentials/<account>/adc.json when present (often fresher than application-default).
+     Re-run periodically — authorized_user tokens expire in prod and the deploy gate does not monitor runtime.
+  4. Push to Amplify when verify passes:
+       AMPLIFY_BRANCH=main REDEPLOY=true npm run amplify:concierge-scheduling
+  5. Verify runtime:
        curl -s http://localhost:3000/api/scheduling/status
      Expect: "enabled":true,"configured":true
   5. Fresh concierge chat with name + email → "Pick an open introductory call time"

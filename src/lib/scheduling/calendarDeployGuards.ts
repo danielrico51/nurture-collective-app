@@ -131,8 +131,9 @@ export const classifyGoogleAuthFailure = (
     return {
       kind: "expired_adc",
       hint:
-        "Google application-default credentials expired. On your machine run: gcloud auth application-default login, " +
-        "then npm run verify:calendar-deploy, then npm run amplify:concierge-scheduling, then redeploy Amplify.",
+        "Google Calendar ADC expired in Amplify. On your machine run: npm run verify:calendar-deploy " +
+        "(uses gcloud legacy credentials when application-default is stale), then " +
+        "AMPLIFY_BRANCH=main REDEPLOY=true npm run amplify:concierge-scheduling.",
     };
   }
 

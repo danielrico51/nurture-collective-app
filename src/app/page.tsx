@@ -5,6 +5,7 @@ import TeamBylineBanner from "@/components/Home/TeamBylineBanner";
 import FaqList from "@/components/Common/FaqList";
 import Hero from "@/components/Home/Hero";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
+import GoogleReviews from "@/components/Reviews/GoogleReviews";
 import JsonLd from "@/components/Seo/JsonLd";
 import { buildPageMetadata } from "@/config/seo";
 import { momFaqs, momHowItWorks } from "@/content/site";
@@ -49,6 +50,7 @@ export default function HomePage() {
         steps={momHowItWorks}
         className="bg-nurture-sage/5 py-20"
       />
+      <GoogleReviews className="bg-white" />
       <FaqList items={momFaqs} />
       <CallToAction />
       <JoinTeamSection />

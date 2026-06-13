@@ -101,6 +101,7 @@ describe("buildSchedulingAuthErrorMessage", () => {
       "invalid_grant invalid_rapt"
     );
     expect(message).toContain("expired or need re-auth");
-    expect(message).toContain("gcloud auth application-default login");
+    expect(message).toContain("verify:calendar-deploy");
+    expect(message).toContain("amplify:concierge-scheduling");
   });
 });

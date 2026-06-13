@@ -4,7 +4,7 @@ export type GoogleReviewsMode = "placeholder" | "live";
 
 const parseVisibility = (value: string | undefined): GoogleReviewsVisibility => {
   if (value === "public" || value === "admin" || value === "off") return value;
-  return "off";
+  return "public";
 };
 
 /** Client-safe: who may see the reviews section on marketing pages. */

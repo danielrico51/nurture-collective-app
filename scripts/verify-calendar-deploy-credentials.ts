@@ -6,21 +6,20 @@
  *
  * Optional:
  *   GOOGLE_CALENDAR_ADC_JSON_FILE=~/.config/gcloud/application_default_credentials.json
+ *   (default: legacy gcloud user ADC for active account, then application-default)
  *   GOOGLE_CALENDAR_DELEGATED_USER=admin@nesting-place.com
  *   SKIP_CALENDAR_LIVE_TEST=1   # structure/config only (not recommended)
  */
 import { readFileSync } from "fs";
 import { resolve } from "path";
+import { resolveGoogleAdcFile } from "./lib/resolveGoogleAdcFile";
 import { verifyCalendarDelegation } from "../src/lib/scheduling/verifyCalendarDelegation";
 import {
   validateAdcJsonForDelegatedDeploy,
   validateCalendarDelegatedUserForDeploy,
 } from "../src/lib/scheduling/calendarDeployGuards";
 
-const ADC_FILE =
-  process.env.GOOGLE_CALENDAR_ADC_JSON_FILE?.trim() ||
-  process.env.GOOGLE_TASKS_ADC_JSON_FILE?.trim() ||
-  `${process.env.HOME}/.config/gcloud/application_default_credentials.json`;
+const ADC_FILE = resolveGoogleAdcFile();
 
 const DELEGATED_USER =
   process.env.GOOGLE_CALENDAR_DELEGATED_USER?.trim() ||
@@ -80,6 +79,9 @@ const main = async () => {
 
   console.log(
     `OK [delegation]: Calendar access token received for ${result.delegatedUser} (${result.credentialType}).`
+  );
+  console.log(
+    "Note: authorized_user credentials expire periodically. Re-run this check before /book breaks in prod."
   );
   console.log("Safe to run: npm run amplify:concierge-scheduling");
 };

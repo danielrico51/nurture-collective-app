@@ -27,7 +27,17 @@ ROOT="$(cd "$(dirname "$0")/../../.." && pwd)"
 APP_ID="${AMPLIFY_APP_ID:-d9588bqvrp5xs}"
 BRANCH="${AMPLIFY_BRANCH:-}"
 REDEPLOY="${REDEPLOY:-false}"
-ADC_FILE="${GOOGLE_CALENDAR_ADC_JSON_FILE:-${GOOGLE_TASKS_ADC_JSON_FILE:-${HOME}/.config/gcloud/application_default_credentials.json}}"
+ADC_FILE="${GOOGLE_CALENDAR_ADC_JSON_FILE:-${GOOGLE_TASKS_ADC_JSON_FILE:-}}"
+if [[ -z "$ADC_FILE" ]]; then
+  GCLOUD_ACCOUNT="$(gcloud config get-value account 2>/dev/null || true)"
+  LEGACY_ADC="${HOME}/.config/gcloud/legacy_credentials/${GCLOUD_ACCOUNT}/adc.json"
+  DEFAULT_ADC="${HOME}/.config/gcloud/application_default_credentials.json"
+  if [[ -n "$GCLOUD_ACCOUNT" && -f "$LEGACY_ADC" ]]; then
+    ADC_FILE="$LEGACY_ADC"
+  else
+    ADC_FILE="$DEFAULT_ADC"
+  fi
+fi
 DELEGATED_USER="${GOOGLE_CALENDAR_DELEGATED_USER:-admin@nesting-place.com}"
 IMPERSONATE_SA="${GOOGLE_TASKS_IMPERSONATE_SERVICE_ACCOUNT:-nurture-tasks-sync@boxwood-magnet-498623-n4.iam.gserviceaccount.com}"
 CALENDAR_ID="${GOOGLE_CALENDAR_ID:-c_2d5a066a46512e1ec02b55c8c92e83e00a9a8e77655de2e712a347fbb969552c@group.calendar.google.com}"
@@ -58,6 +68,7 @@ if [[ "$DELEGATED_LOWER" == "info@nesting-place.com" ]]; then
 fi
 
 echo "Running Calendar deploy credential checks before pushing to Amplify..."
+echo "  ADC file: $ADC_FILE"
 (
   cd "$ROOT"
   GOOGLE_CALENDAR_ADC_JSON_FILE="$ADC_FILE" \
