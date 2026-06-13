@@ -107,6 +107,8 @@ Deploy the Lambda once per pool:
 npm run setup:cognito-federated-presignup
 ```
 
+Cognito also requires `phone_number` and `address` in the Google IdP attribute mapping. Google does not send those claims, so the mapping uses `phone_number=sub` and `address=email` as placeholders; the PreSignUp Lambda replaces them before the user is created.
+
 ## Code references
 
 | File | Role |

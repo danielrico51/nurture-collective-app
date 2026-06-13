@@ -31,6 +31,16 @@ describe("needsFederatedProfileCompletion", () => {
     ).toBe(true);
   });
 
+  it("flags email used as placeholder address from Cognito IdP mapping", () => {
+    expect(
+      needsFederatedProfileCompletion({
+        ...complete,
+        email: "jane@example.com",
+        address: "jane@example.com",
+      })
+    ).toBe(true);
+  });
+
   it("flags missing or invalid username", () => {
     expect(
       needsFederatedProfileCompletion({

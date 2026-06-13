@@ -91,11 +91,30 @@ attach_to_user_pool() {
     --region "$REGION" >/dev/null
 }
 
+sync_google_attribute_mapping() {
+  if ! aws cognito-idp describe-identity-provider \
+    --user-pool-id "$POOL_ID" \
+    --provider-name Google \
+    --region "$REGION" >/dev/null 2>&1; then
+    log "Google provider not configured; skipping attribute mapping sync"
+    return
+  fi
+
+  log "Syncing Google attribute mapping (placeholder phone/address from sub/email)"
+  aws cognito-idp update-identity-provider \
+    --user-pool-id "$POOL_ID" \
+    --provider-name Google \
+    --region "$REGION" \
+    --attribute-mapping email=email,given_name=given_name,family_name=family_name,name=name,username=sub,phone_number=sub,address=email \
+    >/dev/null
+}
+
 main() {
   log "Deploy federated PreSignUp Lambda (pool $POOL_ID)"
   ensure_lambda_role
   deploy_lambda
   attach_to_user_pool
+  sync_google_attribute_mapping
   log "Done. Google sign-up should succeed and redirect to /signup/complete-profile."
 }
 

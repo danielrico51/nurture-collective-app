@@ -16,9 +16,12 @@ export const isPlaceholderPhone = (value?: string | null): boolean => {
   );
 };
 
-export const isPlaceholderAddress = (value?: string | null): boolean => {
+export const isPlaceholderAddress = (value?: string | null, email?: string | null): boolean => {
   const trimmed = value?.trim() ?? "";
-  return !trimmed || trimmed === FEDERATED_PLACEHOLDER_ADDRESS;
+  if (!trimmed || trimmed === FEDERATED_PLACEHOLDER_ADDRESS) return true;
+  // Cognito maps address=email when Google does not provide address.
+  if (email && trimmed === email.trim()) return true;
+  return false;
 };
 
 const isValidCustomUsername = (value?: string | null): boolean => {
@@ -34,5 +37,5 @@ export const needsFederatedProfileCompletion = (
   attributes: Record<string, string | undefined>
 ): boolean =>
   isPlaceholderPhone(attributes.phone_number) ||
-  isPlaceholderAddress(attributes.address) ||
+  isPlaceholderAddress(attributes.address, attributes.email) ||
   !isValidCustomUsername(attributes["custom:username"]);

@@ -53,8 +53,9 @@ export function FederatedProfileCompletionForm({
         setShowPhone(isPlaceholderPhone(phone));
 
         const addr = attributes.address ?? "";
-        setAddress(isPlaceholderAddress(addr) ? "" : addr);
-        setShowAddress(isPlaceholderAddress(addr));
+        const email = attributes.email ?? "";
+        setAddress(isPlaceholderAddress(addr, email) ? "" : addr);
+        setShowAddress(isPlaceholderAddress(addr, email));
       })
       .catch(() => setError("Could not load your profile. Try signing in again."))
       .finally(() => setLoading(false));

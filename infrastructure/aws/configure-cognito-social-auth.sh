@@ -34,7 +34,9 @@ LOGOUT_URLS=(
   "https://d84l1y8p4kdic.cloudfront.net/"
 )
 
-ATTRIBUTE_MAPPING='email=email,given_name=given_name,family_name=family_name,name=name,username=sub,phone_number=phone_number,address=address'
+# Cognito requires mappings for required pool attrs; Google only sends profile/email/openid.
+# Map placeholders from sub/email — PreSignUp Lambda normalizes before user creation.
+ATTRIBUTE_MAPPING='email=email,given_name=given_name,family_name=family_name,name=name,username=sub,phone_number=sub,address=email'
 
 log() { printf '→ %s\n' "$*"; }
 warn() { printf '⚠ %s\n' "$*" >&2; }
