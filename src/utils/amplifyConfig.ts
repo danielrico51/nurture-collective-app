@@ -91,4 +91,8 @@ export const configureAmplify = () => {
   configured = true;
 };
 
+if (typeof window !== "undefined") {
+  configureAmplify();
+}
+
 export const isAmplifyConfigured = () => configured;

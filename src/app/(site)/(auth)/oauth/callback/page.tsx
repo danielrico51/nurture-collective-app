@@ -60,12 +60,14 @@ export default function OAuthCallbackPage() {
           await waitForOAuthCallbackCompletion();
         }
         await finish();
-      } catch {
+      } catch (error) {
         if (!cancelled) {
-          setMessage("Sign-in is taking longer than expected. Redirecting…");
-          router.replace(
-            "/signin?oauthError=Sign-in%20timed%20out.%20Please%20try%20again."
-          );
+          const detail =
+            error instanceof Error
+              ? error.message
+              : "Sign-in timed out. Please try again.";
+          setMessage(`${detail} Redirecting…`);
+          router.replace(`/signin?oauthError=${encodeURIComponent(detail)}`);
         }
       }
     };
