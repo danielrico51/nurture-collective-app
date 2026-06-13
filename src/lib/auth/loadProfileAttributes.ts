@@ -1,6 +1,8 @@
 import { configureAmplify } from "@/utils/amplifyConfig";
 import { fetchAuthSession, fetchUserAttributes } from "aws-amplify/auth";
 
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
 const idTokenAttributes = (
   payload: Record<string, unknown> | undefined
 ): Partial<Record<string, string>> => {
@@ -22,14 +24,23 @@ const idTokenAttributes = (
   };
 };
 
+const waitForAuthIdToken = async (maxWaitMs = 8000): Promise<string> => {
+  const deadline = Date.now() + maxWaitMs;
+
+  while (Date.now() < deadline) {
+    const session = await fetchAuthSession();
+    const token = session.tokens?.idToken?.toString();
+    if (token) return token;
+    await sleep(200);
+  }
+
+  throw new Error("Not authenticated");
+};
+
 const loadProfileAttributesFromServer = async (): Promise<
   Partial<Record<string, string>>
 > => {
-  const session = await fetchAuthSession();
-  const token = session.tokens?.idToken?.toString();
-  if (!token) {
-    throw new Error("Not authenticated");
-  }
+  const token = await waitForAuthIdToken();
 
   const response = await fetch("/api/account/profile", {
     headers: { Authorization: `Bearer ${token}` },
@@ -50,37 +61,47 @@ const loadProfileAttributesFromServer = async (): Promise<
   return payload.attributes ?? {};
 };
 
-/** Load Cognito profile attributes, with server + ID token fallbacks for OAuth sessions. */
+/** Load Cognito profile attributes, preferring the server API for OAuth sessions. */
 export const loadProfileAttributes = async (): Promise<
   Partial<Record<string, string>>
 > => {
   configureAmplify();
 
   try {
+    const serverAttributes = await loadProfileAttributesFromServer();
+    if (Object.keys(serverAttributes).length > 0) {
+      return serverAttributes;
+    }
+  } catch {
+    /* fall through to client-side loaders */
+  }
+
+  try {
     return await fetchUserAttributes();
   } catch {
     try {
-      return await loadProfileAttributesFromServer();
+      await fetchAuthSession({ forceRefresh: true });
+      return await fetchUserAttributes();
     } catch {
       try {
-        await fetchAuthSession({ forceRefresh: true });
-        return await fetchUserAttributes();
-      } catch {
-        try {
-          return await loadProfileAttributesFromServer();
-        } catch {
-          const session = await fetchAuthSession();
-          const fromIdToken = idTokenAttributes(
-            session.tokens?.idToken?.payload as Record<string, unknown> | undefined
-          );
-
-          if (Object.values(fromIdToken).some(Boolean)) {
-            return fromIdToken;
-          }
-
-          throw new Error("Could not load your profile");
+        const serverAttributes = await loadProfileAttributesFromServer();
+        if (Object.keys(serverAttributes).length > 0) {
+          return serverAttributes;
         }
+      } catch {
+        const session = await fetchAuthSession();
+        const fromIdToken = idTokenAttributes(
+          session.tokens?.idToken?.payload as Record<string, unknown> | undefined
+        );
+
+        if (Object.values(fromIdToken).some(Boolean)) {
+          return fromIdToken;
+        }
+
+        throw new Error("Could not load your profile");
       }
     }
   }
+
+  throw new Error("Could not load your profile");
 };

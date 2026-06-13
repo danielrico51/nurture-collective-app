@@ -14,13 +14,28 @@ const buildCompleteProfilePath = (returnTo: string | null | undefined) => {
 export const resolvePostAuthPath = async (
   returnTo: string | null | undefined
 ): Promise<string> => {
-  try {
-    const attributes = await loadProfileAttributes();
-    if (needsFederatedProfileCompletion(attributes)) {
+  for (let attempt = 0; attempt < 4; attempt += 1) {
+    try {
+      const attributes = await loadProfileAttributes();
+      if (!needsFederatedProfileCompletion(attributes)) {
+        if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {
+          return returnTo;
+        }
+        return resolveMemberHomePath();
+      }
+
+      if (attempt < 3) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        continue;
+      }
+
       return buildCompleteProfilePath(returnTo);
+    } catch {
+      if (attempt < 3) {
+        await new Promise((resolve) => setTimeout(resolve, 300));
+        continue;
+      }
     }
-  } catch {
-    /* not signed in or attributes unavailable */
   }
 
   if (returnTo && returnTo.startsWith("/") && !returnTo.startsWith("//")) {

@@ -42,6 +42,17 @@ describe("needsFederatedProfileCompletion", () => {
     expect(needsFederatedProfileCompletion(complete)).toBe(false);
   });
 
+  it("returns false for a completed Google-linked member profile", () => {
+    expect(
+      needsFederatedProfileCompletion({
+        email: "operations@nesting-place.com",
+        phone_number: "+12018928961",
+        address: "215 Country Route 1",
+        "custom:username": "santi_campo",
+      })
+    ).toBe(false);
+  });
+
   it("flags placeholder phone and address from federated PreSignUp", () => {
     expect(
       needsFederatedProfileCompletion({

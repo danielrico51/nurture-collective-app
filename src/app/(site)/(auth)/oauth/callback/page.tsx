@@ -47,8 +47,12 @@ export default function OAuthCallbackPage() {
     }
 
     let cancelled = false;
+    let finished = false;
 
     const finish = async () => {
+      if (finished || cancelled) return;
+      finished = true;
+
       const returnTo = readAuthReturnTo();
       const path = await resolvePostAuthPath(returnTo);
       if (!cancelled) router.replace(path);
@@ -61,6 +65,7 @@ export default function OAuthCallbackPage() {
         }
         await finish();
       } catch (error) {
+        finished = false;
         if (!cancelled) {
           const detail =
             error instanceof Error
@@ -75,9 +80,6 @@ export default function OAuthCallbackPage() {
     void complete();
 
     const unsubscribe = Hub.listen("auth", ({ payload }) => {
-      if (payload.event === "signedIn") {
-        void finish();
-      }
       if (payload.event === "signInWithRedirect_failure") {
         setMessage("Sign in was cancelled or failed. Redirecting…");
         router.replace("/signin?oauthError=Sign%20in%20was%20cancelled%20or%20failed");
