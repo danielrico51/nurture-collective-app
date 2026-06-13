@@ -120,7 +120,7 @@ Amplify’s CDN/SSR layer rejects large **multipart** bodies to Next.js route ha
 
 1. Client compresses image (avatars) or validates size (post photos).
 2. `POST /api/.../presign` with JSON `{ contentType }` → small response with presigned **PUT** URL.
-3. Browser uploads bytes **directly to S3** (CORS allowed for Amplify origins).
+3. Browser uploads bytes **directly to S3** (CORS must include your app origin — run `infrastructure/aws/scripts/configure-community-media-cors.sh`).
 4. Avatars: `PATCH /api/community/users/me` with `avatar_url`.
 5. Posts: create post with `image_urls` pointing at `/api/community/media/...` (Next.js reads from S3 and streams GET).
 
