@@ -4,7 +4,7 @@ export type SocialAuthProvider = "Google" | "Facebook" | "Apple";
  * Set to true only when Cognito Hosted UI + provider apps are verified end-to-end.
  * Until then, social buttons stay hidden regardless of env flags.
  */
-export const SOCIAL_AUTH_INTEGRATION_READY = false;
+export const SOCIAL_AUTH_INTEGRATION_READY = true;
 
 const parseEnabled = (value: string | undefined): boolean =>
   value === "true" || value === "1";

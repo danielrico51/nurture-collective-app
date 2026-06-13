@@ -20,6 +20,8 @@ CALLBACK_URLS=(
   "http://localhost:3000/oauth/callback"
   "https://dev.d9588bqvrp5xs.amplifyapp.com/oauth/callback"
   "https://main.d9588bqvrp5xs.amplifyapp.com/oauth/callback"
+  "https://www.nesting-place.com/oauth/callback"
+  "https://nesting-place.com/oauth/callback"
   "https://d84l1y8p4kdic.cloudfront.net/oauth/callback"
 )
 
@@ -27,10 +29,12 @@ LOGOUT_URLS=(
   "http://localhost:3000/"
   "https://dev.d9588bqvrp5xs.amplifyapp.com/"
   "https://main.d9588bqvrp5xs.amplifyapp.com/"
+  "https://www.nesting-place.com/"
+  "https://nesting-place.com/"
   "https://d84l1y8p4kdic.cloudfront.net/"
 )
 
-ATTRIBUTE_MAPPING='email=email,given_name=given_name,family_name=family_name,username=sub'
+ATTRIBUTE_MAPPING='email=email,given_name=given_name,family_name=family_name,name=name,username=sub,phone_number=phone_number,address=address'
 
 log() { printf '→ %s\n' "$*"; }
 warn() { printf '⚠ %s\n' "$*" >&2; }

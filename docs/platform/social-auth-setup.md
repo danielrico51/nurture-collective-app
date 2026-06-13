@@ -25,15 +25,28 @@ Hosted UI domain: `us-east-1ruftimytf` → full domain `us-east-1ruftimytf.auth.
 
 ### Automated setup (recommended)
 
-1. Copy `infrastructure/aws/cognito-social-auth.env.example` → `infrastructure/aws/cognito-social-auth.env`.
-2. Add OAuth credentials from Google, Meta, and Apple (see sections below).
-3. Run:
+1. Ensure a **Web application** OAuth client exists in [Google Cloud → Auth → Clients](https://console.cloud.google.com/auth/clients?project=boxwood-magnet-498623-n4) for project `boxwood-magnet-498623-n4`.
+   - Google does **not** expose standard OAuth Web Client create/list via `gcloud` (only Console or IAP/workforce APIs).
+   - Reuse an existing Web client or create one named e.g. `Nesting Place Cognito`.
+2. On that OAuth client, add **Authorized redirect URI**:
+   `https://us-east-1ruftimytf.auth.us-east-1.amazoncognito.com/oauth2/idpresponse`
+3. Put credentials in `infrastructure/aws/cognito-social-auth.env` **or** set `GOOGLE_COGNITO_CLIENT_ID` / `GOOGLE_COGNITO_CLIENT_SECRET` in `.env.local` (the setup script can also reuse `GOOGLE_TASKS_OAUTH_*` as a fallback).
+4. Run:
 
 ```bash
-./infrastructure/aws/configure-cognito-social-auth.sh
+npm run setup:cognito-google
+# or: ./infrastructure/google/setup-cognito-google-oauth.sh
 ```
 
-The script creates or updates federated identity providers and enables them on the app client. **OAuth client secrets are not stored in the repo** — only in your local env file (gitignored).
+The script writes `cognito-social-auth.env` (gitignored), creates/updates the **Google** identity provider in Cognito, and enables **Google** on the app client. **OAuth client secrets are not stored in the repo.**
+
+**Cognito Google federation fields (if configuring in Console manually):**
+
+| Field | Value |
+|-------|--------|
+| Client ID | From Google Web OAuth client |
+| Client secret | From same client |
+| Authorized scopes | `profile email openid` |
 
 **Amplify Gen 2 (optional):** `amplify/auth/resource.ts` declares the same providers using `npx ampx sandbox secret set GOOGLE_CLIENT_ID` (and related secrets) before `npx ampx sandbox deploy`.
 
@@ -86,7 +99,7 @@ Map federated attributes to user pool attributes as needed:
 - `given_name` → `given_name`
 - `family_name` → `family_name`
 
-Social sign-up may not collect custom attributes (`custom:username`, `phone_number`, `address`) on first login. Consider a post-sign-up profile step or mark those attributes optional for federated users.
+Social sign-up may not collect custom attributes (`custom:username`, `phone_number`, `address`) on first login — Google only sends `profile email openid` by default. The pool currently requires `phone_number` and `address`; federated users may need a **post-sign-up profile step** until those attributes are collected or made optional.
 
 ## Code references
 
