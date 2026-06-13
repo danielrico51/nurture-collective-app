@@ -8,6 +8,7 @@ out/
 # Env
 .env*.local
 infrastructure/aws/cognito-social-auth.env
+infrastructure/aws/cognito-resend-email.env
 *.local
 .data/
 

@@ -1,0 +1,8 @@
+{
+  "name": "cognito-custom-email-resend",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "@aws-crypto/client-node": "^4.2.1"
+  }
+}
