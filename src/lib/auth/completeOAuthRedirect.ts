@@ -3,15 +3,39 @@ import {
   getOAuthCallbackUrl,
 } from "@/config/socialAuth";
 import { configureAmplify } from "@/utils/amplifyConfig";
+import { cognitoUserPoolsTokenProvider } from "aws-amplify/auth/cognito";
 import { decodeJWT, fetchAuthSession, getCurrentUser } from "aws-amplify/auth";
 
-const AUTH_KEY_PREFIX = "CognitoIdentityServiceProvider";
 const OAUTH_PKCE_KEY = "oauthPKCE";
 const OAUTH_STATE_KEY = "oauthState";
 const OAUTH_INFLIGHT_KEY = "inflightOAuth";
-const OAUTH_SIGN_IN_KEY = "oauthSignIn";
+const AUTH_KEY_PREFIX = "CognitoIdentityServiceProvider";
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+type TokenOrchestratorLike = {
+  setTokens: (input: {
+    tokens: {
+      accessToken: ReturnType<typeof decodeJWT>;
+      idToken?: ReturnType<typeof decodeJWT>;
+      refreshToken?: string;
+      clockDrift: number;
+      username: string;
+      signInDetails?: {
+        loginId?: string;
+        authFlowType?: string;
+      };
+    };
+  }) => Promise<void>;
+  setOAuthMetadata: (metadata: { oauthSignIn: boolean }) => Promise<void>;
+};
+
+const getTokenOrchestrator = (): TokenOrchestratorLike =>
+  (
+    cognitoUserPoolsTokenProvider as unknown as {
+      tokenOrchestrator: TokenOrchestratorLike;
+    }
+  ).tokenOrchestrator;
 
 const getClientId = () => {
   const clientId = process.env.NEXT_PUBLIC_USER_POOL_CLIENT_ID?.trim();
@@ -23,12 +47,6 @@ const getClientId = () => {
 
 const oauthStorageKey = (clientId: string, suffix: string) =>
   `${AUTH_KEY_PREFIX}.${clientId}.${suffix}`;
-
-const tokenStorageKey = (
-  clientId: string,
-  username: string,
-  suffix: string
-) => `${AUTH_KEY_PREFIX}.${clientId}.${username}.${suffix}`;
 
 const resolveRedirectUri = (): string => {
   const callbackUrl = getOAuthCallbackUrl();
@@ -65,55 +83,59 @@ const clearOAuthTransientState = (clientId: string) => {
   }
 };
 
-const storeCognitoTokens = ({
-  clientId,
-  username,
+const resolveStoredUsername = (accessToken: string, idToken?: string) => {
+  const accessPayload = decodeJWT(accessToken).payload;
+  const idPayload = idToken ? decodeJWT(idToken).payload : undefined;
+
+  const candidates = [
+    idPayload?.["cognito:username"],
+    accessPayload.username,
+    idPayload?.sub,
+    accessPayload.sub,
+  ];
+
+  for (const candidate of candidates) {
+    if (typeof candidate === "string" && candidate.trim()) {
+      return candidate;
+    }
+  }
+
+  return "username";
+};
+
+const persistOAuthTokens = async ({
   accessToken,
   idToken,
   refreshToken,
 }: {
-  clientId: string;
-  username: string;
   accessToken: string;
   idToken?: string;
   refreshToken?: string;
 }) => {
-  const decoded = decodeJWT(accessToken);
-  const issuedAtMs = (decoded.payload.iat ?? 0) * 1000;
-  const clockDrift =
-    issuedAtMs > 0 ? issuedAtMs - Date.now() : 0;
+  const decodedAccess = decodeJWT(accessToken);
+  const decodedId = idToken ? decodeJWT(idToken) : undefined;
+  const username = resolveStoredUsername(accessToken, idToken);
+  const issuedAtMs = (decodedAccess.payload.iat ?? 0) * 1000;
+  const clockDrift = issuedAtMs > 0 ? issuedAtMs - Date.now() : 0;
+  const loginId =
+    typeof decodedId?.payload.email === "string"
+      ? decodedId.payload.email
+      : undefined;
 
-  window.localStorage.setItem(
-    `${AUTH_KEY_PREFIX}.${clientId}.LastAuthUser`,
-    username
-  );
-  window.localStorage.setItem(
-    tokenStorageKey(clientId, username, "accessToken"),
-    accessToken
-  );
-  window.localStorage.setItem(
-    tokenStorageKey(clientId, username, "clockDrift"),
-    String(clockDrift)
-  );
-
-  if (idToken) {
-    window.localStorage.setItem(
-      tokenStorageKey(clientId, username, "idToken"),
-      idToken
-    );
-  }
-
-  if (refreshToken) {
-    window.localStorage.setItem(
-      tokenStorageKey(clientId, username, "refreshToken"),
-      refreshToken
-    );
-  }
-
-  window.localStorage.setItem(
-    oauthStorageKey(clientId, OAUTH_SIGN_IN_KEY),
-    "true,false"
-  );
+  const orchestrator = getTokenOrchestrator();
+  await orchestrator.setTokens({
+    tokens: {
+      accessToken: decodedAccess,
+      idToken: decodedId,
+      refreshToken,
+      clockDrift,
+      username,
+      signInDetails: loginId
+        ? { loginId, authFlowType: "CUSTOM_AUTH_WITHOUT_SRP" }
+        : undefined,
+    },
+  });
+  await orchestrator.setOAuthMetadata({ oauthSignIn: true });
 };
 
 const exchangeAuthorizationCode = async (code: string, state: string) => {
@@ -171,12 +193,7 @@ const exchangeAuthorizationCode = async (code: string, state: string) => {
     throw new Error("OAuth token exchange returned no access token");
   }
 
-  const username =
-    decodeJWT(payload.access_token).payload.username?.toString() || "username";
-
-  storeCognitoTokens({
-    clientId,
-    username,
+  await persistOAuthTokens({
     accessToken: payload.access_token,
     idToken: payload.id_token,
     refreshToken: payload.refresh_token,

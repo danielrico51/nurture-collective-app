@@ -4,10 +4,11 @@ import {
   attributesToProfileForm,
   profileFormToUserAttributes,
 } from "@/lib/auth/profileAttributes";
+import { loadProfileAttributes } from "@/lib/auth/loadProfileAttributes";
 import { formatCognitoPhoneAttribute } from "@/utils/signUpAttributes";
 import type { ProfileFormData } from "@/types/profile";
 import { emptyProfileForm } from "@/types/profile";
-import { fetchUserAttributes, updateUserAttributes } from "aws-amplify/auth";
+import { updateUserAttributes } from "aws-amplify/auth";
 import { ProfileAvatarField } from "@/components/Account/ProfileAvatarField";
 import { FormEvent, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -24,9 +25,13 @@ const ProfileForm = () => {
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
-    fetchUserAttributes()
+    loadProfileAttributes()
       .then((attributes) => setForm(attributesToProfileForm(attributes)))
-      .catch(() => toast.error("Could not load your profile"))
+      .catch((error) =>
+        toast.error(
+          error instanceof Error ? error.message : "Could not load your profile"
+        )
+      )
       .finally(() => setLoading(false));
   }, []);
 
@@ -71,7 +76,7 @@ const ProfileForm = () => {
       }
 
       toast.success("Profile updated");
-      const refreshed = await fetchUserAttributes();
+      const refreshed = await loadProfileAttributes();
       setForm(attributesToProfileForm(refreshed));
     } catch (error) {
       toast.error(

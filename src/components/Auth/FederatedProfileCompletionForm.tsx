@@ -13,7 +13,8 @@ import {
   resolveCognitoUsername,
   splitPhoneForAmplifyForm,
 } from "@/utils/signUpAttributes";
-import { fetchUserAttributes, updateUserAttributes } from "aws-amplify/auth";
+import { loadProfileAttributes } from "@/lib/auth/loadProfileAttributes";
+import { updateUserAttributes } from "aws-amplify/auth";
 import { FormEvent, useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
@@ -39,7 +40,7 @@ export function FederatedProfileCompletionForm({
   const [showAddress, setShowAddress] = useState(false);
 
   useEffect(() => {
-    fetchUserAttributes()
+    loadProfileAttributes()
       .then((attributes) => {
         if (!needsFederatedProfileCompletion(attributes)) {
           void resolvePostAuthPath(returnTo).then((path) => router.replace(path));
