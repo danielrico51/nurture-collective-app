@@ -1,4 +1,5 @@
 import type { ProfileFormData } from "@/types/profile";
+import { formatCognitoPhoneAttribute } from "@/utils/signUpAttributes";
 
 export const attributesToProfileForm = (
   attributes: Partial<Record<string, string>>
