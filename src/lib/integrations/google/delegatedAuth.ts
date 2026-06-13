@@ -26,7 +26,10 @@ const createSourceClient = async (
   if (!forceAdc) {
     const wifConfig = getGoogleWorkloadIdentityConfig();
     if (wifConfig) {
-      return createWorkloadIdentityAwsClient(wifConfig);
+      // Federated principal token (not SA impersonation) calls IAM signJwt.
+      return createWorkloadIdentityAwsClient(wifConfig, {
+        impersonateServiceAccount: false,
+      });
     }
   }
 

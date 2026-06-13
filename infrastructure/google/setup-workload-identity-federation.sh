@@ -92,7 +92,14 @@ gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
   --member="principalSet://iam.googleapis.com/${POOL_RESOURCE}/*" \
   --quiet
 
-log "Granting serviceAccountTokenCreator to ${SA_EMAIL} (self) for IAM signJwt after WIF impersonation"
+log "Granting serviceAccountTokenCreator to WIF principal (IAM signJwt for delegation)"
+gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
+  --project="$PROJECT_ID" \
+  --role="roles/iam.serviceAccountTokenCreator" \
+  --member="principalSet://iam.googleapis.com/${POOL_RESOURCE}/*" \
+  --quiet
+
+log "Granting serviceAccountTokenCreator to ${SA_EMAIL} (self) for optional SA impersonation paths"
 gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
   --project="$PROJECT_ID" \
   --role="roles/iam.serviceAccountTokenCreator" \

@@ -13,8 +13,8 @@ Delegated calendar access previously stored a human `gcloud` refresh token in Am
 ```
 Amplify SSR (AWS IAM role)
   → Google STS (workload identity pool)
-  → impersonate nurture-tasks-sync service account
-  → IAM signJwt → domain-wide delegation as admin@
+  → federated principal calls IAM signJwt on nurture-tasks-sync
+  → domain-wide delegation as admin@
   → Calendar API
 ```
 
@@ -64,4 +64,4 @@ After WIF is verified, remove `GOOGLE_CALENDAR_ADC_JSON` and `GOOGLE_TASKS_ADC_J
 - Domain-wide delegation for `nurture-tasks-sync` in Google Workspace Admin
 - Calendar owned/managed by `admin@nesting-place.com`
 - Amplify compute role: `NurtureCollectiveAmplifyComputeRole` (or server IAM user)
-- Service account can call `signJwt` on itself (`roles/iam.serviceAccountTokenCreator` for `serviceAccount:nurture-tasks-sync@...` on that same SA — applied by `npm run setup:google-wif`)
+- Service account grants `roles/iam.serviceAccountTokenCreator` to the WIF principal set (`principalSet://.../nurture-amplify-aws/*`) so federated AWS identities can call `signJwt` — applied by `npm run setup:google-wif`

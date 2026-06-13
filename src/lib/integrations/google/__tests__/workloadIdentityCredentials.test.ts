@@ -28,6 +28,14 @@ describe("buildWorkloadIdentityCredentials", () => {
     );
     expect(creds.credential_source).toBeUndefined();
   });
+
+  it("omits impersonation URL when signJwt uses federated principal token", () => {
+    const creds = buildWorkloadIdentityCredentials(config, {
+      impersonateServiceAccount: false,
+    });
+
+    expect(creds.service_account_impersonation_url).toBeUndefined();
+  });
 });
 
 describe("buildAwsSecurityCredentialsSupplier", () => {
