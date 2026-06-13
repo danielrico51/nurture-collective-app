@@ -8,7 +8,8 @@ export type GoogleTasksAuthMode =
   | "adc"
   | "impersonate"
   | "delegated"
-  | "oauth";
+  | "oauth"
+  | "wif";
 
 /** personal = each team member connects their Google account; legacy = single admin list */
 export type GoogleTasksSyncMode = "personal" | "legacy";
@@ -97,6 +98,7 @@ export const isGoogleTasksConfigured = (): boolean => {
     case "adc":
     case "impersonate":
     case "delegated":
+    case "wif":
       return true;
     case "oauth":
       return Boolean(
