@@ -87,13 +87,27 @@ attach_to_user_pool() {
     >/dev/null 2>&1 || true
 
   local lambda_config
-  lambda_config="$(merge_cognito_lambda_config "$POOL_ID" "$REGION" "PreSignUp=${function_arn}")"
+  lambda_config="$(merge_cognito_lambda_config \
+    "$POOL_ID" \
+    "$REGION" \
+    "PreSignUp=${function_arn}" \
+    "InboundFederationArn=${function_arn}")"
 
-  log "Attaching PreSignUp trigger to user pool $POOL_ID (preserving other Lambda triggers)"
-  aws cognito-idp update-user-pool \
-    --user-pool-id "$POOL_ID" \
-    --lambda-config "$lambda_config" \
-    --region "$REGION" >/dev/null
+  log "Attaching PreSignUp + InboundFederation triggers to user pool $POOL_ID (preserving other Lambda triggers)"
+  if python3 "$ROOT/infrastructure/aws/scripts/lib/update-cognito-lambda-config.py" \
+    --pool-id "$POOL_ID" \
+    --region "$REGION" \
+    "PreSignUp=${function_arn}" \
+    "InboundFederationArn=${function_arn}" >/dev/null 2>&1; then
+    :
+  else
+    log "Falling back to aws cli update-user-pool (InboundFederation may require newer CLI)"
+    aws cognito-idp update-user-pool \
+      --user-pool-id "$POOL_ID" \
+      --auto-verified-attributes email \
+      --lambda-config "$lambda_config" \
+      --region "$REGION" >/dev/null
+  fi
 }
 
 sync_google_attribute_mapping() {
@@ -105,12 +119,12 @@ sync_google_attribute_mapping() {
     return
   fi
 
-  log "Syncing Google attribute mapping (placeholder phone/address from sub/email)"
+  log "Syncing Google attribute mapping (phone_number=phone_number; PreSignUp injects placeholder)"
   aws cognito-idp update-identity-provider \
     --user-pool-id "$POOL_ID" \
     --provider-name Google \
     --region "$REGION" \
-    --attribute-mapping email=email,given_name=given_name,family_name=family_name,name=name,username=sub,phone_number=sub,address=email \
+    --attribute-mapping email=email,given_name=given_name,family_name=family_name,name=name,username=sub,phone_number=phone_number,address=email \
     >/dev/null
 }
 

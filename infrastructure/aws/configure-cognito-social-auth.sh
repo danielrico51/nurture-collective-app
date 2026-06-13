@@ -34,9 +34,10 @@ LOGOUT_URLS=(
   "https://d84l1y8p4kdic.cloudfront.net/"
 )
 
-# Cognito requires mappings for required pool attrs; Google only sends profile/email/openid.
-# Map placeholders from sub/email — PreSignUp Lambda normalizes before user creation.
-ATTRIBUTE_MAPPING='email=email,given_name=given_name,family_name=family_name,name=name,username=sub,phone_number=sub,address=email'
+# Cognito requires phone_number + address in the IdP mapping. Google does not send phone.
+# Never map phone_number=sub — Google's numeric sub fails Cognito E.164 validation before PreSignUp runs.
+# Map phone_number=phone_number (empty OIDC claim); PreSignUp Lambda injects a valid placeholder.
+ATTRIBUTE_MAPPING='email=email,given_name=given_name,family_name=family_name,name=name,username=sub,phone_number=phone_number,address=email'
 
 log() { printf '→ %s\n' "$*"; }
 warn() { printf '⚠ %s\n' "$*" >&2; }

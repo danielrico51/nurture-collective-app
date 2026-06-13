@@ -6,8 +6,12 @@ import {
   getOAuthSignOutUrl,
 } from "@/config/socialAuth";
 import { Amplify } from "aws-amplify";
+import { signInWithRedirect } from "aws-amplify/auth";
 import { cognitoUserPoolsTokenProvider } from "aws-amplify/auth/cognito";
 import { defaultStorage } from "aws-amplify/utils";
+
+// Registers Amplify's OAuth redirect listener (completeOAuthFlow on /oauth/callback).
+void signInWithRedirect;
 
 let configured = false;
 
@@ -32,6 +36,14 @@ export const configureAmplify = () => {
   const oauthDomain = getCognitoOAuthDomain();
   const socialProviders = getEnabledSocialProviders();
   const appBaseUrl = getAppBaseUrl();
+  const callbackUrl = getOAuthCallbackUrl();
+  const callbackUrls = Array.from(
+    new Set([
+      callbackUrl,
+      callbackUrl.replace("://www.", "://"),
+      callbackUrl.replace("://", "://www."),
+    ])
+  );
 
   const loginWith: {
     email: boolean;
@@ -55,7 +67,7 @@ export const configureAmplify = () => {
     loginWith.oauth = {
       domain: oauthDomain,
       scopes: ["openid", "email", "profile"],
-      redirectSignIn: [getOAuthCallbackUrl()],
+      redirectSignIn: callbackUrls,
       redirectSignOut: [getOAuthSignOutUrl()],
       responseType: "code",
       providers: socialProviders,

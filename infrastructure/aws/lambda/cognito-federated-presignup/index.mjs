@@ -29,19 +29,57 @@ const deriveUsername = (attrs) => {
   return base.slice(0, 50);
 };
 
+const readIdpAttributes = (event) => {
+  const { providerType, attributes } = event.request;
+  if (providerType === "SAML") {
+    return { ...(attributes.samlResponse || {}) };
+  }
+  return {
+    ...(attributes.userInfo || {}),
+    ...(attributes.idToken || {}),
+  };
+};
+
+const applyFederatedPlaceholders = (attrs) => {
+  const email = attrs.email || "";
+
+  if (!isValidCognitoPhoneNumber(attrs.phone_number || "")) {
+    attrs.phone_number = PLACEHOLDER_PHONE;
+  }
+
+  if (isPlaceholderAddress(attrs.address, email)) {
+    attrs.address = PLACEHOLDER_ADDRESS;
+  }
+
+  if (!attrs.name?.trim()) {
+    const given = attrs.given_name?.trim() || "";
+    const family = attrs.family_name?.trim() || "";
+    const combined = [given, family].filter(Boolean).join(" ").trim();
+    if (combined) attrs.name = combined;
+  }
+
+  return attrs;
+};
+
 /**
  * Cognito user pools cannot relax required attributes after creation.
- * Federated IdPs (Google) do not send phone_number or address, so Cognito
- * maps placeholder claims (sub/email) and this trigger normalizes them.
+ * Google does not send phone_number. InboundFederation runs before Cognito
+ * validates mapped attributes; PreSignUp finalizes custom:username + auto-confirm.
  */
 export const handler = async (event) => {
-  console.log("PreSignUp trigger:", event.triggerSource, event.userName);
+  console.log("Federated auth trigger:", event.triggerSource, event.userName);
+
+  if (event.triggerSource === "InboundFederation_ExternalProvider") {
+    const idpAttributes = applyFederatedPlaceholders(readIdpAttributes(event));
+    event.response = event.response || {};
+    event.response.userAttributesToMap = idpAttributes;
+    return event;
+  }
 
   if (event.triggerSource === "PreSignUp_ExternalProvider") {
     const attrs = event.request.userAttributes;
     const email = attrs.email || "";
 
-    // Always replace Google sub / invalid interim values with valid Cognito E.164.
     if (!isValidCognitoPhoneNumber(attrs.phone_number || "")) {
       event.request.userAttributes.phone_number = PLACEHOLDER_PHONE;
     }

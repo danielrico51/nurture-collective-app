@@ -258,6 +258,7 @@ attach_to_user_pool() {
   log "Attaching CustomEmailSender + KMS to user pool $POOL_ID (preserving PreSignUp)"
   aws cognito-idp update-user-pool \
     --user-pool-id "$POOL_ID" \
+    --auto-verified-attributes email \
     --lambda-config "$lambda_config" \
     --region "$REGION" >/dev/null
 }

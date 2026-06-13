@@ -99,7 +99,7 @@ Map federated attributes to user pool attributes as needed:
 - `given_name` → `given_name`
 - `family_name` → `family_name`
 
-Social sign-up may not collect custom attributes (`custom:username`, `phone_number`, `address`) on first login — Google only sends `profile email openid` by default. A **PreSignUp Lambda** injects placeholders so Cognito can create the user; the app then sends members to `/signup/complete-profile` to collect phone and address.
+Social sign-up may not collect custom attributes (`custom:username`, `phone_number`, `address`) on first login — Google only sends `profile email openid` by default. An **Inbound Federation Lambda** injects a valid placeholder `phone_number` before Cognito validates mapped attributes; **PreSignUp** then sets `custom:username`, auto-confirms the user, and the app sends members to `/signup/complete-profile` to collect phone and address.
 
 Deploy the Lambda once per pool:
 
@@ -107,7 +107,7 @@ Deploy the Lambda once per pool:
 npm run setup:cognito-federated-presignup
 ```
 
-Cognito also requires `phone_number` and `address` in the Google IdP attribute mapping. Google does not send those claims, so the mapping uses `phone_number=sub` and `address=email` as placeholders; the PreSignUp Lambda replaces them before the user is created.
+Cognito also requires `phone_number` and `address` in the Google IdP attribute mapping. Google does not send `phone_number`, so map `phone_number=phone_number` (empty OIDC claim) and `address=email`. **Do not** map `phone_number=sub` — Google's numeric `sub` fails Cognito's E.164 check. The **Inbound Federation** + **PreSignUp** Lambdas inject a valid placeholder phone and address before the user is created.
 
 ## Code references
 

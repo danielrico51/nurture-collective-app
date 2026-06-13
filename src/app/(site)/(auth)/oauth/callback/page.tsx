@@ -1,39 +1,49 @@
 "use client";
 
+import { waitForOAuthCallbackCompletion } from "@/lib/auth/completeOAuthRedirect";
 import { readAuthReturnTo } from "@/config/socialAuth";
 import { resolvePostAuthPath } from "@/lib/auth/postAuthNavigation";
-import { getCurrentUser } from "aws-amplify/auth";
+import { configureAmplify } from "@/utils/amplifyConfig";
 import { Hub } from "aws-amplify/utils";
 import { useRouter, useSearchParams } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 const decodeOAuthError = (description: string | null, error: string | null) => {
   const raw = description || error || "Sign in failed";
   return decodeURIComponent(raw.replace(/\+/g, " "));
 };
 
+const friendlyOAuthError = (detail: string) => {
+  if (/attributes required/i.test(detail)) {
+    return "Google sign-in could not finish because required profile fields were missing. Please try Google sign-in again.";
+  }
+  if (/invalid phone number/i.test(detail)) {
+    return "Google sign-in could not finish due to a phone validation error. Please try again.";
+  }
+  return detail;
+};
+
 export default function OAuthCallbackPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [message, setMessage] = useState("Completing sign in…");
+  const oauthError = searchParams.get("error");
+  const oauthErrorDescription = searchParams.get("error_description");
+  const oauthCode = searchParams.get("code");
+  const friendlyError = useMemo(() => {
+    if (!oauthError) return null;
+    const detail = decodeOAuthError(oauthErrorDescription, oauthError);
+    return friendlyOAuthError(detail);
+  }, [oauthError, oauthErrorDescription]);
+  const [message, setMessage] = useState(
+    friendlyError ? `${friendlyError} Redirecting…` : "Completing sign in…"
+  );
 
   useEffect(() => {
-    const oauthError = searchParams.get("error");
-    const oauthErrorDescription = searchParams.get("error_description");
+    configureAmplify();
 
-    if (oauthError) {
-      const detail = decodeOAuthError(oauthErrorDescription, oauthError);
-      const friendly = /attributes required/i.test(detail)
-        ? "Google sign-in needs a quick profile step, but Cognito rejected the account before sign-in finished. Please try Google sign-in again."
-        : detail;
-
-      setMessage(`${friendly} Redirecting…`);
-      const timeout = window.setTimeout(() => {
-        router.replace(
-          `/signin?oauthError=${encodeURIComponent(friendly)}`
-        );
-      }, 2500);
-      return () => window.clearTimeout(timeout);
+    if (friendlyError) {
+      router.replace(`/signin?oauthError=${encodeURIComponent(friendlyError)}`);
+      return;
     }
 
     let cancelled = false;
@@ -44,16 +54,23 @@ export default function OAuthCallbackPage() {
       if (!cancelled) router.replace(path);
     };
 
-    const tryFinish = async () => {
+    const complete = async () => {
       try {
-        await getCurrentUser();
+        if (oauthCode) {
+          await waitForOAuthCallbackCompletion();
+        }
         await finish();
       } catch {
-        /* wait for Hub signedIn after Amplify parses the OAuth response */
+        if (!cancelled) {
+          setMessage("Sign-in is taking longer than expected. Redirecting…");
+          router.replace(
+            "/signin?oauthError=Sign-in%20timed%20out.%20Please%20try%20again."
+          );
+        }
       }
     };
 
-    void tryFinish();
+    void complete();
 
     const unsubscribe = Hub.listen("auth", ({ payload }) => {
       if (payload.event === "signedIn") {
@@ -71,20 +88,12 @@ export default function OAuthCallbackPage() {
       }
     }, 4000);
 
-    const failTimeout = window.setTimeout(() => {
-      if (!cancelled) {
-        setMessage("Sign-in is taking longer than expected. Redirecting…");
-        router.replace("/signin?oauthError=Sign-in%20timed%20out.%20Please%20try%20again.");
-      }
-    }, 20000);
-
     return () => {
       cancelled = true;
       unsubscribe();
       window.clearTimeout(timeout);
-      window.clearTimeout(failTimeout);
     };
-  }, [router, searchParams]);
+  }, [friendlyError, oauthCode, router]);
 
   return (
     <div className="flex min-h-[50vh] items-center justify-center px-4">

@@ -20,12 +20,18 @@ export default function RootLayoutClient({
 }) {
   const pathname = usePathname();
   const isIntakeChat = isIntakeChatPath(pathname);
+  const isOAuthCallback = pathname === "/oauth/callback";
   const showSiteArtwork = shouldShowSiteArtwork(pathname);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
     configureAmplify();
+
+    if (isOAuthCallback) {
+      setReady(true);
+      return;
+    }
 
     const checkAuth = async () => {
       try {
@@ -50,7 +56,7 @@ export default function RootLayoutClient({
     checkAuth();
 
     return () => unsubscribe();
-  }, []);
+  }, [isOAuthCallback]);
 
   useEffect(() => {
     if (!isIntakeChat) return;

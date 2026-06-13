@@ -45,6 +45,29 @@ npm run setup:cognito-federated-presignup
 
 **Important:** `aws cognito-idp update-user-pool --lambda-config` replaces the entire Lambda trigger set. Always use `npm run setup:cognito-resend-email` / `setup:cognito-federated-presignup` so PreSignUp and CustomEmailSender stay merged.
 
+Both deploy scripts also set `--auto-verified-attributes email`. **Never** run a bare `update-user-pool` with only one flag — Cognito clears the other settings (Lambda triggers or auto-verify).
+
+## Troubleshooting
+
+| Symptom | Likely cause |
+| --- | --- |
+| No email in Resend; Lambda never invoked | `AutoVerifiedAttributes` missing `email`, or `CustomEmailSender` was wiped from `LambdaConfig` |
+| `Cannot resend codes. Auto verification not turned on.` | Pool needs `--auto-verified-attributes email` |
+| Resend API succeeds but no inbox delivery | Check spam; same-domain (`info@` → `operations@`) may route internally — check Resend dashboard for “delivered” |
+| Stuck `UNCONFIRMED` user from before fix | Re-sign up, or wait for rate limit then resend; account must be **enabled** (`Enabled: true`) |
+
+Restore full pool email config in one command:
+
+```bash
+source infrastructure/aws/scripts/lib/merge-cognito-lambda-config.sh
+lambda_config="$(merge_cognito_lambda_config us-east-1_rUfTimytf us-east-1)"
+aws cognito-idp update-user-pool \
+  --user-pool-id us-east-1_rUfTimytf \
+  --auto-verified-attributes email \
+  --lambda-config "$lambda_config" \
+  --region us-east-1
+```
+
 ## Related
 
 - Gift card Resend setup: `docs/platform/gift-cards-payments.md`
