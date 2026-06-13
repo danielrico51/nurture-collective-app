@@ -1,12 +1,13 @@
 import { describe, expect, it } from "vitest";
 import {
   buildNewFederatedUserAttributes,
+  buildReturningFederatedUserAttributes,
   resolveInboundFederationAttributes,
 } from "../index.mjs";
 
 const baseEvent = {
   triggerSource: "InboundFederation_ExternalProvider",
-  userName: "google_118280321789996478223",
+  userName: "118280321789996478223",
   request: {
     providerName: "Google",
     providerType: "Google",
@@ -25,16 +26,22 @@ const baseEvent = {
   response: {},
 };
 
+const storedProfile = {
+  email: "danielrico51@gmail.com",
+  phone_number: "+12626139986",
+  address: "215 Country Route 1",
+  "custom:username": "rico1987",
+  picture: "/api/account/avatar/example.jpg",
+};
+
 describe("resolveInboundFederationAttributes", () => {
-  it("no-ops for returning users so Cognito keeps saved phone and address", () => {
-    expect(
-      resolveInboundFederationAttributes(baseEvent, {
-        email: "danielrico51@gmail.com",
-        phone_number: "+12018928961",
-        address: "215 Country Route 1",
-        "custom:username": "rico1987",
-      })
-    ).toEqual({});
+  it("re-supplies saved phone and address for returning Google users", () => {
+    const mapped = resolveInboundFederationAttributes(baseEvent, storedProfile);
+    expect(mapped).not.toEqual({});
+    expect(mapped.sub).toBe("118280321789996478223");
+    expect(mapped.phone_number).toBe("+12626139986");
+    expect(mapped.address).toBe("215 Country Route 1");
+    expect(mapped["custom:username"]).toBe("rico1987");
   });
 
   it("applies placeholders for brand-new federated users", () => {
@@ -43,6 +50,13 @@ describe("resolveInboundFederationAttributes", () => {
     expect(mapped.sub).toBe("118280321789996478223");
     expect(mapped.address).toBe("Pending profile completion");
     expect(mapped.email).toBe("danielrico51@gmail.com");
+  });
+});
+
+describe("buildReturningFederatedUserAttributes", () => {
+  it("keeps stored picture when Google does not send one", () => {
+    const mapped = buildReturningFederatedUserAttributes(baseEvent, storedProfile);
+    expect(mapped.picture).toBe("/api/account/avatar/example.jpg");
   });
 });
 

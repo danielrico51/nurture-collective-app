@@ -69,7 +69,16 @@ const attributesFromCognitoUser = (user) => {
 const federatedUsernameCandidates = (event) => {
   const candidates = [];
   const userName = event.userName?.trim();
-  if (userName) candidates.push(userName);
+  if (userName) {
+    candidates.push(userName);
+    if (/^\d+$/.test(userName)) {
+      const providerName = event.request.providerName?.trim();
+      if (providerName) {
+        candidates.push(`${providerName}_${userName}`);
+        candidates.push(`${providerName.toLowerCase()}_${userName}`);
+      }
+    }
+  }
 
   const idpSub = readIdpAttributes(event).sub?.trim();
   const providerName = event.request.providerName?.trim();
@@ -113,14 +122,62 @@ export const buildNewFederatedUserAttributes = (event) => {
   return mapped;
 };
 
+export const buildReturningFederatedUserAttributes = (event, storedAttributes) => {
+  const idpAttributes = readIdpAttributes(event);
+  const email = idpAttributes.email || storedAttributes.email || "";
+  const mapped = {};
+
+  const idpSub = idpAttributes.sub;
+  if (typeof idpSub === "string" && idpSub.trim()) {
+    mapped.sub = idpSub.trim();
+  }
+
+  for (const key of ["email", "given_name", "family_name", "name"]) {
+    const value = idpAttributes[key] || storedAttributes[key];
+    if (typeof value === "string" && value.trim()) {
+      mapped[key] = value.trim();
+    }
+  }
+
+  const picture = storedAttributes.picture || idpAttributes.picture;
+  if (typeof picture === "string" && picture.trim()) {
+    mapped.picture = picture.trim();
+  }
+
+  const storedPhone = storedAttributes.phone_number;
+  if (isValidCognitoPhoneNumber(storedPhone) && !isPlaceholderPhone(storedPhone)) {
+    mapped.phone_number = storedPhone;
+  } else if (isValidCognitoPhoneNumber(idpAttributes.phone_number || "")) {
+    mapped.phone_number = idpAttributes.phone_number;
+  } else {
+    mapped.phone_number = PLACEHOLDER_PHONE;
+  }
+
+  const storedAddress = storedAttributes.address;
+  if (!isPlaceholderAddress(storedAddress, email)) {
+    mapped.address = storedAddress;
+  } else if (!isPlaceholderAddress(idpAttributes.address, email)) {
+    mapped.address = idpAttributes.address;
+  } else {
+    mapped.address = PLACEHOLDER_ADDRESS;
+  }
+
+  const storedUsername = storedAttributes["custom:username"]?.trim();
+  if (storedUsername) {
+    mapped["custom:username"] = storedUsername;
+  }
+
+  return mapped;
+};
+
 /**
  * InboundFederation does not include saved Cognito profile attributes in the event.
- * Returning users must no-op so Cognito keeps stored phone/address; only new users
- * receive placeholder required attributes.
+ * Returning users must re-supply required pool attributes from AdminGetUser because
+ * Google does not send phone_number or address on sign-in.
  */
 export const resolveInboundFederationAttributes = (event, storedAttributes) => {
   if (storedAttributes && Object.keys(storedAttributes).length > 0) {
-    return {};
+    return buildReturningFederatedUserAttributes(event, storedAttributes);
   }
   return buildNewFederatedUserAttributes(event);
 };
