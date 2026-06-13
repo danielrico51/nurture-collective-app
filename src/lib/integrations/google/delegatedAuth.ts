@@ -1,5 +1,7 @@
 import { GoogleAuth, OAuth2Client } from "google-auth-library";
+import { getGoogleWorkloadIdentityConfig } from "@/config/googleWorkloadIdentity";
 import { serverGoogleTasksConfig } from "@/config/googleTasks";
+import { buildWorkloadIdentityCredentials } from "@/lib/integrations/google/workloadIdentityCredentials";
 
 const CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 
@@ -8,10 +10,35 @@ export interface DelegatedGoogleAuthOptions {
   subject?: string;
   serviceAccount?: string;
   adcJson?: string;
+  /** When true, skip WIF even if env is set (deploy scripts testing ADC only). */
+  forceAdc?: boolean;
 }
+
+const createSourceAuth = async (adcJson?: string, forceAdc = false) => {
+  if (adcJson || forceAdc) {
+    if (adcJson) {
+      return new GoogleAuth({
+        credentials: JSON.parse(adcJson) as Record<string, unknown>,
+        scopes: [CLOUD_PLATFORM_SCOPE],
+      });
+    }
+    return new GoogleAuth({ scopes: [CLOUD_PLATFORM_SCOPE] });
+  }
+
+  const wifConfig = getGoogleWorkloadIdentityConfig();
+  if (wifConfig) {
+    return new GoogleAuth({
+      credentials: buildWorkloadIdentityCredentials(wifConfig),
+      scopes: [CLOUD_PLATFORM_SCOPE],
+    });
+  }
+
+  return new GoogleAuth({ scopes: [CLOUD_PLATFORM_SCOPE] });
+};
 
 /**
  * Domain-wide delegation via IAM signJwt (no JSON keys).
+ * Prefers AWS Workload Identity Federation when configured (no expiring user ADC).
  * Requires Workspace Admin to authorize the service account client ID.
  */
 export const createDelegatedGoogleAuthClient = async (
@@ -35,12 +62,7 @@ export const createDelegatedGoogleAuthClient = async (
     exp: now + 3600,
   });
 
-  const sourceAuth = adcJson
-    ? new GoogleAuth({
-        credentials: JSON.parse(adcJson) as Record<string, unknown>,
-        scopes: [CLOUD_PLATFORM_SCOPE],
-      })
-    : new GoogleAuth({ scopes: [CLOUD_PLATFORM_SCOPE] });
+  const sourceAuth = await createSourceAuth(adcJson, options.forceAdc);
   const sourceClient = await sourceAuth.getClient();
 
   const signUrl = `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${encodeURIComponent(serviceAccount)}:signJwt`;

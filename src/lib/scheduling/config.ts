@@ -1,5 +1,6 @@
 import "server-only";
 
+import { isGoogleWorkloadIdentityConfigured } from "@/config/googleWorkloadIdentity";
 import { resolveCalendarDelegatedUser } from "@/lib/scheduling/calendarDeployGuards";
 
 /**
@@ -15,7 +16,8 @@ export type GoogleSchedulingAuthMode =
   | "service_account"
   | "adc"
   | "impersonate"
-  | "delegated";
+  | "delegated"
+  | "wif";
 
 const readAuthMode = (): GoogleSchedulingAuthMode => {
   const raw =
@@ -25,6 +27,7 @@ const readAuthMode = (): GoogleSchedulingAuthMode => {
     raw === "adc" ||
     raw === "impersonate" ||
     raw === "delegated" ||
+    raw === "wif" ||
     raw === "service_account"
   ) {
     return raw;
@@ -115,6 +118,7 @@ export const isGoogleSchedulingConfigured = (): boolean => {
     serviceAccountJson,
   } = serverSchedulingConfig;
   if (!calendarId) return false;
+  if (authMode === "wif" || isGoogleWorkloadIdentityConfigured()) return true;
   if (authMode === "adc" || authMode === "impersonate" || authMode === "delegated") {
     return true;
   }

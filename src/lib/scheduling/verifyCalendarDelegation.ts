@@ -11,7 +11,8 @@ const CALENDAR_SCOPE = "https://www.googleapis.com/auth/calendar";
 export type VerifyCalendarDelegationInput = {
   delegatedUser: string;
   serviceAccount: string;
-  adcJson: string;
+  adcJson?: string;
+  forceAdc?: boolean;
 };
 
 export type VerifyCalendarDelegationResult =
@@ -31,14 +32,20 @@ export const verifyCalendarDelegation = async (
     };
   }
 
-  const adcCheck = validateAdcJsonForDelegatedDeploy(input.adcJson);
-  if (!adcCheck.ok) {
-    return {
-      ok: false,
-      stage: "adc",
-      error: adcCheck.reason,
-      hint: "Run: gcloud auth application-default login",
-    };
+  const useWif = !input.forceAdc && !input.adcJson;
+  let credentialType = "workload_identity";
+
+  if (!useWif) {
+    const adcCheck = validateAdcJsonForDelegatedDeploy(input.adcJson ?? "");
+    if (!adcCheck.ok) {
+      return {
+        ok: false,
+        stage: "adc",
+        error: adcCheck.reason,
+        hint: "Run: gcloud auth application-default login",
+      };
+    }
+    credentialType = adcCheck.credentialType;
   }
 
   try {
@@ -46,7 +53,8 @@ export const verifyCalendarDelegation = async (
       scope: CALENDAR_SCOPE,
       subject: userCheck.email,
       serviceAccount: input.serviceAccount.trim(),
-      adcJson: adcCheck.adcJson,
+      adcJson: input.adcJson,
+      forceAdc: input.forceAdc,
     });
 
     if (!client.credentials.access_token) {
@@ -61,7 +69,7 @@ export const verifyCalendarDelegation = async (
     return {
       ok: true,
       delegatedUser: userCheck.email,
-      credentialType: adcCheck.credentialType,
+      credentialType,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);

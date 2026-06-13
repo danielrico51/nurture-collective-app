@@ -30,6 +30,8 @@
     "test:calendar-delegation": "tsx scripts/test-google-calendar-delegation.ts",
     "amplify:concierge-scheduling": "bash infrastructure/aws/scripts/set-amplify-google-calendar-env.sh",
     "setup:cognito-google": "bash infrastructure/google/setup-cognito-google-oauth.sh",
+    "setup:google-wif": "bash infrastructure/google/setup-workload-identity-federation.sh",
+    "amplify:google-wif": "bash infrastructure/aws/scripts/set-amplify-google-wif-env.sh",
     "share:intro-calendar": "bash infrastructure/google/share-intro-calendar-with-sa.sh"
   },
   "dependencies": {
