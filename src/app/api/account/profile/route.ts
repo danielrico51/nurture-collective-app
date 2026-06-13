@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { updateMemberProfileAttributes } from "@/lib/auth/cognitoAdmin";
+import {
+  getMemberProfileAttributes,
+  updateMemberProfileAttributes,
+} from "@/lib/auth/cognitoAdmin";
 import { pickMutableProfileAttributes } from "@/lib/auth/profileAttributeAllowlist";
 import { verifyRequest } from "@/lib/auth/verifyRequest";
 
@@ -8,6 +11,34 @@ export const dynamic = "force-dynamic";
 type ProfilePatchBody = {
   attributes?: Record<string, string>;
 };
+
+export async function GET(request: NextRequest) {
+  const user = await verifyRequest(request);
+  if (!user) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  try {
+    const attributes = await getMemberProfileAttributes({
+      cognitoUsername: user.cognitoUsername ?? user.sub,
+      sub: user.sub,
+    });
+    return NextResponse.json({ attributes });
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    console.error("[account/profile] load failed:", error);
+    const status = /not found/i.test(message) ? 404 : 500;
+    return NextResponse.json(
+      {
+        error:
+          status === 404
+            ? "User profile not found"
+            : "Could not load profile",
+      },
+      { status }
+    );
+  }
+}
 
 export async function PATCH(request: NextRequest) {
   const user = await verifyRequest(request);

@@ -170,3 +170,21 @@ export const updateMemberProfileAttributes = async ({
     })
   );
 };
+
+export const getMemberProfileAttributes = async ({
+  cognitoUsername,
+  sub,
+}: {
+  cognitoUsername: string;
+  sub: string;
+}): Promise<Record<string, string>> => {
+  const username = await resolveCognitoPoolUsername({ cognitoUsername, sub });
+  const response = await getCognitoClient().send(
+    new AdminGetUserCommand({
+      UserPoolId: getUserPoolId(),
+      Username: username,
+    })
+  );
+
+  return attributesFromCognito(response.UserAttributes);
+};
