@@ -1,7 +1,8 @@
 import { GoogleAuth, OAuth2Client } from "google-auth-library";
+import type { GaxiosOptions, GaxiosResponse } from "gaxios";
 import { getGoogleWorkloadIdentityConfig } from "@/config/googleWorkloadIdentity";
 import { serverGoogleTasksConfig } from "@/config/googleTasks";
-import { buildWorkloadIdentityCredentials } from "@/lib/integrations/google/workloadIdentityCredentials";
+import { createWorkloadIdentityAwsClient } from "@/lib/integrations/google/workloadIdentityCredentials";
 
 const CLOUD_PLATFORM_SCOPE = "https://www.googleapis.com/auth/cloud-platform";
 
@@ -14,25 +15,32 @@ export interface DelegatedGoogleAuthOptions {
   forceAdc?: boolean;
 }
 
-const createSourceAuth = async (adcJson?: string, forceAdc = false) => {
+type SourceRequestClient = {
+  request<T>(options: GaxiosOptions): Promise<GaxiosResponse<T>>;
+};
+
+const createSourceClient = async (
+  adcJson?: string,
+  forceAdc = false
+): Promise<SourceRequestClient> => {
   if (!forceAdc) {
     const wifConfig = getGoogleWorkloadIdentityConfig();
     if (wifConfig) {
-      return new GoogleAuth({
-        credentials: buildWorkloadIdentityCredentials(wifConfig),
-        scopes: [CLOUD_PLATFORM_SCOPE],
-      });
+      return createWorkloadIdentityAwsClient(wifConfig);
     }
   }
 
+  let sourceAuth: GoogleAuth;
   if (adcJson) {
-    return new GoogleAuth({
+    sourceAuth = new GoogleAuth({
       credentials: JSON.parse(adcJson) as Record<string, unknown>,
       scopes: [CLOUD_PLATFORM_SCOPE],
     });
+  } else {
+    sourceAuth = new GoogleAuth({ scopes: [CLOUD_PLATFORM_SCOPE] });
   }
 
-  return new GoogleAuth({ scopes: [CLOUD_PLATFORM_SCOPE] });
+  return sourceAuth.getClient();
 };
 
 /**
@@ -61,8 +69,7 @@ export const createDelegatedGoogleAuthClient = async (
     exp: now + 3600,
   });
 
-  const sourceAuth = await createSourceAuth(adcJson, options.forceAdc);
-  const sourceClient = await sourceAuth.getClient();
+  const sourceClient = await createSourceClient(adcJson, options.forceAdc);
 
   const signUrl = `https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/${encodeURIComponent(serviceAccount)}:signJwt`;
 
