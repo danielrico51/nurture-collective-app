@@ -4,7 +4,7 @@ import { canAccessAdminApps } from "@/lib/auth/groups";
 import { extractGroupsFromSession } from "@/lib/auth/sessionGroups";
 import { isIntakeComplete } from "@/types/intake";
 
-/** Where to send a member after sign-in (admins go to admin; members to apps hub or intake). */
+/** Where to send a member after sign-in (admins → admin hub; members → apps). */
 export async function resolveMemberHomePath(): Promise<string> {
   try {
     const session = await fetchAuthSession();
@@ -13,19 +13,10 @@ export async function resolveMemberHomePath(): Promise<string> {
       return "/admin";
     }
   } catch {
-    /* fall through to intake check */
+    /* fall through */
   }
 
-  try {
-    const intake = await fetchIntake();
-    if (isIntakeComplete(intake.profile?.intakeStatus)) {
-      return "/apps";
-    }
-  } catch {
-    /* unauthenticated or storage unavailable */
-  }
-
-  return "/apps/dashboard/intake";
+  return "/apps";
 }
 
 export const hasCompletedIntake = async (): Promise<boolean> => {

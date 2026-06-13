@@ -1,9 +1,11 @@
 #!/usr/bin/env bash
-# Allow browser presigned PUT uploads to COMMUNITY_MEDIA_S3_BUCKET from app origins.
+# Allow browser presigned PUT uploads to an S3 media bucket from app origins.
+# Use for COMMUNITY_MEDIA_S3_BUCKET, INTAKE_S3_BUCKET / TASKS_S3_BUCKET (journal timeline photos), etc.
 #
 # Usage:
 #   ./infrastructure/aws/scripts/configure-community-media-cors.sh
-#   APP_URL=https://www.nesting-place.com BUCKET=nurture-community-media-dev-886436941204 ./infrastructure/aws/scripts/configure-community-media-cors.sh
+#   BUCKET=nurture-collective-tasks APP_URL=https://www.nesting-place.com ./infrastructure/aws/scripts/configure-community-media-cors.sh
+#   BUCKET=nurture-community-media-dev-886436941204 APP_URL=https://www.nesting-place.com ./infrastructure/aws/scripts/configure-community-media-cors.sh
 set -euo pipefail
 
 REGION="${AWS_REGION:-us-east-1}"

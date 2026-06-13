@@ -50,11 +50,18 @@ export const uploadJournalTimelinePhoto = async (file: File): Promise<string> =>
   }
 
   const { uploadUrl, url } = presignData as { uploadUrl: string; url: string };
-  const putResponse = await fetch(uploadUrl, {
-    method: "PUT",
-    headers: { "Content-Type": file.type },
-    body: file,
-  });
+  let putResponse: Response;
+  try {
+    putResponse = await fetch(uploadUrl, {
+      method: "PUT",
+      headers: { "Content-Type": file.type },
+      body: file,
+    });
+  } catch {
+    throw new Error(
+      "Could not upload your photo. If this keeps happening, try again after a hard refresh."
+    );
+  }
   if (!putResponse.ok) {
     throw new Error("Upload to storage failed. Please try again.");
   }
