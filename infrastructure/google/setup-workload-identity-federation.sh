@@ -92,6 +92,13 @@ gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
   --member="principalSet://iam.googleapis.com/${POOL_RESOURCE}/*" \
   --quiet
 
+log "Granting serviceAccountTokenCreator to ${SA_EMAIL} (self) for IAM signJwt after WIF impersonation"
+gcloud iam service-accounts add-iam-policy-binding "$SA_EMAIL" \
+  --project="$PROJECT_ID" \
+  --role="roles/iam.serviceAccountTokenCreator" \
+  --member="serviceAccount:${SA_EMAIL}" \
+  --quiet
+
 echo
 log "Workload Identity Federation ready."
 echo "  GOOGLE_WORKLOAD_IDENTITY_PROJECT_NUMBER=${PROJECT_NUMBER}"

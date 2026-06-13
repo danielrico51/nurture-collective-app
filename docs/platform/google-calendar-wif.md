@@ -64,3 +64,4 @@ After WIF is verified, remove `GOOGLE_CALENDAR_ADC_JSON` and `GOOGLE_TASKS_ADC_J
 - Domain-wide delegation for `nurture-tasks-sync` in Google Workspace Admin
 - Calendar owned/managed by `admin@nesting-place.com`
 - Amplify compute role: `NurtureCollectiveAmplifyComputeRole` (or server IAM user)
+- Service account can call `signJwt` on itself (`roles/iam.serviceAccountTokenCreator` for `serviceAccount:nurture-tasks-sync@...` on that same SA — applied by `npm run setup:google-wif`)
