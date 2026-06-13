@@ -23,6 +23,7 @@ import { useEffect, useRef } from "react";
 const SigninPage = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const oauthError = searchParams.get("oauthError");
   const queryReturnTo = searchParams.get("returnTo");
   const returnToRef = useRef<string | null>(null);
   if (returnToRef.current === null) {
@@ -102,6 +103,14 @@ const SigninPage = () => {
         )
       }
     >
+      {oauthError ? (
+        <p
+          className="mb-4 rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-950"
+          role="alert"
+        >
+          {oauthError}
+        </p>
+      ) : null}
       <AuthFormProvider mode="signIn">
         <EmailAuthAuthenticator
           mode="signIn"

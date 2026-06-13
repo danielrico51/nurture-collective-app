@@ -99,7 +99,13 @@ Map federated attributes to user pool attributes as needed:
 - `given_name` → `given_name`
 - `family_name` → `family_name`
 
-Social sign-up may not collect custom attributes (`custom:username`, `phone_number`, `address`) on first login — Google only sends `profile email openid` by default. The pool currently requires `phone_number` and `address`; federated users may need a **post-sign-up profile step** until those attributes are collected or made optional.
+Social sign-up may not collect custom attributes (`custom:username`, `phone_number`, `address`) on first login — Google only sends `profile email openid` by default. A **PreSignUp Lambda** injects placeholders so Cognito can create the user; the app then sends members to `/signup/complete-profile` to collect phone and address.
+
+Deploy the Lambda once per pool:
+
+```bash
+npm run setup:cognito-federated-presignup
+```
 
 ## Code references
 
@@ -109,6 +115,9 @@ Social sign-up may not collect custom attributes (`custom:username`, `phone_numb
 | `src/utils/amplifyConfig.ts` | Amplify `loginWith.oauth` |
 | `src/components/Auth/SocialAuthButtons.tsx` | Sign-in / sign-up buttons |
 | `src/app/(site)/(auth)/oauth/callback/page.tsx` | OAuth return handler |
+| `src/app/(site)/(auth)/signup/complete-profile/page.tsx` | Federated profile completion |
+| `src/lib/auth/federatedProfile.ts` | Placeholder detection after social sign-in |
+| `infrastructure/aws/scripts/deploy-cognito-federated-presignup.sh` | PreSignUp Lambda for required attrs |
 | `src/lib/auth/socialSignIn.ts` | `signInWithRedirect` |
 
 ## Verify
