@@ -73,6 +73,8 @@ deploy_lambda() {
 attach_to_user_pool() {
   local function_arn="arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${FUNCTION_NAME}"
   local pool_arn="arn:aws:cognito-idp:${REGION}:${ACCOUNT_ID}:userpool/${POOL_ID}"
+  # shellcheck source=/dev/null
+  source "$ROOT/infrastructure/aws/scripts/lib/merge-cognito-lambda-config.sh"
 
   log "Granting Cognito permission to invoke Lambda"
   aws lambda add-permission \
@@ -84,10 +86,13 @@ attach_to_user_pool() {
     --region "$REGION" \
     >/dev/null 2>&1 || true
 
-  log "Attaching PreSignUp trigger to user pool $POOL_ID"
+  local lambda_config
+  lambda_config="$(merge_cognito_lambda_config "$POOL_ID" "$REGION" "PreSignUp=${function_arn}")"
+
+  log "Attaching PreSignUp trigger to user pool $POOL_ID (preserving other Lambda triggers)"
   aws cognito-idp update-user-pool \
     --user-pool-id "$POOL_ID" \
-    --lambda-config "PreSignUp=${function_arn}" \
+    --lambda-config "$lambda_config" \
     --region "$REGION" >/dev/null
 }
 

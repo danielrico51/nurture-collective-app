@@ -36,16 +36,14 @@ npm run setup:cognito-resend-email
 When SES production is **GRANTED**:
 
 1. Configure Cognito `EmailSendingAccount=DEVELOPER` with `nesting-place.com` (see SES docs).
-2. Remove the custom sender from the pool:
+2. Remove the custom sender from the pool (keep `PreSignUp` if Google sign-up placeholders are still needed):
 
 ```bash
-aws cognito-idp update-user-pool \
-  --user-pool-id us-east-1_rUfTimytf \
-  --region us-east-1 \
-  --lambda-config PreSignUp=arn:aws:lambda:us-east-1:886436941204:function:nurture-cognito-federated-presignup
+npm run setup:cognito-federated-presignup
+# or merge manually — never set --lambda-config to only one trigger
 ```
 
-(Keep `PreSignUp` if you still need federated Google sign-up placeholders.)
+**Important:** `aws cognito-idp update-user-pool --lambda-config` replaces the entire Lambda trigger set. Always use `npm run setup:cognito-resend-email` / `setup:cognito-federated-presignup` so PreSignUp and CustomEmailSender stay merged.
 
 ## Related
 

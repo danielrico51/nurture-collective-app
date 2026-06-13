@@ -230,16 +230,11 @@ deploy_lambda() {
 attach_to_user_pool() {
   local function_arn="arn:aws:lambda:${REGION}:${ACCOUNT_ID}:function:${FUNCTION_NAME}"
   local pool_arn="arn:aws:cognito-idp:${REGION}:${ACCOUNT_ID}:userpool/${POOL_ID}"
+  # shellcheck source=/dev/null
+  source "$ROOT/infrastructure/aws/scripts/lib/merge-cognito-lambda-config.sh"
 
-  if [[ -z "$PRESIGNUP_ARN" ]]; then
-    PRESIGNUP_ARN="$(aws cognito-idp describe-user-pool \
-      --user-pool-id "$POOL_ID" \
-      --region "$REGION" \
-      --query 'UserPool.LambdaConfig.PreSignUp' \
-      --output text 2>/dev/null || true)"
-    if [[ "$PRESIGNUP_ARN" == "None" ]]; then
-      PRESIGNUP_ARN=""
-    fi
+  if [[ -n "$PRESIGNUP_ARN" ]]; then
+    log "Using explicit PreSignUp ARN: $PRESIGNUP_ARN"
   fi
 
   log "Granting Cognito permission to invoke custom email Lambda"
@@ -252,13 +247,15 @@ attach_to_user_pool() {
     --region "$REGION" \
     >/dev/null 2>&1 || true
 
-  local lambda_config="CustomEmailSender={LambdaVersion=V1_0,LambdaArn=${function_arn}},KMSKeyID=${KMS_KEY_ARN}"
-  if [[ -n "$PRESIGNUP_ARN" ]]; then
-    lambda_config="PreSignUp=${PRESIGNUP_ARN},${lambda_config}"
-    log "Preserving PreSignUp trigger: $PRESIGNUP_ARN"
-  fi
+  local lambda_config
+  lambda_config="$(merge_cognito_lambda_config \
+    "$POOL_ID" \
+    "$REGION" \
+    ${PRESIGNUP_ARN:+PreSignUp=${PRESIGNUP_ARN}} \
+    "CustomEmailSenderArn=${function_arn}" \
+    "KMSKeyARN=${KMS_KEY_ARN}")"
 
-  log "Attaching CustomEmailSender + KMS to user pool $POOL_ID"
+  log "Attaching CustomEmailSender + KMS to user pool $POOL_ID (preserving PreSignUp)"
   aws cognito-idp update-user-pool \
     --user-pool-id "$POOL_ID" \
     --lambda-config "$lambda_config" \
