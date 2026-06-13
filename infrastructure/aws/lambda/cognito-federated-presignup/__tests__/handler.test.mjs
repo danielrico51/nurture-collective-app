@@ -13,6 +13,7 @@ describe("InboundFederation_ExternalProvider", () => {
           family_name: "Rico",
         },
         idToken: {
+          sub: "118280321789996478223",
           email: "danielrico51@gmail.com",
         },
       },
@@ -28,6 +29,7 @@ describe("InboundFederation_ExternalProvider", () => {
 
   it("preserves saved phone and address on returning Google sign-in", async () => {
     const result = await handler(baseEvent);
+    expect(result.response.userAttributesToMap.sub).toBe("118280321789996478223");
     expect(result.response.userAttributesToMap.phone_number).toBe("+12018928961");
     expect(result.response.userAttributesToMap.address).toBe("215 Country Route 1");
     expect(result.response.userAttributesToMap["custom:username"]).toBe("rico1987");
@@ -43,6 +45,7 @@ describe("InboundFederation_ExternalProvider", () => {
     });
 
     expect(result.response.userAttributesToMap.phone_number).toBe("+12025550100");
+    expect(result.response.userAttributesToMap.sub).toBe("118280321789996478223");
     expect(result.response.userAttributesToMap.address).toBe(
       "Pending profile completion"
     );

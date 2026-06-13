@@ -80,6 +80,12 @@ const buildInboundFederationAttributes = (event) => {
   const email = idpAttributes.email || existing.email || "";
   const mapped = {};
 
+  // Cognito maps username=sub; userAttributesToMap must include the IdP sub claim.
+  const idpSub = idpAttributes.sub;
+  if (typeof idpSub === "string" && idpSub.trim()) {
+    mapped.sub = idpSub.trim();
+  }
+
   for (const key of ["email", "given_name", "family_name", "name", "picture"]) {
     const value = idpAttributes[key] || existing[key];
     if (typeof value === "string" && value.trim()) {
