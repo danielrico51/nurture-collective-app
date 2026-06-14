@@ -112,3 +112,40 @@ export interface UpdateLeadInput {
   coordinatorEmail?: string;
   archivedAt?: string | null;
 }
+
+/** Assign or clear coordinator using admin user id (empty string = unassigned). */
+export interface AssignLeadCoordinatorInput {
+  coordinatorId: string;
+}
+
+/** How a coordinator-entered lead first reached us (non-intake channels). */
+export type ManualLeadChannel =
+  | "phone"
+  | "referral"
+  | "email"
+  | "event"
+  | "social"
+  | "provider_referral"
+  | "other";
+
+export const MANUAL_LEAD_CHANNELS: { value: ManualLeadChannel; label: string }[] = [
+  { value: "phone", label: "Phone call" },
+  { value: "referral", label: "Referral" },
+  { value: "email", label: "Email inquiry" },
+  { value: "event", label: "Event / fair" },
+  { value: "social", label: "Social media" },
+  { value: "provider_referral", label: "Provider referral" },
+  { value: "other", label: "Other" },
+];
+
+export interface CreateManualLeadInput {
+  name: string;
+  email?: string;
+  phone?: string;
+  channel: ManualLeadChannel;
+  maternalStage?: string | null;
+  supportInterests?: string[];
+  locationZip?: string | null;
+  notes?: string;
+  coordinatorId?: string;
+}

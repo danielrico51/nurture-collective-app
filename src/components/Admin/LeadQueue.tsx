@@ -1,6 +1,8 @@
 "use client";
 
 import ConversationAdminPanel from "@/components/Admin/ConversationAdminPanel";
+import LeadCoordinatorSelect from "@/components/Admin/LeadCoordinatorSelect";
+import ManualLeadForm from "@/components/Admin/ManualLeadForm";
 import {
   MATERNAL_STAGE_LABELS,
   SUPPORT_INTEREST_LABELS,
@@ -17,6 +19,8 @@ import {
   fetchAdminLeads,
   updateAdminLead,
 } from "@/lib/api/leadsClient";
+import { fetchTeamMembers } from "@/lib/api/tasksClient";
+import { getCoordinatorDisplayName } from "@/lib/leads/coordinatorDisplay";
 import type { MaternalStage, SupportInterest, IntakeStatus, CareRecommendation, IntakeProfile } from "@/types/intake";
 import { INTAKE_STATUSES } from "@/types/intake";
 import type {
@@ -25,14 +29,17 @@ import type {
   LeadConversationPrep,
   LeadRecord,
   LeadStatus,
+  ManualLeadChannel,
 } from "@/types/lead";
-import { LEAD_STATUSES } from "@/types/lead";
+import { LEAD_STATUSES, MANUAL_LEAD_CHANNELS } from "@/types/lead";
+import type { TeamMember } from "@/types/teamMember";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 type StatusFilter = "all" | LeadStatus;
 type QueueFilter = "active" | "archived" | "all";
 type TypeFilter = "all" | "guest" | "member";
+type AssignmentFilter = "all" | "mine" | "unassigned";
 
 const STATUS_LABELS: Record<LeadStatus, string> = {
   new: "New",
@@ -109,6 +116,17 @@ const formatDate = (value: string) =>
     minute: "2-digit",
   });
 
+const formatLeadSource = (source: string): string => {
+  if (source.startsWith("manual_")) {
+    const channel = source.replace("manual_", "") as ManualLeadChannel;
+    return (
+      MANUAL_LEAD_CHANNELS.find((item) => item.value === channel)?.label ??
+      "Manual entry"
+    );
+  }
+  return source.replace(/_/g, " ");
+};
+
 interface LeadQueueProps {
   coordinatorEmail: string;
   coordinatorId: string;
@@ -116,11 +134,15 @@ interface LeadQueueProps {
 
 const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
   const [leads, setLeads] = useState<LeadRecord[]>([]);
+  const [members, setMembers] = useState<TeamMember[]>([]);
+  const [membersLoading, setMembersLoading] = useState(true);
+  const [membersNotice, setMembersNotice] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [queueFilter, setQueueFilter] = useState<QueueFilter>("active");
   const [typeFilter, setTypeFilter] = useState<TypeFilter>("all");
+  const [assignmentFilter, setAssignmentFilter] = useState<AssignmentFilter>("all");
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [notesByLead, setNotesByLead] = useState<Record<string, CoordinatorNote[]>>({});
@@ -138,6 +160,22 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
   const [reopeningKey, setReopeningKey] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [noteType, setNoteType] = useState<CoordinatorNoteType>("general");
+  const [showManualForm, setShowManualForm] = useState(false);
+
+  const loadMembers = useCallback(async () => {
+    setMembersLoading(true);
+    try {
+      const data = await fetchTeamMembers();
+      setMembers(data.members);
+      setMembersNotice(data.partial ? data.message ?? null : null);
+    } catch (err) {
+      setMembersNotice(
+        err instanceof Error ? err.message : "Could not load admin team"
+      );
+    } finally {
+      setMembersLoading(false);
+    }
+  }, []);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -151,6 +189,10 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
       setLoading(false);
     }
   }, []);
+
+  useEffect(() => {
+    void loadMembers();
+  }, [loadMembers]);
 
   useEffect(() => {
     load();
@@ -238,14 +280,27 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
     }
   };
 
-  const handleAssignToMe = async (leadId: string) => {
+  const handleCoordinatorChange = async (
+    leadId: string,
+    nextCoordinatorId: string
+  ) => {
     setSavingId(leadId);
     try {
-      await updateAdminLead(leadId, { assignToMe: true });
-      await load();
-      toast.success("Lead assigned to you");
+      const { lead } = await updateAdminLead(leadId, {
+        coordinatorId: nextCoordinatorId,
+      });
+      setLeads((current) =>
+        current.map((item) => (item.leadId === leadId ? lead : item))
+      );
+      toast.success(
+        nextCoordinatorId
+          ? `Assigned to ${getCoordinatorDisplayName(lead, members)}`
+          : "Lead unassigned"
+      );
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Could not assign lead");
+      toast.error(
+        err instanceof Error ? err.message : "Could not update assignment"
+      );
     } finally {
       setSavingId(null);
     }
@@ -330,6 +385,15 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
       if (queueFilter === "archived" && !lead.archivedAt) return false;
       if (typeFilter === "guest" && !lead.isGuest) return false;
       if (typeFilter === "member" && lead.isGuest) return false;
+      if (assignmentFilter === "mine" && lead.coordinatorId !== coordinatorId) {
+        return false;
+      }
+      if (
+        assignmentFilter === "unassigned" &&
+        Boolean(lead.coordinatorId || lead.coordinatorEmail)
+      ) {
+        return false;
+      }
       if (statusFilter !== "all" && lead.status !== statusFilter) return false;
       if (!query) return true;
       return (
@@ -340,7 +404,7 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
         (lead.locationZip ?? "").toLowerCase().includes(query)
       );
     });
-  }, [leads, queueFilter, typeFilter, search, statusFilter]);
+  }, [leads, queueFilter, typeFilter, assignmentFilter, search, statusFilter, coordinatorId]);
 
   const counts = useMemo(() => {
     const active = leads.filter((lead) => !lead.archivedAt);
@@ -349,20 +413,16 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
       archived: leads.filter((lead) => lead.archivedAt).length,
       guest: active.filter((lead) => lead.isGuest).length,
       member: active.filter((lead) => !lead.isGuest).length,
+      mine: active.filter((lead) => lead.coordinatorId === coordinatorId).length,
+      unassigned: active.filter(
+        (lead) => !lead.coordinatorId && !lead.coordinatorEmail
+      ).length,
     };
     for (const status of LEAD_STATUSES) {
       base[status] = active.filter((lead) => lead.status === status).length;
     }
     return base;
-  }, [leads]);
-
-  const myLeads = useMemo(
-    () =>
-      leads.filter(
-        (lead) => !lead.archivedAt && lead.coordinatorId === coordinatorId
-      ).length,
-    [coordinatorId, leads]
-  );
+  }, [leads, coordinatorId]);
 
   if (loading) {
     return <p className="text-sm text-nurture-charcoal/60">Loading lead CRM…</p>;
@@ -387,22 +447,48 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
             Lead CRM
           </h2>
           <p className="mt-1 max-w-2xl text-sm text-nurture-charcoal/65">
-            One queue for guest leads and members who created an account. Track
-            pipeline, intake profiles, care recommendations, and concierge
-            conversations.
+            One queue for guest leads and members who created an account — plus
+            leads you enter manually from phone calls, referrals, and other
+            channels. Track pipeline, intake profiles, care recommendations,
+            and concierge conversations.
           </p>
           <p className="mt-2 text-xs text-nurture-charcoal/50">
-            Assigned to you: {myLeads} · Signed in as {coordinatorEmail}
+            Assigned to you: {counts.mine} · Signed in as {coordinatorEmail}
+            {membersNotice ? ` · ${membersNotice}` : ""}
           </p>
         </div>
-        <button
-          type="button"
-          onClick={load}
-          className="shrink-0 rounded-full border border-nurture-sage/30 px-4 py-2 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
-        >
-          Refresh
-        </button>
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={() => setShowManualForm((open) => !open)}
+            className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
+          >
+            {showManualForm ? "Close form" : "Add lead"}
+          </button>
+          <button
+            type="button"
+            onClick={load}
+            className="rounded-full border border-nurture-sage/30 px-4 py-2 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10"
+          >
+            Refresh
+          </button>
+        </div>
       </div>
+
+      {showManualForm ? (
+        <div className="mt-6">
+          <ManualLeadForm
+            members={members}
+            membersLoading={membersLoading}
+            defaultCoordinatorId={coordinatorId}
+            onCreated={() => {
+              setShowManualForm(false);
+              void load();
+            }}
+            onCancel={() => setShowManualForm(false)}
+          />
+        </div>
+      ) : null}
 
       <div className="mt-6 flex flex-col gap-4">
         <input
@@ -466,6 +552,30 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
         </div>
 
         <div className="flex flex-wrap gap-2">
+          {(
+            [
+              ["all", "All assignments"],
+              ["mine", "Assigned to me"],
+              ["unassigned", "Unassigned"],
+            ] as const
+          ).map(([filter, label]) => (
+            <button
+              key={filter}
+              type="button"
+              onClick={() => setAssignmentFilter(filter)}
+              className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+                assignmentFilter === filter
+                  ? "bg-nurture-rose text-white"
+                  : "bg-nurture-cream text-nurture-charcoal/70 hover:bg-nurture-rose/10"
+              }`}
+            >
+              {label}{" "}
+              <span className="opacity-75">({counts[filter] ?? 0})</span>
+            </button>
+          ))}
+        </div>
+
+        <div className="flex flex-wrap gap-2">
           {(["all", "new", "intake_in_progress", "intake_completed", "consult_scheduled"] as StatusFilter[]).map(
             (filter) => (
               <button
@@ -503,6 +613,7 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
             const prep = prepByLead[lead.leadId];
             const intake = intakeByLead[lead.leadId];
             const recommendations = recommendationsByLead[lead.leadId] ?? [];
+            const coordinatorLabel = getCoordinatorDisplayName(lead, members);
             const stageLabel = lead.maternalStage
               ? MATERNAL_STAGE_LABELS[lead.maternalStage as MaternalStage] ??
                 lead.maternalStage
@@ -546,14 +657,32 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
                           Archived
                         </span>
                       ) : null}
+                      {lead.source.startsWith("manual_") ? (
+                        <span className="rounded-full bg-violet-50 px-2 py-0.5 text-xs font-semibold text-violet-800">
+                          Manual · {formatLeadSource(lead.source)}
+                        </span>
+                      ) : null}
                     </div>
                     <p className="mt-1 truncate text-sm text-nurture-charcoal/65">
                       {lead.email || "No email"}
                       {lead.phone ? ` · ${lead.phone}` : ""}
                       {lead.locationZip ? ` · ${lead.locationZip}` : ""}
                     </p>
+                    <p className="mt-1 text-xs font-medium text-nurture-charcoal/55">
+                      Coordinator:{" "}
+                      <span
+                        className={
+                          lead.coordinatorId || lead.coordinatorEmail
+                            ? "text-nurture-sage-dark"
+                            : "text-amber-700"
+                        }
+                      >
+                        {coordinatorLabel}
+                      </span>
+                    </p>
                   </div>
                   <div className="flex shrink-0 flex-wrap items-center gap-4 text-sm text-nurture-charcoal/60">
+                    <span className="hidden sm:inline">{coordinatorLabel}</span>
                     <span>{stageLabel}</span>
                     <span>{lead.completionScore}%</span>
                     <span>{formatDate(lead.updatedAt)}</span>
@@ -563,17 +692,21 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
 
                 {expanded ? (
                   <div className="border-t border-nurture-sage/10 bg-nurture-cream/30 px-5 py-5">
+                    <div className="mb-5 max-w-md">
+                      <LeadCoordinatorSelect
+                        value={lead.coordinatorId}
+                        members={members}
+                        membersLoading={membersLoading}
+                        disabled={savingId === lead.leadId}
+                        onChange={(nextCoordinatorId) =>
+                          handleCoordinatorChange(lead.leadId, nextCoordinatorId)
+                        }
+                      />
+                    </div>
+
                     <div className="mb-5 flex flex-wrap gap-2">
                       {!lead.archivedAt ? (
                         <>
-                          <button
-                            type="button"
-                            disabled={savingId === lead.leadId}
-                            onClick={() => handleAssignToMe(lead.leadId)}
-                            className="rounded-full border border-nurture-sage/30 px-4 py-2 text-xs font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10 disabled:opacity-50"
-                          >
-                            Assign to me
-                          </button>
                           {pipelineActionsForLead(lead).map((status) => (
                             <button
                               key={status}
@@ -670,7 +803,11 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
                             label="Type"
                             value={lead.isGuest ? "Guest lead (no account)" : "Member account"}
                           />
-                          <DetailItem label="Coordinator" value={lead.coordinatorEmail || "Unassigned"} />
+                          <DetailItem
+                            label="Coordinator"
+                            value={getCoordinatorDisplayName(lead, members)}
+                          />
+                          <DetailItem label="Source" value={formatLeadSource(lead.source)} />
                           <DetailItem label="Intake status" value={lead.intakeStatus || intake?.intakeStatus || "—"} />
                           <DetailItem label="ZIP" value={lead.locationZip || intake?.locationZip || "—"} />
                           <DetailItem

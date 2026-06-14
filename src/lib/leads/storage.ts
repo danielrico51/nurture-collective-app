@@ -21,6 +21,11 @@ import {
 } from "@/lib/leads/platformS3";
 import { notifyLeadPipelineEvent } from "@/lib/integrations/slack/pipeline";
 import {
+  buildManualLeadRecord,
+  validateManualLeadInput,
+} from "@/lib/leads/manualLead";
+import { resolveCoordinatorAssignment } from "@/lib/leads/coordinatorAssignment";
+import {
   buildLeadFromSources,
   canTransitionLeadStatus,
   isGuestLead,
@@ -171,6 +176,58 @@ export const syncLeadFromConsultBooking = async (input: {
   });
 
   return { lead: saved, isNewConsultSchedule };
+};
+
+/** Coordinator-entered lead from phone, referral, email, or other non-intake channels. */
+export const createManualLead = async (
+  rawInput: unknown,
+  coordinator: { id: string; email?: string }
+): Promise<LeadRecord> => {
+  const payload = validateManualLeadInput(rawInput);
+  const leadId = crypto.randomUUID();
+  let assignedCoordinator: { id: string; email: string } | undefined;
+  if (payload.coordinatorId) {
+    const assignment = await resolveCoordinatorAssignment(payload.coordinatorId);
+    assignedCoordinator = {
+      id: assignment.coordinatorId,
+      email: assignment.coordinatorEmail,
+    };
+  }
+
+  const lead = buildManualLeadRecord({
+    leadId,
+    payload,
+    coordinator: assignedCoordinator,
+  });
+  const saved = await saveLeadProfile(lead);
+
+  const channelLabel =
+    payload.channel.charAt(0).toUpperCase() + payload.channel.slice(1).replace(/_/g, " ");
+  const noteLines = [
+    `Lead manually entered by ${coordinator.email ?? "coordinator"}.`,
+    `Channel: ${channelLabel}.`,
+  ];
+  if (payload.notes) {
+    noteLines.push(`Notes: ${payload.notes}`);
+  }
+
+  try {
+    await addCoordinatorNote(leadId, coordinator, {
+      body: noteLines.join(" "),
+      type: "general",
+    });
+  } catch (error) {
+    console.error("[leads] manual lead entry note failed:", error);
+  }
+
+  void notifyLeadPipelineEvent({
+    previous: null,
+    current: saved,
+  }).catch((error) => {
+    console.error("[leads] Slack notification failed:", error);
+  });
+
+  return saved;
 };
 
 export const listAllLeads = async (): Promise<LeadRecord[]> => {
@@ -344,8 +401,12 @@ export const updateLead = async (
   const updated: LeadRecord = {
     ...existing,
     status: input.status ?? existing.status,
-    coordinatorId: input.coordinatorId ?? existing.coordinatorId,
-    coordinatorEmail: input.coordinatorEmail ?? existing.coordinatorEmail,
+    coordinatorId: input.coordinatorId !== undefined
+      ? input.coordinatorId
+      : existing.coordinatorId,
+    coordinatorEmail: input.coordinatorEmail !== undefined
+      ? input.coordinatorEmail
+      : existing.coordinatorEmail,
     archivedAt:
       input.archivedAt !== undefined ? input.archivedAt : existing.archivedAt,
     updatedAt: new Date().toISOString(),
@@ -365,13 +426,11 @@ export const updateLead = async (
 
 export const assignLeadToCoordinator = async (
   leadId: string,
-  coordinator: { id: string; email?: string }
-): Promise<LeadRecord> =>
-  updateLead(leadId, {
-    coordinatorId: coordinator.id,
-    coordinatorEmail: coordinator.email,
-    status: undefined,
-  });
+  coordinatorId: string
+): Promise<LeadRecord> => {
+  const assignment = await resolveCoordinatorAssignment(coordinatorId);
+  return updateLead(leadId, assignment);
+};
 
 export const updateLeadStatus = async (
   leadId: string,

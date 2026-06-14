@@ -3,6 +3,7 @@ import {
   handleLeadsStorageError,
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
+import { CoordinatorAssignmentError } from "@/lib/leads/coordinatorAssignment";
 import {
   assignLeadToCoordinator,
   archiveLead,
@@ -38,7 +39,7 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
 
   let body: {
     status?: LeadStatus;
-    assignToMe?: boolean;
+    coordinatorId?: string;
     archive?: boolean;
     restore?: boolean;
   };
@@ -49,11 +50,8 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    if (body.assignToMe) {
-      const lead = await assignLeadToCoordinator(params.id, {
-        id: auth.user.sub,
-        email: auth.user.email,
-      });
+    if (body.coordinatorId !== undefined) {
+      const lead = await assignLeadToCoordinator(params.id, body.coordinatorId);
       return NextResponse.json({ lead });
     }
 
@@ -78,6 +76,9 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "No update specified" }, { status: 400 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Update failed";
+    if (error instanceof CoordinatorAssignmentError) {
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
     if (message.includes("not found")) {
       return NextResponse.json({ error: message }, { status: 404 });
     }

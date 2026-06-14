@@ -1,6 +1,7 @@
 import type {
   AdminLeadsResponse,
   CoordinatorNoteType,
+  CreateManualLeadInput,
   LeadDetailResponse,
   LeadRecord,
   LeadStatus,
@@ -62,11 +63,22 @@ export const addAdminLeadNote = async (
   return handleResponse(response);
 };
 
+export const createAdminLead = async (
+  payload: CreateManualLeadInput
+): Promise<{ lead: LeadRecord }> => {
+  const response = await fetch("/api/admin/leads", {
+    method: "POST",
+    headers: await authHeaders(),
+    body: JSON.stringify(payload),
+  });
+  return handleResponse(response);
+};
+
 export const updateAdminLead = async (
   leadId: string,
   payload: {
     status?: LeadStatus;
-    assignToMe?: boolean;
+    coordinatorId?: string;
     archive?: boolean;
     restore?: boolean;
   }
