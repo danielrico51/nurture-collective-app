@@ -1,9 +1,14 @@
 "use client";
 
-import LeafMark from "@/components/Art/LeafMark";
 import ServiceCardExpandedContent from "@/components/Services/ServiceCardExpandedContent";
 import ServiceIllustration from "@/components/Services/ServiceIllustration";
+import ServicesDecor from "@/components/Services/ServicesDecor";
 import { buildCareStartHref } from "@/config/carePaths";
+import {
+  serviceCardBackgroundSrc,
+  serviceCardCornerSrc,
+  serviceCardIconSrc,
+} from "@/config/servicesDecor";
 import type { ServiceDetail } from "@/content/serviceDetails";
 import type { SourceCitation } from "@/content/sources";
 import type { CoreService } from "@/content/site";
@@ -72,13 +77,32 @@ const ServicesLandingCard = ({
           : "border-nurture-sage/15"
       } p-4 sm:p-5`}
     >
-      <LeafMark className="pointer-events-none absolute bottom-3 right-3 h-4 w-4 opacity-45 transition group-hover:opacity-70 sm:bottom-4 sm:right-4" />
-      <div className="flex min-h-0 flex-1 items-start gap-3 sm:gap-4">
-        <div className="w-[42%] max-w-[10.5rem] shrink-0 sm:max-w-[11rem]">
-          <ServiceIllustration slug={service.slug} />
-        </div>
+      {serviceCardBackgroundSrc[service.slug] ? (
+        <ServicesDecor
+          src={serviceCardBackgroundSrc[service.slug]!}
+          placement="card-background"
+        />
+      ) : null}
+      {serviceCardIconSrc[service.slug] ? (
+        <ServicesDecor
+          src={serviceCardIconSrc[service.slug]!}
+          placement="card-icon"
+        />
+      ) : null}
+      {serviceCardCornerSrc[service.slug] ? (
+        <ServicesDecor
+          src={serviceCardCornerSrc[service.slug]!}
+          placement="card-corner"
+        />
+      ) : null}
+      <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
+        <ServiceIllustration
+          slug={service.slug}
+          variant="card"
+          className="mb-4 w-full shrink-0"
+        />
 
-        <div className="flex min-w-0 flex-1 flex-col py-0.5">
+        <div className="flex min-w-0 flex-1 flex-col">
           <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-nurture-sage-dark/80">
             {service.tag}
           </span>

@@ -1,6 +1,7 @@
+import ServicesDecor from "@/components/Services/ServicesDecor";
 import { buildCareStartHref } from "@/config/carePaths";
+import { servicesPageDecor } from "@/config/servicesDecor";
 import Link from "next/link";
-import LeafMark from "@/components/Art/LeafMark";
 
 const HeartIcon = () => (
   <svg viewBox="0 0 20 20" className="h-4 w-4" aria-hidden fill="currentColor">
@@ -11,10 +12,16 @@ const HeartIcon = () => (
 const ServicesCtaBanner = () => (
   <section className="relative pb-16 sm:pb-20">
     <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
-      <div className="flex flex-col items-center justify-between gap-6 rounded-[2rem] border border-nurture-sage/10 bg-gradient-to-r from-nurture-blush/70 via-nurture-rose-light/80 to-nurture-sage/20 px-6 py-6 text-center shadow-[0_14px_35px_rgba(45,52,54,0.07)] sm:flex-row sm:px-8 sm:text-left">
-        <div className="flex items-center gap-5">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-nurture-sage-dark text-white shadow-sm">
-            <LeafMark className="h-7 w-7 brightness-0 invert" />
+      <div className="relative flex flex-col items-center justify-between gap-6 overflow-hidden rounded-[2rem] border border-nurture-sage/10 bg-gradient-to-r from-nurture-blush/70 via-nurture-rose-light/80 to-nurture-sage/20 px-6 py-8 text-center shadow-[0_14px_35px_rgba(45,52,54,0.07)] sm:flex-row sm:px-8 sm:py-7 sm:text-left">
+        <ServicesDecor src={servicesPageDecor.ctaWash} placement="cta-wash" />
+        <ServicesDecor src={servicesPageDecor.ctaWave} placement="cta-wave" />
+        <div className="relative z-[1] flex items-center gap-5">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-nurture-sage-dark/90 text-white shadow-sm">
+            <ServicesDecor
+              src={servicesPageDecor.ctaHeart}
+              placement="cta-icon"
+              className="brightness-0 invert opacity-90"
+            />
           </div>
           <p className="max-w-xl font-serif text-xl font-semibold leading-snug text-nurture-charcoal sm:text-2xl">
             You&apos;re not just preparing for birth — you&apos;re becoming a
@@ -26,7 +33,7 @@ const ServicesCtaBanner = () => (
         </div>
         <Link
           href={buildCareStartHref()}
-          className="inline-flex shrink-0 items-center gap-2 rounded-full bg-nurture-rose px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-nurture-rose-dark"
+          className="relative z-[1] inline-flex shrink-0 items-center gap-2 rounded-full bg-nurture-rose px-7 py-3 text-sm font-semibold text-white shadow-sm transition hover:bg-nurture-rose-dark"
         >
           <HeartIcon />
           Get Support Today

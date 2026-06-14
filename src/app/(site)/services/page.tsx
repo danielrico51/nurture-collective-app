@@ -1,10 +1,12 @@
 import BookingEmbed from "@/components/Common/BookingEmbed";
 import JsonLd from "@/components/Seo/JsonLd";
 import ServicesCtaBanner from "@/components/Services/ServicesCtaBanner";
+import ServicesDecor from "@/components/Services/ServicesDecor";
 import ServicesHero from "@/components/Services/ServicesHero";
 import ServicesJumpNav from "@/components/Services/ServicesJumpNav";
 import ServicesLandingCard from "@/components/Services/ServicesLandingCard";
 import { buildPageMetadata } from "@/config/seo";
+import { servicesPageDecor } from "@/config/servicesDecor";
 import { publishedCoreServices } from "@/content/site";
 import type { CoreService } from "@/content/site";
 import { fetchPublishedBlogPosts } from "@/lib/blog/public";
@@ -52,8 +54,24 @@ export default async function ServicesPage() {
       />
       <ServicesHero />
 
-      <section className="relative -mt-8 bg-gradient-to-b from-transparent via-nurture-rose-light/15 to-nurture-sage-light/10 pb-16 sm:-mt-10 sm:pb-20">
-        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+      <section className="relative -mt-8 overflow-hidden bg-gradient-to-b from-transparent via-nurture-rose-light/15 to-nurture-sage-light/10 pb-16 sm:-mt-10 sm:pb-20">
+        <div
+          aria-hidden
+          className="pointer-events-none absolute inset-0 opacity-[0.045]"
+          style={{
+            backgroundImage: `url(${servicesPageDecor.patternTile})`,
+            backgroundSize: "280px 280px",
+            backgroundRepeat: "repeat",
+          }}
+        />
+        <ServicesDecor src={servicesPageDecor.edgeLeft} placement="edge-left" />
+        <ServicesDecor src={servicesPageDecor.edgeRight} placement="edge-right" />
+        <ServicesDecor
+          src={servicesPageDecor.cornerBottomRight}
+          placement="corner-bottom-right"
+          className="opacity-35"
+        />
+        <div className="relative z-[1] mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <ServicesJumpNav services={publishedCoreServices} />
 
           <div className="mt-6 space-y-4">

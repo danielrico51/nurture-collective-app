@@ -1,0 +1,28 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="700" height="700" viewBox="0 0 700 700" fill="none">
+<path d="M90 590 C170 420 230 265 390 110" stroke="#7F896E" stroke-width="3" stroke-linecap="round" opacity=".23"/>
+<path d="M610 90 C500 165 450 250 385 390" stroke="#7F896E" stroke-width="3" stroke-linecap="round" opacity=".18"/>
+<g transform="translate(562 554) rotate(-25)" opacity="0.2">
+<path d="M0 -16 C10 -9.92 10 9.92 0 16 C-10 9.92 -10 -9.92 0 -16Z" fill="#E8D6BF"/>
+</g>
+<g transform="translate(330 336) rotate(-19)" opacity="0.2">
+<path d="M0 -15 C6 -9.3 6 9.3 0 15 C-6 9.3 -6 -9.3 0 -15Z" fill="#C7CCB7"/>
+</g>
+<g transform="translate(364 525) rotate(27)" opacity="0.2">
+<path d="M0 -16 C9 -9.92 9 9.92 0 16 C-9 9.92 -9 -9.92 0 -16Z" fill="#A7AE91"/>
+</g>
+<g transform="translate(165 407) rotate(-38)" opacity="0.2">
+<path d="M0 -21 C11 -13.02 11 13.02 0 21 C-11 13.02 -11 -13.02 0 -21Z" fill="#D8A095"/>
+</g>
+<g transform="translate(373 481) rotate(50)" opacity="0.2">
+<path d="M0 -25 C6 -15.5 6 15.5 0 25 C-6 15.5 -6 -15.5 0 -25Z" fill="#D8A095"/>
+</g>
+<g transform="translate(528 294) rotate(-57)" opacity="0.2">
+<path d="M0 -17 C9 -10.54 9 10.54 0 17 C-9 10.54 -9 -10.54 0 -17Z" fill="#C7CCB7"/>
+</g>
+<g transform="translate(135 338) rotate(-16)" opacity="0.2">
+<path d="M0 -15 C6 -9.3 6 9.3 0 15 C-6 9.3 -6 -9.3 0 -15Z" fill="#A7AE91"/>
+</g>
+<g transform="translate(472 417) rotate(23)" opacity="0.2">
+<path d="M0 -14 C10 -8.68 10 8.68 0 14 C-10 8.68 -10 -8.68 0 -14Z" fill="#D8A095"/>
+</g>
+</svg>

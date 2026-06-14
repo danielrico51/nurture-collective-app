@@ -1,14 +1,14 @@
 import type { ServiceSlug } from "@/content/site";
 
-/** Brand illustration paths for each published service. */
+/** Brand illustration paths for each published service (2026 refresh). */
 export const serviceIllustrationSrc: Partial<Record<ServiceSlug, string>> = {
-  "birth-doula": "/images/services/birth-doula.png",
-  "overnight-newborn": "/images/services/overnight-newborn.png",
-  "postpartum-care": "/images/services/postpartum-care.png",
-  lactation: "/images/services/lactation.png",
-  "prenatal-massage": "/images/services/prenatal-massage.png",
-  "postpartum-massage": "/images/services/postpartum-massage.png",
-  "childbirth-education": "/images/services/childbirth-education.png",
+  "birth-doula": "/images/services/birth-doula.jpg",
+  "overnight-newborn": "/images/services/overnight-newborn.jpg",
+  "postpartum-care": "/images/services/postpartum-care.jpg",
+  lactation: "/images/services/lactation.jpg",
+  "prenatal-massage": "/images/services/prenatal-massage.jpg",
+  "postpartum-massage": "/images/services/postpartum-massage.jpg",
+  "childbirth-education": "/images/services/childbirth-education.jpg",
 };
 
 export const serviceIllustrationAlt: Partial<Record<ServiceSlug, string>> = {
@@ -22,7 +22,7 @@ export const serviceIllustrationAlt: Partial<Record<ServiceSlug, string>> = {
 };
 
 /** Hero art for the services landing page. */
-export const servicesHeroIllustrationSrc = "/images/services/main.png";
+export const servicesHeroIllustrationSrc = "/images/services/main.jpg";
 
 export const servicesHeroIllustrationAlt =
   "Parent seated peacefully with a swaddled newborn";

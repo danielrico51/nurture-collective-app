@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="1000" viewBox="0 0 300 1000" fill="none">
+<path d="M259 94 C211 222 211 222 156 364" stroke="#7F896E" stroke-width="3" stroke-linecap="round" fill="none" opacity=".30"/>
+<g transform="translate(240 146) rotate(-65)" opacity="0.48">
+<path d="M0 -16 C14 -9.92 14 9.92 0 16 C-14 9.92 -14 -9.92 0 -16Z" fill="#A7AE91"/>
+</g>
+<g transform="translate(219 199) rotate(-65)" opacity="0.48">
+<path d="M0 -21 C8 -13.02 8 13.02 0 21 C-8 13.02 -8 -13.02 0 -21Z" fill="#BBC5A5"/>
+</g>
+<g transform="translate(199 253) rotate(-65)" opacity="0.48">
+<path d="M0 -24 C7 -14.879999999999999 7 14.879999999999999 0 24 C-7 14.879999999999999 -7 -14.879999999999999 0 -24Z" fill="#E8D6BF"/>
+</g>
+<g transform="translate(178 308) rotate(-35)" opacity="0.48">
+<path d="M0 -25 C12 -15.5 12 15.5 0 25 C-12 15.5 -12 -15.5 0 -25Z" fill="#C7CCB7"/>
+</g>
+<path d="M265 383 C189 498 189 498 209 648" stroke="#7F896E" stroke-width="3" stroke-linecap="round" fill="none" opacity=".30"/>
+<g transform="translate(238 430) rotate(-50)" opacity="0.48">
+<path d="M0 -17 C14 -10.54 14 10.54 0 17 C-14 10.54 -14 -10.54 0 -17Z" fill="#A7AE91"/>
+</g>
+<g transform="translate(220 481) rotate(-35)" opacity="0.48">
+<path d="M0 -24 C7 -14.879999999999999 7 14.879999999999999 0 24 C-7 14.879999999999999 -7 -14.879999999999999 0 -24Z" fill="#C7CCB7"/>
+</g>
+<g transform="translate(208 534) rotate(-50)" opacity="0.48">
+<path d="M0 -16 C14 -9.92 14 9.92 0 16 C-14 9.92 -14 -9.92 0 -16Z" fill="#A7AE91"/>
+</g>
+<g transform="translate(205 589) rotate(-50)" opacity="0.48">
+<path d="M0 -24 C7 -14.879999999999999 7 14.879999999999999 0 24 C-7 14.879999999999999 -7 -14.879999999999999 0 -24Z" fill="#C7CCB7"/>
+</g>
+<path d="M251 620 C201 773 201 773 224 928" stroke="#7F896E" stroke-width="3" stroke-linecap="round" fill="none" opacity=".30"/>
+<g transform="translate(234 681) rotate(-65)" opacity="0.48">
+<path d="M0 -25 C11 -15.5 11 15.5 0 25 C-11 15.5 -11 -15.5 0 -25Z" fill="#A7AE91"/>
+</g>
+<g transform="translate(223 743) rotate(-50)" opacity="0.48">
+<path d="M0 -25 C7 -15.5 7 15.5 0 25 C-7 15.5 -7 -15.5 0 -25Z" fill="#C7CCB7"/>
+</g>
+<g transform="translate(217 804) rotate(-35)" opacity="0.48">
+<path d="M0 -21 C11 -13.02 11 13.02 0 21 C-11 13.02 -11 -13.02 0 -21Z" fill="#C7CCB7"/>
+</g>
+<g transform="translate(218 866) rotate(-50)" opacity="0.48">
+<path d="M0 -29 C13 -17.98 13 17.98 0 29 C-13 17.98 -13 -17.98 0 -29Z" fill="#E8D6BF"/>
+</g>
+</svg>

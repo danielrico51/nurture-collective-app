@@ -1,0 +1,41 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="300" height="1000" viewBox="0 0 300 1000" fill="none">
+<path d="M50 90 C87 230 87 230 73 417" stroke="#7F896E" stroke-width="3" stroke-linecap="round" fill="none" opacity=".30"/>
+<g transform="translate(63 148) rotate(35)" opacity="0.48">
+<path d="M0 -18 C7 -11.16 7 11.16 0 18 C-7 11.16 -7 -11.16 0 -18Z" fill="#C7CCB7"/>
+</g>
+<g transform="translate(71 210) rotate(65)" opacity="0.48">
+<path d="M0 -18 C9 -11.16 9 11.16 0 18 C-9 11.16 -9 -11.16 0 -18Z" fill="#A7AE91"/>
+</g>
+<g transform="translate(76 275) rotate(35)" opacity="0.48">
+<path d="M0 -18 C7 -11.16 7 11.16 0 18 C-7 11.16 -7 -11.16 0 -18Z" fill="#E8D6BF"/>
+</g>
+<g transform="translate(77 344) rotate(65)" opacity="0.48">
+<path d="M0 -19 C13 -11.78 13 11.78 0 19 C-13 11.78 -13 -11.78 0 -19Z" fill="#A7AE91"/>
+</g>
+<path d="M35 357 C105 490 105 490 80 623" stroke="#7F896E" stroke-width="3" stroke-linecap="round" fill="none" opacity=".30"/>
+<g transform="translate(59 410) rotate(50)" opacity="0.48">
+<path d="M0 -22 C12 -13.64 12 13.64 0 22 C-12 13.64 -12 -13.64 0 -22Z" fill="#C7CCB7"/>
+</g>
+<g transform="translate(76 463) rotate(35)" opacity="0.48">
+<path d="M0 -27 C10 -16.74 10 16.74 0 27 C-10 16.74 -10 -16.74 0 -27Z" fill="#E8D6BF"/>
+</g>
+<g transform="translate(85 517) rotate(35)" opacity="0.48">
+<path d="M0 -16 C7 -9.92 7 9.92 0 16 C-7 9.92 -7 -9.92 0 -16Z" fill="#BBC5A5"/>
+</g>
+<g transform="translate(86 570) rotate(35)" opacity="0.48">
+<path d="M0 -19 C9 -11.78 9 11.78 0 19 C-9 11.78 -9 -11.78 0 -19Z" fill="#E8D6BF"/>
+</g>
+<path d="M37 611 C113 757 113 757 138 878" stroke="#7F896E" stroke-width="3" stroke-linecap="round" fill="none" opacity=".30"/>
+<g transform="translate(65 668) rotate(50)" opacity="0.48">
+<path d="M0 -28 C10 -17.36 10 17.36 0 28 C-10 17.36 -10 -17.36 0 -28Z" fill="#BBC5A5"/>
+</g>
+<g transform="translate(90 724) rotate(65)" opacity="0.48">
+<path d="M0 -21 C10 -13.02 10 13.02 0 21 C-10 13.02 -10 -13.02 0 -21Z" fill="#C7CCB7"/>
+</g>
+<g transform="translate(110 777) rotate(50)" opacity="0.48">
+<path d="M0 -16 C14 -9.92 14 9.92 0 16 C-14 9.92 -14 -9.92 0 -16Z" fill="#BBC5A5"/>
+</g>
+<g transform="translate(126 829) rotate(65)" opacity="0.48">
+<path d="M0 -21 C11 -13.02 11 13.02 0 21 C-11 13.02 -11 -13.02 0 -21Z" fill="#E8D6BF"/>
+</g>
+</svg>

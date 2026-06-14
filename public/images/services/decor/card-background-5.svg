@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="620" viewBox="0 0 900 620" fill="none">
+<path d="M139 146 C260 40 430 80 510 180 C610 300 760 240 810 370 C860 500 720 590 560 540 C420 500 340 630 190 540 C50 455 35 260 120 150Z" fill="#C7CCB7" opacity=".16"/>
+<path d="M75 535 C180 435 235 360 310 220" stroke="#7F896E" stroke-width="3" stroke-linecap="round" opacity=".20"/>
+<g transform="translate(115 495) rotate(-50)" opacity="0.28">
+<path d="M0 -18 C8 -11.16 8 11.16 0 18 C-8 11.16 -8 -11.16 0 -18Z" fill="#C7CCB7"/>
+</g>
+<g transform="translate(153 440) rotate(-50)" opacity="0.28">
+<path d="M0 -18 C8 -11.16 8 11.16 0 18 C-8 11.16 -8 -11.16 0 -18Z" fill="#E8D6BF"/>
+</g>
+<g transform="translate(191 385) rotate(-50)" opacity="0.28">
+<path d="M0 -18 C8 -11.16 8 11.16 0 18 C-8 11.16 -8 -11.16 0 -18Z" fill="#A7AE91"/>
+</g>
+<g transform="translate(229 330) rotate(-50)" opacity="0.28">
+<path d="M0 -18 C8 -11.16 8 11.16 0 18 C-8 11.16 -8 -11.16 0 -18Z" fill="#C7CCB7"/>
+</g>
+<g transform="translate(267 275) rotate(45)" opacity="0.28">
+<path d="M0 -18 C8 -11.16 8 11.16 0 18 C-8 11.16 -8 -11.16 0 -18Z" fill="#A7AE91"/>
+</g>
+</svg>
