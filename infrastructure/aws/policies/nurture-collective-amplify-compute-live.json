@@ -20,7 +20,7 @@
       "Resource": "arn:aws:s3:::nurture-collective-tasks",
       "Condition": {
         "StringLike": {
-          "s3:prefix": ["management/*", "platform/*"]
+          "s3:prefix": ["management/*", "platform/*", "class-registrations/*"]
         }
       }
     },

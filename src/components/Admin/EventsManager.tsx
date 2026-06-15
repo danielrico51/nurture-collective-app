@@ -336,14 +336,28 @@ const EventsManager = () => {
           ) : (
             <div className="space-y-6">
               <div>
-                <h3 className="font-serif text-xl font-semibold text-nurture-charcoal">
-                  {isNew ? "New listing" : form.title}
-                </h3>
-                {!isNew && selectedSlug ? (
-                  <p className="mt-1 text-sm text-nurture-charcoal/60">
-                    /events-and-classes/{selectedSlug}
-                  </p>
-                ) : null}
+                <div className="flex flex-wrap items-start justify-between gap-3">
+                  <div>
+                    <h3 className="font-serif text-xl font-semibold text-nurture-charcoal">
+                      {isNew ? "New listing" : form.title}
+                    </h3>
+                    {!isNew && selectedSlug ? (
+                      <p className="mt-1 text-sm text-nurture-charcoal/60">
+                        /events-and-classes/{selectedSlug}
+                      </p>
+                    ) : null}
+                  </div>
+                  {!isNew && selectedSlug && form.status === "published" ? (
+                    <Link
+                      href={`/events-and-classes/${selectedSlug}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="shrink-0 text-sm font-semibold text-nurture-sage-dark hover:underline"
+                    >
+                      View live →
+                    </Link>
+                  ) : null}
+                </div>
               </div>
 
               {!isNew ? (
@@ -681,15 +695,6 @@ const EventsManager = () => {
                 >
                   {saving ? "Saving…" : isNew ? "Create" : "Save"}
                 </button>
-                {!isNew && selectedSlug && form.status === "published" ? (
-                  <Link
-                    href={`/events-and-classes/${selectedSlug}`}
-                    target="_blank"
-                    className="text-sm font-semibold text-nurture-sage-dark hover:underline"
-                  >
-                    View live →
-                  </Link>
-                ) : null}
                 {!isNew && selectedSlug ? (
                   <button
                     type="button"

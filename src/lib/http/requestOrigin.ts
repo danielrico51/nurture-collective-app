@@ -14,6 +14,10 @@ const resolveOriginFromHeaders = (
     if (normalizedHost) return `${proto}://${normalizedHost}`;
   }
   if (process.env.VERCEL_URL) return `https://${process.env.VERCEL_URL}`;
+  const appUrl =
+    process.env.NEXT_PUBLIC_APP_URL?.trim() ||
+    process.env.NEXT_PUBLIC_SITE_URL?.trim();
+  if (appUrl) return appUrl.replace(/\/$/, "");
   return "http://localhost:3000";
 };
 

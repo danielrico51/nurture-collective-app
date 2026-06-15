@@ -34,8 +34,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
     const item = await createEvent(body);
-    const synced = await syncEventToGoogleCalendar(item);
-    return NextResponse.json({ item: synced }, { status: 201 });
+    try {
+      const synced = await syncEventToGoogleCalendar(item, { registrations: [] });
+      return NextResponse.json({ item: synced }, { status: 201 });
+    } catch (syncError) {
+      console.error("[events] calendar sync after create failed:", syncError);
+      return NextResponse.json({ item }, { status: 201 });
+    }
   } catch (error) {
     return handleEventsStorageError(error);
   }

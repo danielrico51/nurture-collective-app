@@ -189,11 +189,23 @@ export const deleteClassCalendarEvent = async (
 };
 
 export const syncEventToGoogleCalendar = async (
-  event: EventItem
+  event: EventItem,
+  options?: { registrations?: ClassRegistration[] }
 ): Promise<EventItem> => {
   if (!isClassCalendarSyncEnabled()) return event;
 
-  const registrations = await listClassRegistrations(event.slug);
+  let registrations = options?.registrations;
+  if (registrations === undefined) {
+    try {
+      registrations = await listClassRegistrations(event.slug);
+    } catch (error) {
+      console.warn("[events-calendar] could not list registrations; continuing without attendees", {
+        eventSlug: event.slug,
+        error,
+      });
+      registrations = [];
+    }
+  }
 
   const patch = shouldSyncEventToCalendar(event)
     ? await upsertClassCalendarEvent(event, registrations)

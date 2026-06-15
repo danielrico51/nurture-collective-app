@@ -40,8 +40,13 @@ export async function PATCH(
     if (!item) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    const synced = await syncEventToGoogleCalendar(item);
-    return NextResponse.json({ item: synced });
+    try {
+      const synced = await syncEventToGoogleCalendar(item);
+      return NextResponse.json({ item: synced });
+    } catch (syncError) {
+      console.error("[events] calendar sync after update failed:", syncError);
+      return NextResponse.json({ item });
+    }
   } catch (error) {
     return handleEventsStorageError(error);
   }

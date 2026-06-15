@@ -1,9 +1,10 @@
-import { NextResponse } from "next/server";
+import { eventsStorageConfig } from "@/lib/events/config";
 import { isManagementUser, verifyRequest } from "@/lib/auth/verifyRequest";
 import {
   formatGoogleTasksError,
   isGoogleTasksErrorMessage,
 } from "@/lib/tasks/googleSyncFeedback";
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export const requireManagementAuth = async (request: NextRequest) => {
@@ -274,24 +275,71 @@ export const handleCoverageStorageError = (error: unknown) => {
 
 export const handleEventsStorageError = (error: unknown) => {
   console.error("[events] storage error:", error);
-  const message =
-    error instanceof Error ? error.message : "Storage operation failed";
-
-  if (
+  const message = getErrorMessage(error);
+  const bucket = eventsStorageConfig.bucket;
+  const key = eventsStorageConfig.s3Key;
+  const usingStaticKeys = Boolean(
+    process.env.SERVER_AWS_ACCESS_KEY_ID?.trim() ||
+      process.env.AMPLIFY_AWS_ACCESS_KEY_ID?.trim()
+  );
+  const accessDenied =
     message.includes("AccessDenied") ||
     message.includes("not authorized") ||
-    message.includes("Access Denied")
-  ) {
+    message.includes("Access Denied") ||
+    (error instanceof Error && error.name === "AccessDenied");
+
+  if (accessDenied) {
     return NextResponse.json(
       {
         error:
-          "Events storage access denied. Grant s3:GetObject and s3:PutObject on management/events/* (including management/events/dev/* for non-prod branches) in the tasks bucket.",
+          `Events storage access denied for s3://${bucket}/${key}. ` +
+          "Grant s3:GetObject and s3:PutObject on management/events/* and s3:ListBucket on class-registrations/* in the tasks bucket " +
+          (usingStaticKeys
+            ? "(IAM user behind SERVER_AWS_ACCESS_KEY_ID)."
+            : "(Amplify compute role — see infrastructure/aws/policies/nurture-collective-amplify-compute-live.json)."),
       },
       { status: 503 }
     );
   }
 
-  return NextResponse.json({ error: "Failed to access events storage" }, { status: 500 });
+  if (
+    message.includes("Could not load credentials") ||
+    message.includes("CredentialsProviderError") ||
+    message.includes("security token included in the request is invalid") ||
+    message.includes("InvalidAccessKeyId") ||
+    message.includes("SignatureDoesNotMatch")
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          `Events storage credentials failed for s3://${bucket}/${key}. ` +
+          (usingStaticKeys
+            ? "Verify SERVER_AWS_ACCESS_KEY_ID / SERVER_AWS_SECRET_ACCESS_KEY or remove them to use the Amplify compute role."
+            : "Attach S3 permissions to the Amplify compute role and redeploy."),
+      },
+      { status: 503 }
+    );
+  }
+
+  if (message.includes("EROFS") || message.includes("read-only file system")) {
+    return NextResponse.json(
+      {
+        error:
+          "Events cannot write to local disk in this environment. Set TASKS_S3_BUCKET in Amplify and redeploy.",
+      },
+      { status: 503 }
+    );
+  }
+
+  return NextResponse.json(
+    {
+      error:
+        message && message !== "Storage operation failed"
+          ? `Events storage failed: ${message}`
+          : "Failed to access events storage",
+    },
+    { status: 500 }
+  );
 };
 
 export const handleJournalStorageError = (error: unknown) => {
