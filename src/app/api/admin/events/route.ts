@@ -3,6 +3,7 @@ import {
   handleEventsStorageError,
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
+import { syncEventToGoogleCalendar } from "@/lib/events/calendar/sync";
 import { createEvent, listAllEvents, seedEventsSamplesIfEmpty } from "@/lib/events/storage";
 import type { CreateEventInput } from "@/types/event";
 
@@ -33,7 +34,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "Title is required" }, { status: 400 });
     }
     const item = await createEvent(body);
-    return NextResponse.json({ item }, { status: 201 });
+    const synced = await syncEventToGoogleCalendar(item);
+    return NextResponse.json({ item: synced }, { status: 201 });
   } catch (error) {
     return handleEventsStorageError(error);
   }

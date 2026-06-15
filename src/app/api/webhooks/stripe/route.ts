@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import Stripe from "stripe";
 import { serverGiftCardConfig } from "@/config/giftCards";
+import { completeClassRegistrationPayment } from "@/lib/classRegistrations/completePayment";
 import { completeGiftCardPayment } from "@/lib/giftCards/completePayment";
 
 export const dynamic = "force-dynamic";
@@ -47,7 +48,15 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true, skipped: "no_order_id" });
       }
 
-      if (orderType === "gift_card" || session.metadata?.designId) {
+      if (orderType === "class_registration") {
+        await completeClassRegistrationPayment({
+          registrationId: orderId,
+          paymentProvider: "stripe",
+          paymentReference: session.payment_intent
+            ? String(session.payment_intent)
+            : session.id,
+        });
+      } else if (orderType === "gift_card" || session.metadata?.designId) {
         await completeGiftCardPayment({
           orderId,
           paymentProvider: "stripe",

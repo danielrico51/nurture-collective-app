@@ -1,4 +1,5 @@
 import type { CreateEventInput, EventItem, UpdateEventInput } from "@/types/event";
+import type { ClassRegistrationAdminSettings } from "@/types/classRegistrationAdmin";
 
 const authHeaders = async (): Promise<HeadersInit> => {
   const { fetchAuthSession } = await import("aws-amplify/auth");
@@ -57,4 +58,27 @@ export const deleteAdminEvent = async (slug: string): Promise<void> => {
     headers: await authHeaders(),
   });
   await handleResponse<{ ok: boolean }>(response);
+};
+
+export const syncAdminEventCalendar = async (
+  slug: string
+): Promise<{ item: EventItem }> => {
+  const response = await fetch(
+    `/api/admin/events/${encodeURIComponent(slug)}/calendar/sync`,
+    {
+      method: "POST",
+      headers: await authHeaders(),
+    }
+  );
+  return handleResponse<{ item: EventItem }>(response);
+};
+
+export const fetchAdminEventsSettings = async (): Promise<{
+  settings: ClassRegistrationAdminSettings;
+}> => {
+  const response = await fetch("/api/admin/events/settings", {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  return handleResponse<{ settings: ClassRegistrationAdminSettings }>(response);
 };

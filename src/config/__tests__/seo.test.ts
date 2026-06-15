@@ -65,7 +65,7 @@ describe("buildPageMetadata", () => {
 describe("ROBOTS_DISALLOW_PATHS", () => {
   it("blocks private app surfaces from crawlers", () => {
     expect(ROBOTS_DISALLOW_PATHS).toEqual(
-      expect.arrayContaining(["/admin", "/apps", "/intake", "/care/start", "/book"])
+      expect.arrayContaining(["/admin", "/apps", "/intake", "/care/start", "/book/"])
     );
   });
 });

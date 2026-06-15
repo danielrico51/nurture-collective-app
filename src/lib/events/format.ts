@@ -45,3 +45,26 @@ export const kindLabel = (kind: EventKind): string =>
   kind === "class" ? "Class" : "Event";
 
 export const formatLabel = (format: EventFormat): string => format;
+
+export const formatEventPrice = (priceCents?: number): string | null => {
+  if (typeof priceCents !== "number" || priceCents <= 0) return null;
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+  }).format(priceCents / 100);
+};
+
+export const formatEventSchedule = (
+  eventDate: string,
+  startTime?: string
+): string => {
+  const dateLabel = formatEventDate(eventDate);
+  if (!startTime) return dateLabel;
+  return `${dateLabel} · ${startTime}`;
+};
+
+export const REGISTRATION_MODE_LABELS = {
+  online: "Online registration",
+  contact: "Contact to register",
+  external: "External registration link",
+} as const;

@@ -14,6 +14,7 @@ import {
   readLocalEventsDocument,
   writeLocalEventsDocument,
 } from "@/lib/events/localStorage";
+import { eventsStorageConfig } from "@/lib/events/config";
 import { getServerCredentials } from "@/lib/aws/amplifyCredentials";
 import type {
   CreateEventInput,
@@ -22,17 +23,8 @@ import type {
   UpdateEventInput,
 } from "@/types/event";
 
-const DEFAULT_S3_KEY = "management/events/items.json";
-const DEFAULT_BUCKET = "nurture-collective-tasks";
-
-const isLocalStorageEnabled = () => {
-  if (process.env.EVENTS_USE_LOCAL_STORAGE === "true") return true;
-  if (process.env.TASKS_S3_BUCKET?.trim()) return false;
-  return process.env.NODE_ENV === "development";
-};
-
 export const getEventsStorageMode = (): "local" | "s3" =>
-  isLocalStorageEnabled() ? "local" : "s3";
+  eventsStorageConfig.useLocalStorage ? "local" : "s3";
 
 const getS3Client = () => {
   const region =
@@ -45,13 +37,9 @@ const getS3Client = () => {
   });
 };
 
-const getBucket = () =>
-  process.env.EVENTS_S3_BUCKET?.trim() ||
-  process.env.TASKS_S3_BUCKET?.trim() ||
-  DEFAULT_BUCKET;
+const getBucket = () => eventsStorageConfig.bucket;
 
-const getObjectKey = () =>
-  process.env.EVENTS_S3_KEY?.trim() || DEFAULT_S3_KEY;
+const getObjectKey = () => eventsStorageConfig.s3Key;
 
 const readS3EventsDocument = async (): Promise<EventsDocument> => {
   const client = getS3Client();
@@ -105,14 +93,14 @@ const writeS3EventsDocument = async (document: EventsDocument): Promise<void> =>
 };
 
 const readEventsDocument = async (): Promise<EventsDocument> => {
-  if (isLocalStorageEnabled()) {
+  if (eventsStorageConfig.useLocalStorage) {
     return readLocalEventsDocument();
   }
   return readS3EventsDocument();
 };
 
 const writeEventsDocument = async (document: EventsDocument): Promise<void> => {
-  if (isLocalStorageEnabled()) {
+  if (eventsStorageConfig.useLocalStorage) {
     return writeLocalEventsDocument(document);
   }
   return writeS3EventsDocument(document);

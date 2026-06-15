@@ -58,7 +58,8 @@ export const ADMIN_APPS: AdminApp[] = [
   {
     id: "events",
     title: "Events & classes",
-    description: "Manage workshops, classes, and community event listings in S3.",
+    description:
+      "Listings, registrations, payments, and settings for classes and events.",
     href: "/admin/events",
     status: "available",
     icon: "events",

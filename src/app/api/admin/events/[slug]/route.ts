@@ -3,6 +3,7 @@ import {
   handleEventsStorageError,
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
+import { syncEventToGoogleCalendar } from "@/lib/events/calendar/sync";
 import { deleteEvent, getEventBySlug, updateEvent } from "@/lib/events/storage";
 import type { UpdateEventInput } from "@/types/event";
 
@@ -39,7 +40,8 @@ export async function PATCH(
     if (!item) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json({ item });
+    const synced = await syncEventToGoogleCalendar(item);
+    return NextResponse.json({ item: synced });
   } catch (error) {
     return handleEventsStorageError(error);
   }

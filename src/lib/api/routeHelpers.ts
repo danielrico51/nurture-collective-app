@@ -285,7 +285,7 @@ export const handleEventsStorageError = (error: unknown) => {
     return NextResponse.json(
       {
         error:
-          "Events storage access denied. Grant s3:GetObject and s3:PutObject on management/events/* in the tasks bucket.",
+          "Events storage access denied. Grant s3:GetObject and s3:PutObject on management/events/* (including management/events/dev/* for non-prod branches) in the tasks bucket.",
       },
       { status: 503 }
     );
