@@ -12,6 +12,14 @@ import {
   updateAdminEvent,
 } from "@/lib/api/eventsClient";
 import {
+  filterAdminEvents,
+  type EventKindFilter,
+  type EventPublishFilter,
+  type EventSessionFilter,
+  type EventSortOrder,
+} from "@/lib/events/adminFilters";
+import { buildDuplicateEventDraft } from "@/lib/events/duplicate";
+import {
   formatEventDate,
   kindLabel,
   LISTING_STATUS_LABELS,
@@ -29,7 +37,7 @@ import type {
   EventRegistrationMode,
 } from "@/types/event";
 import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 const emptyDraft = (): Partial<EventItem> => ({
@@ -103,6 +111,11 @@ const EventsManager = () => {
   const [priceDollars, setPriceDollars] = useState("");
   const [hubView, setHubView] = useState<HubView>("listings");
   const [listingTab, setListingTab] = useState<ListingTab>("details");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [publishFilter, setPublishFilter] = useState<EventPublishFilter>("all");
+  const [sessionFilter, setSessionFilter] = useState<EventSessionFilter>("all");
+  const [kindFilter, setKindFilter] = useState<EventKindFilter>("all");
+  const [sortOrder, setSortOrder] = useState<EventSortOrder>("date-desc");
 
   const loadItems = useCallback(async (seed = false) => {
     setLoading(true);
@@ -137,6 +150,29 @@ const EventsManager = () => {
     setForm(emptyDraft());
     setPriceDollars("");
   };
+
+  const startDuplicate = (item: EventItem) => {
+    const draft = buildDuplicateEventDraft(item);
+    setHubView("listings");
+    setListingTab("details");
+    setIsNew(true);
+    setSelectedSlug(null);
+    setForm({ ...draft, faq: draft.faq ?? [] });
+    setPriceDollars(dollarsFromCents(draft.priceCents));
+    toast.success("Copied into a new draft — update the date and save");
+  };
+
+  const filteredItems = useMemo(
+    () =>
+      filterAdminEvents(items, {
+        query: searchQuery,
+        publishFilter,
+        sessionFilter,
+        kindFilter,
+        sortOrder,
+      }),
+    [items, searchQuery, publishFilter, sessionFilter, kindFilter, sortOrder]
+  );
 
   const updateField = <K extends keyof EventItem>(key: K, value: EventItem[K]) => {
     setForm((prev) => {
@@ -247,8 +283,11 @@ const EventsManager = () => {
             Events & classes
           </h2>
           <p className="mt-1 text-sm text-nurture-charcoal/65">
-            Listings, registrations, payments, and class operations ({items.length}{" "}
-            total).
+            Listings, registrations, payments, and class operations (
+            {filteredItems.length === items.length
+              ? `${items.length} total`
+              : `${filteredItems.length} of ${items.length}`}
+            ).
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
@@ -287,13 +326,113 @@ const EventsManager = () => {
       ) : (
       <div className="grid gap-6 lg:grid-cols-[minmax(0,280px)_minmax(0,1fr)]">
         <aside className="rounded-2xl border border-nurture-sage/15 bg-nurture-cream/30 p-4">
+          <div className="mb-4 space-y-3">
+            <label className="block">
+              <span className="text-[10px] font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+                Search
+              </span>
+              <input
+                type="search"
+                value={searchQuery}
+                onChange={(event) => setSearchQuery(event.target.value)}
+                placeholder="Title, slug, instructor…"
+                className="mt-1 w-full rounded-lg border border-nurture-sage/25 bg-white px-3 py-2 text-sm"
+              />
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <label className="block">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+                  Publish
+                </span>
+                <select
+                  value={publishFilter}
+                  onChange={(event) =>
+                    setPublishFilter(event.target.value as EventPublishFilter)
+                  }
+                  className="mt-1 w-full rounded-lg border border-nurture-sage/25 bg-white px-2 py-1.5 text-xs"
+                >
+                  <option value="all">All</option>
+                  <option value="published">Published</option>
+                  <option value="draft">Drafts</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+                  Session
+                </span>
+                <select
+                  value={sessionFilter}
+                  onChange={(event) =>
+                    setSessionFilter(event.target.value as EventSessionFilter)
+                  }
+                  className="mt-1 w-full rounded-lg border border-nurture-sage/25 bg-white px-2 py-1.5 text-xs"
+                >
+                  <option value="all">All</option>
+                  <option value="active">Active</option>
+                  <option value="past">Past / completed</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+                  Type
+                </span>
+                <select
+                  value={kindFilter}
+                  onChange={(event) =>
+                    setKindFilter(event.target.value as EventKindFilter)
+                  }
+                  className="mt-1 w-full rounded-lg border border-nurture-sage/25 bg-white px-2 py-1.5 text-xs"
+                >
+                  <option value="all">All</option>
+                  <option value="class">Classes</option>
+                  <option value="event">Events</option>
+                </select>
+              </label>
+              <label className="block">
+                <span className="text-[10px] font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+                  Sort
+                </span>
+                <select
+                  value={sortOrder}
+                  onChange={(event) =>
+                    setSortOrder(event.target.value as EventSortOrder)
+                  }
+                  className="mt-1 w-full rounded-lg border border-nurture-sage/25 bg-white px-2 py-1.5 text-xs"
+                >
+                  <option value="date-desc">Newest first</option>
+                  <option value="date-asc">Oldest first</option>
+                </select>
+              </label>
+            </div>
+            {searchQuery ||
+            publishFilter !== "all" ||
+            sessionFilter !== "all" ||
+            kindFilter !== "all" ? (
+              <button
+                type="button"
+                onClick={() => {
+                  setSearchQuery("");
+                  setPublishFilter("all");
+                  setSessionFilter("all");
+                  setKindFilter("all");
+                }}
+                className="text-xs font-semibold text-nurture-sage-dark hover:underline"
+              >
+                Clear filters
+              </button>
+            ) : null}
+          </div>
           {loading ? (
             <p className="text-sm text-nurture-charcoal/60">Loading…</p>
           ) : items.length === 0 ? (
             <p className="text-sm text-nurture-charcoal/60">No listings yet.</p>
+          ) : filteredItems.length === 0 ? (
+            <p className="text-sm text-nurture-charcoal/60">
+              No listings match these filters.
+            </p>
           ) : (
             <ul className="max-h-[32rem] space-y-2 overflow-y-auto">
-              {items.map((item) => (
+              {filteredItems.map((item) => (
                 <li key={item.slug}>
                   <button
                     type="button"
@@ -696,14 +835,27 @@ const EventsManager = () => {
                   {saving ? "Saving…" : isNew ? "Create" : "Save"}
                 </button>
                 {!isNew && selectedSlug ? (
-                  <button
-                    type="button"
-                    onClick={() => void handleDelete()}
-                    disabled={saving}
-                    className="text-sm font-medium text-red-700/80 hover:text-red-800"
-                  >
-                    Delete
-                  </button>
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const source = items.find((item) => item.slug === selectedSlug);
+                        if (source) startDuplicate(source);
+                      }}
+                      disabled={saving}
+                      className="rounded-full border border-nurture-sage/30 px-4 py-2 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10 disabled:opacity-60"
+                    >
+                      Copy & reopen session
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => void handleDelete()}
+                      disabled={saving}
+                      className="text-sm font-medium text-red-700/80 hover:text-red-800"
+                    >
+                      Delete
+                    </button>
+                  </>
                 ) : null}
               </div>
             </form>
