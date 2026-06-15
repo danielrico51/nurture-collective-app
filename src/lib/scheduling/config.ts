@@ -8,7 +8,7 @@ import { resolveCalendarDelegatedUser } from "@/lib/scheduling/calendarDeployGua
  * @see docs/platform/google-calendar-concierge-booking.md
  */
 
-/** Nesting Place introductory-call calendar (Google Appointment Schedule). */
+/** Nesting Place introductory-call / lead-call calendar (concierge booking only). */
 export const DEFAULT_GOOGLE_CALENDAR_ID =
   "c_2d5a066a46512e1ec02b55c8c92e83e00a9a8e77655de2e712a347fbb969552c@group.calendar.google.com";
 

@@ -136,6 +136,24 @@ const EventClassSettingsPanel = () => {
         </div>
         <div className="mt-3">
           <SettingsRow label="Calendar ID" value={settings.calendar.calendarId} />
+          {settings.calendar.embedUrl ? (
+            <p className="mt-3 text-sm">
+              <span className="text-nurture-charcoal/65">Classes calendar:</span>{" "}
+              <a
+                href={settings.calendar.embedUrl}
+                target="_blank"
+                rel="noreferrer"
+                className="font-medium text-nurture-sage-dark hover:underline"
+              >
+                Open embed view
+              </a>
+            </p>
+          ) : null}
+          <p className="mt-2 text-xs text-nurture-charcoal/55">
+            Lead-call booking uses <code className="text-xs">GOOGLE_CALENDAR_ID</code>{" "}
+            separately. Set <code className="text-xs">CLASS_EVENTS_GOOGLE_CALENDAR_ID</code>{" "}
+            for classes and events sync.
+          </p>
         </div>
       </section>
 

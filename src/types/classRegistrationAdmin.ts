@@ -18,6 +18,7 @@ export type ClassRegistrationAdminSettings = {
   calendar: {
     syncEnabled: boolean;
     calendarId: string | null;
+    embedUrl: string | null;
   };
   storage: {
     deploymentEnvironment: string;

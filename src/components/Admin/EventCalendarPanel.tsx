@@ -1,5 +1,6 @@
 "use client";
 
+import { DEFAULT_CLASS_EVENTS_CALENDAR_EMBED_URL } from "@/config/classCalendarConstants";
 import { syncAdminEventCalendar } from "@/lib/api/eventsClient";
 import type { EventItem } from "@/types/event";
 import { useState } from "react";
@@ -100,9 +101,18 @@ const EventCalendarPanel = ({
           rel="noopener noreferrer"
           className="inline-flex text-sm font-semibold text-nurture-sage-dark hover:underline"
         >
-          Open in Google Calendar →
+          Open session in Google Calendar →
         </a>
       ) : null}
+
+      <a
+        href={DEFAULT_CLASS_EVENTS_CALENDAR_EMBED_URL}
+        target="_blank"
+        rel="noopener noreferrer"
+        className="inline-flex text-sm font-semibold text-nurture-sage-dark hover:underline"
+      >
+        View classes calendar →
+      </a>
     </div>
   );
 };

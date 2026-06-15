@@ -3,7 +3,11 @@ import {
   classRegistrationEmailConfig,
   classRegistrationPaymentConfig,
 } from "@/config/classRegistrations";
-import { classCalendarConfig, isClassCalendarSyncEnabled } from "@/config/classCalendar";
+import {
+  classCalendarConfig,
+  classCalendarEmbedUrl,
+  isClassCalendarSyncEnabled,
+} from "@/config/classCalendar";
 import { classRegistrationConfig } from "@/lib/classRegistrations/config";
 import { eventsStorageConfig } from "@/lib/events/config";
 import { toAbsoluteUrl } from "@/config/siteUrl";
@@ -37,6 +41,7 @@ export const getClassRegistrationAdminSettings =
     calendar: {
       syncEnabled: isClassCalendarSyncEnabled(),
       calendarId: classCalendarConfig.calendarId || null,
+      embedUrl: classCalendarEmbedUrl || null,
     },
     storage: {
       deploymentEnvironment: eventsStorageConfig.deploymentEnvironment,

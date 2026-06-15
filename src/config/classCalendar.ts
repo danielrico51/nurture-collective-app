@@ -1,4 +1,8 @@
 import {
+  buildClassCalendarEmbedUrl,
+  DEFAULT_CLASS_EVENTS_GOOGLE_CALENDAR_ID,
+} from "@/config/classCalendarConstants";
+import {
   isGoogleSchedulingActive,
   serverSchedulingConfig,
 } from "@/lib/scheduling/config";
@@ -15,8 +19,7 @@ export const classCalendarConfig = {
   syncEnabled: readEnabled(),
   calendarId:
     process.env.CLASS_EVENTS_GOOGLE_CALENDAR_ID?.trim() ||
-    process.env.GOOGLE_CALENDAR_ID?.trim() ||
-    serverSchedulingConfig.calendarId,
+    DEFAULT_CLASS_EVENTS_GOOGLE_CALENDAR_ID,
   timezone: serverSchedulingConfig.timezone,
   defaultClassDurationMinutes: Number.parseInt(
     process.env.CLASS_EVENTS_DEFAULT_DURATION_MINUTES ?? "120",
@@ -30,5 +33,16 @@ export const classCalendarConfig = {
     process.env.CLASS_EVENTS_DEFAULT_START_TIME?.trim() || "10:00",
 } as const;
 
+export const classCalendarEmbedUrl = buildClassCalendarEmbedUrl(
+  classCalendarConfig.calendarId,
+  classCalendarConfig.timezone
+);
+
 export const isClassCalendarSyncEnabled = () =>
   classCalendarConfig.syncEnabled && Boolean(classCalendarConfig.calendarId);
+
+export {
+  buildClassCalendarEmbedUrl,
+  DEFAULT_CLASS_EVENTS_CALENDAR_EMBED_URL,
+  DEFAULT_CLASS_EVENTS_GOOGLE_CALENDAR_ID,
+} from "@/config/classCalendarConstants";
