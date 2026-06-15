@@ -39,7 +39,9 @@ jq \
     "STRIPE_WEBHOOK_SECRET": $whsec,
     "GIFT_CARD_PAYMENT_PROVIDER": $provider,
     "NEXT_PUBLIC_GIFT_CARD_PAYMENTS_ENABLED": $enabled,
-    "NEXT_PUBLIC_GIFT_CARD_PAYMENT_PROVIDER": $publicProvider
+    "NEXT_PUBLIC_GIFT_CARD_PAYMENT_PROVIDER": $publicProvider,
+    "NEXT_PUBLIC_CLASS_REGISTRATION_STRIPE_ENABLED": "true",
+    "NEXT_PUBLIC_CLASS_REGISTRATION_PAYMENTS_ENABLED": "true"
   }
   ' "$BEFORE" >"$MERGED"
 
@@ -47,12 +49,15 @@ aws amplify update-app --app-id "$APP_ID" --environment-variables "file://${MERG
 
 rm -f "$BEFORE" "$MERGED"
 
-echo "Stripe gift card env updated on Amplify app ${APP_ID}."
+echo "Stripe env updated on Amplify app ${APP_ID}."
 echo "  STRIPE_SECRET_KEY set"
 echo "  GIFT_CARD_PAYMENT_PROVIDER=${GIFT_CARD_PAYMENT_PROVIDER:-stripe}"
 echo "  NEXT_PUBLIC_GIFT_CARD_PAYMENTS_ENABLED=${NEXT_PUBLIC_GIFT_CARD_PAYMENTS_ENABLED:-true}"
+echo "  NEXT_PUBLIC_CLASS_REGISTRATION_STRIPE_ENABLED=true (class registration card checkout)"
 if [[ -z "${STRIPE_WEBHOOK_SECRET:-}" ]]; then
   echo "  STRIPE_WEBHOOK_SECRET not set — add after creating Stripe webhook"
+  echo "  Dev webhook URL: https://dev.d9588bqvrp5xs.amplifyapp.com/api/webhooks/stripe"
+  echo "  Event: checkout.session.completed"
 fi
 echo ""
 echo "Redeploy the dev branch in Amplify Console."
