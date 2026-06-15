@@ -3,6 +3,7 @@
 import ConversationAdminPanel from "@/components/Admin/ConversationAdminPanel";
 import LeadCoordinatorSelect from "@/components/Admin/LeadCoordinatorSelect";
 import ManualLeadForm from "@/components/Admin/ManualLeadForm";
+import ProposalPanel from "@/components/Admin/ProposalPanel";
 import {
   MATERNAL_STAGE_LABELS,
   SUPPORT_INTEREST_LABELS,
@@ -898,6 +899,8 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
                             handleReopenConversation(lead, sessionId)
                           }
                         />
+
+                        <ProposalPanel lead={lead} />
 
                         <dl className="mt-5 grid gap-4 sm:grid-cols-2">
                           <DetailItem label="Lead ID" value={lead.leadId} />

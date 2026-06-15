@@ -208,6 +208,53 @@ export const handleLeadsStorageError = (error: unknown) => {
   return NextResponse.json({ error: "Failed to access lead storage" }, { status: 500 });
 };
 
+export const handleProposalsStorageError = (error: unknown) => {
+  console.error("[proposals] storage error:", error);
+  const message = getErrorMessage(error);
+  const bucket =
+    process.env.NURTURE_CLIENTS_BUCKET?.trim() ||
+    process.env.NURTURE_PROPOSALS_BUCKET?.trim() ||
+    "nurture-clients-*";
+  const usingStaticKeys = Boolean(
+    process.env.SERVER_AWS_ACCESS_KEY_ID?.trim() ||
+      process.env.AMPLIFY_AWS_ACCESS_KEY_ID?.trim()
+  );
+
+  if (message.includes("NURTURE_CLIENTS_BUCKET")) {
+    return NextResponse.json(
+      {
+        error:
+          "Proposal storage is not configured. Set NURTURE_CLIENTS_BUCKET (or NURTURE_PROPOSALS_BUCKET) in Amplify environment variables.",
+      },
+      { status: 503 }
+    );
+  }
+
+  if (
+    message.includes("AccessDenied") ||
+    message.includes("not authorized") ||
+    message.includes("Access Denied")
+  ) {
+    return NextResponse.json(
+      {
+        error:
+          `Proposal storage access denied for bucket "${bucket}". ` +
+          (usingStaticKeys
+            ? "SERVER_AWS_ACCESS_KEY_ID is set — grant s3:ListBucket, s3:GetObject, and s3:PutObject on the clients bucket to that IAM user, or remove those keys so the Amplify compute role is used."
+            : "Attach the NurtureAmplifyPlatformS3 policy to your Amplify compute role (see infrastructure/aws/scripts/attach-amplify-s3-policy.sh).") +
+          " Confirm NURTURE_CLIENTS_BUCKET matches the CloudFormation ClientsBucketName output for this branch (dev vs prod), then redeploy Amplify.",
+      },
+      { status: 503 }
+    );
+  }
+
+  if (message.includes("OPENAI")) {
+    return NextResponse.json({ error: message }, { status: 503 });
+  }
+
+  return NextResponse.json({ error: "Failed to access proposal storage" }, { status: 500 });
+};
+
 export const handleBlogStorageError = (error: unknown) => {
   console.error("[blog] storage error:", error);
   const message =
