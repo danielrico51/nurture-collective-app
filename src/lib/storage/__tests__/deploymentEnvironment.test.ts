@@ -24,7 +24,10 @@ describe("resolveDeploymentEnvironment", () => {
     expect(resolveDeploymentEnvironment({ APP_ENV: "local" })).toBe("local");
   });
 
-  it("defaults to local during local development", () => {
-    expect(resolveDeploymentEnvironment({ NODE_ENV: "development" })).toBe("local");
+  it("defaults deployed builds to prod only when branch and APP_ENV are unknown", () => {
+    expect(resolveDeploymentEnvironment({ NODE_ENV: "production" })).toBe("prod");
+    expect(
+      resolveDeploymentEnvironment({ APP_ENV: "dev", NODE_ENV: "production" })
+    ).toBe("dev");
   });
 });

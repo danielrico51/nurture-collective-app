@@ -13,7 +13,20 @@ frontend:
       commands:
         - export NODE_OPTIONS="--max-old-space-size=6144"
         - |
+          BRANCH="${AWS_BRANCH:-${AMPLIFY_BRANCH:-}}"
+          if [ -n "${APP_ENV:-}" ]; then
+            DEPLOYMENT_ENV="$(printf '%s' "$APP_ENV" | tr '[:upper:]' '[:lower:]')"
+          else
+            case "$BRANCH" in
+              main|master|production|prod) DEPLOYMENT_ENV=prod ;;
+              *) DEPLOYMENT_ENV=dev ;;
+            esac
+          fi
+          echo "Nurture deployment scope: ${DEPLOYMENT_ENV} (branch: ${BRANCH:-unknown})"
           cat > .env.production <<EOF
+          APP_ENV=${DEPLOYMENT_ENV}
+          NURTURE_DEPLOYMENT_ENV=${DEPLOYMENT_ENV}
+          AMPLIFY_BRANCH=${BRANCH}
           NEXT_PUBLIC_SITE_URL=${NEXT_PUBLIC_SITE_URL:-https://www.nesting-place.com}
           NEXT_PUBLIC_AWS_REGION=${NEXT_PUBLIC_AWS_REGION:-us-east-1}
           NEXT_PUBLIC_USER_POOL_ID=${NEXT_PUBLIC_USER_POOL_ID}

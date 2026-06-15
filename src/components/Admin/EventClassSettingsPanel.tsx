@@ -174,6 +174,11 @@ const EventClassSettingsPanel = () => {
             label="Registrations prefix"
             value={settings.storage.registrationsPrefix}
           />
+          <p className="mt-2 text-xs text-nurture-charcoal/55">
+            {settings.storage.deploymentEnvironment === "prod"
+              ? "Production scope — events and registrations share the live site catalog."
+              : `Isolated ${settings.storage.deploymentEnvironment} scope — changes here do not update the live site catalog.`}
+          </p>
         </div>
       </section>
 
