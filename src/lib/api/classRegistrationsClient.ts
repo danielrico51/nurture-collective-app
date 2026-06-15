@@ -96,6 +96,7 @@ export const fetchAdminProviderRosterLink = async (
   slug: string
 ): Promise<{
   url: string;
+  path: string;
   instructorEmail: string;
   expiresAt: string;
 }> => {
@@ -112,6 +113,7 @@ export const fetchAdminProviderRosterLink = async (
   }
   return data as {
     url: string;
+    path: string;
     instructorEmail: string;
     expiresAt: string;
   };

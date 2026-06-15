@@ -47,7 +47,7 @@ const EventRegistrationsPanel = ({
   const [availability, setAvailability] = useState<ClassAvailability | null>(null);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
-  const [providerLink, setProviderLink] = useState<string | null>(null);
+  const [providerLinkPath, setProviderLinkPath] = useState<string | null>(null);
   const [providerLinkExpiresAt, setProviderLinkExpiresAt] = useState<string | null>(
     null
   );
@@ -74,7 +74,7 @@ const EventRegistrationsPanel = ({
 
   useEffect(() => {
     if (!instructorEmail?.trim()) {
-      setProviderLink(null);
+      setProviderLinkPath(null);
       setProviderLinkExpiresAt(null);
       return;
     }
@@ -84,13 +84,18 @@ const EventRegistrationsPanel = ({
     void fetchAdminProviderRosterLink(eventSlug)
       .then((data) => {
         if (cancelled) return;
-        setProviderLink(data.url);
+        setProviderLinkPath(data.path);
         setProviderLinkExpiresAt(data.expiresAt);
       })
-      .catch(() => {
+      .catch((error) => {
         if (cancelled) return;
-        setProviderLink(null);
+        setProviderLinkPath(null);
         setProviderLinkExpiresAt(null);
+        toast.error(
+          error instanceof Error
+            ? error.message
+            : "Could not generate instructor roster link"
+        );
       })
       .finally(() => {
         if (!cancelled) setProviderLinkLoading(false);
@@ -101,10 +106,17 @@ const EventRegistrationsPanel = ({
     };
   }, [eventSlug, instructorEmail]);
 
+  const resolveProviderLink = (): string | null => {
+    if (!providerLinkPath) return null;
+    if (typeof window === "undefined") return providerLinkPath;
+    return `${window.location.origin}${providerLinkPath}`;
+  };
+
   const copyProviderLink = async () => {
-    if (!providerLink) return;
+    const link = resolveProviderLink();
+    if (!link) return;
     try {
-      await navigator.clipboard.writeText(providerLink);
+      await navigator.clipboard.writeText(link);
       toast.success("Instructor roster link copied");
     } catch {
       toast.error("Could not copy link");
@@ -204,19 +216,20 @@ const EventRegistrationsPanel = ({
             {providerLinkExpiresAt
               ? ` · expires ${new Date(providerLinkExpiresAt).toLocaleDateString()}`
               : ""}
+            {providerLinkPath ? " · preview opens on this site" : ""}
           </p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
             <button
               type="button"
               onClick={() => void copyProviderLink()}
-              disabled={!providerLink || providerLinkLoading}
+              disabled={!providerLinkPath || providerLinkLoading}
               className="rounded-full border border-nurture-sage/30 px-3 py-1.5 text-xs font-medium text-nurture-sage-dark hover:bg-nurture-sage/10 disabled:opacity-50"
             >
               {providerLinkLoading ? "Loading link…" : "Copy instructor link"}
             </button>
-            {providerLink ? (
+            {providerLinkPath ? (
               <a
-                href={providerLink}
+                href={providerLinkPath}
                 target="_blank"
                 rel="noreferrer"
                 className="text-xs font-semibold text-nurture-sage-dark hover:underline"

@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
+  buildProviderRosterPath,
   buildProviderRosterUrl,
   createProviderRosterToken,
   resolveProviderRosterExpiry,
@@ -67,9 +68,12 @@ describe("provider roster access tokens", () => {
     expect(buildProviderRosterUrl(baseEvent({ instructorEmail: undefined }))).toBeNull();
   });
 
-  it("builds an absolute provider roster URL", () => {
-    const url = buildProviderRosterUrl(baseEvent());
-    expect(url).toMatch(
+  it("builds a provider roster path and absolute URL", () => {
+    const token = createProviderRosterToken(baseEvent());
+    expect(buildProviderRosterPath(token!)).toBe(
+      `/provider/classes/${encodeURIComponent(token!)}`
+    );
+    expect(buildProviderRosterUrl(baseEvent())).toMatch(
       /^https:\/\/www\.nesting-place\.com\/provider\/classes\/.+/
     );
   });

@@ -110,10 +110,13 @@ export const verifyProviderRosterToken = (
   }
 };
 
+export const buildProviderRosterPath = (token: string): string =>
+  `/provider/classes/${encodeURIComponent(token)}`;
+
 export const buildProviderRosterUrl = (event: EventItem): string | null => {
   const token = createProviderRosterToken(event);
   if (!token) return null;
-  return toAbsoluteUrl(`/provider/classes/${encodeURIComponent(token)}`);
+  return toAbsoluteUrl(buildProviderRosterPath(token));
 };
 
 export const instructorEmailMatchesEvent = (

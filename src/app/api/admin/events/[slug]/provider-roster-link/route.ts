@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  buildProviderRosterPath,
   buildProviderRosterUrl,
+  createProviderRosterToken,
   resolveProviderRosterExpiry,
 } from "@/lib/classRegistrations/providerAccess";
 import {
@@ -32,8 +34,8 @@ export async function GET(
       );
     }
 
-    const url = buildProviderRosterUrl(event);
-    if (!url) {
+    const token = createProviderRosterToken(event);
+    if (!token) {
       return NextResponse.json(
         { error: "Could not generate provider roster link." },
         { status: 500 }
@@ -41,7 +43,8 @@ export async function GET(
     }
 
     return NextResponse.json({
-      url,
+      url: buildProviderRosterUrl(event),
+      path: buildProviderRosterPath(token),
       instructorEmail,
       expiresAt: resolveProviderRosterExpiry(event),
     });

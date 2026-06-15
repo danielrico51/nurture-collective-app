@@ -1,6 +1,7 @@
 "use client";
 
 import AdminTabBar from "@/components/Admin/AdminTabBar";
+import EventsAdminGuide from "@/components/Admin/EventsAdminGuide";
 import EventCalendarPanel from "@/components/Admin/EventCalendarPanel";
 import EventClassSettingsPanel from "@/components/Admin/EventClassSettingsPanel";
 import EventPaymentsPanel from "@/components/Admin/EventPaymentsPanel";
@@ -309,6 +310,8 @@ const EventsManager = () => {
           ) : null}
         </div>
       </div>
+
+      <EventsAdminGuide />
 
       <AdminTabBar
         tabs={[
