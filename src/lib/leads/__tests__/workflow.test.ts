@@ -5,8 +5,10 @@ import {
 } from "@/lib/leads/paths";
 import {
   buildLeadFromSources,
+  canAdminOverrideLeadStatus,
   canTransitionLeadStatus,
   deriveLeadStatus,
+  getAllowedLeadTransitions,
   isGuestLead,
 } from "@/lib/leads/workflow";
 
@@ -101,6 +103,7 @@ describe("lead workflow", () => {
 
   it("allows valid CRM status transitions", () => {
     expect(canTransitionLeadStatus("new", "intake_in_progress")).toBe(true);
+    expect(canTransitionLeadStatus("new", "consult_scheduled")).toBe(false);
     expect(canTransitionLeadStatus("intake_completed", "consult_scheduled")).toBe(
       true
     );
@@ -113,6 +116,43 @@ describe("lead workflow", () => {
     expect(canTransitionLeadStatus("under_contract", "lost")).toBe(true);
     expect(canTransitionLeadStatus("converted", "qualified")).toBe(false);
     expect(canTransitionLeadStatus("lost", "qualified")).toBe(false);
+  });
+
+  it("lists only valid next statuses for admin pipeline actions", () => {
+    expect(getAllowedLeadTransitions("new")).toContain("consult_scheduled");
+    expect(getAllowedLeadTransitions("new")).toContain("intake_in_progress");
+    expect(getAllowedLeadTransitions("intake_completed")).toContain(
+      "consult_scheduled"
+    );
+    expect(
+      getAllowedLeadTransitions("proposal_sent", { isGuest: true })
+    ).toContain("converted_to_member");
+    expect(
+      getAllowedLeadTransitions("proposal_sent", { isGuest: false })
+    ).toContain("under_contract");
+    expect(
+      getAllowedLeadTransitions("proposal_sent", { isGuest: false })
+    ).not.toContain("converted_to_member");
+    expect(getAllowedLeadTransitions("lost")).toContain("qualified");
+  });
+
+  it("allows admin manual overrides across pipeline steps", () => {
+    expect(canAdminOverrideLeadStatus("new", "consult_scheduled")).toBe(true);
+    expect(canAdminOverrideLeadStatus("lost", "qualified")).toBe(true);
+    expect(
+      canAdminOverrideLeadStatus("converted_to_member", "intake_in_progress")
+    ).toBe(true);
+    expect(
+      canAdminOverrideLeadStatus("proposal_sent", "converted_to_member", {
+        isGuest: false,
+      })
+    ).toBe(false);
+    expect(
+      canAdminOverrideLeadStatus("proposal_sent", "under_contract", {
+        isGuest: true,
+      })
+    ).toBe(false);
+    expect(canAdminOverrideLeadStatus("new", "converted")).toBe(false);
   });
 });
 

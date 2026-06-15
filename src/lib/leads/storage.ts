@@ -27,7 +27,7 @@ import {
 import { resolveCoordinatorAssignment } from "@/lib/leads/coordinatorAssignment";
 import {
   buildLeadFromSources,
-  canTransitionLeadStatus,
+  canAdminOverrideLeadStatus,
   isGuestLead,
 } from "@/lib/leads/workflow";
 import { formatConsultBookingSummary } from "@/lib/scheduling/bookingSummary";
@@ -394,7 +394,9 @@ export const updateLead = async (
 ): Promise<LeadRecord> => {
   const existing = await ensureLeadRecord(leadId);
 
-  if (input.status && !canTransitionLeadStatus(existing.status, input.status)) {
+  if (input.status && !canAdminOverrideLeadStatus(existing.status, input.status, {
+    isGuest: existing.isGuest,
+  })) {
     throw new Error(`Cannot transition from ${existing.status} to ${input.status}`);
   }
 

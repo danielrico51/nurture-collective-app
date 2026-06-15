@@ -21,6 +21,7 @@ import {
 } from "@/lib/api/leadsClient";
 import { fetchTeamMembers } from "@/lib/api/tasksClient";
 import { getCoordinatorDisplayName } from "@/lib/leads/coordinatorDisplay";
+import { getAllowedLeadTransitions } from "@/lib/leads/workflow";
 import type { MaternalStage, SupportInterest, IntakeStatus, CareRecommendation, IntakeProfile } from "@/types/intake";
 import { INTAKE_STATUSES } from "@/types/intake";
 import type {
@@ -72,40 +73,117 @@ const NOTE_TYPE_LABELS: Record<CoordinatorNoteType, string> = {
 const statusBadgeClass = (status: LeadStatus) => {
   switch (status) {
     case "new":
-      return "bg-blue-100 text-blue-800";
+      return "bg-blue-600 text-white";
+    case "intake_in_progress":
+      return "bg-sky-600 text-white";
     case "intake_completed":
+      return "bg-nurture-sage-dark text-white";
     case "qualified":
-      return "bg-nurture-sage/15 text-nurture-sage-dark";
+      return "bg-emerald-700 text-white";
     case "consult_scheduled":
+      return "bg-violet-600 text-white";
     case "consult_completed":
-      return "bg-violet-100 text-violet-800";
+      return "bg-violet-800 text-white";
     case "proposal_sent":
-      return "bg-amber-100 text-amber-800";
+      return "bg-amber-600 text-white";
     case "converted":
     case "converted_to_member":
-      return "bg-emerald-100 text-emerald-800";
+      return "bg-emerald-600 text-white";
     case "under_contract":
-      return "bg-teal-100 text-teal-900";
+      return "bg-teal-700 text-white";
     case "lost":
+      return "bg-nurture-charcoal text-white";
     case "stale":
-      return "bg-nurture-charcoal/10 text-nurture-charcoal/70";
+      return "bg-stone-500 text-white";
     default:
-      return "bg-nurture-cream text-nurture-charcoal/75";
+      return "bg-nurture-sage-dark text-white";
   }
 };
 
-const PIPELINE_ACTIONS: LeadStatus[] = [
-  "consult_scheduled",
-  "consult_completed",
-  "proposal_sent",
-  "qualified",
-  "lost",
-];
+const statusRingClass = (status: LeadStatus) => {
+  switch (status) {
+    case "new":
+      return "ring-blue-400";
+    case "intake_in_progress":
+      return "ring-sky-400";
+    case "intake_completed":
+      return "ring-nurture-sage";
+    case "qualified":
+      return "ring-emerald-400";
+    case "consult_scheduled":
+      return "ring-violet-400";
+    case "consult_completed":
+      return "ring-violet-500";
+    case "proposal_sent":
+      return "ring-amber-400";
+    case "converted":
+    case "converted_to_member":
+      return "ring-emerald-400";
+    case "under_contract":
+      return "ring-teal-400";
+    case "lost":
+      return "ring-nurture-charcoal/60";
+    case "stale":
+      return "ring-stone-400";
+    default:
+      return "ring-nurture-sage";
+  }
+};
 
-const pipelineActionsForLead = (lead: LeadRecord): LeadStatus[] => [
-  ...PIPELINE_ACTIONS,
-  ...(lead.isGuest ? (["converted_to_member"] as LeadStatus[]) : (["under_contract"] as LeadStatus[])),
-];
+const statusCardAccentClass = (status: LeadStatus) => {
+  switch (status) {
+    case "new":
+      return "border-l-blue-600";
+    case "intake_in_progress":
+      return "border-l-sky-600";
+    case "intake_completed":
+      return "border-l-nurture-sage-dark";
+    case "qualified":
+      return "border-l-emerald-700";
+    case "consult_scheduled":
+      return "border-l-violet-600";
+    case "consult_completed":
+      return "border-l-violet-800";
+    case "proposal_sent":
+      return "border-l-amber-600";
+    case "converted":
+    case "converted_to_member":
+      return "border-l-emerald-600";
+    case "under_contract":
+      return "border-l-teal-700";
+    case "lost":
+      return "border-l-nurture-charcoal";
+    case "stale":
+      return "border-l-stone-500";
+    default:
+      return "border-l-nurture-sage-dark";
+  }
+};
+
+const LeadStatusBadge = ({
+  status,
+  size = "sm",
+}: {
+  status: LeadStatus;
+  size?: "sm" | "lg";
+}) => (
+  <span
+    className={`inline-flex shrink-0 items-center gap-2 rounded-full font-bold uppercase tracking-wide shadow-md ring-2 ring-offset-2 ${statusBadgeClass(status)} ${statusRingClass(status)} ${
+      size === "lg" ? "px-5 py-2 text-sm" : "px-3.5 py-1.5 text-xs"
+    }`}
+  >
+    <span
+      className={`rounded-full bg-white/90 shadow-sm ${
+        size === "lg" ? "h-3 w-3" : "h-2.5 w-2.5"
+      }`}
+      aria-hidden
+    />
+    {STATUS_LABELS[status]}
+  </span>
+);
+
+const pipelineActionsForLead = (lead: LeadRecord): LeadStatus[] =>
+  getAllowedLeadTransitions(lead.status, { isGuest: lead.isGuest });
 
 const formatDate = (value: string) =>
   new Date(value).toLocaleString(undefined, {
@@ -622,7 +700,7 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
             return (
               <div
                 key={lead.leadId}
-                className={`overflow-hidden rounded-2xl border bg-white shadow-sm ${
+                className={`overflow-hidden rounded-2xl border border-l-4 bg-white shadow-sm ${statusCardAccentClass(lead.status)} ${
                   lead.archivedAt
                     ? "border-nurture-charcoal/15 opacity-90"
                     : "border-nurture-sage/15"
@@ -638,11 +716,6 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
                       <p className="font-medium text-nurture-charcoal">
                         {lead.name || "Unnamed"}
                       </p>
-                      <span
-                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${statusBadgeClass(lead.status)}`}
-                      >
-                        {STATUS_LABELS[lead.status]}
-                      </span>
                       {lead.isGuest ? (
                         <span className="rounded-full bg-amber-50 px-2 py-0.5 text-xs font-semibold text-amber-800">
                           Guest lead
@@ -681,12 +754,15 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
                       </span>
                     </p>
                   </div>
-                  <div className="flex shrink-0 flex-wrap items-center gap-4 text-sm text-nurture-charcoal/60">
-                    <span className="hidden sm:inline">{coordinatorLabel}</span>
-                    <span>{stageLabel}</span>
-                    <span>{lead.completionScore}%</span>
-                    <span>{formatDate(lead.updatedAt)}</span>
-                    <span aria-hidden>{expanded ? "▲" : "▼"}</span>
+                  <div className="flex shrink-0 flex-col items-end gap-2 sm:items-end">
+                    <LeadStatusBadge status={lead.status} />
+                    <div className="flex flex-wrap items-center justify-end gap-3 text-sm text-nurture-charcoal/60">
+                      <span className="hidden sm:inline">{coordinatorLabel}</span>
+                      <span>{stageLabel}</span>
+                      <span>{lead.completionScore}%</span>
+                      <span>{formatDate(lead.updatedAt)}</span>
+                      <span aria-hidden>{expanded ? "▲" : "▼"}</span>
+                    </div>
                   </div>
                 </button>
 
@@ -707,23 +783,49 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
                     <div className="mb-5 flex flex-wrap gap-2">
                       {!lead.archivedAt ? (
                         <>
-                          {pipelineActionsForLead(lead).map((status) => (
-                            <button
-                              key={status}
-                              type="button"
-                              disabled={
-                                savingId === lead.leadId || lead.status === status
-                              }
-                              onClick={() => handleStatusChange(lead.leadId, status)}
-                              className={`rounded-full px-3 py-1.5 text-xs font-medium disabled:opacity-50 ${
-                                lead.status === status
-                                  ? "bg-nurture-sage text-white"
-                                  : "border border-nurture-sage/25 bg-white text-nurture-charcoal/75"
-                              }`}
+                          <div className="mb-1 w-full">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+                              Current pipeline stage
+                            </p>
+                            <div
+                              className={`mt-3 flex items-center gap-3 rounded-2xl px-5 py-4 shadow-md ring-2 ring-offset-2 ${statusBadgeClass(lead.status)} ${statusRingClass(lead.status)}`}
                             >
-                              {STATUS_LABELS[status]}
-                            </button>
-                          ))}
+                              <span
+                                className="h-4 w-4 shrink-0 rounded-full bg-white/90 shadow-sm"
+                                aria-hidden
+                              />
+                              <p className="text-lg font-bold uppercase tracking-wide text-white">
+                                {STATUS_LABELS[lead.status]}
+                              </p>
+                            </div>
+                          </div>
+                          {pipelineActionsForLead(lead).length > 0 ? (
+                            <div className="w-full">
+                              <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+                                Move to
+                              </p>
+                              <div className="flex flex-wrap gap-2">
+                                {pipelineActionsForLead(lead).map((status) => (
+                                  <button
+                                    key={status}
+                                    type="button"
+                                    disabled={savingId === lead.leadId}
+                                    onClick={() =>
+                                      handleStatusChange(lead.leadId, status)
+                                    }
+                                    className="rounded-full border border-nurture-sage/25 bg-white px-3 py-1.5 text-xs font-medium text-nurture-charcoal/75 transition hover:border-nurture-sage/50 hover:bg-nurture-sage/10 disabled:opacity-50"
+                                  >
+                                    {STATUS_LABELS[status]}
+                                  </button>
+                                ))}
+                              </div>
+                            </div>
+                          ) : (
+                            <p className="w-full text-sm text-nurture-charcoal/55">
+                              This lead is in a terminal status — no further pipeline
+                              moves are available.
+                            </p>
+                          )}
                           <button
                             type="button"
                             disabled={savingId === lead.leadId}
