@@ -165,3 +165,44 @@ export const canTransitionLeadStatus = (
 
   return allowed[from]?.includes(to) ?? false;
 };
+
+/** Statuses coordinators can set manually in the CRM (excludes deprecated `converted`). */
+export const ADMIN_PIPELINE_STATUSES: LeadStatus[] = [
+  "new",
+  "intake_in_progress",
+  "intake_completed",
+  "consult_scheduled",
+  "consult_completed",
+  "proposal_sent",
+  "qualified",
+  "under_contract",
+  "converted_to_member",
+  "lost",
+  "stale",
+];
+
+/**
+ * Relaxed rules for coordinator manual updates in the CRM.
+ * Allows skipping pipeline steps; only blocks deprecated/lead-type-specific targets.
+ */
+export const canAdminOverrideLeadStatus = (
+  from: LeadStatus,
+  to: LeadStatus,
+  options?: { isGuest?: boolean }
+): boolean => {
+  if (from === to) return true;
+  if (to === "converted") return false;
+  if (!ADMIN_PIPELINE_STATUSES.includes(to)) return false;
+  if (to === "converted_to_member" && options?.isGuest === false) return false;
+  if (to === "under_contract" && options?.isGuest === true) return false;
+  return true;
+};
+
+export const getAllowedLeadTransitions = (
+  from: LeadStatus,
+  options?: { isGuest?: boolean }
+): LeadStatus[] =>
+  ADMIN_PIPELINE_STATUSES.filter((status) => {
+    if (status === from) return false;
+    return canAdminOverrideLeadStatus(from, status, options);
+  });
