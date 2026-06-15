@@ -1,0 +1,123 @@
+[
+  {
+    "id": "birth-doula-standard-redacted",
+    "service_type": "birth-doula",
+    "title": "Birth doula services agreement (in-person)",
+    "tags": {
+      "service_types": ["birth-doula", "birth-doula"],
+      "budget_range": "premium",
+      "family_size": "any",
+      "goals": ["birth-support", "labor", "prenatal", "postpartum-follow-up", "confidence"]
+    },
+    "style_reference": {
+      "executive_summary": "A comprehensive birth doula package providing non-medical emotional, physical, and educational support through pregnancy, labor, birth, and immediate postpartum. Includes prenatal meetings, on-call coverage around the estimated due date, continuous labor support, cesarean emotional support when permitted, and a postpartum follow-up visit.",
+      "recommended_services": [
+        {
+          "name": "Prenatal support",
+          "description": "One to two prenatal meetings with client and partner to review birth preferences, concerns, and expectations; reasonable phone and email availability throughout pregnancy.",
+          "frequency": "1–2 visits before birth"
+        },
+        {
+          "name": "Labor and birth support",
+          "description": "Phone/text guidance when labor begins; in-person support once contractions are consistent. Continuous presence through labor and birth, including induction coordination and backup doula after prolonged labor if needed.",
+          "frequency": "On call from 2 weeks before through 2 weeks after EDD"
+        },
+        {
+          "name": "Immediate postpartum support",
+          "description": "Approximately two hours after birth for comfort and breastfeeding initiation if desired; follow-up visit within two weeks.",
+          "frequency": "Birth day + one follow-up visit"
+        }
+      ],
+      "timeline": "On-call window begins two weeks before estimated due date and ends two weeks after. Agreement valid for 24 hours from issuance to secure availability.",
+      "pricing": "Total package typically $2,500–$2,800: one-third deposit due upon signing (non-refundable), remaining balance due before estimated due date (non-refundable). Payment via Zelle, Venmo, Cash App, cash, or card (3% processing fee on Venmo/card). No refunds for cesarean births; fees refunded only if TNP cannot provide support and no qualified backup is available.",
+      "next_steps": "Review agreement, sign within 24 hours, submit deposit, and confirm estimated due date and assigned doula. Contact doula when labor begins; use text only 10pm–6am unless urgent or in active labor."
+    }
+  },
+  {
+    "id": "birth-doula-virtual-redacted",
+    "service_type": "birth-doula-virtual",
+    "title": "Birth doula services agreement (virtual agreement format)",
+    "tags": {
+      "service_types": ["birth-doula", "birth-doula"],
+      "budget_range": "flexible",
+      "family_size": "any",
+      "goals": ["birth-support", "virtual", "labor", "prenatal"]
+    },
+    "style_reference": {
+      "executive_summary": "Standard birth doula scope delivered under a virtual agreement format, emphasizing educational and emotional support, clear scope-of-practice boundaries, and third-party authorization for care coordination among TNP team and healthcare providers.",
+      "recommended_services": [
+        {
+          "name": "Prenatal education and planning",
+          "description": "Prenatal meetings and ongoing communication to prepare for labor, including preference review and expectation setting.",
+          "frequency": "1–2 prenatal sessions"
+        },
+        {
+          "name": "Labor support",
+          "description": "Remote guidance until in-person support is appropriate; continuous support once active labor support begins.",
+          "frequency": "On-call around due date"
+        }
+      ],
+      "timeline": "Same on-call window as standard birth doula agreements; virtual agreement revision noted in contract header.",
+      "pricing": "Representative total fee near $2,300 with proportional deposit and balance schedule; non-refundable deposit at signing, balance before due date.",
+      "next_steps": "Sign virtual agreement promptly, authorize TNP collaboration with care team as outlined, and establish labor communication preferences."
+    }
+  },
+  {
+    "id": "postpartum-doula-intensive-redacted",
+    "service_type": "postpartum-doula-intensive",
+    "title": "Intensive overnight postpartum doula package",
+    "tags": {
+      "service_types": ["postpartum-doula", "overnight-newborn-care", "postpartum-doula"],
+      "budget_range": "premium",
+      "family_size": "first-baby",
+      "goals": ["sleep", "recovery", "feeding", "parent-rest", "newborn-care"]
+    },
+    "style_reference": {
+      "executive_summary": "High-hour overnight postpartum care package for the first six weeks after birth, combining physical newborn and household support, evidence-based education, and emotional support. Minimum session lengths apply; Carrot Fertility benefit timing may require completion within six weeks of discharge.",
+      "recommended_services": [
+        {
+          "name": "Overnight postpartum shifts",
+          "description": "10-hour night shifts in weeks 1–2, tapering in weeks 3–6. Physical support includes feeding, soothing, nursery organization, light housework, and baby laundry when requested.",
+          "frequency": "Example: 6 nights/week weeks 1–2, 5 nights/week weeks 3–6 (320 total hours)"
+        },
+        {
+          "name": "Informational and emotional support",
+          "description": "Postpartum recovery guidance, infant care education, referrals, listening, and collaborative planning.",
+          "frequency": "Integrated into each shift"
+        }
+      ],
+      "timeline": "Schedule agreed between client and assigned doula after birth notification; 48-hour notice preferred for scheduling changes. Carrot Fertility hours must be used within six weeks of discharge when applicable.",
+      "pricing": "Representative intensive package near $25,600: 50% due upon signing (non-refundable), 50% after first week of service (non-refundable). Additional hours and holiday premiums per TNP discretion. Venmo/card 3% processing fee.",
+      "next_steps": "Contact TNP after birth to schedule first session, confirm shift calendar with assigned doula, and review illness/mask preferences and no-solicitation policy."
+    }
+  },
+  {
+    "id": "postpartum-doula-overnight-redacted",
+    "service_type": "postpartum-doula-overnight",
+    "title": "Overnight postpartum doula package (Carrot Fertility)",
+    "tags": {
+      "service_types": ["postpartum-doula", "overnight-newborn-care", "postpartum-doula"],
+      "budget_range": "premium",
+      "family_size": "any",
+      "goals": ["sleep", "feeding", "recovery", "parent-rest"]
+    },
+    "style_reference": {
+      "executive_summary": "Structured postpartum doula agreement for overnight newborn care with defined hour minimums, illness policies, scope limitations, and Carrot Fertility benefit timing. Emphasizes non-medical support, schedule commitment, and safety policies for family and doula.",
+      "recommended_services": [
+        {
+          "name": "Overnight newborn care shifts",
+          "description": "10-hour night shifts on an agreed weekly schedule (example: 3 nights per week for 4 weeks, 120 total hours).",
+          "frequency": "12 overnight shifts"
+        },
+        {
+          "name": "Daytime postpartum support",
+          "description": "Minimum 4-hour day sessions when scheduled; feeding, soothing, light household support, and emotional adjustment support.",
+          "frequency": "As scheduled with TNP approval"
+        }
+      ],
+      "timeline": "Services begin on or after estimated due date or hospital discharge; not on-call before EDD unless written arrangement. Carrot benefits must be completed within six weeks when applicable.",
+      "pricing": "Representative package near $9,600: 50% due at signing, 50% after first week; all fees non-refundable. Additional hours via amended agreement. Holiday premiums may apply.",
+      "next_steps": "Notify TNP after birth, honor confirmed schedule, disclose household illness promptly, and return signed agreement with payment within 24-hour offer window when possible."
+    }
+  }
+]

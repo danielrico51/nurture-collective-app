@@ -1,15 +1,12 @@
 import "server-only";
 
 import { google } from "googleapis";
-import { createGoogleCalendarAuthClient } from "@/lib/scheduling/google/client";
+import { createGoogleProposalDocsAuthClient } from "@/lib/proposals/googleAuth";
 import { proposalsStorageConfig } from "@/lib/proposals/config";
 import type { ProposalLlmContent } from "@/types/proposal";
 
-const DOCS_SCOPE = "https://www.googleapis.com/auth/documents";
-const DRIVE_SCOPE = "https://www.googleapis.com/auth/drive";
-
 const getDocsClients = async () => {
-  const auth = await createGoogleCalendarAuthClient();
+  const auth = await createGoogleProposalDocsAuthClient();
   return {
     docs: google.docs({
       version: "v1",
@@ -106,5 +103,3 @@ export const createProposalGoogleDoc = async (input: {
 
   return { documentId, documentUrl };
 };
-
-export const getGoogleDocsAuthScopes = (): string[] => [DOCS_SCOPE, DRIVE_SCOPE];

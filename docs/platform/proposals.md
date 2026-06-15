@@ -35,6 +35,96 @@ Built-in style references are used when the S3 library is empty.
 5. After approval, enter signer email and **Send for e-signature**.
 6. On `SIGNED` webhook, the lead status moves to `converted_to_member` and onboarding scaffold runs.
 
+## Step 3 — Google Doc template
+
+Proposal generation can write JSON to S3 without Google Docs. For coordinator-facing documents, configure a master template.
+
+### One-time: Workspace domain-wide delegation
+
+In **Google Workspace Admin → Security → API controls → Domain-wide delegation**, add these scopes for the nurture-tasks-sync service account client ID:
+
+```
+https://www.googleapis.com/auth/documents
+https://www.googleapis.com/auth/drive
+```
+
+(Calendar/Tasks scopes stay as-is — this is an additional authorization.)
+
+### Create template + push to Amplify dev
+
+```bash
+chmod +x infrastructure/google/setup-proposal-docs.sh
+
+# Creates master doc as admin@nesting-place.com, verifies copy/replace, updates Amplify dev
+CREATE_TEMPLATE=true AMPLIFY_BRANCH=dev REDEPLOY=true \
+  ./infrastructure/google/setup-proposal-docs.sh
+```
+
+Or use an existing Doc ID:
+
+```bash
+GOOGLE_PROPOSAL_TEMPLATE_DOC_ID=<doc-id> AMPLIFY_BRANCH=dev REDEPLOY=true \
+  ./infrastructure/google/setup-proposal-docs.sh
+```
+
+### Template placeholders (must match exactly)
+
+```
+{{CLIENT_NAME}}
+{{EXECUTIVE_SUMMARY}}
+{{SERVICES}}
+{{PRICING}}
+{{TIMELINE}}
+{{TERMS}}
+{{NEXT_STEPS}}
+```
+
+See `src/lib/proposals/proposalDocTemplate.ts` for the canonical section layout.
+
+### Verify only
+
+```bash
+GOOGLE_PROPOSAL_TEMPLATE_DOC_ID=<doc-id> npm run verify:proposal-docs
+```
+
+### Manual template (if API create fails)
+
+1. Create a Google Doc titled **Proposal Template (Master — Nesting Place)**
+2. Paste the sections from `proposalDocTemplate.ts`
+3. Copy the document ID from the URL (`/document/d/{ID}/edit`)
+4. Run `GOOGLE_PROPOSAL_TEMPLATE_DOC_ID={ID} AMPLIFY_BRANCH=dev ./infrastructure/aws/scripts/set-amplify-proposals-env.sh`
+
+Optional: set `GOOGLE_PROPOSAL_DRIVE_FOLDER_ID` so generated copies land in a shared Drive folder.
+
+### Sample contract library (LLM style references)
+
+Historical contracts are redacted and stored as JSON (no client names, EDDs, or doula assignments):
+
+```
+proposal-library-seed/dev/entries.json
+s3://nurture-collective-tasks/proposal-library/dev/{service_type}/proposal.json
+```
+
+Upload or refresh:
+
+```bash
+./infrastructure/aws/scripts/seed-proposal-library-s3.sh
+```
+
+When S3 entries exist, retrieval uses them instead of built-in examples in `src/lib/proposals/library/builtin.ts`.
+
+### `invalid_rapt` when running setup scripts
+
+This means **local gcloud credentials expired**, not missing Workspace delegation.
+
+```bash
+gcloud auth login admin@nesting-place.com
+gcloud auth application-default login
+npm run setup:proposal-google-template
+```
+
+Or skip API creation: build the Doc manually in Google Docs, then set `GOOGLE_PROPOSAL_TEMPLATE_DOC_ID` on Amplify.
+
 ## Dev vs production storage
 
 Proposal storage follows the same deployment rules as leads, events, and class registrations:
