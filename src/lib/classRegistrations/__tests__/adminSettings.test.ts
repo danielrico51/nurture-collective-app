@@ -9,6 +9,7 @@ vi.mock("@/config/classCalendar", () => ({
     defaultEventDurationMinutes: 60,
     defaultStartTime: "10:00",
   },
+  classCalendarEmbedUrl: "https://calendar.google.com/calendar/embed?src=classes",
   isClassCalendarSyncEnabled: () => true,
 }));
 
@@ -49,6 +50,12 @@ vi.mock("@/lib/events/config", () => ({
     bucket: "nurture-collective-tasks",
     s3Key: "management/events/dev/items.json",
     useLocalStorage: false,
+  },
+}));
+
+vi.mock("@/lib/scheduling/config", () => ({
+  serverSchedulingConfig: {
+    delegatedUser: "admin@nesting-place.com",
   },
 }));
 

@@ -3,12 +3,14 @@ import "server-only";
 import { classCalendarConfig, isClassCalendarSyncEnabled } from "@/config/classCalendar";
 import { toAbsoluteUrl } from "@/config/siteUrl";
 import { formatEventPrice } from "@/lib/events/format";
+import { formatClassCalendarSyncError } from "@/lib/events/calendar/errors";
 import {
   buildCalendarEventDescription,
   buildCalendarEventSummary,
   buildEventSessionBounds,
   shouldSyncEventToCalendar,
 } from "@/lib/events/calendar/times";
+import { serverSchedulingConfig } from "@/lib/scheduling/config";
 import { updateEvent } from "@/lib/events/storage";
 import { listClassRegistrations } from "@/lib/classRegistrations/storage";
 import { getCalendarApi } from "@/lib/scheduling/google/client";
@@ -153,7 +155,10 @@ export const upsertClassCalendarEvent = async (
       googleCalendarSyncError: "",
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = formatClassCalendarSyncError(error, {
+      calendarId,
+      delegatedUser: serverSchedulingConfig.delegatedUser,
+    });
     console.error("[events-calendar] upsert failed:", error);
     return {
       googleCalendarSyncError: message,
@@ -182,7 +187,10 @@ export const deleteClassCalendarEvent = async (
       googleCalendarSyncError: "",
     };
   } catch (error) {
-    const message = error instanceof Error ? error.message : String(error);
+    const message = formatClassCalendarSyncError(error, {
+      calendarId: classCalendarConfig.calendarId,
+      delegatedUser: serverSchedulingConfig.delegatedUser,
+    });
     console.error("[events-calendar] delete failed:", error);
     return { googleCalendarSyncError: message };
   }

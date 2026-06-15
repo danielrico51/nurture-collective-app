@@ -70,7 +70,21 @@ export const syncAdminEventCalendar = async (
       headers: await authHeaders(),
     }
   );
-  return handleResponse<{ item: EventItem }>(response);
+  const data = await response.json().catch(() => ({}));
+  if (!response.ok) {
+    const item =
+      data && typeof data === "object" && "item" in data
+        ? (data.item as EventItem)
+        : undefined;
+    const message =
+      typeof data.error === "string"
+        ? data.error
+        : "Calendar sync failed";
+    const error = new Error(message) as Error & { item?: EventItem };
+    if (item) error.item = item;
+    throw error;
+  }
+  return data as { item: EventItem };
 };
 
 export const fetchAdminEventsSettings = async (): Promise<{

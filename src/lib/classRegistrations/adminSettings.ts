@@ -10,6 +10,7 @@ import {
 } from "@/config/classCalendar";
 import { classRegistrationConfig } from "@/lib/classRegistrations/config";
 import { eventsStorageConfig } from "@/lib/events/config";
+import { serverSchedulingConfig } from "@/lib/scheduling/config";
 import { toAbsoluteUrl } from "@/config/siteUrl";
 import type { ClassRegistrationAdminSettings } from "@/types/classRegistrationAdmin";
 
@@ -42,6 +43,7 @@ export const getClassRegistrationAdminSettings =
       syncEnabled: isClassCalendarSyncEnabled(),
       calendarId: classCalendarConfig.calendarId || null,
       embedUrl: classCalendarEmbedUrl || null,
+      delegatedUser: serverSchedulingConfig.delegatedUser,
     },
     storage: {
       deploymentEnvironment: eventsStorageConfig.deploymentEnvironment,

@@ -136,6 +136,10 @@ const EventClassSettingsPanel = () => {
         </div>
         <div className="mt-3">
           <SettingsRow label="Calendar ID" value={settings.calendar.calendarId} />
+          <SettingsRow
+            label="Delegated user"
+            value={settings.calendar.delegatedUser}
+          />
           {settings.calendar.embedUrl ? (
             <p className="mt-3 text-sm">
               <span className="text-nurture-charcoal/65">Classes calendar:</span>{" "}
@@ -151,8 +155,9 @@ const EventClassSettingsPanel = () => {
           ) : null}
           <p className="mt-2 text-xs text-nurture-charcoal/55">
             Lead-call booking uses <code className="text-xs">GOOGLE_CALENDAR_ID</code>{" "}
-            separately. Set <code className="text-xs">CLASS_EVENTS_GOOGLE_CALENDAR_ID</code>{" "}
-            for classes and events sync.
+            separately. Share the classes calendar above with{" "}
+            <strong>{settings.calendar.delegatedUser ?? "admin@nesting-place.com"}</strong>{" "}
+            (Make changes to events) or sync will fail with a permission error.
           </p>
         </div>
       </section>

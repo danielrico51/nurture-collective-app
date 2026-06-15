@@ -26,14 +26,22 @@ const EventCalendarPanel = ({
     try {
       const { item } = await syncAdminEventCalendar(eventSlug);
       onSynced?.(item);
-      toast.success(
-        item.googleCalendarEventId
-          ? "Google Calendar updated"
-          : "Calendar sync completed"
+      if (item.googleCalendarSyncError?.trim()) {
+        toast.error(item.googleCalendarSyncError);
+        return;
+      }
+      if (item.googleCalendarEventId) {
+        toast.success("Google Calendar updated");
+        return;
+      }
+      toast.error(
+        "Calendar sync finished without creating an event. Check Settings and the error below."
       );
     } catch (error) {
+      const syncError = error as Error & { item?: EventItem };
+      if (syncError.item) onSynced?.(syncError.item);
       toast.error(
-        error instanceof Error ? error.message : "Calendar sync failed"
+        syncError instanceof Error ? syncError.message : "Calendar sync failed"
       );
     } finally {
       setSyncing(false);
@@ -51,6 +59,11 @@ const EventCalendarPanel = ({
             {event.status === "published"
               ? "Published listings sync as a single session event. Confirmed registrations are added as attendees."
               : "Publish this listing to create a calendar session."}
+          </p>
+          <p className="mt-2 text-xs text-nurture-charcoal/55">
+            The classes calendar must be shared with{" "}
+            <strong>admin@nesting-place.com</strong> (Make changes to events).
+            Lead-call calendar settings are separate — see Settings tab.
           </p>
         </div>
         <button
