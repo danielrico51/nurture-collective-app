@@ -8,6 +8,7 @@ import {
   buildCalendarEventDescription,
   buildCalendarEventSummary,
   buildEventSessionBounds,
+  shouldRemoveEventFromCalendar,
   shouldSyncEventToCalendar,
 } from "@/lib/events/calendar/times";
 import { serverSchedulingConfig } from "@/lib/scheduling/config";
@@ -217,7 +218,9 @@ export const syncEventToGoogleCalendar = async (
 
   const patch = shouldSyncEventToCalendar(event)
     ? await upsertClassCalendarEvent(event, registrations)
-    : await deleteClassCalendarEvent(event);
+    : shouldRemoveEventFromCalendar(event)
+      ? await deleteClassCalendarEvent(event)
+      : {};
 
   if (!Object.keys(patch).length) return event;
 

@@ -63,7 +63,9 @@ const EventCalendarPanel = ({
           <p className="mt-2 text-xs text-nurture-charcoal/55">
             The classes calendar must be shared with{" "}
             <strong>admin@nesting-place.com</strong> (Make changes to events).
-            Lead-call calendar settings are separate — see Settings tab.
+            Saving as <strong>Draft</strong> does not remove a synced event; only{" "}
+            <strong>Completed</strong> or deleting the listing removes it from Google
+            Calendar.
           </p>
         </div>
         <button

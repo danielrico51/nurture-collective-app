@@ -3,6 +3,7 @@ import {
   buildCalendarEventSummary,
   buildEventSessionBounds,
   parseEventStartTime,
+  shouldRemoveEventFromCalendar,
   shouldSyncEventToCalendar,
 } from "@/lib/events/calendar/times";
 import type { EventItem } from "@/types/event";
@@ -44,6 +45,23 @@ describe("event calendar helpers", () => {
     expect(shouldSyncEventToCalendar(event({ status: "draft" }))).toBe(false);
     expect(
       shouldSyncEventToCalendar(event({ listingStatus: "completed" }))
+    ).toBe(false);
+  });
+
+  it("only removes calendar events when a synced session is completed", () => {
+    expect(
+      shouldRemoveEventFromCalendar(
+        event({
+          listingStatus: "completed",
+          googleCalendarEventId: "abc123",
+        })
+      )
+    ).toBe(true);
+    expect(shouldRemoveEventFromCalendar(event({ status: "draft" }))).toBe(false);
+    expect(
+      shouldRemoveEventFromCalendar(
+        event({ listingStatus: "completed" })
+      )
     ).toBe(false);
   });
 

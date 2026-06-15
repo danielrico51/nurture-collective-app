@@ -57,6 +57,10 @@ export const shouldSyncEventToCalendar = (event: EventItem): boolean =>
   Boolean(event.eventDate?.trim()) &&
   event.listingStatus !== "completed";
 
+/** Remove from Google Calendar only when the session is explicitly finished. */
+export const shouldRemoveEventFromCalendar = (event: EventItem): boolean =>
+  event.listingStatus === "completed" && Boolean(event.googleCalendarEventId);
+
 export const buildCalendarEventSummary = (event: EventItem): string => {
   const prefix = event.kind === "class" ? "Class" : "Event";
   return `${prefix}: ${event.title}`;

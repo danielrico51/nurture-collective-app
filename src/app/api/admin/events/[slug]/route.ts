@@ -3,7 +3,10 @@ import {
   handleEventsStorageError,
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
-import { syncEventToGoogleCalendar } from "@/lib/events/calendar/sync";
+import {
+  deleteClassCalendarEvent,
+  syncEventToGoogleCalendar,
+} from "@/lib/events/calendar/sync";
 import { deleteEvent, getEventBySlug, updateEvent } from "@/lib/events/storage";
 import type { UpdateEventInput } from "@/types/event";
 
@@ -60,6 +63,12 @@ export async function DELETE(
   if (auth.error) return auth.error;
 
   try {
+    const item = await getEventBySlug(params.slug, { includeDrafts: true });
+    if (!item) {
+      return NextResponse.json({ error: "Not found" }, { status: 404 });
+    }
+
+    await deleteClassCalendarEvent(item);
     const removed = await deleteEvent(params.slug);
     if (!removed) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
