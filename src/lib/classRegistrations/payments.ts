@@ -19,11 +19,17 @@ export const isVenmoPaymentAvailable = () =>
 export const isClassPaymentConfigured = () =>
   isStripePaymentAvailable() || isVenmoPaymentAvailable();
 
+export type RegistrationPaymentFields = {
+  amountCents: number;
+  paymentMethod?: ClassRegistrationPaymentMethod;
+  paymentStatus: ClassRegistration["paymentStatus"];
+};
+
 export const resolveRegistrationPaymentFields = (input: {
   event: EventItem;
   waitlist: boolean;
   paymentMethod?: ClassRegistrationPaymentMethod;
-}) => {
+}): RegistrationPaymentFields => {
   const amountCents = input.event.priceCents ?? 0;
   const requiresPayment = !input.waitlist && amountCents > 0;
 

@@ -1,12 +1,14 @@
 import type {
   ClassAvailability,
   ClassRegistration,
-  ClassRegistrationPaymentMethod,
   CreateClassRegistrationInput,
   UpdateClassRegistrationInput,
 } from "@/types/classRegistration";
 import type { EventItem } from "@/types/event";
-import { resolveRegistrationPaymentFields } from "@/lib/classRegistrations/payments";
+import {
+  resolveRegistrationPaymentFields,
+  type RegistrationPaymentFields,
+} from "@/lib/classRegistrations/payments";
 import {
   listClassRegistrations,
   readClassRegistration,
@@ -170,11 +172,7 @@ export const createClassRegistration = async (
       event.waitlistEnabled
   );
 
-  let paymentFields: {
-    amountCents: number;
-    paymentMethod: ClassRegistrationPaymentMethod;
-    paymentStatus: ClassRegistration["paymentStatus"];
-  };
+  let paymentFields: RegistrationPaymentFields;
 
   try {
     paymentFields = resolveRegistrationPaymentFields({
