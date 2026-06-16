@@ -67,6 +67,22 @@ if [[ "$DELEGATED_LOWER" == "info@nesting-place.com" ]]; then
   exit 1
 fi
 
+FORCE_LEGACY_ADC="${FORCE_LEGACY_ADC:-false}"
+BRANCH_FOR_GUARD="${BRANCH:-dev}"
+BRANCH_ENV_CHECK="${TMPDIR:-/tmp}/amplify-calendar-guard-${BRANCH_FOR_GUARD}-$$.json"
+aws amplify get-branch --app-id "$APP_ID" --branch-name "$BRANCH_FOR_GUARD" \
+  --query 'branch.environmentVariables' --output json >"$BRANCH_ENV_CHECK" 2>/dev/null || echo '{}' >"$BRANCH_ENV_CHECK"
+
+if [[ "$FORCE_LEGACY_ADC" != "true" ]] && jq -e '.GOOGLE_CALENDAR_AUTH_MODE == "wif" and .GOOGLE_WORKLOAD_IDENTITY_POOL_ID != null and .GOOGLE_WORKLOAD_IDENTITY_POOL_ID != ""' "$BRANCH_ENV_CHECK" >/dev/null; then
+  rm -f "$BRANCH_ENV_CHECK"
+  echo "Refusing to push legacy ADC: Amplify branch ${BRANCH_FOR_GUARD} uses Workload Identity Federation." >&2
+  echo "All delegated Google APIs (booking, proposals, tasks, class calendar) share WIF via createDelegatedGoogleAuthClient." >&2
+  echo "To refresh WIF env only: AMPLIFY_BRANCH=${BRANCH_FOR_GUARD} REDEPLOY=true REMOVE_ADC_JSON=true npm run amplify:google-wif" >&2
+  echo "To force legacy ADC anyway (not recommended): FORCE_LEGACY_ADC=true $0" >&2
+  exit 1
+fi
+rm -f "$BRANCH_ENV_CHECK"
+
 echo "Running Calendar deploy credential checks before pushing to Amplify..."
 echo "  ADC file: $ADC_FILE"
 (

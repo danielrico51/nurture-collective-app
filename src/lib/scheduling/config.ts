@@ -32,6 +32,7 @@ const readAuthMode = (): GoogleSchedulingAuthMode => {
   ) {
     return raw;
   }
+  if (isGoogleWorkloadIdentityConfigured()) return "wif";
   return "delegated";
 };
 

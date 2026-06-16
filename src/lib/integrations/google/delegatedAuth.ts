@@ -1,6 +1,9 @@
 import { GoogleAuth, OAuth2Client } from "google-auth-library";
 import type { GaxiosOptions, GaxiosResponse } from "gaxios";
-import { getGoogleWorkloadIdentityConfig } from "@/config/googleWorkloadIdentity";
+import {
+  getGoogleWorkloadIdentityConfig,
+  isGoogleWorkloadIdentityConfigured,
+} from "@/config/googleWorkloadIdentity";
 import { serverGoogleTasksConfig } from "@/config/googleTasks";
 import { createWorkloadIdentityAwsClient } from "@/lib/integrations/google/workloadIdentityCredentials";
 
@@ -19,11 +22,14 @@ type SourceRequestClient = {
   request<T>(options: GaxiosOptions): Promise<GaxiosResponse<T>>;
 };
 
+export const shouldUseGoogleWorkloadIdentity = (forceAdc = false): boolean =>
+  !forceAdc && isGoogleWorkloadIdentityConfigured();
+
 const createSourceClient = async (
   adcJson?: string,
   forceAdc = false
 ): Promise<SourceRequestClient> => {
-  if (!forceAdc) {
+  if (shouldUseGoogleWorkloadIdentity(forceAdc)) {
     const wifConfig = getGoogleWorkloadIdentityConfig();
     if (wifConfig) {
       // Federated principal token (not SA impersonation) calls IAM signJwt.
@@ -60,7 +66,9 @@ export const createDelegatedGoogleAuthClient = async (
     "admin@nesting-place.com";
   const serviceAccount =
     options.serviceAccount || serverGoogleTasksConfig.impersonateServiceAccount;
-  const adcJson = options.adcJson || serverGoogleTasksConfig.adcJson;
+  const adcJson = shouldUseGoogleWorkloadIdentity(options.forceAdc)
+    ? undefined
+    : options.adcJson || serverGoogleTasksConfig.adcJson;
   const now = Math.floor(Date.now() / 1000);
 
   const payload = JSON.stringify({

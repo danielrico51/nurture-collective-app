@@ -2,6 +2,17 @@
 
 Durable `/book` scheduling auth without expiring `authorized_user` ADC tokens.
 
+The same WIF configuration powers **all** delegated Google APIs on Amplify:
+
+| Feature | APIs | Auth entrypoint |
+|---------|------|-----------------|
+| Concierge booking (`/book`) | Calendar | `createGoogleCalendarAuthClient` |
+| Proposal Google Docs | Docs + Drive | `createGoogleProposalDocsAuthClient` |
+| Legacy Google Tasks sync | Tasks | `createGoogleTasksAuthClient` |
+| Class/event calendar sync | Calendar | `getCalendarApi` |
+
+All paths call `createDelegatedGoogleAuthClient`, which prefers WIF when `GOOGLE_WORKLOAD_IDENTITY_*` env vars are set.
+
 ## Problem
 
 Delegated calendar access previously stored a human `gcloud` refresh token in Amplify (`GOOGLE_CALENDAR_ADC_JSON`). Those tokens expire (`invalid_rapt`) and break `/book` until someone re-authenticates and redeploys.
@@ -31,6 +42,8 @@ Optional redeploy:
 
 ```bash
 REDEPLOY=true REMOVE_ADC_JSON=true npm run setup:google-wif
+# Dev branch (same pool — isolates proposal S3/Drive folders separately):
+AMPLIFY_BRANCH=dev REDEPLOY=true REMOVE_ADC_JSON=true npm run amplify:google-wif
 ```
 
 ## Verify

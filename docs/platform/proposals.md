@@ -122,9 +122,29 @@ Upload or refresh:
 
 When S3 entries exist, retrieval uses them instead of built-in examples in `src/lib/proposals/library/builtin.ts`.
 
-### `invalid_rapt` when running setup scripts
+### Google auth on Amplify (production)
 
-This means **local gcloud credentials expired**, not missing Workspace delegation.
+Proposal Docs use the **same Workload Identity Federation** as concierge booking — not a separate ADC token.
+
+```bash
+# One-time / refresh (dev and main use the same GCP WIF pool):
+GOOGLE_WORKLOAD_IDENTITY_PROJECT_NUMBER=643818957131 \
+GOOGLE_WORKLOAD_IDENTITY_POOL_ID=nurture-amplify-aws \
+GOOGLE_WORKLOAD_IDENTITY_PROVIDER_ID=aws-amplify \
+GOOGLE_WORKLOAD_IDENTITY_SERVICE_ACCOUNT=nurture-tasks-sync@boxwood-magnet-498623-n4.iam.gserviceaccount.com \
+AMPLIFY_BRANCH=dev REDEPLOY=true REMOVE_ADC_JSON=true \
+./infrastructure/aws/scripts/set-amplify-google-wif-env.sh
+```
+
+See `docs/platform/google-calendar-wif.md` for architecture. After WIF is active, remove `GOOGLE_CALENDAR_ADC_JSON` from Amplify so proposals do not fall back to expiring user tokens.
+
+### `invalid_rapt` on Amplify (proposal Google Docs)
+
+This means **Amplify still has an expiring `authorized_user` ADC** instead of WIF. Proposal JSON is saved to S3; only Google Doc creation fails.
+
+Fix: enable shared WIF on the branch (see **Google auth on Amplify** above) with `REMOVE_ADC_JSON=true`, redeploy, then regenerate.
+
+### `invalid_rapt` when running setup scripts locally
 
 ```bash
 gcloud auth login admin@nesting-place.com

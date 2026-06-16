@@ -3,6 +3,8 @@
  * @see docs/platform/google-tasks-sync.md
  */
 
+import { isGoogleWorkloadIdentityConfigured } from "@/config/googleWorkloadIdentity";
+
 export type GoogleTasksAuthMode =
   | "service_account"
   | "adc"
@@ -26,6 +28,7 @@ const readAuthMode = (): GoogleTasksAuthMode => {
   ) {
     return raw;
   }
+  if (isGoogleWorkloadIdentityConfigured()) return "wif";
   return "delegated";
 };
 
