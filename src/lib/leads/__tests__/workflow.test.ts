@@ -107,6 +107,13 @@ describe("lead workflow", () => {
     expect(canTransitionLeadStatus("intake_completed", "consult_scheduled")).toBe(
       true
     );
+    expect(canTransitionLeadStatus("consult_completed", "send_to_doula")).toBe(
+      true
+    );
+    expect(canTransitionLeadStatus("consult_completed", "proposal_sent")).toBe(
+      false
+    );
+    expect(canTransitionLeadStatus("send_to_doula", "proposal_sent")).toBe(true);
     expect(canTransitionLeadStatus("proposal_sent", "converted")).toBe(true);
     expect(canTransitionLeadStatus("proposal_sent", "converted_to_member")).toBe(
       true
@@ -196,6 +203,8 @@ describe("intake to CRM workflow", () => {
     status = "consult_scheduled";
     expect(canTransitionLeadStatus(status, "consult_completed")).toBe(true);
     status = "consult_completed";
+    expect(canTransitionLeadStatus(status, "send_to_doula")).toBe(true);
+    status = "send_to_doula";
     expect(canTransitionLeadStatus(status, "proposal_sent")).toBe(true);
   });
 });

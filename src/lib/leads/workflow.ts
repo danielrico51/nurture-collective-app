@@ -35,6 +35,7 @@ export const deriveLeadStatus = (input: {
   }
   if (input.currentStatus === "consult_scheduled") return "consult_scheduled";
   if (input.currentStatus === "consult_completed") return "consult_completed";
+  if (input.currentStatus === "send_to_doula") return "send_to_doula";
   if (input.currentStatus === "proposal_sent") return "proposal_sent";
   if (input.currentStatus === "qualified") return "qualified";
   if (input.currentStatus === "stale") return "stale";
@@ -138,7 +139,8 @@ export const canTransitionLeadStatus = (
     intake_in_progress: ["intake_completed", "qualified", "lost", "stale"],
     intake_completed: ["consult_scheduled", "qualified", "lost", "stale"],
     consult_scheduled: ["consult_completed", "intake_completed", "lost", "stale"],
-    consult_completed: ["proposal_sent", "qualified", "lost", "stale"],
+    consult_completed: ["send_to_doula", "qualified", "lost", "stale"],
+    send_to_doula: ["proposal_sent", "qualified", "lost", "stale"],
     proposal_sent: [
       "qualified",
       "converted",
@@ -173,6 +175,7 @@ export const ADMIN_PIPELINE_STATUSES: LeadStatus[] = [
   "intake_completed",
   "consult_scheduled",
   "consult_completed",
+  "send_to_doula",
   "proposal_sent",
   "qualified",
   "under_contract",

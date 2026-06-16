@@ -9,6 +9,7 @@ LeadStatus = Literal[
     "intake_completed",
     "consult_scheduled",
     "consult_completed",
+    "send_to_doula",
     "proposal_sent",
     "contract_pending",
     "converted",
