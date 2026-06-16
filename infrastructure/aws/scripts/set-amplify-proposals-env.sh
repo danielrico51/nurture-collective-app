@@ -9,8 +9,12 @@
 #
 # Optional overrides:
 #   AMPLIFY_APP_ID=d9588bqvrp5xs
-#   GOOGLE_PROPOSAL_TEMPLATE_DOC_ID=<google-doc-id>
-#   GOOGLE_PROPOSAL_DRIVE_FOLDER_ID=<drive-folder-id>
+#   GOOGLE_PROPOSAL_TEMPLATE_DOC_ID=<google-doc-id>          # sets scoped *_DEV or *_PROD for branch
+#   GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_DEV=<google-doc-id>
+#   GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_PROD=<google-doc-id>
+#   GOOGLE_PROPOSAL_DRIVE_FOLDER_ID=<drive-folder-id>        # sets scoped *_DEV or *_PROD for branch
+#   GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_DEV=1kucYlHjXwgWV7XW-oKDKqRmk9hOYNExP
+#   GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_PROD=<prod-folder-id>
 #   PROPOSAL_LIBRARY_S3_BUCKET=nurture-collective-tasks
 #   OPENAI_API_KEY=sk-...
 
@@ -47,7 +51,17 @@ fi
 
 LIBRARY_BUCKET="${PROPOSAL_LIBRARY_S3_BUCKET:-nurture-collective-tasks}"
 TEMPLATE_DOC_ID="${GOOGLE_PROPOSAL_TEMPLATE_DOC_ID:-}"
-DRIVE_FOLDER_ID="${GOOGLE_PROPOSAL_DRIVE_FOLDER_ID:-}"
+if [[ "$PLATFORM_ENV" == "prod" ]]; then
+  TEMPLATE_DOC_ID="${TEMPLATE_DOC_ID:-${GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_PROD:-}}"
+  DRIVE_FOLDER_ID="${GOOGLE_PROPOSAL_DRIVE_FOLDER_ID:-${GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_PROD:-}}"
+  DRIVE_FOLDER_KEY="GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_PROD"
+  TEMPLATE_DOC_KEY="GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_PROD"
+else
+  TEMPLATE_DOC_ID="${TEMPLATE_DOC_ID:-${GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_DEV:-}}"
+  DRIVE_FOLDER_ID="${GOOGLE_PROPOSAL_DRIVE_FOLDER_ID:-${GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_DEV:-}}"
+  DRIVE_FOLDER_KEY="GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_DEV"
+  TEMPLATE_DOC_KEY="GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_DEV"
+fi
 OPENAI_KEY="${OPENAI_API_KEY:-}"
 
 TMP_DIR="${TMPDIR:-/tmp}"
@@ -64,7 +78,9 @@ jq \
   --arg clientsBucket "$CLIENTS_BUCKET" \
   --arg libraryBucket "$LIBRARY_BUCKET" \
   --arg templateDocId "$TEMPLATE_DOC_ID" \
+  --arg templateDocKey "$TEMPLATE_DOC_KEY" \
   --arg driveFolderId "$DRIVE_FOLDER_ID" \
+  --arg driveFolderKey "$DRIVE_FOLDER_KEY" \
   --arg webhookSecret "$PROPOSAL_SIGNATURE_WEBHOOK_SECRET" \
   --arg openaiKey "$OPENAI_KEY" \
   --arg deploymentEnv "$PLATFORM_ENV" \
@@ -76,8 +92,18 @@ jq \
     "PROPOSAL_LIBRARY_S3_BUCKET": $libraryBucket,
     "PROPOSAL_SIGNATURE_WEBHOOK_SECRET": $webhookSecret
   }
-  | if $templateDocId != "" then . + {"GOOGLE_PROPOSAL_TEMPLATE_DOC_ID": $templateDocId} else . end
-  | if $driveFolderId != "" then . + {"GOOGLE_PROPOSAL_DRIVE_FOLDER_ID": $driveFolderId} else . end
+  | if $templateDocId != "" then
+      . + {
+        ($templateDocKey): $templateDocId,
+        "GOOGLE_PROPOSAL_TEMPLATE_DOC_ID": $templateDocId
+      }
+    else . end
+  | if $driveFolderId != "" then
+      . + {
+        ($driveFolderKey): $driveFolderId,
+        "GOOGLE_PROPOSAL_DRIVE_FOLDER_ID": $driveFolderId
+      }
+    else . end
   | if $openaiKey != "" then . + {"OPENAI_API_KEY": $openaiKey} else . end
   | if $deploymentEnv == "dev" then . + {"APP_ENV": "dev"} else . + {"APP_ENV": "prod"} end
   ' "$BRANCH_BEFORE" >"$BRANCH_MERGED"
@@ -98,14 +124,20 @@ fi
 echo "  PROPOSAL_LIBRARY_S3_BUCKET=${LIBRARY_BUCKET}"
 echo "  PROPOSAL_SIGNATURE_WEBHOOK_SECRET=set"
 if [[ -n "$TEMPLATE_DOC_ID" ]]; then
+  echo "  ${TEMPLATE_DOC_KEY}=${TEMPLATE_DOC_ID}"
   echo "  GOOGLE_PROPOSAL_TEMPLATE_DOC_ID=${TEMPLATE_DOC_ID}"
+fi
+if [[ -n "$DRIVE_FOLDER_ID" ]]; then
+  echo "  ${DRIVE_FOLDER_KEY}=${DRIVE_FOLDER_ID}"
+  echo "  GOOGLE_PROPOSAL_DRIVE_FOLDER_ID=${DRIVE_FOLDER_ID}"
 fi
 echo ""
 if [[ "$BRANCH" == "main" ]]; then
   echo "Production checklist:"
   echo "  1. Merge dev → main, redeploy main."
   echo "  2. Proposal library S3 prefix: proposal-library/ (prod legacy path)."
-  echo "  3. Signature webhook: https://www.nesting-place.com/api/proposals/signature/webhook"
+  echo "  3. Set GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_PROD to your Proposals - PROD Drive folder."
+  echo "  4. Signature webhook: https://www.nesting-place.com/api/proposals/signature/webhook"
   echo "     Header: x-proposal-signature-secret"
 else
   echo "Dev checklist:"

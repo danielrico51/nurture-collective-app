@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   getProposalsStorageMode,
+  resolveGoogleProposalDriveFolderId,
+  resolveGoogleProposalTemplateDocId,
   resolveProposalLibraryPrefix,
 } from "@/lib/proposals/config";
 
@@ -24,6 +26,57 @@ describe("resolveProposalLibraryPrefix", () => {
         AMPLIFY_BRANCH: "dev",
       })
     ).toBe("custom/library/");
+  });
+});
+
+describe("resolveGoogleProposalDriveFolderId", () => {
+  it("uses dev folder on dev deployments", () => {
+    expect(
+      resolveGoogleProposalDriveFolderId({
+        AMPLIFY_BRANCH: "dev",
+        GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_DEV: "dev-folder-id",
+        GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_PROD: "prod-folder-id",
+      })
+    ).toBe("dev-folder-id");
+  });
+
+  it("uses prod folder on main deployments", () => {
+    expect(
+      resolveGoogleProposalDriveFolderId({
+        AMPLIFY_BRANCH: "main",
+        GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_DEV: "dev-folder-id",
+        GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_PROD: "prod-folder-id",
+      })
+    ).toBe("prod-folder-id");
+  });
+
+  it("honors explicit GOOGLE_PROPOSAL_DRIVE_FOLDER_ID override", () => {
+    expect(
+      resolveGoogleProposalDriveFolderId({
+        AMPLIFY_BRANCH: "dev",
+        GOOGLE_PROPOSAL_DRIVE_FOLDER_ID: "override-id",
+        GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_DEV: "dev-folder-id",
+      })
+    ).toBe("override-id");
+  });
+});
+
+describe("resolveGoogleProposalTemplateDocId", () => {
+  it("uses scoped dev and prod template doc ids", () => {
+    expect(
+      resolveGoogleProposalTemplateDocId({
+        AMPLIFY_BRANCH: "dev",
+        GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_DEV: "dev-template",
+        GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_PROD: "prod-template",
+      })
+    ).toBe("dev-template");
+    expect(
+      resolveGoogleProposalTemplateDocId({
+        AMPLIFY_BRANCH: "main",
+        GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_DEV: "dev-template",
+        GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_PROD: "prod-template",
+      })
+    ).toBe("prod-template");
   });
 });
 

@@ -31,15 +31,21 @@ export const fetchClientProposals = async (
 
 export const generateClientProposal = async (
   clientId: string
-): Promise<{ metadata: ProposalMetadata; content: ProposalLlmContent }> => {
+): Promise<{
+  metadata: ProposalMetadata;
+  content: ProposalLlmContent;
+  google_doc_error?: string | null;
+}> => {
   const response = await fetch("/api/proposals/generate", {
     method: "POST",
     headers: await authHeaders(),
     body: JSON.stringify({ client_id: clientId }),
   });
-  return handleResponse<{ metadata: ProposalMetadata; content: ProposalLlmContent }>(
-    response
-  );
+  return handleResponse<{
+    metadata: ProposalMetadata;
+    content: ProposalLlmContent;
+    google_doc_error?: string | null;
+  }>(response);
 };
 
 export const approveClientProposal = async (

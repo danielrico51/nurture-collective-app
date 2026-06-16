@@ -48,7 +48,11 @@ export const generateProposalForClient = async (input: {
   actor: AuthUser;
   revisionNotes?: string;
   existingProposalId?: string;
-}): Promise<{ metadata: ProposalMetadata; content: ProposalLlmContent }> => {
+}): Promise<{
+  metadata: ProposalMetadata;
+  content: ProposalLlmContent;
+  google_doc_error?: string | null;
+}> => {
   const context = await buildProposalContext(input.clientId);
   const examples = await retrieveProposalExamples(context);
   const llmContent = await chatCompletionJson<ProposalLlmContent>([
@@ -71,6 +75,7 @@ export const generateProposalForClient = async (input: {
 
   let googleDocId = metadata?.google_doc_id ?? null;
   let googleDocUrl = metadata?.google_doc_url ?? null;
+  let googleDocError: string | null = null;
 
   try {
     const doc = await createProposalGoogleDoc({
@@ -80,6 +85,8 @@ export const generateProposalForClient = async (input: {
     googleDocId = doc.documentId;
     googleDocUrl = doc.documentUrl;
   } catch (error) {
+    googleDocError =
+      error instanceof Error ? error.message : "Google Doc creation failed";
     console.warn("[proposals] Google Doc creation skipped:", error);
   }
 
@@ -135,7 +142,7 @@ export const generateProposalForClient = async (input: {
     });
   }
 
-  return { metadata, content: llmContent };
+  return { metadata, content: llmContent, google_doc_error: googleDocError };
 };
 
 export const approveProposal = async (input: {

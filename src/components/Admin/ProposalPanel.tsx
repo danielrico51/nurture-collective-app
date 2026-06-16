@@ -99,6 +99,12 @@ const ProposalPanel = ({ lead }: ProposalPanelProps) => {
         return [result.metadata, ...without];
       });
       toast.success("Proposal generated — review in Google Docs when ready.");
+      if (result.google_doc_error) {
+        toast.error(
+          `Google Doc was not created: ${result.google_doc_error.slice(0, 180)}`,
+          { duration: 8000 }
+        );
+      }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Generation failed");
     } finally {
@@ -253,8 +259,10 @@ const ProposalPanel = ({ lead }: ProposalPanelProps) => {
                     Open Google Doc
                   </a>
                 ) : (
-                  <p className="mt-3 text-xs text-nurture-charcoal/50">
-                    Google Doc not linked — configure template ID for automatic document creation.
+                  <p className="mt-3 text-xs text-amber-700">
+                    Google Doc not linked — proposal JSON was saved to S3. Regenerate after
+                    refreshing Amplify Google credentials, or check CloudWatch logs for
+                    <code className="mx-1">[proposals] Google Doc creation skipped</code>.
                   </p>
                 )}
 

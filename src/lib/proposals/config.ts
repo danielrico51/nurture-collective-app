@@ -28,6 +28,57 @@ export const resolveProposalLibraryPrefix = (
   return `proposal-library/${deployment}/`;
 };
 
+const readEnvScopedValue = (
+  env: Parameters<typeof resolveDeploymentEnvironment>[0] &
+    Record<string, string | undefined>,
+  keys: { explicit?: string; dev: string; prod: string }
+): string => {
+  const explicit = keys.explicit ? env[keys.explicit]?.trim() : "";
+  if (explicit) return explicit;
+
+  const deployment = resolveDeploymentEnvironment(env);
+  if (deployment === "prod") {
+    return env[keys.prod]?.trim() || "";
+  }
+  return env[keys.dev]?.trim() || env[keys.prod]?.trim() || "";
+};
+
+/** Drive folder for generated proposal copies (dev vs prod folders in admin@ Drive). */
+export const resolveGoogleProposalDriveFolderId = (
+  env: Parameters<typeof resolveDeploymentEnvironment>[0] &
+    Partial<
+      Record<
+        | "GOOGLE_PROPOSAL_DRIVE_FOLDER_ID"
+        | "GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_DEV"
+        | "GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_PROD",
+        string | undefined
+      >
+    > = process.env
+): string =>
+  readEnvScopedValue(env, {
+    explicit: "GOOGLE_PROPOSAL_DRIVE_FOLDER_ID",
+    dev: "GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_DEV",
+    prod: "GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_PROD",
+  });
+
+/** Master Google Doc template (may differ between dev and prod). */
+export const resolveGoogleProposalTemplateDocId = (
+  env: Parameters<typeof resolveDeploymentEnvironment>[0] &
+    Partial<
+      Record<
+        | "GOOGLE_PROPOSAL_TEMPLATE_DOC_ID"
+        | "GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_DEV"
+        | "GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_PROD",
+        string | undefined
+      >
+    > = process.env
+): string =>
+  readEnvScopedValue(env, {
+    explicit: "GOOGLE_PROPOSAL_TEMPLATE_DOC_ID",
+    dev: "GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_DEV",
+    prod: "GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_PROD",
+  });
+
 export const getProposalsStorageMode = (): "local" | "s3" => {
   if (process.env.PROPOSALS_USE_LOCAL_STORAGE === "true") return "local";
   if (process.env.PROPOSALS_USE_S3 === "true" && getProposalsBucket()) return "s3";
@@ -50,10 +101,8 @@ export const proposalsStorageConfig = {
     DEFAULT_TASKS_BUCKET,
   libraryPrefix: resolveProposalLibraryPrefix(),
   useLocalStorage: getProposalsStorageMode() === "local",
-  googleTemplateDocId:
-    process.env.GOOGLE_PROPOSAL_TEMPLATE_DOC_ID?.trim() || "",
-  googleDriveFolderId:
-    process.env.GOOGLE_PROPOSAL_DRIVE_FOLDER_ID?.trim() || "",
+  googleTemplateDocId: resolveGoogleProposalTemplateDocId(),
+  googleDriveFolderId: resolveGoogleProposalDriveFolderId(),
   signatureWebhookSecret:
     process.env.PROPOSAL_SIGNATURE_WEBHOOK_SECRET?.trim() ||
     process.env.N8N_WEBHOOK_SECRET?.trim() ||

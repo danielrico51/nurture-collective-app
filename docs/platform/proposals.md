@@ -94,7 +94,16 @@ GOOGLE_PROPOSAL_TEMPLATE_DOC_ID=<doc-id> npm run verify:proposal-docs
 3. Copy the document ID from the URL (`/document/d/{ID}/edit`)
 4. Run `GOOGLE_PROPOSAL_TEMPLATE_DOC_ID={ID} AMPLIFY_BRANCH=dev ./infrastructure/aws/scripts/set-amplify-proposals-env.sh`
 
-Optional: set `GOOGLE_PROPOSAL_DRIVE_FOLDER_ID` so generated copies land in a shared Drive folder.
+Optional: set scoped Drive folders so dev and prod proposals stay separated in admin@ Drive:
+
+| Environment | Env var | Example folder |
+|-------------|---------|----------------|
+| Amplify `dev` | `GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_DEV` | Proposals - DEV |
+| Amplify `main` | `GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_PROD` | Proposals - PROD |
+
+`GOOGLE_PROPOSAL_DRIVE_FOLDER_ID` still works as a manual override. At runtime, `APP_ENV` / branch selects the scoped value.
+
+Same pattern applies to `GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_DEV` and `_PROD` if you use different master templates per environment.
 
 ### Sample contract library (LLM style references)
 
@@ -188,8 +197,10 @@ Data is written to `.data/proposals/local/clients/{leadId}/{proposalId}/`.
 | `PROPOSALS_USE_LOCAL_STORAGE` | `true` → `.data/proposals/{env}/` (local dev default when bucket unset) |
 | `PROPOSALS_USE_S3` | `true` → force S3 during local dev when bucket is set |
 | `OPENAI_API_KEY` | LLM proposal generation |
-| `GOOGLE_PROPOSAL_TEMPLATE_DOC_ID` | Master Google Doc with placeholders |
-| `GOOGLE_PROPOSAL_DRIVE_FOLDER_ID` | Optional Drive folder for copies |
+| `GOOGLE_PROPOSAL_TEMPLATE_DOC_ID` | Master template override (any env) |
+| `GOOGLE_PROPOSAL_TEMPLATE_DOC_ID_DEV` / `_PROD` | Per-environment master templates |
+| `GOOGLE_PROPOSAL_DRIVE_FOLDER_ID` | Drive folder override (any env) |
+| `GOOGLE_PROPOSAL_DRIVE_FOLDER_ID_DEV` / `_PROD` | Proposals - DEV / Proposals - PROD folders |
 | `PROPOSAL_LIBRARY_S3_BUCKET` | S3 bucket for style library (defaults to `TASKS_S3_BUCKET`) |
 | `PROPOSAL_LIBRARY_S3_PREFIX` | Optional override; dev default `proposal-library/dev/` |
 | `PROPOSAL_SIGNATURE_WEBHOOK_SECRET` | `x-proposal-signature-secret` header for webhook auth |
