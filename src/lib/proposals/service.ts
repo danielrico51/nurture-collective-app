@@ -2,6 +2,10 @@ import "server-only";
 
 import { chatCompletionJson } from "@/lib/openai/client";
 import { buildProposalContext } from "@/lib/proposals/contextBuilder";
+import {
+  buildProposalUserPrompt,
+  PROPOSAL_GENERATION_SYSTEM_PROMPT,
+} from "@/lib/proposals/generationPrompt";
 import { retrieveProposalExamples } from "@/lib/proposals/library/retrieval";
 import { createProposalGoogleDoc } from "@/lib/proposals/googleWorkspace";
 import { recordProposalAuditEvent } from "@/lib/proposals/audit";
@@ -24,25 +28,6 @@ import type {
 } from "@/types/proposal";
 import { randomUUID } from "crypto";
 
-const GENERATION_SYSTEM_PROMPT = `You are a proposal writer for The Nesting Place maternal wellness agency.
-Return JSON only with keys: executive_summary, recommended_services, timeline, pricing, terms, next_steps.
-recommended_services must be an array of objects with name, description, and optional frequency.
-Use professional, warm language. Never copy example text verbatim — examples are style references only.
-Pricing should be descriptive (packages/ranges), not invented dollar amounts unless context includes them.`;
-
-const buildGenerationPrompt = (
-  context: Awaited<ReturnType<typeof buildProposalContext>>,
-  examples: Awaited<ReturnType<typeof retrieveProposalExamples>>,
-  revisionNotes?: string
-) => ({
-  context,
-  style_examples: examples.map((entry) => ({
-    service_type: entry.service_type,
-    style_reference: entry.style_reference,
-  })),
-  revision_notes: revisionNotes ?? null,
-});
-
 export const generateProposalForClient = async (input: {
   clientId: string;
   actor: AuthUser;
@@ -56,10 +41,14 @@ export const generateProposalForClient = async (input: {
   const context = await buildProposalContext(input.clientId);
   const examples = await retrieveProposalExamples(context);
   const llmContent = await chatCompletionJson<ProposalLlmContent>([
-    { role: "system", content: GENERATION_SYSTEM_PROMPT },
+    { role: "system", content: PROPOSAL_GENERATION_SYSTEM_PROMPT },
     {
       role: "user",
-      content: JSON.stringify(buildGenerationPrompt(context, examples, input.revisionNotes)),
+      content: buildProposalUserPrompt({
+        context,
+        examples,
+        revisionNotes: input.revisionNotes,
+      }),
     },
   ]);
 

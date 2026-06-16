@@ -69,15 +69,29 @@ GOOGLE_PROPOSAL_TEMPLATE_DOC_ID=<doc-id> AMPLIFY_BRANCH=dev REDEPLOY=true \
 
 ### Template placeholders (must match exactly)
 
+Master template follows the **TNP Postpartum Doula Contract** layout (redacted real agreement) with **formatted** Google Docs styling:
+
+- Centered logo (from the original contract)
+- Bold section headings and client/date fields
+- Native bullet lists for static contract sections
+
+Update in Drive:
+
+```bash
+npm run update:proposal-google-template
 ```
+
+```
+{{DATE}}
 {{CLIENT_NAME}}
-{{EXECUTIVE_SUMMARY}}
-{{SERVICES}}
-{{PRICING}}
-{{TIMELINE}}
-{{TERMS}}
-{{NEXT_STEPS}}
+{{SERVICES}}      # SERVICE DETAILS (dynamic bullets)
+{{TIMELINE}}      # FOLLOWING THE BIRTH
+{{PRICING}}       # FEES (amounts / deposit / balance)
+{{TERMS}}         # AGREEMENT
+{{NEXT_STEPS}}    # 24-hour offer / signing instructions
 ```
+
+Static sections (client commitment, doula limitations, payment methods, signature block, TNP services footer) remain in the template. The LLM fills only the placeholders above.
 
 See `src/lib/proposals/proposalDocTemplate.ts` for the canonical section layout.
 
@@ -121,6 +135,14 @@ Upload or refresh:
 ```
 
 When S3 entries exist, retrieval uses them instead of built-in examples in `src/lib/proposals/library/builtin.ts`.
+
+The LLM receives the **top-ranked example as `primary_format_example`** (full agreement structure, section headings, tone, and redacted contract text) and adapts it for the lead — mirroring payment patterns, service granularity, and legal terms rather than inventing a generic marketing proposal.
+
+After updating `proposal-library-seed/dev/entries.json`, re-upload:
+
+```bash
+./infrastructure/aws/scripts/seed-proposal-library-s3.sh
+```
 
 ### Google auth on Amplify (production)
 
@@ -230,11 +252,11 @@ Google Docs uses the same service account / delegated user as Calendar and Tasks
 ### Template placeholders
 
 ```
+{{DATE}}
 {{CLIENT_NAME}}
-{{EXECUTIVE_SUMMARY}}
 {{SERVICES}}
-{{PRICING}}
 {{TIMELINE}}
+{{PRICING}}
 {{TERMS}}
 {{NEXT_STEPS}}
 ```

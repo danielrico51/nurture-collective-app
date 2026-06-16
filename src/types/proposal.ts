@@ -97,7 +97,15 @@ export interface ProposalLibraryEntry {
     recommended_services: ProposalLlmContent["recommended_services"];
     timeline: string;
     pricing: string;
+    terms: string;
     next_steps: string;
+  };
+  /** Section order and tone cues from the source contract (LLM format blueprint). */
+  document_structure?: {
+    document_title: string;
+    section_headings: string[];
+    tone: string;
+    payment_pattern: string;
   };
 }
 

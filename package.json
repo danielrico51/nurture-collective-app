@@ -29,6 +29,7 @@
     "verify:calendar-deploy": "NODE_OPTIONS='-r ./scripts/lib/server-only-stub.cjs' tsx scripts/verify-calendar-deploy-credentials.ts",
     "verify:proposal-docs": "NODE_OPTIONS='-r ./scripts/lib/server-only-stub.cjs' tsx scripts/verify-proposal-docs-credentials.ts",
     "setup:proposal-google-template": "NODE_OPTIONS='-r ./scripts/lib/server-only-stub.cjs' tsx scripts/create-proposal-google-template.ts",
+    "update:proposal-google-template": "NODE_OPTIONS='-r ./scripts/lib/server-only-stub.cjs' tsx scripts/update-proposal-google-template.ts",
     "setup:proposal-docs": "bash infrastructure/google/setup-proposal-docs.sh",
     "test:calendar-delegation": "tsx scripts/test-google-calendar-delegation.ts",
     "amplify:concierge-scheduling": "bash infrastructure/aws/scripts/set-amplify-google-calendar-env.sh",

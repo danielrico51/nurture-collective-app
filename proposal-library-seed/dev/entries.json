@@ -9,8 +9,22 @@
       "family_size": "any",
       "goals": ["birth-support", "labor", "prenatal", "postpartum-follow-up", "confidence"]
     },
+    "document_structure": {
+      "document_title": "BIRTH DOULA SERVICES AGREEMENT",
+      "section_headings": [
+        "Parties and Purpose",
+        "Scope of Services",
+        "Fees and Payment",
+        "Cancellation and Refund Policy",
+        "Limitations of Practice",
+        "Client Responsibilities",
+        "Agreement Terms"
+      ],
+      "tone": "Formal third-person service agreement. Enumerates prenatal, labor, and postpartum deliverables with clear non-medical scope boundaries.",
+      "payment_pattern": "Total package fee stated upfront; fractional deposit at signing (non-refundable); balance before estimated due date; accepted payment methods listed; cesarean and provider-unavailability clauses."
+    },
     "style_reference": {
-      "executive_summary": "A comprehensive birth doula package providing non-medical emotional, physical, and educational support through pregnancy, labor, birth, and immediate postpartum. Includes prenatal meetings, on-call coverage around the estimated due date, continuous labor support, cesarean emotional support when permitted, and a postpartum follow-up visit.",
+      "executive_summary": "This Birth Doula Services Agreement is entered into between The Nesting Place, LLC (\"TNP\") and the Client named below. TNP agrees to provide non-medical emotional, physical, and educational doula support through pregnancy, labor, birth, and immediate postpartum as described herein. The doula does not perform clinical tasks or replace the Client's obstetric care team.",
       "recommended_services": [
         {
           "name": "Prenatal support",
@@ -28,8 +42,9 @@
           "frequency": "Birth day + one follow-up visit"
         }
       ],
-      "timeline": "On-call window begins two weeks before estimated due date and ends two weeks after. Agreement valid for 24 hours from issuance to secure availability.",
-      "pricing": "Total package typically $2,500–$2,800: one-third deposit due upon signing (non-refundable), remaining balance due before estimated due date (non-refundable). Payment via Zelle, Venmo, Cash App, cash, or card (3% processing fee on Venmo/card). No refunds for cesarean births; fees refunded only if TNP cannot provide support and no qualified backup is available.",
+      "timeline": "On-call window begins two weeks before estimated due date and ends two weeks after. Agreement valid for 24 hours from issuance to secure doula availability.",
+      "pricing": "Total package fee: $2,500–$2,800. One-third (1/3) deposit due upon signing (non-refundable). Remaining balance due before estimated due date (non-refundable). Payment accepted via Zelle, Venmo, Cash App, cash, or card (3% processing fee on Venmo/card).",
+      "terms": "Doula support is non-medical and does not replace care from physicians, midwives, or nurses. No refunds for cesarean births. Fees refunded only if TNP cannot provide support and no qualified backup doula is available. Client agrees to maintain open communication with the care team and to contact the assigned doula when labor begins.",
       "next_steps": "Review agreement, sign within 24 hours, submit deposit, and confirm estimated due date and assigned doula. Contact doula when labor begins; use text only 10pm–6am unless urgent or in active labor."
     }
   },
@@ -43,8 +58,21 @@
       "family_size": "any",
       "goals": ["birth-support", "virtual", "labor", "prenatal"]
     },
+    "document_structure": {
+      "document_title": "BIRTH DOULA SERVICES AGREEMENT (VIRTUAL)",
+      "section_headings": [
+        "Parties and Purpose",
+        "Authorization for Care Coordination",
+        "Scope of Services",
+        "Fees and Payment",
+        "Limitations of Practice",
+        "Agreement Terms"
+      ],
+      "tone": "Formal agreement with virtual-signature header; emphasizes scope-of-practice boundaries and third-party authorization for TNP care coordination.",
+      "payment_pattern": "Stated total fee; non-refundable deposit at signing; balance before due date."
+    },
     "style_reference": {
-      "executive_summary": "Standard birth doula scope delivered under a virtual agreement format, emphasizing educational and emotional support, clear scope-of-practice boundaries, and third-party authorization for care coordination among TNP team and healthcare providers.",
+      "executive_summary": "This Virtual Birth Doula Services Agreement is between The Nesting Place, LLC and the Client. TNP will provide birth doula services as outlined below under the virtual agreement format. Client authorizes TNP to coordinate with members of the care team as needed to deliver non-medical support.",
       "recommended_services": [
         {
           "name": "Prenatal education and planning",
@@ -57,38 +85,56 @@
           "frequency": "On-call around due date"
         }
       ],
-      "timeline": "Same on-call window as standard birth doula agreements; virtual agreement revision noted in contract header.",
-      "pricing": "Representative total fee near $2,300 with proportional deposit and balance schedule; non-refundable deposit at signing, balance before due date.",
+      "timeline": "On-call window matches standard birth doula agreements (two weeks before through two weeks after estimated due date). Virtual agreement revision noted in contract header.",
+      "pricing": "Total fee: approximately $2,300. Non-refundable deposit due at signing; remaining balance due before estimated due date.",
+      "terms": "Services are educational and emotional in nature and do not constitute medical advice. Client authorizes information sharing among TNP team members and healthcare providers solely for care coordination. Virtual execution does not alter scope of doula practice or liability limitations.",
       "next_steps": "Sign virtual agreement promptly, authorize TNP collaboration with care team as outlined, and establish labor communication preferences."
     }
   },
   {
     "id": "postpartum-doula-intensive-redacted",
     "service_type": "postpartum-doula-intensive",
-    "title": "Intensive overnight postpartum doula package",
+    "title": "The Nesting Place Postpartum Doula Contract (intensive overnight)",
     "tags": {
       "service_types": ["postpartum-doula", "overnight-newborn-care", "postpartum-doula"],
       "budget_range": "premium",
       "family_size": "first-baby",
       "goals": ["sleep", "recovery", "feeding", "parent-rest", "newborn-care"]
     },
+    "document_structure": {
+      "document_title": "The Nesting Place Postpartum Doula Contract",
+      "section_headings": [
+        "YOUR CLIENT COMMITMENT",
+        "SERVICE DETAILS",
+        "AS A DOULA (Limitations)",
+        "FOLLOWING THE BIRTH",
+        "FEES",
+        "FAILURE TO PROVIDE SERVICES",
+        "ADDITIONAL ITEMS",
+        "AGREEMENT",
+        "Signature Block"
+      ],
+      "tone": "TNP standard postpartum doula contract with bullet sections, firm schedule commitment, Carrot Fertility timing, and signature block.",
+      "payment_pattern": "Total package fee; 50% deposit at signing (non-refundable); 50% after first service week; Zelle/Venmo/Cash App; 3% card/Venmo fee; 24-hour offer validity."
+    },
     "style_reference": {
-      "executive_summary": "High-hour overnight postpartum care package for the first six weeks after birth, combining physical newborn and household support, evidence-based education, and emotional support. Minimum session lengths apply; Carrot Fertility benefit timing may require completion within six weeks of discharge.",
+      "executive_summary": "Standard TNP postpartum doula contract for an intensive overnight package. Client agrees to schedule commitment and communication expectations.",
       "recommended_services": [
         {
-          "name": "Overnight postpartum shifts",
-          "description": "10-hour night shifts in weeks 1–2, tapering in weeks 3–6. Physical support includes feeding, soothing, nursery organization, light housework, and baby laundry when requested.",
-          "frequency": "Example: 6 nights/week weeks 1–2, 5 nights/week weeks 3–6 (320 total hours)"
+          "name": "Postpartum care package",
+          "description": "You will be receiving [TOTAL_HOURS] hours of postpartum care with [ASSIGNED_DOULA]. Care outlined as follows: [SHIFT_SCHEDULE]. All dates/times to be agreed upon between client and doula.",
+          "frequency": "Per agreed weekly schedule"
         },
         {
-          "name": "Informational and emotional support",
-          "description": "Postpartum recovery guidance, infant care education, referrals, listening, and collaborative planning.",
-          "frequency": "Integrated into each shift"
+          "name": "Carrot Fertility",
+          "description": "All hours must be used within 6 weeks of discharge date when Carrot Fertility benefits apply.",
+          "frequency": "Within 6 weeks of discharge"
         }
       ],
-      "timeline": "Schedule agreed between client and assigned doula after birth notification; 48-hour notice preferred for scheduling changes. Carrot Fertility hours must be used within six weeks of discharge when applicable.",
-      "pricing": "Representative intensive package near $25,600: 50% due upon signing (non-refundable), 50% after first week of service (non-refundable). Additional hours and holiday premiums per TNP discretion. Venmo/card 3% processing fee.",
-      "next_steps": "Contact TNP after birth to schedule first session, confirm shift calendar with assigned doula, and review illness/mask preferences and no-solicitation policy."
+      "timeline": "Following the birth of your baby, please contact us to schedule your 1st postpartum session. Note we will do our best, but support isn't guaranteed with less than 48-hour notice. We will make every effort to provide you with the same doula(s) if at all possible. In special circumstances (with a scheduled surgical birth) you have the option of scheduling your 1st postpartum appointment or shorter length at the hospital (if allowed by hospital).",
+      "pricing": "The fee for doula support described above is [TOTAL_FEE] due as follows:\n[DEPOSIT_AMOUNT] due upon signing and returning the contract (non-refundable).\n[BALANCE_AMOUNT] due after the first week of service (non-refundable).",
+      "terms": "Both parties must agree to and feel comfortable with this contract. By signing below, you agree to the service fees described above and in return, we commit to providing the said services.\n\nBy signing below, it is understood that TNP is not held responsible or liable for any unexpected or undesirable outcome. If a disagreement does occur, both parties agree to resolve the challenges amicably.",
+      "next_steps": "This offer is valid for 24 hours. After which time we will do our best, but cannot guarantee doula availability. If you wish to enter into this agreement please sign and return it with the required fee by the close of business day tomorrow."
     }
   },
   {
@@ -101,8 +147,22 @@
       "family_size": "any",
       "goals": ["sleep", "feeding", "recovery", "parent-rest"]
     },
+    "document_structure": {
+      "document_title": "POSTPARTUM DOULA SERVICES AGREEMENT — OVERNIGHT PACKAGE",
+      "section_headings": [
+        "Parties and Purpose",
+        "Scope of Services",
+        "Schedule Commitment",
+        "Fees and Payment",
+        "Illness and Safety Policies",
+        "Carrot Fertility Benefit Terms",
+        "Agreement Terms"
+      ],
+      "tone": "Structured overnight postpartum agreement with defined shift hours, schedule commitment, and benefit timing language.",
+      "payment_pattern": "Package total; 50% at signing; 50% after first week; non-refundable; amended agreement for additional hours."
+    },
     "style_reference": {
-      "executive_summary": "Structured postpartum doula agreement for overnight newborn care with defined hour minimums, illness policies, scope limitations, and Carrot Fertility benefit timing. Emphasizes non-medical support, schedule commitment, and safety policies for family and doula.",
+      "executive_summary": "This Postpartum Doula Services Agreement is between The Nesting Place, LLC and the Client for overnight newborn care support. TNP will provide non-medical postpartum doula services on the schedule below. Services are not on-call before estimated due date unless otherwise agreed in writing.",
       "recommended_services": [
         {
           "name": "Overnight newborn care shifts",
@@ -115,8 +175,9 @@
           "frequency": "As scheduled with TNP approval"
         }
       ],
-      "timeline": "Services begin on or after estimated due date or hospital discharge; not on-call before EDD unless written arrangement. Carrot benefits must be completed within six weeks when applicable.",
-      "pricing": "Representative package near $9,600: 50% due at signing, 50% after first week; all fees non-refundable. Additional hours via amended agreement. Holiday premiums may apply.",
+      "timeline": "Services begin on or after estimated due date or hospital discharge. Carrot Fertility benefits must be completed within six weeks of discharge when applicable.",
+      "pricing": "Total package fee: approximately $9,600. Fifty percent (50%) due at signing (non-refundable). Fifty percent (50%) due after first week of service (non-refundable). Additional hours require amended agreement. Holiday premiums may apply.",
+      "terms": "Minimum 10-hour overnight sessions and 4-hour daytime sessions when scheduled. Doula support is non-medical. Client agrees to honor confirmed schedule, disclose household illness promptly, and maintain a safe work environment. Carrot Fertility hours must be used within six weeks of discharge when applicable.",
       "next_steps": "Notify TNP after birth, honor confirmed schedule, disclose household illness promptly, and return signed agreement with payment within 24-hour offer window when possible."
     }
   }

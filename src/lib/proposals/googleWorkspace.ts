@@ -21,21 +21,35 @@ const getDocsClients = async () => {
 
 const formatServices = (content: ProposalLlmContent): string =>
   content.recommended_services
-    .map(
-      (service) =>
-        `• ${service.name}${service.frequency ? ` (${service.frequency})` : ""}\n  ${service.description}`
-    )
-    .join("\n\n");
+    .map((service) => {
+      const frequency = service.frequency ? ` ${service.frequency}.` : "";
+      return `• ${service.name}:${frequency} ${service.description}`;
+    })
+    .join("\n");
+
+const formatDateForContract = (date = new Date()): string =>
+  date.toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+    timeZone: "America/New_York",
+  });
 
 const buildReplacementMap = (
   clientName: string,
   content: ProposalLlmContent
 ): Record<string, string> => ({
   CLIENT_NAME: clientName,
-  EXECUTIVE_SUMMARY: content.executive_summary,
+  DATE: formatDateForContract(),
   SERVICES: formatServices(content),
-  PRICING: content.pricing,
-  TIMELINE: content.timeline,
+  PRICING: content.pricing
+    .split("\n")
+    .map((line) => (line.startsWith("•") ? line : `• ${line}`))
+    .join("\n"),
+  TIMELINE: content.timeline
+    .split("\n")
+    .map((line) => (line.startsWith("•") ? line : `• ${line}`))
+    .join("\n"),
   TERMS: content.terms,
   NEXT_STEPS: content.next_steps,
 });

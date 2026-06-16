@@ -3,16 +3,15 @@
  *
  * Usage:
  *   npm run setup:proposal-google-template
- *
- * Load env from .env.local first, e.g.:
- *   export $(grep -v '^#' .env.local | xargs) && npm run setup:proposal-google-template
  */
 import { google } from "googleapis";
-import { createGoogleProposalDocsAuthClient } from "../src/lib/proposals/googleAuth";
 import {
-  PROPOSAL_TEMPLATE_TITLE,
-  buildProposalTemplateBody,
-} from "../src/lib/proposals/proposalDocTemplate";
+  applyFormattedTemplateToDocument,
+  uploadTemplateLogo,
+} from "../src/lib/proposals/applyFormattedGoogleTemplate";
+import { createGoogleProposalDocsAuthClient } from "../src/lib/proposals/googleAuth";
+import { PROPOSAL_TEMPLATE_TITLE } from "../src/lib/proposals/proposalDocTemplate";
+import { FORMATTED_POSTPARTUM_TEMPLATE_SEGMENTS } from "../src/lib/proposals/proposalDocTemplateFormatted";
 import {
   bootstrapGoogleCliEnv,
   formatGoogleCliAuthHint,
@@ -22,7 +21,7 @@ const folderId = process.env.GOOGLE_PROPOSAL_DRIVE_FOLDER_ID?.trim() || "";
 
 const main = async () => {
   const authInfo = bootstrapGoogleCliEnv();
-  console.log("Creating Nesting Place proposal Google Doc template…");
+  console.log("Creating formatted Nesting Place proposal Google Doc template…");
   if (authInfo.adcFile) {
     console.log(`  ADC file: ${authInfo.adcFile} (${authInfo.credentialType ?? "unreadable"})`);
   }
@@ -49,19 +48,12 @@ const main = async () => {
     throw new Error("Google Docs API did not return a document id");
   }
 
-  const body = buildProposalTemplateBody();
-  await docs.documents.batchUpdate({
+  const logoUri = await uploadTemplateLogo(drive);
+  await applyFormattedTemplateToDocument({
+    docs,
     documentId,
-    requestBody: {
-      requests: [
-        {
-          insertText: {
-            location: { index: 1 },
-            text: body,
-          },
-        },
-      ],
-    },
+    segments: FORMATTED_POSTPARTUM_TEMPLATE_SEGMENTS,
+    logoUri,
   });
 
   if (folderId) {
@@ -82,15 +74,13 @@ const main = async () => {
 
   const link = `https://docs.google.com/document/d/${documentId}/edit`;
 
-  console.log("Template created successfully.\n");
+  console.log("Formatted template created successfully.\n");
   console.log(`  Document ID : ${documentId}`);
   console.log(`  URL         : ${link}`);
   console.log("");
   console.log("Next:");
   console.log(`  GOOGLE_PROPOSAL_TEMPLATE_DOC_ID=${documentId} \\`);
   console.log("    AMPLIFY_BRANCH=dev ./infrastructure/aws/scripts/set-amplify-proposals-env.sh");
-  console.log("");
-  console.log("Then redeploy Amplify dev and generate a test proposal from Admin → Leads.");
 };
 
 main().catch((error) => {
