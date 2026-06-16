@@ -24,7 +24,6 @@ const isBoldSegment = (segment: FormattedTemplateSegment): boolean => {
   if (segment.kind === "bullet") return Boolean(segment.bold);
   if (segment.kind === "placeholder") {
     return (
-      segment.bold === true ||
       segment.name === "DATE" ||
       segment.name === "CLIENT_NAME" ||
       segment.name === "NEXT_STEPS"
