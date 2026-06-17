@@ -6,6 +6,7 @@ export type LeadStatus =
   | "intake_completed"
   | "consult_scheduled"
   | "consult_completed"
+  | "send_to_doula"
   | "proposal_sent"
   | "qualified"
   | "lost"
@@ -21,6 +22,7 @@ export const LEAD_STATUSES: LeadStatus[] = [
   "intake_completed",
   "consult_scheduled",
   "consult_completed",
+  "send_to_doula",
   "proposal_sent",
   "qualified",
   "lost",

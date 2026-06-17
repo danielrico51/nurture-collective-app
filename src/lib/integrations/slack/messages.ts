@@ -8,6 +8,7 @@ const STATUS_LABELS: Record<LeadStatus, string> = {
   intake_completed: "Intake completed",
   consult_scheduled: "Consult scheduled",
   consult_completed: "Consult completed",
+  send_to_doula: "Send to Doula",
   proposal_sent: "Proposal sent",
   qualified: "Qualified",
   lost: "Lost",

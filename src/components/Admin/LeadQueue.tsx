@@ -49,6 +49,7 @@ const STATUS_LABELS: Record<LeadStatus, string> = {
   intake_completed: "Intake completed",
   consult_scheduled: "Consult scheduled",
   consult_completed: "Consult completed",
+  send_to_doula: "Send to Doula",
   proposal_sent: "Proposal sent",
   qualified: "Qualified",
   lost: "Lost",
@@ -85,6 +86,8 @@ const statusBadgeClass = (status: LeadStatus) => {
       return "bg-violet-600 text-white";
     case "consult_completed":
       return "bg-violet-800 text-white";
+    case "send_to_doula":
+      return "bg-indigo-700 text-white";
     case "proposal_sent":
       return "bg-amber-600 text-white";
     case "converted":
@@ -115,6 +118,8 @@ const statusRingClass = (status: LeadStatus) => {
       return "ring-violet-400";
     case "consult_completed":
       return "ring-violet-500";
+    case "send_to_doula":
+      return "ring-indigo-400";
     case "proposal_sent":
       return "ring-amber-400";
     case "converted":
@@ -145,6 +150,8 @@ const statusCardAccentClass = (status: LeadStatus) => {
       return "border-l-violet-600";
     case "consult_completed":
       return "border-l-violet-800";
+    case "send_to_doula":
+      return "border-l-indigo-700";
     case "proposal_sent":
       return "border-l-amber-600";
     case "converted":
