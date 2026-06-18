@@ -37,7 +37,7 @@ export const MEMBER_APPS: MemberApp[] = [
     id: "purchases",
     title: "Purchases",
     description:
-      "View eGift card and service orders, payment status, and QuickBooks sync for your account.",
+      "View eGift card and service orders, care service invoices, payment status, and printable invoice copies.",
     href: "/apps/purchases",
     status: "available",
     icon: "purchases",

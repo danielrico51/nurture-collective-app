@@ -389,7 +389,7 @@ const mergeInvoiceFieldUpdates = (
   };
 };
 
-const saveInvoice = async (
+export const saveInvoice = async (
   clientId: string,
   serviceId: string,
   invoice: ServiceInvoice
@@ -623,9 +623,35 @@ export const updateServiceInvoice = async (
   }
 
   if (raw.markPaid) {
-    status = "paid";
-    paidAt = now;
-    if (!sentAt) sentAt = now;
+    const { completeServiceInvoicePayment } = await import(
+      "@/lib/invoices/completePayment"
+    );
+    await completeServiceInvoicePayment({
+      clientId,
+      serviceId,
+      invoiceId,
+      paymentProvider:
+        existing.paymentMethod === "stripe"
+          ? "stripe"
+          : existing.paymentMethod === "quickbooks"
+            ? "quickbooks"
+            : "manual",
+      paymentReference: existing.stripe?.paymentIntentId,
+    });
+    const updated = await readServiceInvoice(clientId, serviceId, invoiceId);
+    if (!updated) {
+      throw new ClientServiceValidationError("Invoice not found");
+    }
+    return updated;
+  }
+
+  if (raw.markRefunded) {
+    if (existing.status !== "paid") {
+      throw new ClientServiceValidationError(
+        "Only paid invoices can be marked refunded"
+      );
+    }
+    status = "refunded";
   }
 
   if (hasFieldEdits) {

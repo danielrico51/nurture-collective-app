@@ -417,6 +417,24 @@ export const findClientByEmail = async (
   );
 };
 
+/** Resolve the CRM client record for a signed-in member (cognito link or matching email). */
+export const findClientForMember = async (input: {
+  cognitoSub: string;
+  email: string;
+}): Promise<ClientRecord | null> => {
+  const sub = input.cognitoSub.trim();
+  if (!sub) return null;
+
+  const clients = await listClients();
+  const bySub = clients.find((client) => client.cognitoSub === sub);
+  if (bySub) return bySub;
+
+  const byEmail = await findClientByEmail(input.email);
+  if (byEmail && !byEmail.cognitoSub) return byEmail;
+
+  return null;
+};
+
 const buildClientFromLead = (
   lead: LeadRecord,
   coordinator?: { id: string; email: string }

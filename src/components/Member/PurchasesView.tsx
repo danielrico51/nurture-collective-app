@@ -4,10 +4,12 @@ import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import { fetchMemberPurchases } from "@/lib/api/purchasesClient";
 import { MemberAppIcon } from "@/components/Member/MemberAppIcon";
 import { getMemberAppById } from "@/config/memberApps";
+import { PAYMENT_METHODS } from "@/config/paymentMethods";
 import { useRequireMember } from "@/hooks/useRequireMember";
 import type {
   MemberPaymentStatus,
   MemberPurchase,
+  MemberPurchaseKind,
   MemberPurchaseQuickBooks,
 } from "@/types/memberPurchases";
 import Link from "next/link";
@@ -60,20 +62,58 @@ const quickBooksClass = (qb: MemberPurchaseQuickBooks): string => {
   return "bg-nurture-cream text-nurture-charcoal/65";
 };
 
+const formatShortDate = (iso: string | null | undefined) => {
+  if (!iso) return null;
+  return new Intl.DateTimeFormat("en-US", { dateStyle: "medium" }).format(
+    new Date(iso)
+  );
+};
+
+const purchaseKindLabel: Record<MemberPurchaseKind, string> = {
+  gift_card: "eGift card",
+  service: "Service order",
+  client_invoice: "Service invoice",
+};
+
+const paymentMethodLabel = (method?: string): string | null => {
+  if (!method) return null;
+  return PAYMENT_METHODS.find((entry) => entry.id === method)?.label ?? method;
+};
+
 function PurchaseRow({ purchase }: { purchase: MemberPurchase }) {
+  const methodLabel = paymentMethodLabel(purchase.paymentProvider);
+  const dueDate = formatShortDate(purchase.dueDate ?? undefined);
+
   return (
     <tr className="border-b border-nurture-sage/10 last:border-0">
       <td className="px-4 py-4 align-top">
+        <p className="text-[10px] font-semibold uppercase tracking-wide text-nurture-charcoal/45">
+          {purchaseKindLabel[purchase.kind]}
+        </p>
         <p className="font-medium text-nurture-charcoal">{purchase.title}</p>
+        {purchase.invoiceNumber ? (
+          <p className="mt-1 text-xs text-nurture-charcoal/60">
+            Invoice {purchase.invoiceNumber}
+          </p>
+        ) : null}
+        {purchase.installmentLabel ? (
+          <p className="mt-1 text-xs text-nurture-charcoal/60">
+            {purchase.installmentLabel}
+          </p>
+        ) : null}
         {purchase.recipientLabel ? (
           <p className="mt-1 text-xs text-nurture-charcoal/60">
             Recipient: {purchase.recipientLabel}
           </p>
         ) : null}
-        {purchase.description ? (
+        {purchase.description &&
+        purchase.description !== purchase.installmentLabel ? (
           <p className="mt-1 line-clamp-2 text-xs text-nurture-charcoal/55">
             {purchase.description}
           </p>
+        ) : null}
+        {dueDate && purchase.paymentStatus !== "paid" ? (
+          <p className="mt-1 text-xs text-nurture-charcoal/55">Due {dueDate}</p>
         ) : null}
         <p className="mt-2 text-xs text-nurture-charcoal/45">
           {formatDate(purchase.paidAt ?? purchase.createdAt)}
@@ -81,6 +121,11 @@ function PurchaseRow({ purchase }: { purchase: MemberPurchase }) {
       </td>
       <td className="px-4 py-4 align-top text-sm font-semibold text-nurture-charcoal">
         {formatCurrency(purchase.amountCents)}
+        {purchase.processingFeeCents && purchase.processingFeeCents > 0 ? (
+          <p className="mt-1 text-[11px] font-normal text-nurture-charcoal/55">
+            incl. {formatCurrency(purchase.processingFeeCents)} fee
+          </p>
+        ) : null}
       </td>
       <td className="px-4 py-4 align-top">
         <span
@@ -88,7 +133,11 @@ function PurchaseRow({ purchase }: { purchase: MemberPurchase }) {
         >
           {paymentStatusLabel[purchase.paymentStatus]}
         </span>
-        {purchase.paymentProvider ? (
+        {methodLabel ? (
+          <p className="mt-1 text-[10px] uppercase tracking-wide text-nurture-charcoal/45">
+            via {methodLabel}
+          </p>
+        ) : purchase.paymentProvider ? (
           <p className="mt-1 text-[10px] uppercase tracking-wide text-nurture-charcoal/45">
             via {purchase.paymentProvider}
           </p>
@@ -102,6 +151,20 @@ function PurchaseRow({ purchase }: { purchase: MemberPurchase }) {
           {quickBooksLabel(purchase.quickbooks)}
         </span>
       </td>
+      <td className="px-4 py-4 align-top">
+        {purchase.printUrl ? (
+          <a
+            href={purchase.printUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex rounded-full border border-nurture-sage/30 px-3 py-1.5 text-xs font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+          >
+            View / print
+          </a>
+        ) : (
+          <span className="text-xs text-nurture-charcoal/40">—</span>
+        )}
+      </td>
     </tr>
   );
 }
@@ -110,6 +173,7 @@ export function PurchasesView() {
   const { ready, loading: authLoading, user } = useRequireMember();
   const app = getMemberAppById("purchases");
   const [purchases, setPurchases] = useState<MemberPurchase[]>([]);
+  const [clientLinked, setClientLinked] = useState(false);
   const [accountEmail, setAccountEmail] = useState("");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -120,6 +184,7 @@ export function PurchasesView() {
     try {
       const data = await runWithAutoRetry(() => fetchMemberPurchases());
       setPurchases(data.purchases);
+      setClientLinked(data.clientLinked);
       setAccountEmail(data.email);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load purchases");
@@ -156,8 +221,10 @@ export function PurchasesView() {
               {app?.title ?? "Purchases"}
             </h2>
             <p className="mt-2 text-sm text-nurture-charcoal/75">
-              Orders linked to <span className="font-medium">{accountEmail || user?.loginId}</span>
-              . Payment status reflects Stripe; QuickBooks shows accounting sync.
+              Orders and invoices linked to{" "}
+              <span className="font-medium">{accountEmail || user?.loginId}</span>
+              . eGift cards and service orders show Stripe payment status; care
+              service invoices include printable copies for your records.
             </p>
           </div>
         </div>
@@ -171,6 +238,14 @@ export function PurchasesView() {
         </Link>{" "}
         for help.
       </p>
+
+      {clientLinked ? (
+        <p className="mt-3 rounded-xl border border-violet-200 bg-violet-50/70 px-4 py-3 text-xs text-violet-950">
+          Your account is linked to our client records. Service invoices and payment
+          history for doula and care packages appear below — open{" "}
+          <strong>View / print</strong> to save a PDF for insurance or your files.
+        </p>
+      ) : null}
 
       {error ? (
         <div className="mt-6 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-900">
@@ -191,7 +266,9 @@ export function PurchasesView() {
         <div className="mt-10 rounded-2xl border border-dashed border-nurture-sage/25 bg-white/80 px-6 py-12 text-center">
           <p className="font-medium text-nurture-charcoal">No purchases yet</p>
           <p className="mt-2 text-sm text-nurture-charcoal/65">
-            eGift cards and service orders appear here after payment.
+            {clientLinked
+              ? "Your client account is linked. Service invoices will appear here once they are sent."
+              : "eGift cards, service orders, and care invoices appear here after payment."}
           </p>
           <Link
             href="/gift-cards"
@@ -210,6 +287,7 @@ export function PurchasesView() {
                   <th className="px-4 py-3">Amount</th>
                   <th className="px-4 py-3">Payment</th>
                   <th className="px-4 py-3">QuickBooks</th>
+                  <th className="px-4 py-3">Invoice</th>
                 </tr>
               </thead>
               <tbody>

@@ -14,6 +14,7 @@ import ServiceFeeItemsEditor, {
   type ServiceFeeItemDraft,
 } from "@/components/Admin/ServiceFeeItemsEditor";
 import { PAYMENT_METHODS } from "@/config/paymentMethods";
+import { formatServiceInvoiceQuickBooksLabel } from "@/lib/invoices/quickbooksLabels";
 import {
   DEFAULT_PROCESSING_FEE_PERCENT,
   paymentMethodSupportsProcessingFee,
@@ -324,23 +325,33 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
   const handleInvoiceAction = async (
     serviceId: string,
     invoiceId: string,
-    action: "markSent" | "markPaid" | "resend",
+    action: "markSent" | "markPaid" | "markRefunded" | "resend",
     options?: { notes?: string }
   ) => {
+    if (action === "markRefunded") {
+      const confirmed = window.confirm(
+        "Mark this invoice as refunded? This is a tracking label only — process the actual refund manually (Venmo, Stripe, QuickBooks, etc.). The service balance will be restored."
+      );
+      if (!confirmed) return;
+    }
+
     setSaving(true);
     try {
       await updateServiceInvoice(clientId, serviceId, invoiceId, {
         markSent: action === "markSent",
         markPaid: action === "markPaid",
+        markRefunded: action === "markRefunded",
         resend: action === "resend",
         notes: options?.notes,
       });
       toast.success(
         action === "markPaid"
           ? "Marked paid"
-          : action === "resend"
-            ? "Invoice resent"
-            : "Invoice sent"
+          : action === "markRefunded"
+            ? "Marked refunded"
+            : action === "resend"
+              ? "Invoice resent"
+              : "Invoice sent"
       );
       await load({ silent: true });
       onChanged?.();
@@ -946,6 +957,16 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     {invoice.processingFeePercent}%)
                                   </p>
                                 ) : null}
+                                {formatServiceInvoiceQuickBooksLabel(
+                                  invoice.quickbooks
+                                ) ? (
+                                  <p className="text-nurture-charcoal/60">
+                                    QuickBooks:{" "}
+                                    {formatServiceInvoiceQuickBooksLabel(
+                                      invoice.quickbooks
+                                    )}
+                                  </p>
+                                ) : null}
                                 {invoice.notes && invoice.status !== "draft" ? (
                                   <p className="mt-1 text-nurture-charcoal/70 whitespace-pre-wrap">
                                     <span className="font-semibold">Notes:</span>{" "}
@@ -1048,6 +1069,22 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     className="text-violet-700 font-medium hover:underline disabled:opacity-60"
                                   >
                                     Resend
+                                  </button>
+                                ) : null}
+                                {invoice.status === "paid" ? (
+                                  <button
+                                    type="button"
+                                    disabled={saving}
+                                    onClick={() =>
+                                      void handleInvoiceAction(
+                                        service.serviceId,
+                                        invoice.invoiceId,
+                                        "markRefunded"
+                                      )
+                                    }
+                                    className="text-rose-700 font-medium hover:underline disabled:opacity-60"
+                                  >
+                                    Mark refunded
                                   </button>
                                 ) : null}
                                 {invoice.status !== "paid" &&

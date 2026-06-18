@@ -23,8 +23,8 @@ export const computeServiceBalanceDueCents = (
   invoices: ServiceInvoice[]
 ): number => {
   const paid = sumPaidInvoiceCents(invoices);
-  const refunded = sumRefundedInvoiceCents(invoices);
-  return Math.max(0, totalFeeCents - paid + refunded);
+  // Refunded invoices are excluded from `paid`; no extra adjustment needed.
+  return Math.max(0, totalFeeCents - paid);
 };
 
 export const computeOpenInvoiceCount = (invoices: ServiceInvoice[]): number =>

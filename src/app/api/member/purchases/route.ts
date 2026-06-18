@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const purchases = await listMemberPurchases({
+    const { purchases, clientLinked } = await listMemberPurchases({
       email,
       userId: user!.sub,
     });
@@ -26,6 +26,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       ok: true,
       email,
+      clientLinked,
       purchases,
     });
   } catch (err) {

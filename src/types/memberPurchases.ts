@@ -1,6 +1,6 @@
 import type { QuickBooksSyncStatus } from "@/types/giftCard";
 
-export type MemberPurchaseKind = "gift_card" | "service";
+export type MemberPurchaseKind = "gift_card" | "service" | "client_invoice";
 
 export type MemberPaymentStatus =
   | "pending_payment"
@@ -34,10 +34,20 @@ export interface MemberPurchase {
   paymentReference?: string;
   quickbooks: MemberPurchaseQuickBooks;
   recipientLabel?: string;
+  /** CRM service invoice fields (kind client_invoice). */
+  invoiceNumber?: string;
+  printUrl?: string;
+  dueDate?: string | null;
+  serviceTitle?: string;
+  installmentLabel?: string;
+  subtotalCents?: number;
+  processingFeeCents?: number;
 }
 
 export interface MemberPurchasesResponse {
   ok: true;
   email: string;
+  /** True when this account is linked to a Client CRM record. */
+  clientLinked: boolean;
   purchases: MemberPurchase[];
 }

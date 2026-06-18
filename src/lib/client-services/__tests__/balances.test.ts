@@ -56,11 +56,9 @@ describe("client service balances", () => {
     expect(computeServiceBalanceDueCents(15425, invoices)).toBe(5425);
   });
 
-  it("accounts for refunds", () => {
-    const invoices = [
-      invoice({ amountCents: 40000, status: "paid" }),
-      invoice({ amountCents: 40000, status: "refunded" }),
-    ];
+  it("restores service balance when a paid invoice is marked refunded", () => {
+    const invoices = [invoice({ amountCents: 40000, status: "refunded" })];
+    expect(sumPaidInvoiceCents(invoices)).toBe(0);
     expect(computeServiceBalanceDueCents(40000, invoices)).toBe(40000);
   });
 

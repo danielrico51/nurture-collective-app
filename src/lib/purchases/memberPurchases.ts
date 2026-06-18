@@ -1,5 +1,6 @@
 import { listPurchaseOrdersForMember } from "@/lib/billing/listOrders";
 import { listGiftCardOrdersForMember } from "@/lib/giftCards/listOrders";
+import { listMemberClientInvoices } from "@/lib/purchases/memberClientInvoices";
 import { centsToDollars } from "@/lib/giftCards/validateOrder";
 import type { GiftCardOrder } from "@/types/giftCard";
 import type {
@@ -106,16 +107,23 @@ const formatUsd = (amount: number) =>
 export const listMemberPurchases = async (input: {
   email: string;
   userId: string;
-}): Promise<MemberPurchase[]> => {
-  const [giftCards, billing] = await Promise.all([
+}): Promise<{ clientLinked: boolean; purchases: MemberPurchase[] }> => {
+  const [giftCards, billing, clientInvoices] = await Promise.all([
     listGiftCardOrdersForMember({ email: input.email, userId: input.userId }),
     listPurchaseOrdersForMember(input),
+    listMemberClientInvoices(input),
   ]);
 
   const purchases = [
     ...giftCards.map(giftCardToMemberPurchase),
     ...billing.map(billingToMemberPurchase),
+    ...clientInvoices.purchases,
   ];
 
-  return purchases.sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+  return {
+    clientLinked: clientInvoices.clientLinked,
+    purchases: purchases.sort(
+      (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt)
+    ),
+  };
 };

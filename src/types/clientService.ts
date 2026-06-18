@@ -35,6 +35,9 @@ export interface ServiceInvoiceQuickBooksRef {
   customerId?: string;
   invoiceId?: string;
   invoiceNumber?: string;
+  /** QBO Sales Receipt after Stripe (or manual) payment — mirrors eGift cards. */
+  salesReceiptId?: string;
+  salesReceiptNumber?: string;
   /** QBO customer pay URL (InvoiceLink). */
   paymentLink?: string | null;
   syncStatus?: "pending" | "synced" | "failed";
@@ -187,4 +190,6 @@ export interface UpdateServiceInvoiceInput {
   resend?: boolean;
   /** Update fields on a sent invoice and resend corrected copy to the client. */
   saveAndResend?: boolean;
+  /** Label a paid invoice as refunded (manual refunds — no payment API). */
+  markRefunded?: boolean;
 }
