@@ -285,7 +285,20 @@ const ClientDetailPanel = ({
                 : "bg-nurture-cream text-nurture-charcoal/70 hover:bg-nurture-sage/10"
             }`}
           >
-            {tabLabel(item)}
+            <span className="inline-flex items-center gap-1.5">
+              {tabLabel(item)}
+              {item === "proposals" ? (
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                    tab === item
+                      ? "bg-white/25 text-white"
+                      : "bg-amber-100 text-amber-800"
+                  }`}
+                >
+                  Experimental
+                </span>
+              ) : null}
+            </span>
           </button>
         ))}
       </div>
@@ -572,7 +585,13 @@ const ClientDetailPanel = ({
           </div>
         </div>
       ) : tab === "proposals" ? (
-        <ProposalPanel clientId={client.clientId} signerEmail={client.email} />
+        <div className="space-y-4">
+          <p className="rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">
+            <span className="font-semibold">Experimental</span> — proposals are
+            preview-only and not ready for client-facing use yet.
+          </p>
+          <ProposalPanel clientId={client.clientId} signerEmail={client.email} />
+        </div>
       ) : tab === "services" ? (
         <ClientServicesTab
           clientId={client.clientId}
