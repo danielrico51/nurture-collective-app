@@ -60,6 +60,21 @@ const listBillingOrderIdsLocal = async (): Promise<string[]> => {
   }
 };
 
+export const listPurchaseOrdersForClient = async (
+  clientId: string
+): Promise<PurchaseOrder[]> => {
+  if (!clientId) return [];
+  const orderIds = serverBillingConfig.useLocalStorage
+    ? await listBillingOrderIdsLocal()
+    : await listBillingOrderIdsFromS3();
+
+  const orders = await Promise.all(orderIds.map((id) => readPurchaseOrder(id)));
+  return orders
+    .filter((order): order is PurchaseOrder => order !== null)
+    .filter((order) => order.clientId === clientId)
+    .sort((a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt));
+};
+
 export const listPurchaseOrdersForMember = async (input: {
   email: string;
   userId: string;

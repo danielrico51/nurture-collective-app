@@ -4,6 +4,7 @@ export type AdminAppIcon =
   | "tasks"
   | "intakes"
   | "leads"
+  | "clients"
   | "coverage"
   | "blog"
   | "events"
@@ -30,6 +31,15 @@ export const ADMIN_APPS: AdminApp[] = [
     href: "/admin/leads",
     status: "available",
     icon: "leads",
+  },
+  {
+    id: "clients",
+    title: "Client CRM",
+    description:
+      "Manage active clients, link leads and app users, and track proposals, billing, and communications.",
+    href: "/admin/clients",
+    status: "available",
+    icon: "clients",
   },
   {
     id: "coverage",

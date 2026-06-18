@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Build a Cognito --lambda-config value that merges existing triggers with updates.
-# Usage: merge_cognito_lambda_config POOL_ID REGION [PreSignUp=arn] [InboundFederationArn=arn] [CustomEmailSenderArn=arn] [KMSKeyARN=arn]
+# Usage: merge_cognito_lambda_config POOL_ID REGION [PreSignUp=arn] [PostConfirmation=arn] [InboundFederationArn=arn] [CustomEmailSenderArn=arn] [KMSKeyARN=arn]
 set -euo pipefail
 
 merge_cognito_lambda_config() {
@@ -9,6 +9,7 @@ merge_cognito_lambda_config() {
   shift 2
 
   local presignup=""
+  local post_confirmation=""
   local inbound_federation_arn=""
   local custom_email_arn=""
   local kms_key_arn=""
@@ -17,6 +18,11 @@ merge_cognito_lambda_config() {
     --user-pool-id "$pool_id" \
     --region "$region" \
     --query 'UserPool.LambdaConfig.PreSignUp' \
+    --output text 2>/dev/null || true)"
+  post_confirmation="$(aws cognito-idp describe-user-pool \
+    --user-pool-id "$pool_id" \
+    --region "$region" \
+    --query 'UserPool.LambdaConfig.PostConfirmation' \
     --output text 2>/dev/null || true)"
   inbound_federation_arn="$(aws cognito-idp describe-user-pool \
     --user-pool-id "$pool_id" \
@@ -35,6 +41,7 @@ merge_cognito_lambda_config() {
     --output text 2>/dev/null || true)"
 
   [[ "$presignup" == "None" ]] && presignup=""
+  [[ "$post_confirmation" == "None" ]] && post_confirmation=""
   [[ "$inbound_federation_arn" == "None" ]] && inbound_federation_arn=""
   [[ "$custom_email_arn" == "None" ]] && custom_email_arn=""
   [[ "$kms_key_arn" == "None" ]] && kms_key_arn=""
@@ -43,6 +50,9 @@ merge_cognito_lambda_config() {
     case "$1" in
       PreSignUp=*)
         presignup="${1#PreSignUp=}"
+        ;;
+      PostConfirmation=*)
+        post_confirmation="${1#PostConfirmation=}"
         ;;
       InboundFederationArn=*)
         inbound_federation_arn="${1#InboundFederationArn=}"
@@ -60,6 +70,9 @@ merge_cognito_lambda_config() {
   local parts=()
   if [[ -n "$presignup" ]]; then
     parts+=("PreSignUp=${presignup}")
+  fi
+  if [[ -n "$post_confirmation" ]]; then
+    parts+=("PostConfirmation=${post_confirmation}")
   fi
   if [[ -n "$inbound_federation_arn" ]]; then
     parts+=("InboundFederation={LambdaVersion=V1_0,LambdaArn=${inbound_federation_arn}}")

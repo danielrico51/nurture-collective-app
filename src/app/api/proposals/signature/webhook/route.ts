@@ -9,6 +9,7 @@ import {
 import { readProposalMetadata, writeProposalMetadata } from "@/lib/proposals/storage";
 import { handleProposalSigned } from "@/lib/proposals/service";
 import { runClientOnboardingAfterSignature } from "@/lib/proposals/onboarding";
+import { getClientById, resolveStorageClientId } from "@/lib/clients/storage";
 import { getLeadById } from "@/lib/leads/storage";
 import type { SignatureWebhookPayload } from "@/types/proposal";
 
@@ -28,20 +29,22 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = (await request.json()) as SignatureWebhookPayload;
-    const clientId = body.client_id?.trim();
+    const requestedId = body.client_id?.trim();
     const proposalId = body.proposal_id?.trim();
     const signatureRequestId = body.signature_request_id?.trim();
 
-    if (!clientId || !proposalId || !signatureRequestId) {
+    if (!requestedId || !proposalId || !signatureRequestId) {
       return NextResponse.json({ error: "Invalid payload" }, { status: 400 });
     }
 
+    const clientId = await resolveStorageClientId(requestedId);
     const metadata = await readProposalMetadata(clientId, proposalId);
     if (!metadata) {
       return NextResponse.json({ error: "Proposal not found" }, { status: 404 });
     }
 
-    const lead = await getLeadById(clientId);
+    const client = await getClientById(clientId);
+    const lead = client?.leadId ? await getLeadById(client.leadId) : null;
 
     if (body.event === "SIGNED") {
       const updated = await handleProposalSigned({

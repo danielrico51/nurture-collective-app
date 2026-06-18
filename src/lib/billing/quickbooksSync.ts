@@ -131,6 +131,7 @@ export const createPaymentCheckoutForOrder = async (order: PurchaseOrder, urls: 
     cancelUrl: urls.cancelUrl,
     metadata: {
       orderId: order.id,
+      orderType: "billing",
       billing: "true",
       ...(order.userId ? { userId: order.userId } : {}),
       ...(order.clientId ? { clientId: order.clientId } : {}),

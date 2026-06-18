@@ -42,6 +42,8 @@ def parse_lambda_config(shorthand: str) -> dict:
     for part in parts:
         if part.startswith("PreSignUp="):
             config["PreSignUp"] = part.split("=", 1)[1]
+        elif part.startswith("PostConfirmation="):
+            config["PostConfirmation"] = part.split("=", 1)[1]
         elif part.startswith("InboundFederation="):
             value = part.split("=", 1)[1]
             if value.startswith("{"):

@@ -1,0 +1,45 @@
+import { NextRequest, NextResponse } from "next/server";
+import {
+  handleClientsStorageError,
+  requireManagementAuth,
+} from "@/lib/api/routeHelpers";
+import {
+  ClientServiceValidationError,
+  getClientServiceWithInvoices,
+  updateServiceInvoice,
+} from "@/lib/client-services/storage";
+import type { UpdateServiceInvoiceInput } from "@/types/clientService";
+
+export const dynamic = "force-dynamic";
+
+type RouteContext = {
+  params: { id: string; serviceId: string; invoiceId: string };
+};
+
+export async function PATCH(request: NextRequest, { params }: RouteContext) {
+  const auth = await requireManagementAuth(request);
+  if (auth.error) return auth.error;
+
+  let body: UpdateServiceInvoiceInput;
+  try {
+    body = await request.json();
+  } catch {
+    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
+  }
+
+  try {
+    const invoice = await updateServiceInvoice(
+      params.id,
+      params.serviceId,
+      params.invoiceId,
+      body
+    );
+    const service = await getClientServiceWithInvoices(params.id, params.serviceId);
+    return NextResponse.json({ invoice, service });
+  } catch (error) {
+    if (error instanceof ClientServiceValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    return handleClientsStorageError(error);
+  }
+}

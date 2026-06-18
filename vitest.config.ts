@@ -4,7 +4,10 @@ import path from "path";
 export default defineConfig({
   test: {
     environment: "node",
-    include: ["src/**/*.test.ts"],
+    include: [
+      "src/**/*.test.ts",
+      "infrastructure/aws/lambda/**/__tests__/**/*.test.mjs",
+    ],
   },
   resolve: {
     alias: {

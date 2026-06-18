@@ -1,21 +1,46 @@
 import "server-only";
 
-import { getLeadById } from "@/lib/leads/storage";
+import {
+  buildWelcomeEmail,
+  sendClientEmail,
+} from "@/lib/clients/communications";
+import { getClientById, resolveStorageClientId } from "@/lib/clients/storage";
 
-/** Post-signature onboarding scaffold (Cognito + community in follow-up). */
+/** Post-signature onboarding: send the welcome email and log it. */
 export const runClientOnboardingAfterSignature = async (input: {
   clientId: string;
   proposalId: string;
 }): Promise<void> => {
-  const lead = await getLeadById(input.clientId);
-  console.info("[proposals] onboarding scaffold", {
-    clientId: input.clientId,
-    proposalId: input.proposalId,
-    clientEmail: lead?.email,
-    tasks: [
-      "Send welcome email",
-      "Create community membership",
-      "Schedule kickoff call",
-    ],
-  });
+  const storageClientId = await resolveStorageClientId(input.clientId);
+  const client = await getClientById(storageClientId);
+
+  if (!client) {
+    console.warn("[proposals] onboarding skipped — client not found", {
+      clientId: storageClientId,
+      proposalId: input.proposalId,
+    });
+    return;
+  }
+
+  if (!client.email) {
+    console.warn("[proposals] onboarding welcome email skipped — no client email", {
+      clientId: storageClientId,
+    });
+    return;
+  }
+
+  const template = buildWelcomeEmail(client);
+  try {
+    await sendClientEmail({
+      client,
+      subject: template.subject,
+      body: template.text,
+      html: template.html,
+      templateId: "welcome",
+      sentBy: "system",
+      sentByEmail: "system@nesting-place.com",
+    });
+  } catch (error) {
+    console.error("[proposals] onboarding welcome email failed:", error);
+  }
 };

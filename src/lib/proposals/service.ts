@@ -1,7 +1,12 @@
 import "server-only";
 
 import { chatCompletionJson } from "@/lib/openai/client";
-import { buildProposalContext } from "@/lib/proposals/contextBuilder";
+import { buildProposalContextForClient } from "@/lib/proposals/contextBuilder";
+import {
+  resolveClientForProposal,
+  resolveStorageClientId,
+  updateClient,
+} from "@/lib/clients/storage";
 import {
   buildProposalUserPrompt,
   PROPOSAL_GENERATION_SYSTEM_PROMPT,
@@ -38,7 +43,9 @@ export const generateProposalForClient = async (input: {
   content: ProposalLlmContent;
   google_doc_error?: string | null;
 }> => {
-  const context = await buildProposalContext(input.clientId);
+  const client = await resolveClientForProposal(input.clientId);
+  const storageClientId = client.clientId;
+  const { context, leadId } = await buildProposalContextForClient(client);
   const examples = await retrieveProposalExamples(context);
   const llmContent = await chatCompletionJson<ProposalLlmContent>([
     { role: "system", content: PROPOSAL_GENERATION_SYSTEM_PROMPT },
@@ -56,7 +63,7 @@ export const generateProposalForClient = async (input: {
   let metadata: ProposalMetadata | null = null;
 
   if (input.existingProposalId) {
-    metadata = await readProposalMetadata(input.clientId, input.existingProposalId);
+    metadata = await readProposalMetadata(storageClientId, input.existingProposalId);
   }
 
   const proposalId = metadata?.proposal_id ?? randomUUID();
@@ -83,8 +90,8 @@ export const generateProposalForClient = async (input: {
 
   metadata = {
     proposal_id: proposalId,
-    client_id: input.clientId,
-    lead_id: input.clientId,
+    client_id: storageClientId,
+    lead_id: leadId ?? "",
     status,
     google_doc_id: googleDocId,
     google_doc_url: googleDocUrl,
@@ -100,8 +107,8 @@ export const generateProposalForClient = async (input: {
   };
 
   await writeProposalMetadata(metadata);
-  await writeProposalDraft(input.clientId, proposalId, llmContent);
-  await writeProposalVersion(input.clientId, proposalId, {
+  await writeProposalDraft(storageClientId, proposalId, llmContent);
+  await writeProposalVersion(storageClientId, proposalId, {
     version: nextVersion,
     created_at: now,
     created_by: input.actor.email,
@@ -112,7 +119,7 @@ export const generateProposalForClient = async (input: {
   await recordProposalAuditEvent({
     event_type: input.revisionNotes ? "proposal_revised" : "proposal_generated",
     proposal_id: proposalId,
-    client_id: input.clientId,
+    client_id: storageClientId,
     actor_id: input.actor.sub,
     actor_email: input.actor.email,
     payload: {
@@ -122,14 +129,11 @@ export const generateProposalForClient = async (input: {
     },
   });
 
-  const lead = await getLeadById(input.clientId);
-  if (lead) {
-    await notifyProposalGenerated({
-      clientName: lead.name,
-      clientId: input.clientId,
-      proposal: metadata,
-    });
-  }
+  await notifyProposalGenerated({
+    clientName: client.name || context.client_name,
+    clientId: storageClientId,
+    proposal: metadata,
+  });
 
   return { metadata, content: llmContent, google_doc_error: googleDocError };
 };
@@ -139,12 +143,13 @@ export const approveProposal = async (input: {
   proposalId: string;
   actor: AuthUser;
 }): Promise<ProposalMetadata> => {
-  const metadata = await readProposalMetadata(input.clientId, input.proposalId);
+  const storageClientId = await resolveStorageClientId(input.clientId);
+  const metadata = await readProposalMetadata(storageClientId, input.proposalId);
   if (!metadata) throw new Error("Proposal not found");
 
-  const draft = await readProposalDraft(input.clientId, input.proposalId);
+  const draft = await readProposalDraft(storageClientId, input.proposalId);
   if (draft) {
-    await writeProposalApproved(input.clientId, input.proposalId, draft);
+    await writeProposalApproved(storageClientId, input.proposalId, draft);
   }
 
   const now = new Date().toISOString();
@@ -160,16 +165,17 @@ export const approveProposal = async (input: {
   await recordProposalAuditEvent({
     event_type: "proposal_approved",
     proposal_id: input.proposalId,
-    client_id: input.clientId,
+    client_id: storageClientId,
     actor_id: input.actor.sub,
     actor_email: input.actor.email,
     payload: { approved_at: now },
   });
 
-  const lead = await getLeadById(input.clientId);
-  if (lead) {
-    await notifyProposalApproved({ clientName: lead.name, proposal: updated });
-  }
+  const lead = metadata.lead_id ? await getLeadById(metadata.lead_id) : null;
+  await notifyProposalApproved({
+    clientName: lead?.name ?? "Client",
+    proposal: updated,
+  });
 
   return updated;
 };
@@ -180,20 +186,21 @@ export const requestProposalRevision = async (input: {
   feedback: string;
   actor: AuthUser;
 }): Promise<{ metadata: ProposalMetadata; content: ProposalLlmContent }> => {
-  const metadata = await readProposalMetadata(input.clientId, input.proposalId);
+  const storageClientId = await resolveStorageClientId(input.clientId);
+  const metadata = await readProposalMetadata(storageClientId, input.proposalId);
   if (!metadata) throw new Error("Proposal not found");
 
   await recordProposalAuditEvent({
     event_type: "proposal_revision_requested",
     proposal_id: input.proposalId,
-    client_id: input.clientId,
+    client_id: storageClientId,
     actor_id: input.actor.sub,
     actor_email: input.actor.email,
     payload: { feedback: input.feedback },
   });
 
   return generateProposalForClient({
-    clientId: input.clientId,
+    clientId: storageClientId,
     actor: input.actor,
     revisionNotes: input.feedback,
     existingProposalId: input.proposalId,
@@ -206,7 +213,8 @@ export const sendProposalForSignature = async (input: {
   actor: AuthUser;
   signerEmail: string;
 }): Promise<ProposalMetadata> => {
-  const metadata = await readProposalMetadata(input.clientId, input.proposalId);
+  const storageClientId = await resolveStorageClientId(input.clientId);
+  const metadata = await readProposalMetadata(storageClientId, input.proposalId);
   if (!metadata) throw new Error("Proposal not found");
   if (metadata.status !== "APPROVED") {
     throw new Error("Proposal must be approved before sending for signature");
@@ -226,7 +234,7 @@ export const sendProposalForSignature = async (input: {
   await recordProposalAuditEvent({
     event_type: "proposal_sent_for_signature",
     proposal_id: input.proposalId,
-    client_id: input.clientId,
+    client_id: storageClientId,
     actor_id: input.actor.sub,
     actor_email: input.actor.email,
     payload: {
@@ -245,7 +253,8 @@ export const handleProposalSigned = async (input: {
   signatureRequestId: string;
   signedPdfKey?: string;
 }): Promise<ProposalMetadata> => {
-  const metadata = await readProposalMetadata(input.clientId, input.proposalId);
+  const storageClientId = await resolveStorageClientId(input.clientId);
+  const metadata = await readProposalMetadata(storageClientId, input.proposalId);
   if (!metadata) throw new Error("Proposal not found");
 
   const now = new Date().toISOString();
@@ -257,18 +266,30 @@ export const handleProposalSigned = async (input: {
   };
 
   await writeProposalMetadata(updated);
-  await writeProposalSigned(input.clientId, input.proposalId, {
+  await writeProposalSigned(storageClientId, input.proposalId, {
     signature_request_id: input.signatureRequestId,
     signed_at: now,
     signed_pdf_key: input.signedPdfKey ?? null,
   });
 
-  await updateLead(input.clientId, { status: "converted_to_member" });
+  // Advance the client and (when linked) the originating lead.
+  try {
+    await updateClient(storageClientId, { status: "onboarding" });
+  } catch (error) {
+    console.error("[proposals] client status update failed:", error);
+  }
+  if (metadata.lead_id) {
+    try {
+      await updateLead(metadata.lead_id, { status: "converted_to_member" });
+    } catch (error) {
+      console.error("[proposals] lead conversion update failed:", error);
+    }
+  }
 
   await recordProposalAuditEvent({
     event_type: "proposal_signed",
     proposal_id: input.proposalId,
-    client_id: input.clientId,
+    client_id: storageClientId,
     actor_id: "system",
     actor_email: "system@nesting-place.com",
     payload: {

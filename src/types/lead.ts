@@ -110,6 +110,10 @@ export interface CreateCoordinatorNoteInput {
 
 export interface UpdateLeadInput {
   status?: LeadStatus;
+  name?: string;
+  email?: string;
+  phone?: string;
+  locationZip?: string | null;
   coordinatorId?: string;
   coordinatorEmail?: string;
   archivedAt?: string | null;

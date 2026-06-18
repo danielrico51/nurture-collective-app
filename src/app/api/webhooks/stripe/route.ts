@@ -3,6 +3,7 @@ import Stripe from "stripe";
 import { serverGiftCardConfig } from "@/config/giftCards";
 import { completeClassRegistrationPayment } from "@/lib/classRegistrations/completePayment";
 import { completeGiftCardPayment } from "@/lib/giftCards/completePayment";
+import { markPurchaseOrderPaid } from "@/lib/billing/createPurchaseCheckout";
 
 export const dynamic = "force-dynamic";
 
@@ -48,21 +49,26 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ ok: true, skipped: "no_order_id" });
       }
 
+      const paymentReference = session.payment_intent
+        ? String(session.payment_intent)
+        : session.id;
+
       if (orderType === "class_registration") {
         await completeClassRegistrationPayment({
           registrationId: orderId,
           paymentProvider: "stripe",
-          paymentReference: session.payment_intent
-            ? String(session.payment_intent)
-            : session.id,
+          paymentReference,
+        });
+      } else if (orderType === "billing" || session.metadata?.billing === "true") {
+        await markPurchaseOrderPaid(orderId, {
+          provider: "stripe",
+          reference: paymentReference,
         });
       } else if (orderType === "gift_card" || session.metadata?.designId) {
         await completeGiftCardPayment({
           orderId,
           paymentProvider: "stripe",
-          paymentReference: session.payment_intent
-            ? String(session.payment_intent)
-            : session.id,
+          paymentReference,
         });
       }
     }

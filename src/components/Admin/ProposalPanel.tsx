@@ -7,7 +7,6 @@ import {
   reviseClientProposal,
   sendClientProposalForSignature,
 } from "@/lib/api/proposalsClient";
-import type { LeadRecord } from "@/types/lead";
 import type { ProposalMetadata, ProposalStatus } from "@/types/proposal";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
@@ -55,22 +54,30 @@ const formatDate = (value: string | null) =>
     : "—";
 
 interface ProposalPanelProps {
-  lead: LeadRecord;
+  /** Client UUID, or a legacy lead id (resolved server-side). */
+  clientId: string;
+  signerEmail?: string;
+  /** When true, hide generate/approve actions (e.g. read-only view from Lead CRM). */
+  readOnly?: boolean;
 }
 
-const ProposalPanel = ({ lead }: ProposalPanelProps) => {
+const ProposalPanel = ({
+  clientId,
+  signerEmail: defaultSignerEmail,
+  readOnly = false,
+}: ProposalPanelProps) => {
   const [proposals, setProposals] = useState<ProposalMetadata[]>([]);
   const [loading, setLoading] = useState(false);
   const [busyId, setBusyId] = useState<string | null>(null);
   const [feedbackByProposal, setFeedbackByProposal] = useState<Record<string, string>>(
     {}
   );
-  const [signerEmail, setSignerEmail] = useState(lead.email ?? "");
+  const [signerEmail, setSignerEmail] = useState(defaultSignerEmail ?? "");
 
   const loadProposals = useCallback(async () => {
     setLoading(true);
     try {
-      const result = await fetchClientProposals(lead.leadId);
+      const result = await fetchClientProposals(clientId);
       setProposals(
         [...result.proposals].sort(
           (left, right) =>
@@ -82,7 +89,7 @@ const ProposalPanel = ({ lead }: ProposalPanelProps) => {
     } finally {
       setLoading(false);
     }
-  }, [lead.leadId]);
+  }, [clientId]);
 
   useEffect(() => {
     void loadProposals();
@@ -91,7 +98,7 @@ const ProposalPanel = ({ lead }: ProposalPanelProps) => {
   const handleGenerate = async () => {
     setBusyId("generate");
     try {
-      const result = await generateClientProposal(lead.leadId);
+      const result = await generateClientProposal(clientId);
       setProposals((current) => {
         const without = current.filter(
           (item) => item.proposal_id !== result.metadata.proposal_id
@@ -115,7 +122,7 @@ const ProposalPanel = ({ lead }: ProposalPanelProps) => {
   const handleApprove = async (proposalId: string) => {
     setBusyId(proposalId);
     try {
-      const result = await approveClientProposal(lead.leadId, proposalId);
+      const result = await approveClientProposal(clientId, proposalId);
       setProposals((current) =>
         current.map((item) =>
           item.proposal_id === proposalId ? result.metadata : item
@@ -137,7 +144,7 @@ const ProposalPanel = ({ lead }: ProposalPanelProps) => {
     }
     setBusyId(`revise-${proposalId}`);
     try {
-      const result = await reviseClientProposal(lead.leadId, proposalId, feedback);
+      const result = await reviseClientProposal(clientId, proposalId, feedback);
       setProposals((current) =>
         current.map((item) =>
           item.proposal_id === proposalId ? result.metadata : item
@@ -161,7 +168,7 @@ const ProposalPanel = ({ lead }: ProposalPanelProps) => {
     setBusyId(`sign-${proposalId}`);
     try {
       const result = await sendClientProposalForSignature(
-        lead.leadId,
+        clientId,
         proposalId,
         email
       );
@@ -193,14 +200,16 @@ const ProposalPanel = ({ lead }: ProposalPanelProps) => {
           >
             Refresh
           </button>
-          <button
-            type="button"
-            onClick={() => void handleGenerate()}
-            disabled={busyId === "generate"}
-            className="rounded-full bg-nurture-sage px-4 py-2 text-xs font-semibold text-white hover:bg-nurture-sage-dark disabled:opacity-50"
-          >
-            {busyId === "generate" ? "Generating…" : "Generate proposal"}
-          </button>
+          {!readOnly ? (
+            <button
+              type="button"
+              onClick={() => void handleGenerate()}
+              disabled={busyId === "generate"}
+              className="rounded-full bg-nurture-sage px-4 py-2 text-xs font-semibold text-white hover:bg-nurture-sage-dark disabled:opacity-50"
+            >
+              {busyId === "generate" ? "Generating…" : "Generate proposal"}
+            </button>
+          ) : null}
         </div>
       </div>
 
@@ -208,7 +217,9 @@ const ProposalPanel = ({ lead }: ProposalPanelProps) => {
         <p className="mt-3 text-sm text-nurture-charcoal/55">Loading proposals…</p>
       ) : proposals.length === 0 ? (
         <p className="mt-3 text-sm text-nurture-charcoal/60">
-          No proposals yet. Generate one from CRM intake, call notes, and pricing context.
+          {readOnly
+            ? "No proposals yet. Convert this lead to a client to generate and manage proposals in Client CRM."
+            : "No proposals yet. Generate one from CRM intake, call notes, and pricing context."}
         </p>
       ) : (
         <ul className="mt-3 space-y-4">
@@ -266,7 +277,8 @@ const ProposalPanel = ({ lead }: ProposalPanelProps) => {
                   </p>
                 )}
 
-                {(proposal.status === "UNDER_REVIEW" || proposal.status === "DRAFT") && (
+                {(proposal.status === "UNDER_REVIEW" || proposal.status === "DRAFT") &&
+                !readOnly && (
                   <div className="mt-4 space-y-3 border-t border-nurture-sage/10 pt-4">
                     <div className="flex flex-wrap gap-2">
                       <button
@@ -301,7 +313,7 @@ const ProposalPanel = ({ lead }: ProposalPanelProps) => {
                   </div>
                 )}
 
-                {proposal.status === "APPROVED" && (
+                {proposal.status === "APPROVED" && !readOnly && (
                   <div className="mt-4 space-y-2 border-t border-nurture-sage/10 pt-4">
                     <label className="block text-xs font-semibold text-nurture-charcoal/50">
                       Signer email

@@ -20,6 +20,7 @@ import {
   fetchAdminLeads,
   updateAdminLead,
 } from "@/lib/api/leadsClient";
+import { convertLeadToClientRequest, fetchClientByLeadId } from "@/lib/api/clientsClient";
 import { fetchTeamMembers } from "@/lib/api/tasksClient";
 import { getCoordinatorDisplayName } from "@/lib/leads/coordinatorDisplay";
 import { getAllowedLeadTransitions } from "@/lib/leads/workflow";
@@ -33,9 +34,11 @@ import type {
   LeadStatus,
   ManualLeadChannel,
 } from "@/types/lead";
+import type { ClientRecord } from "@/types/client";
 import { LEAD_STATUSES, MANUAL_LEAD_CHANNELS } from "@/types/lead";
 import type { TeamMember } from "@/types/teamMember";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import toast from "react-hot-toast";
 
 type StatusFilter = "all" | LeadStatus;
@@ -243,6 +246,10 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
   const [detailLoadingId, setDetailLoadingId] = useState<string | null>(null);
   const [conversationsLoadingId, setConversationsLoadingId] = useState<string | null>(null);
   const [savingId, setSavingId] = useState<string | null>(null);
+  const [convertingId, setConvertingId] = useState<string | null>(null);
+  const [linkedClientByLead, setLinkedClientByLead] = useState<
+    Record<string, ClientRecord | null | undefined>
+  >({});
   const [reopeningKey, setReopeningKey] = useState<string | null>(null);
   const [noteDraft, setNoteDraft] = useState("");
   const [noteType, setNoteType] = useState<CoordinatorNoteType>("general");
@@ -325,6 +332,15 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
     }
   }, []);
 
+  const loadLinkedClient = useCallback(async (leadId: string) => {
+    try {
+      const { client } = await fetchClientByLeadId(leadId);
+      setLinkedClientByLead((current) => ({ ...current, [leadId]: client }));
+    } catch {
+      setLinkedClientByLead((current) => ({ ...current, [leadId]: null }));
+    }
+  }, []);
+
   const handleExpand = (lead: LeadRecord) => {
     const next = expandedId === lead.leadId ? null : lead.leadId;
     setExpandedId(next);
@@ -333,6 +349,9 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
     if (next) {
       if (!notesByLead[lead.leadId]) loadDetail(lead);
       if (!conversationsByLead[lead.leadId]) loadConversations(lead);
+      if (linkedClientByLead[lead.leadId] === undefined) {
+        void loadLinkedClient(lead.leadId);
+      }
     }
   };
 
@@ -416,6 +435,25 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
       toast.error(err instanceof Error ? err.message : "Could not restore lead");
     } finally {
       setSavingId(null);
+    }
+  };
+
+  const handleConvertToClient = async (leadId: string) => {
+    setConvertingId(leadId);
+    try {
+      const { client, created } = await convertLeadToClientRequest(leadId);
+      setLinkedClientByLead((current) => ({ ...current, [leadId]: client }));
+      toast.success(
+        created
+          ? "Client created — open Client CRM to manage billing and communications"
+          : "This lead is already linked to a client"
+      );
+    } catch (err) {
+      toast.error(
+        err instanceof Error ? err.message : "Could not convert lead to client"
+      );
+    } finally {
+      setConvertingId(null);
     }
   };
 
@@ -699,6 +737,7 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
             const prep = prepByLead[lead.leadId];
             const intake = intakeByLead[lead.leadId];
             const recommendations = recommendationsByLead[lead.leadId] ?? [];
+            const linkedClient = linkedClientByLead[lead.leadId];
             const coordinatorLabel = getCoordinatorDisplayName(lead, members);
             const stageLabel = lead.maternalStage
               ? MATERNAL_STAGE_LABELS[lead.maternalStage as MaternalStage] ??
@@ -907,7 +946,60 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
                           }
                         />
 
-                        <ProposalPanel lead={lead} />
+                        <ProposalPanel
+                          clientId={linkedClient?.clientId ?? lead.leadId}
+                          signerEmail={lead.email}
+                          readOnly
+                        />
+
+                        <div className="mt-5 flex flex-wrap items-center gap-3 rounded-2xl border border-nurture-sage/15 bg-white px-4 py-3">
+                          <div className="min-w-0">
+                            <p className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+                              Client CRM
+                            </p>
+                            {linkedClient === undefined ? (
+                              <p className="mt-0.5 text-sm text-nurture-charcoal/55">
+                                Checking for linked client…
+                              </p>
+                            ) : linkedClient ? (
+                              <p className="mt-0.5 text-sm text-nurture-charcoal/70">
+                                Linked to client{" "}
+                                <span className="font-medium text-nurture-charcoal">
+                                  {linkedClient.name || linkedClient.clientId}
+                                </span>
+                                . Manage proposals, billing, and communications in
+                                Client CRM.
+                              </p>
+                            ) : (
+                              <p className="mt-0.5 text-sm text-nurture-charcoal/70">
+                                This is a lead only. Convert to a managed client to
+                                track billing, proposals, and communications.
+                              </p>
+                            )}
+                          </div>
+                          {linkedClient ? (
+                            <Link
+                              href="/admin/clients"
+                              className="ml-auto rounded-full border border-nurture-sage/30 px-4 py-2 text-xs font-semibold text-nurture-sage-dark transition hover:bg-nurture-sage/10"
+                            >
+                              Open Client CRM
+                            </Link>
+                          ) : (
+                            <button
+                              type="button"
+                              disabled={
+                                convertingId === lead.leadId ||
+                                linkedClient === undefined
+                              }
+                              onClick={() => handleConvertToClient(lead.leadId)}
+                              className="ml-auto rounded-full bg-nurture-sage px-4 py-2 text-xs font-semibold text-white transition hover:bg-nurture-sage-dark disabled:opacity-60"
+                            >
+                              {convertingId === lead.leadId
+                                ? "Converting…"
+                                : "Convert to client"}
+                            </button>
+                          )}
+                        </div>
 
                         <dl className="mt-5 grid gap-4 sm:grid-cols-2">
                           <DetailItem label="Lead ID" value={lead.leadId} />

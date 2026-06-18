@@ -61,7 +61,8 @@ export const stripeGiftCardPaymentProvider: GiftCardPaymentProvider = {
       cancel_url: input.cancelUrl,
       metadata: {
         orderId: input.orderId,
-        orderType: "gift_card",
+        // Default to gift_card but honor an explicit orderType (e.g. "billing").
+        orderType: input.metadata?.orderType ?? "gift_card",
         ...input.metadata,
       },
     });
