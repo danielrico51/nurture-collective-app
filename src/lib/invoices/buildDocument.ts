@@ -63,6 +63,11 @@ const buildPaymentBlock = (
     return `<p style="margin:16px 0;font-size:14px;line-height:1.6;color:#2f2a26;"><strong>Paid</strong> — ${escapeHtml(paidLine)} No payment is due on this invoice.</p>`;
   }
 
+  const manualHtml = buildManualPaymentHtml({ invoice, client: input.client });
+  if (manualHtml) {
+    return `${manualHtml}${buildCardDebitNoteHtml()}`;
+  }
+
   if (paymentLink) {
     const link = escapeHtml(paymentLink);
     const buttonStyle =
@@ -78,11 +83,6 @@ const buildPaymentBlock = (
         Or copy this link:<br /><a href="${link}" style="color:#6b8f7a;">${link}</a>
       </p>
       ${buildCardDebitNoteHtml()}`;
-  }
-
-  const manualHtml = buildManualPaymentHtml({ invoice, client: input.client });
-  if (manualHtml) {
-    return `${manualHtml}${buildCardDebitNoteHtml()}`;
   }
 
   const instructionStyle = options?.emailSafe
@@ -318,9 +318,11 @@ export const buildInvoicePlainText = (input: InvoiceDocumentInput): string => {
     serviceContext.paymentStatusLabel === "Paid" ? "Payment" : "Payment due",
     serviceContext.paymentStatusLabel === "Paid"
       ? paymentInstructions
-      : paymentLink
-        ? `Pay online: ${paymentLink}\n\n${buildCardDebitNotePlainText()}`
-        : `${paymentInstructions}\n\n${buildCardDebitNotePlainText()}`,
+      : ["venmo", "zelle", "ach"].includes(invoice.paymentMethod)
+        ? `${paymentInstructions}\n\n${buildCardDebitNotePlainText()}`
+        : paymentLink
+          ? `Pay online: ${paymentLink}\n\n${buildCardDebitNotePlainText()}`
+          : `${paymentInstructions}\n\n${buildCardDebitNotePlainText()}`,
     "",
     pdfDownloadUrl
       ? [
