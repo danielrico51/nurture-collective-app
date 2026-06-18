@@ -3,6 +3,11 @@ import "server-only";
 import { clientInvoiceConfig } from "@/config/clientInvoices";
 import { serverQuickBooksConfig } from "@/config/quickbooks";
 import { buildVenmoPaymentUrl } from "@/lib/classRegistrations/payments";
+import {
+  buildAchInvoiceInstructions,
+  buildVenmoInvoiceInstructions,
+  buildZelleInvoiceInstructions,
+} from "@/lib/invoices/paymentInstructions";
 import { syncServiceInvoiceToQuickBooks } from "@/lib/invoices/quickbooksSync";
 import { createServiceInvoiceStripeCheckout } from "@/lib/invoices/stripeCheckout";
 import { getPaymentMethod } from "@/config/paymentMethods";
@@ -36,16 +41,13 @@ const formatMoney = (cents: number): string =>
 
 const buildVenmoInstructions = (
   invoice: ServiceInvoice,
-  paymentLink: string
-): string =>
-  `Pay ${formatMoney(invoice.amountCents)} via Venmo to ${clientInvoiceConfig.venmoHandle}. Include invoice ${invoice.invoiceNumber} in the payment note.`;
+  client: ClientRecord
+): string => buildVenmoInvoiceInstructions(invoice, client);
 
-const buildZelleInstructions = (invoice: ServiceInvoice): string =>
-  [
-    `Pay ${formatMoney(invoice.amountCents)} via Zelle to ${clientInvoiceConfig.zelleEmail}.`,
-    `Include invoice ${invoice.invoiceNumber} in the memo.`,
-    `Service: ${invoice.description}`,
-  ].join(" ");
+const buildZelleInstructions = (
+  invoice: ServiceInvoice,
+  client: ClientRecord
+): string => buildZelleInvoiceInstructions(invoice, client);
 
 export const resolveServiceInvoicePayment = async (input: {
   invoice: ServiceInvoice;
@@ -67,7 +69,7 @@ export const resolveServiceInvoicePayment = async (input: {
     });
     return {
       paymentLink,
-      paymentInstructions: buildVenmoInstructions(input.invoice, paymentLink),
+      paymentInstructions: buildVenmoInstructions(input.invoice, input.client),
       quickbooks: null,
       stripe: null,
     };
@@ -76,7 +78,19 @@ export const resolveServiceInvoicePayment = async (input: {
   if (method.id === "zelle") {
     return {
       paymentLink: null,
-      paymentInstructions: buildZelleInstructions(input.invoice),
+      paymentInstructions: buildZelleInstructions(input.invoice, input.client),
+      quickbooks: null,
+      stripe: null,
+    };
+  }
+
+  if (method.id === "ach") {
+    return {
+      paymentLink: null,
+      paymentInstructions: buildAchInvoiceInstructions(
+        input.invoice,
+        input.client
+      ),
       quickbooks: null,
       stripe: null,
     };

@@ -113,7 +113,7 @@ describe("buildInvoiceDocument", () => {
 
   it("includes Zelle instructions when no payment link", () => {
     const instructions =
-      "Pay $74.25 via Zelle to thenestingplacenj@gmail.com.\nInclude invoice TNP-2026-0042 in the memo.";
+      "Pay $74.25 via Zelle to @thenestingplace.\nMemo: Jane Doe — TNP-2026-0042\nScan the Zelle QR code";
     const text = buildInvoicePlainText(
       docInput({
         invoice: { ...invoice, paymentMethod: "zelle" },
@@ -184,5 +184,18 @@ describe("buildInvoiceDocument", () => {
     expect(html).toContain("Pay $74.25 online");
     expect(html).toContain("Installment 1 of 2");
     expect(html).toContain("Alex Smith");
+  });
+
+  it("includes Venmo QR code and handle in email HTML", () => {
+    const html = buildInvoiceEmailHtml(
+      docInput({
+        invoice: { ...invoice, paymentMethod: "venmo" },
+        paymentLink: "https://account.venmo.com/pay?txn=pay&recipients=thenestingplace",
+        paymentInstructions: "Pay via Venmo",
+      })
+    );
+    expect(html).toContain("@thenestingplace");
+    expect(html).toContain("/branding/payments/venmo-qr.jpg");
+    expect(html).toContain("info@nesting-place.com");
   });
 });

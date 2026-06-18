@@ -19,9 +19,26 @@ export const clientInvoiceConfig = {
     process.env.CLIENT_INVOICE_VENMO_HANDLE?.trim() ||
     classRegistrationPaymentConfig.venmoHandle ||
     "@thenestingplace",
+  zelleHandle:
+    process.env.CLIENT_INVOICE_ZELLE_HANDLE?.trim() ||
+    process.env.CLIENT_INVOICE_VENMO_HANDLE?.trim() ||
+    classRegistrationPaymentConfig.venmoHandle ||
+    "@thenestingplace",
+  /** Legacy email fallback; Zelle pay-to handle is preferred on invoices. */
   zelleEmail:
     process.env.CLIENT_INVOICE_ZELLE_EMAIL?.trim() ||
     "thenestingplacenj@gmail.com",
+  achBankName:
+    process.env.CLIENT_INVOICE_ACH_BANK_NAME?.trim() || "Chase Bank",
+  achRoutingNumber:
+    process.env.CLIENT_INVOICE_ACH_ROUTING_NUMBER?.trim() || "021202337",
+  achAccountNumber:
+    process.env.CLIENT_INVOICE_ACH_ACCOUNT_NUMBER?.trim() || "2910010335",
+  achAccountName:
+    process.env.CLIENT_INVOICE_ACH_ACCOUNT_NAME?.trim() ||
+    "Nurture Collective LLC",
+  achAccountType:
+    process.env.CLIENT_INVOICE_ACH_ACCOUNT_TYPE?.trim() || "Business Checking",
 } as const;
 
 /** Public origin for client-facing invoice links (PDF page, payment redirects). */

@@ -1,5 +1,10 @@
 import { clientInvoiceConfig } from "@/config/clientInvoices";
 import type { InvoiceServiceContext } from "@/lib/invoices/serviceContext";
+import {
+  buildCardDebitNoteHtml,
+  buildCardDebitNotePlainText,
+  buildManualPaymentHtml,
+} from "@/lib/invoices/paymentInstructions";
 import type { ClientRecord } from "@/types/client";
 import type { ClientService, ServiceInvoice } from "@/types/clientService";
 
@@ -71,7 +76,13 @@ const buildPaymentBlock = (
       </table>
       <p style="margin:12px 0 0;font-size:13px;line-height:1.5;color:#6b6560;word-break:break-all;">
         Or copy this link:<br /><a href="${link}" style="color:#6b8f7a;">${link}</a>
-      </p>`;
+      </p>
+      ${buildCardDebitNoteHtml()}`;
+  }
+
+  const manualHtml = buildManualPaymentHtml({ invoice, client: input.client });
+  if (manualHtml) {
+    return `${manualHtml}${buildCardDebitNoteHtml()}`;
   }
 
   const instructionStyle = options?.emailSafe
@@ -308,8 +319,8 @@ export const buildInvoicePlainText = (input: InvoiceDocumentInput): string => {
     serviceContext.paymentStatusLabel === "Paid"
       ? paymentInstructions
       : paymentLink
-        ? `Pay online: ${paymentLink}`
-        : paymentInstructions,
+        ? `Pay online: ${paymentLink}\n\n${buildCardDebitNotePlainText()}`
+        : `${paymentInstructions}\n\n${buildCardDebitNotePlainText()}`,
     "",
     pdfDownloadUrl
       ? [
