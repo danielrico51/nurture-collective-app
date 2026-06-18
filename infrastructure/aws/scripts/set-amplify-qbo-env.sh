@@ -68,7 +68,7 @@ jq \
     "QBO_CLIENT_ID": $id,
     "QBO_CLIENT_SECRET": $secret,
     "QBO_REDIRECT_URI": ($base + "/api/integrations/quickbooks/oauth/callback"),
-    "BILLING_SYNC_MODE": (.BILLING_SYNC_MODE // "n8n"),
+    "BILLING_SYNC_MODE": (.BILLING_SYNC_MODE // "direct"),
     "BILLING_PAYMENT_PROVIDER": (.BILLING_PAYMENT_PROVIDER // "stub")
   }
   ' "$BEFORE" >"$MERGED"

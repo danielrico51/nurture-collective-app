@@ -21,6 +21,7 @@ export default function RootLayoutClient({
   const pathname = usePathname();
   const isIntakeChat = isIntakeChatPath(pathname);
   const isOAuthCallback = pathname === "/oauth/callback";
+  const isInvoicePrint = pathname.startsWith("/invoice/");
   const showSiteArtwork = shouldShowSiteArtwork(pathname);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [ready, setReady] = useState(false);
@@ -73,6 +74,10 @@ export default function RootLayoutClient({
         <p className="text-nurture-charcoal/60">Loading…</p>
       </div>
     );
+  }
+
+  if (isInvoicePrint) {
+    return <>{children}</>;
   }
 
   return (

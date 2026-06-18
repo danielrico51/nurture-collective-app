@@ -38,6 +38,9 @@
     "setup:cognito-federated-presignup": "bash infrastructure/aws/scripts/deploy-cognito-federated-presignup.sh",
     "setup:cognito-resend-email": "bash infrastructure/aws/scripts/deploy-cognito-resend-email.sh",
     "setup:cognito-clients-group": "bash infrastructure/aws/scripts/deploy-cognito-post-confirmation-clients-group.sh",
+    "setup:local-client-comms-env": "bash scripts/setup-local-client-comms-env.sh",
+    "setup:amplify-client-comms-env": "bash infrastructure/aws/scripts/set-amplify-client-comms-env.sh",
+    "setup:amplify-billing-sync-env": "bash infrastructure/aws/scripts/set-amplify-billing-sync-env.sh",
     "setup:google-wif": "bash infrastructure/google/setup-workload-identity-federation.sh",
     "amplify:google-wif": "bash infrastructure/aws/scripts/set-amplify-google-wif-env.sh",
     "share:intro-calendar": "bash infrastructure/google/share-intro-calendar-with-sa.sh"

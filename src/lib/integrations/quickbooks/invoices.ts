@@ -1,4 +1,5 @@
 import { serverQuickBooksConfig } from "@/config/quickbooks";
+import { QBO_API_MINOR_VERSION } from "@/lib/integrations/quickbooks/constants";
 import { quickBooksGet, quickBooksPost } from "@/lib/integrations/quickbooks/client";
 import type {
   QuickBooksCreateCustomerInput,
@@ -78,9 +79,36 @@ export const createQuickBooksInvoice = async (
       CustomerMemo: input.customerMemo
         ? { value: input.customerMemo }
         : undefined,
+      BillEmail: input.billEmail
+        ? { Address: input.billEmail }
+        : undefined,
+      AllowOnlineCreditCardPayment:
+        input.allowOnlineCreditCardPayment ?? true,
+      AllowOnlineACHPayment: input.allowOnlineAchPayment ?? true,
     }
   );
   return response.Invoice;
+};
+
+/** Customer-facing pay link (requires QBO Payments + include=invoiceLink). */
+export const fetchQuickBooksInvoicePaymentLink = async (
+  invoiceId: string
+): Promise<string | null> => {
+  const response = await quickBooksGet<{ Invoice: QuickBooksInvoice }>(
+    `/invoice/${invoiceId}?minorversion=${QBO_API_MINOR_VERSION}&include=invoiceLink`
+  );
+  const link = response.Invoice?.InvoiceLink?.trim();
+  return link || null;
+};
+
+export const resolveQuickBooksInvoicePaymentLink = async (
+  invoiceId: string
+): Promise<string | null> => {
+  try {
+    return await fetchQuickBooksInvoicePaymentLink(invoiceId);
+  } catch {
+    return null;
+  }
 };
 
 export const getQuickBooksInvoice = async (

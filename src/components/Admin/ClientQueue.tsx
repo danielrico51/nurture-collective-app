@@ -44,9 +44,12 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
     AdminClientsResponse["storage"] | null
   >(null);
 
-  const loadClients = useCallback(async () => {
-    setLoading(true);
+  const loadClients = useCallback(async (options?: { background?: boolean }) => {
+    const background = options?.background ?? false;
     setError(null);
+    if (!background) {
+      setLoading(true);
+    }
     try {
       const data = await fetchAdminClients(true);
       setClients(data.clients);
@@ -54,7 +57,9 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load clients");
     } finally {
-      setLoading(false);
+      if (!background) {
+        setLoading(false);
+      }
     }
   }, []);
 
@@ -132,7 +137,7 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
           </button>
           <button
             type="button"
-            onClick={() => void loadClients()}
+            onClick={() => void loadClients({ background: true })}
             className="rounded-full border border-nurture-sage/30 px-4 py-2 text-sm font-medium text-nurture-sage-dark transition hover:bg-nurture-sage/10"
           >
             Refresh
@@ -249,7 +254,7 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
                       clientId={client.clientId}
                       members={members}
                       membersLoading={membersLoading}
-                      onChanged={loadClients}
+                      onChanged={() => void loadClients({ background: true })}
                     />
                   </div>
                 ) : null}

@@ -6,6 +6,7 @@ import {
 import {
   ClientServiceValidationError,
   getClientServiceWithInvoices,
+  InvoiceDispatchError,
   updateServiceInvoice,
 } from "@/lib/client-services/storage";
 import type { UpdateServiceInvoiceInput } from "@/types/clientService";
@@ -18,7 +19,7 @@ type RouteContext = {
 
 export async function PATCH(request: NextRequest, { params }: RouteContext) {
   const auth = await requireManagementAuth(request);
-  if (auth.error) return auth.error;
+  if (auth.error || !auth.user) return auth.error;
 
   let body: UpdateServiceInvoiceInput;
   try {
@@ -32,13 +33,22 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       params.id,
       params.serviceId,
       params.invoiceId,
-      body
+      body,
+      body.markSent || body.resend
+        ? {
+            actor: { sub: auth.user.sub, email: auth.user.email },
+            origin: request.nextUrl.origin,
+          }
+        : undefined
     );
     const service = await getClientServiceWithInvoices(params.id, params.serviceId);
     return NextResponse.json({ invoice, service });
   } catch (error) {
     if (error instanceof ClientServiceValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error instanceof InvoiceDispatchError) {
+      return NextResponse.json({ error: error.message }, { status: 502 });
     }
     return handleClientsStorageError(error);
   }

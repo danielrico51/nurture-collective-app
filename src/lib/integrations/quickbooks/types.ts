@@ -35,6 +35,9 @@ export interface QuickBooksCreateInvoiceInput {
   docNumber?: string;
   privateNote?: string;
   customerMemo?: string;
+  billEmail?: string;
+  allowOnlineCreditCardPayment?: boolean;
+  allowOnlineAchPayment?: boolean;
 }
 
 export interface QuickBooksInvoice {
@@ -45,6 +48,7 @@ export interface QuickBooksInvoice {
   DueDate?: string;
   CustomerRef?: QuickBooksRef;
   SyncToken?: string;
+  InvoiceLink?: string;
 }
 
 export interface QuickBooksCustomer {

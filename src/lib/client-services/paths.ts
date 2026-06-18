@@ -6,6 +6,7 @@ import {
 
 export const CLIENT_SERVICE_FILENAME = "service.json";
 export const SERVICE_INVOICE_FILENAME = "invoice.json";
+export const SERVICE_INVOICE_HTML_FILENAME = "invoice.html";
 export const INVOICE_SEQUENCE_FILENAME = "invoice-sequence.json";
 
 export const buildClientServiceKey = (
@@ -23,6 +24,13 @@ export const buildServiceInvoiceKey = (
   invoiceId: string
 ): string =>
   `${buildClientRootPrefix(clientId)}services/service_id=${sanitizeClientSegment(serviceId)}/invoices/invoice_id=${sanitizeClientSegment(invoiceId)}/${SERVICE_INVOICE_FILENAME}`;
+
+export const buildServiceInvoiceDocumentKey = (
+  clientId: string,
+  serviceId: string,
+  invoiceId: string
+): string =>
+  `${buildClientRootPrefix(clientId)}services/service_id=${sanitizeClientSegment(serviceId)}/invoices/invoice_id=${sanitizeClientSegment(invoiceId)}/${SERVICE_INVOICE_HTML_FILENAME}`;
 
 export const buildServiceInvoiceListPrefix = (
   clientId: string,

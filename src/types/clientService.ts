@@ -35,6 +35,8 @@ export interface ServiceInvoiceQuickBooksRef {
   customerId?: string;
   invoiceId?: string;
   invoiceNumber?: string;
+  /** QBO customer pay URL (InvoiceLink). */
+  paymentLink?: string | null;
   syncStatus?: "pending" | "synced" | "failed";
   lastSyncAt?: string;
   lastError?: string;
@@ -43,6 +45,7 @@ export interface ServiceInvoiceQuickBooksRef {
 export interface ServiceInvoiceStripeRef {
   checkoutSessionId?: string;
   paymentIntentId?: string;
+  checkoutUrl?: string;
 }
 
 /** Formal bill for full payment or an installment on a client service. */
@@ -59,13 +62,40 @@ export interface ServiceInvoice {
   status: ServiceInvoiceStatus;
   installmentIndex: number | null;
   installmentTotal: number | null;
+  /** Optional annotation included in the client email and printable invoice. */
+  notes: string;
+  /** Snapshot of bill-to contact at send time. */
+  customerName: string;
+  customerEmail: string;
+  /** Venmo/Zelle instructions or short label when a link is used. */
+  paymentInstructions: string;
+  /** Stripe checkout or Venmo deep link; null for Zelle-only instructions. */
+  paymentLink: string | null;
   quickbooks: ServiceInvoiceQuickBooksRef | null;
   stripe: ServiceInvoiceStripeRef | null;
+  /** Stored branded HTML document (invoice.html). */
+  documentStorageKey: string | null;
+  /** Client-facing Save as PDF page (valid ~1 year). */
+  pdfDownloadUrl: string | null;
+  pdfAccessExpiresAt: string | null;
+  lastEmailError: string | null;
   sentAt: string | null;
   paidAt: string | null;
   createdAt: string;
   updatedAt: string;
   storageKey?: string;
+}
+
+export interface InvoiceDispatchActor {
+  sub: string;
+  email: string;
+}
+
+/** Internal fee breakdown for a client service (Doula, TNP, transportation, …). */
+export interface ClientServiceFeeItem {
+  id: string;
+  label: string;
+  amountCents: number;
 }
 
 /** A service the client hired (billing anchor — proposal link is optional). */
@@ -76,7 +106,10 @@ export interface ClientService {
   providerName: string;
   /** ISO date (YYYY-MM-DD) when the service starts or was booked. */
   serviceDate: string;
+  /** Sum of `feeItems` when itemized; otherwise the entered total. */
   totalFeeCents: number;
+  /** Optional internal line-item breakdown for proposals and tracking. */
+  feeItems: ClientServiceFeeItem[];
   proposalId: string | null;
   googleDocUrl: string | null;
   status: ClientServiceStatus;
@@ -96,7 +129,9 @@ export interface CreateClientServiceInput {
   title: string;
   providerName?: string;
   serviceDate?: string;
-  totalFeeCents: number;
+  /** Required when `feeItems` is empty. Ignored when itemized fee items are provided. */
+  totalFeeCents?: number;
+  feeItems?: Array<{ id?: string; label: string; amountCents: number }>;
   proposalId?: string | null;
   googleDocUrl?: string | null;
   status?: ClientServiceStatus;
@@ -108,6 +143,7 @@ export interface UpdateClientServiceInput {
   providerName?: string;
   serviceDate?: string;
   totalFeeCents?: number;
+  feeItems?: Array<{ id?: string; label: string; amountCents: number }>;
   proposalId?: string | null;
   googleDocUrl?: string | null;
   status?: ClientServiceStatus;
@@ -121,6 +157,7 @@ export interface CreateServiceInvoiceInput {
   paymentMethod: PaymentMethodId;
   installmentIndex?: number | null;
   installmentTotal?: number | null;
+  notes?: string;
   /** When true, mark as sent immediately after creation. */
   send?: boolean;
 }
@@ -131,6 +168,9 @@ export interface UpdateServiceInvoiceInput {
   description?: string;
   dueDate?: string | null;
   paymentMethod?: PaymentMethodId;
+  notes?: string;
   markSent?: boolean;
   markPaid?: boolean;
+  /** Resend email + refresh PDF for sent or paid invoices (e.g. insurance). */
+  resend?: boolean;
 }

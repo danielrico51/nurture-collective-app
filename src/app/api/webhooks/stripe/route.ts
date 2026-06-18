@@ -4,6 +4,7 @@ import { serverGiftCardConfig } from "@/config/giftCards";
 import { completeClassRegistrationPayment } from "@/lib/classRegistrations/completePayment";
 import { completeGiftCardPayment } from "@/lib/giftCards/completePayment";
 import { markPurchaseOrderPaid } from "@/lib/billing/createPurchaseCheckout";
+import { completeServiceInvoicePayment } from "@/lib/invoices/completePayment";
 
 export const dynamic = "force-dynamic";
 
@@ -43,9 +44,14 @@ export async function POST(request: NextRequest) {
 
       const orderId = session.metadata?.orderId?.trim();
       const orderType = session.metadata?.orderType?.trim();
+      const serviceInvoiceId = session.metadata?.serviceInvoiceId?.trim();
+      const clientId = session.metadata?.clientId?.trim();
+      const serviceId = session.metadata?.serviceId?.trim();
 
-      if (!orderId) {
-        console.warn("[stripe/webhook] checkout.session.completed without orderId metadata");
+      if (!orderId && !serviceInvoiceId) {
+        console.warn(
+          "[stripe/webhook] checkout.session.completed without orderId or serviceInvoiceId metadata"
+        );
         return NextResponse.json({ ok: true, skipped: "no_order_id" });
       }
 
@@ -53,18 +59,32 @@ export async function POST(request: NextRequest) {
         ? String(session.payment_intent)
         : session.id;
 
-      if (orderType === "class_registration") {
+      if (orderType === "service_invoice" && serviceInvoiceId && clientId && serviceId) {
+        await completeServiceInvoicePayment({
+          clientId,
+          serviceId,
+          invoiceId: serviceInvoiceId,
+          paymentProvider: "stripe",
+          paymentReference,
+        });
+      } else if (orderType === "class_registration" && orderId) {
         await completeClassRegistrationPayment({
           registrationId: orderId,
           paymentProvider: "stripe",
           paymentReference,
         });
-      } else if (orderType === "billing" || session.metadata?.billing === "true") {
+      } else if (
+        (orderType === "billing" || session.metadata?.billing === "true") &&
+        orderId
+      ) {
         await markPurchaseOrderPaid(orderId, {
           provider: "stripe",
           reference: paymentReference,
         });
-      } else if (orderType === "gift_card" || session.metadata?.designId) {
+      } else if (
+        (orderType === "gift_card" || session.metadata?.designId) &&
+        orderId
+      ) {
         await completeGiftCardPayment({
           orderId,
           paymentProvider: "stripe",

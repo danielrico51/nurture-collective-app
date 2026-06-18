@@ -70,6 +70,41 @@ export const writeClientsJson = async (
   );
 };
 
+export const writeClientsText = async (
+  key: string,
+  body: string,
+  contentType = "text/html; charset=utf-8"
+): Promise<void> => {
+  const Bucket = getClientsCrmBucket();
+  if (!Bucket) throw new Error("NURTURE_CLIENTS_BUCKET is not configured");
+  await getClient().send(
+    new PutObjectCommand({
+      Bucket,
+      Key: key,
+      Body: body,
+      ContentType: contentType,
+    })
+  );
+};
+
+export const readClientsText = async (key: string): Promise<string | null> => {
+  const Bucket = getClientsCrmBucket();
+  if (!Bucket) return null;
+  try {
+    const response = await getClient().send(
+      new GetObjectCommand({ Bucket, Key: key })
+    );
+    const body = await response.Body?.transformToString();
+    return body ?? null;
+  } catch (error) {
+    const err = error as { name?: string; $metadata?: { httpStatusCode?: number } };
+    if (err.name === "NoSuchKey" || err.$metadata?.httpStatusCode === 404) {
+      return null;
+    }
+    throw error;
+  }
+};
+
 export const deleteClientsJson = async (key: string): Promise<void> => {
   const Bucket = getClientsCrmBucket();
   if (!Bucket) return;

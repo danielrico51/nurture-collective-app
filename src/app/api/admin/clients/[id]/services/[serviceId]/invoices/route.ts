@@ -7,6 +7,7 @@ import {
   ClientServiceValidationError,
   createServiceInvoice,
   getClientServiceWithInvoices,
+  InvoiceDispatchError,
   listInvoicesForService,
 } from "@/lib/client-services/storage";
 import type { CreateServiceInvoiceInput } from "@/types/clientService";
@@ -29,7 +30,7 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
 
 export async function POST(request: NextRequest, { params }: RouteContext) {
   const auth = await requireManagementAuth(request);
-  if (auth.error) return auth.error;
+  if (auth.error || !auth.user) return auth.error;
 
   let body: CreateServiceInvoiceInput;
   try {
@@ -39,12 +40,25 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
   }
 
   try {
-    const invoice = await createServiceInvoice(params.id, params.serviceId, body);
+    const invoice = await createServiceInvoice(
+      params.id,
+      params.serviceId,
+      body,
+      body.send
+        ? {
+            actor: { sub: auth.user.sub, email: auth.user.email },
+            origin: request.nextUrl.origin,
+          }
+        : undefined
+    );
     const service = await getClientServiceWithInvoices(params.id, params.serviceId);
     return NextResponse.json({ invoice, service }, { status: 201 });
   } catch (error) {
     if (error instanceof ClientServiceValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+    if (error instanceof InvoiceDispatchError) {
+      return NextResponse.json({ error: error.message }, { status: 502 });
     }
     return handleClientsStorageError(error);
   }

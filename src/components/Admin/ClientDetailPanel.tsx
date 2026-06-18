@@ -91,16 +91,26 @@ const ClientDetailPanel = ({
     setProfileNotesSummary(client.notesSummary);
   }, []);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+      setError(null);
+    }
     try {
       const data = await fetchAdminClientDetail(clientId);
       setDetail(data);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load client");
+      const message = err instanceof Error ? err.message : "Could not load client";
+      if (silent) {
+        toast.error(message);
+      } else {
+        setError(message);
+      }
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [clientId]);
 
@@ -122,7 +132,7 @@ const ClientDetailPanel = ({
     try {
       await updateAdminClient(clientId, { status });
       toast.success("Status updated");
-      await load();
+      await load({ silent: true });
       onChanged();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed");
@@ -136,7 +146,7 @@ const ClientDetailPanel = ({
     try {
       await updateAdminClient(clientId, { coordinatorId });
       toast.success("Coordinator updated");
-      await load();
+      await load({ silent: true });
       onChanged();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed");
@@ -163,7 +173,7 @@ const ClientDetailPanel = ({
       });
       toast.success("Profile updated");
       setEditingProfile(false);
-      await load();
+      await load({ silent: true });
       onChanged();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed");
@@ -181,7 +191,7 @@ const ClientDetailPanel = ({
         detail.client.archivedAt ? { restore: true } : { archive: true }
       );
       toast.success(detail.client.archivedAt ? "Client restored" : "Client archived");
-      await load();
+      await load({ silent: true });
       onChanged();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed");
@@ -200,7 +210,7 @@ const ClientDetailPanel = ({
       toast.success(successMessage);
       setLeadIdInput("");
       setCognitoInput("");
-      await load();
+      await load({ silent: true });
       onChanged();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Link failed");
@@ -567,7 +577,7 @@ const ClientDetailPanel = ({
         <ClientServicesTab
           clientId={client.clientId}
           onChanged={() => {
-            void load();
+            void load({ silent: true });
             onChanged();
           }}
         />

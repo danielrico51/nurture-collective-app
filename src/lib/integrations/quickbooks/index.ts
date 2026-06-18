@@ -15,6 +15,8 @@ export {
   ensureQuickBooksCustomer,
   findQuickBooksCustomerByEmail,
   getQuickBooksInvoice,
+  fetchQuickBooksInvoicePaymentLink,
+  resolveQuickBooksInvoicePaymentLink,
   sendQuickBooksInvoice,
 } from "@/lib/integrations/quickbooks/invoices";
 export { createQuickBooksSalesReceipt } from "@/lib/integrations/quickbooks/salesReceipts";

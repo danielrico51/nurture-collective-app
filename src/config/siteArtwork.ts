@@ -6,6 +6,7 @@ export const shouldShowSiteArtwork = (pathname: string): boolean => {
     pathname.startsWith("/signin") ||
     pathname.startsWith("/signup") ||
     pathname.startsWith("/oauth") ||
+    pathname.startsWith("/invoice") ||
     pathname.startsWith("/care/start") ||
     pathname.startsWith("/intake")
   ) {

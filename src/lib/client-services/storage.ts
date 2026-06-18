@@ -9,6 +9,10 @@ import {
   computeServiceBalanceDueCents,
   sumPaidInvoiceCents,
 } from "@/lib/client-services/balances";
+import {
+  parseFeeItemsInput,
+  resolveServiceTotalFeeCents,
+} from "@/lib/client-services/feeItems";
 import { allocateInvoiceNumber } from "@/lib/client-services/invoiceSequence";
 import {
   buildClientServiceKey,
@@ -21,22 +25,35 @@ import {
   SERVICE_INVOICE_FILENAME,
 } from "@/lib/client-services/paths";
 import { isKnownPaymentMethod } from "@/config/paymentMethods";
+import { getClientById } from "@/lib/clients/storage";
+import {
+  buildEmptyInvoiceContactFields,
+  dispatchServiceInvoice,
+  InvoiceDispatchError,
+} from "@/lib/invoices/dispatchInvoice";
 import type {
   ClientService,
   ClientServiceWithInvoices,
   CreateClientServiceInput,
   CreateServiceInvoiceInput,
+  InvoiceDispatchActor,
   ServiceInvoice,
   UpdateClientServiceInput,
   UpdateServiceInvoiceInput,
 } from "@/types/clientService";
-import { getClientById } from "@/lib/clients/storage";
 
 export class ClientServiceValidationError extends Error {
   constructor(message: string) {
     super(message);
     this.name = "ClientServiceValidationError";
   }
+}
+
+export { InvoiceDispatchError } from "@/lib/invoices/dispatchInvoice";
+
+export interface ServiceInvoiceDispatchOptions {
+  actor: InvoiceDispatchActor;
+  origin: string;
 }
 
 const parseMoneyCents = (value: unknown, field: string): number => {
@@ -82,8 +99,68 @@ export const readClientService = async (
 ): Promise<ClientService | null> => {
   const key = buildClientServiceKey(clientId, serviceId);
   const record = await readJson<ClientService>(key);
-  return record ? { ...record, storageKey: key } : null;
+  if (!record) return null;
+  return {
+    ...record,
+    feeItems: record.feeItems ?? [],
+    storageKey: key,
+  };
 };
+
+const resolveFeeItemsFromInput = (
+  raw: CreateClientServiceInput | UpdateClientServiceInput,
+  existing?: ClientService
+): ClientService["feeItems"] => {
+  if (raw.feeItems !== undefined) {
+    try {
+      return parseFeeItemsInput(raw.feeItems);
+    } catch (error) {
+      throw new ClientServiceValidationError(
+        error instanceof Error ? error.message : "Invalid fee items"
+      );
+    }
+  }
+  return existing?.feeItems ?? [];
+};
+
+const resolveTotalFeeCentsFromInput = (
+  feeItems: ClientService["feeItems"],
+  raw: CreateClientServiceInput | UpdateClientServiceInput,
+  existing?: ClientService
+): number => {
+  const explicitTotal =
+    raw.totalFeeCents !== undefined
+      ? parseMoneyCents(raw.totalFeeCents, "totalFeeCents")
+      : existing?.totalFeeCents;
+
+  try {
+    return resolveServiceTotalFeeCents({
+      feeItems,
+      totalFeeCents: explicitTotal,
+    });
+  } catch (error) {
+    throw new ClientServiceValidationError(
+      error instanceof Error ? error.message : "Invalid service total fee"
+    );
+  }
+};
+
+const normalizeServiceInvoice = (
+  record: ServiceInvoice,
+  key: string
+): ServiceInvoice => ({
+  ...record,
+  customerName: record.customerName ?? "",
+  customerEmail: record.customerEmail ?? "",
+  paymentInstructions: record.paymentInstructions ?? "",
+  paymentLink: record.paymentLink ?? null,
+  documentStorageKey: record.documentStorageKey ?? null,
+  pdfDownloadUrl: record.pdfDownloadUrl ?? null,
+  pdfAccessExpiresAt: record.pdfAccessExpiresAt ?? null,
+  notes: record.notes ?? "",
+  lastEmailError: record.lastEmailError ?? null,
+  storageKey: key,
+});
 
 export const readServiceInvoice = async (
   clientId: string,
@@ -92,7 +169,7 @@ export const readServiceInvoice = async (
 ): Promise<ServiceInvoice | null> => {
   const key = buildServiceInvoiceKey(clientId, serviceId, invoiceId);
   const record = await readJson<ServiceInvoice>(key);
-  return record ? { ...record, storageKey: key } : null;
+  return record ? normalizeServiceInvoice(record, key) : null;
 };
 
 export const listServiceIdsForClient = async (
@@ -174,13 +251,16 @@ export const createClientService = async (
   const now = new Date().toISOString();
   const serviceId = crypto.randomUUID();
   const key = buildClientServiceKey(clientId, serviceId);
+  const feeItems = resolveFeeItemsFromInput(raw);
+  const totalFeeCents = resolveTotalFeeCentsFromInput(feeItems, raw);
   const service: ClientService = {
     serviceId,
     clientId,
     title,
     providerName: String(raw.providerName ?? "").trim(),
     serviceDate: parseServiceDate(raw.serviceDate),
-    totalFeeCents: parseMoneyCents(raw.totalFeeCents, "totalFeeCents"),
+    totalFeeCents,
+    feeItems,
     proposalId: raw.proposalId ?? null,
     googleDocUrl: raw.googleDocUrl?.trim() || null,
     status: raw.status ?? "active",
@@ -201,6 +281,9 @@ export const updateClientService = async (
   const existing = await readClientService(clientId, serviceId);
   if (!existing) throw new ClientServiceValidationError("Service not found");
 
+  const feeItems = resolveFeeItemsFromInput(raw, existing);
+  const totalFeeCents = resolveTotalFeeCentsFromInput(feeItems, raw, existing);
+
   const updated: ClientService = {
     ...existing,
     title: raw.title !== undefined ? String(raw.title).trim() : existing.title,
@@ -212,10 +295,8 @@ export const updateClientService = async (
       raw.serviceDate !== undefined
         ? parseServiceDate(raw.serviceDate)
         : existing.serviceDate,
-    totalFeeCents:
-      raw.totalFeeCents !== undefined
-        ? parseMoneyCents(raw.totalFeeCents, "totalFeeCents")
-        : existing.totalFeeCents,
+    totalFeeCents,
+    feeItems,
     proposalId:
       raw.proposalId !== undefined ? raw.proposalId : existing.proposalId,
     googleDocUrl:
@@ -236,24 +317,22 @@ export const updateClientService = async (
   return { ...updated, storageKey: key };
 };
 
-const resolveInitialInvoiceStatus = (
-  input: CreateServiceInvoiceInput,
-  send: boolean
-): ServiceInvoice["status"] => {
-  if (send) {
-    const method = String(input.paymentMethod);
-    if (method === "quickbooks" || method === "stripe") {
-      return "pending_payment";
-    }
-    return "sent";
-  }
-  return "draft";
+const saveInvoice = async (
+  clientId: string,
+  serviceId: string,
+  invoice: ServiceInvoice
+): Promise<ServiceInvoice> => {
+  const key = buildServiceInvoiceKey(clientId, serviceId, invoice.invoiceId);
+  const saved = { ...invoice, storageKey: key };
+  await writeJson(key, saved);
+  return saved;
 };
 
 export const createServiceInvoice = async (
   clientId: string,
   serviceId: string,
-  raw: CreateServiceInvoiceInput
+  raw: CreateServiceInvoiceInput,
+  dispatchOptions?: ServiceInvoiceDispatchOptions
 ): Promise<ServiceInvoice> => {
   const service = await readClientService(clientId, serviceId);
   if (!service) throw new ClientServiceValidationError("Service not found");
@@ -286,9 +365,9 @@ export const createServiceInvoice = async (
   const invoiceId = crypto.randomUUID();
   const invoiceNumber = await allocateInvoiceNumber();
   const send = Boolean(raw.send);
-  const status = resolveInitialInvoiceStatus(raw, send);
+  const client = await getClientById(clientId);
 
-  const invoice: ServiceInvoice = {
+  let invoice: ServiceInvoice = {
     invoiceId,
     serviceId,
     clientId,
@@ -301,27 +380,46 @@ export const createServiceInvoice = async (
         : service.title),
     dueDate: raw.dueDate ?? null,
     paymentMethod,
-    status,
+    status: "draft",
     installmentIndex: raw.installmentIndex ?? null,
     installmentTotal: raw.installmentTotal ?? null,
+    notes: String(raw.notes ?? "").trim(),
     quickbooks: null,
     stripe: null,
-    sentAt: send ? now : null,
+    ...buildEmptyInvoiceContactFields(client),
+    sentAt: null,
     paidAt: null,
     createdAt: now,
     updatedAt: now,
   };
 
-  const key = buildServiceInvoiceKey(clientId, serviceId, invoiceId);
-  await writeJson(key, { ...invoice, storageKey: key });
-  return { ...invoice, storageKey: key };
+  invoice = await saveInvoice(clientId, serviceId, invoice);
+
+  if (send) {
+    if (!dispatchOptions) {
+      throw new ClientServiceValidationError(
+        "Invoice dispatch requires an authenticated actor"
+      );
+    }
+    invoice = await dispatchServiceInvoice({
+      clientId,
+      serviceId,
+      invoice,
+      actor: dispatchOptions.actor,
+      origin: dispatchOptions.origin,
+    });
+    invoice = await saveInvoice(clientId, serviceId, invoice);
+  }
+
+  return invoice;
 };
 
 export const updateServiceInvoice = async (
   clientId: string,
   serviceId: string,
   invoiceId: string,
-  raw: UpdateServiceInvoiceInput
+  raw: UpdateServiceInvoiceInput,
+  dispatchOptions?: ServiceInvoiceDispatchOptions
 ): Promise<ServiceInvoice> => {
   const existing = await readServiceInvoice(clientId, serviceId, invoiceId);
   if (!existing) throw new ClientServiceValidationError("Invoice not found");
@@ -330,14 +428,54 @@ export const updateServiceInvoice = async (
   let status = raw.status ?? existing.status;
   let sentAt = existing.sentAt;
   let paidAt = existing.paidAt;
+  let invoice: ServiceInvoice = { ...existing };
 
   if (raw.markSent) {
-    status =
-      existing.paymentMethod === "quickbooks" ||
-      existing.paymentMethod === "stripe"
-        ? "pending_payment"
-        : "sent";
-    sentAt = now;
+    if (!dispatchOptions) {
+      throw new ClientServiceValidationError(
+        "Invoice dispatch requires an authenticated actor"
+      );
+    }
+    const toSend: ServiceInvoice = {
+      ...existing,
+      notes:
+        raw.notes !== undefined ? String(raw.notes).trim() : existing.notes,
+    };
+    invoice = await dispatchServiceInvoice({
+      clientId,
+      serviceId,
+      invoice: toSend,
+      actor: dispatchOptions.actor,
+      origin: dispatchOptions.origin,
+    });
+    return saveInvoice(clientId, serviceId, invoice);
+  }
+
+  if (raw.resend) {
+    if (!dispatchOptions) {
+      throw new ClientServiceValidationError(
+        "Invoice dispatch requires an authenticated actor"
+      );
+    }
+    if (existing.status === "draft" || existing.status === "cancelled") {
+      throw new ClientServiceValidationError(
+        "Only sent or paid invoices can be resent"
+      );
+    }
+    const toSend: ServiceInvoice = {
+      ...existing,
+      notes:
+        raw.notes !== undefined ? String(raw.notes).trim() : existing.notes,
+    };
+    invoice = await dispatchServiceInvoice({
+      clientId,
+      serviceId,
+      invoice: toSend,
+      actor: dispatchOptions.actor,
+      origin: dispatchOptions.origin,
+      resend: true,
+    });
+    return saveInvoice(clientId, serviceId, invoice);
   }
 
   if (raw.markPaid) {
@@ -358,15 +496,44 @@ export const updateServiceInvoice = async (
         : existing.description,
     dueDate: raw.dueDate !== undefined ? raw.dueDate : existing.dueDate,
     paymentMethod: raw.paymentMethod ?? existing.paymentMethod,
+    notes: raw.notes !== undefined ? String(raw.notes).trim() : existing.notes,
     status,
     sentAt,
     paidAt,
     updatedAt: now,
   };
 
-  const key = buildServiceInvoiceKey(clientId, serviceId, invoiceId);
-  await writeJson(key, { ...updated, storageKey: key });
-  return { ...updated, storageKey: key };
+  return saveInvoice(clientId, serviceId, updated);
+};
+
+export const markServiceInvoicePaid = async (
+  clientId: string,
+  serviceId: string,
+  invoiceId: string,
+  payment: { provider: string; reference?: string }
+): Promise<ServiceInvoice> => {
+  const existing = await readServiceInvoice(clientId, serviceId, invoiceId);
+  if (!existing) {
+    throw new ClientServiceValidationError("Invoice not found");
+  }
+  if (existing.status === "paid") {
+    return existing;
+  }
+
+  const now = new Date().toISOString();
+  const updated: ServiceInvoice = {
+    ...existing,
+    status: "paid",
+    paidAt: now,
+    sentAt: existing.sentAt ?? now,
+    stripe: {
+      ...existing.stripe,
+      paymentIntentId: payment.reference ?? existing.stripe?.paymentIntentId,
+    },
+    updatedAt: now,
+  };
+
+  return saveInvoice(clientId, serviceId, updated);
 };
 
 export const getClientServiceWithInvoices = async (

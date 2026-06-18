@@ -115,7 +115,12 @@ export const sendClientEmail = async (input: {
   const from = resolveFromAddress();
   if (!from) {
     throw new Error(
-      "Client email sender is not configured. Set CLIENT_COMMS_EMAIL_FROM or GIFT_CARD_EMAIL_FROM."
+      "Client email sender is not configured. Add to .env.local (see .env.example):\n" +
+        "  GIFT_CARD_EMAIL_ENABLED=true\n" +
+        "  GIFT_CARD_EMAIL_FROM=info@nesting-place.com\n" +
+        "  GIFT_CARD_EMAIL_PROVIDER=resend\n" +
+        "  RESEND_API_KEY=re_...\n" +
+        "Or run: npm run setup:local-client-comms-env"
     );
   }
 

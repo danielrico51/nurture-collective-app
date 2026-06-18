@@ -4,8 +4,15 @@ import {
   createClientService,
   createServiceInvoice,
   fetchClientServices,
+  updateClientService,
   updateServiceInvoice,
 } from "@/lib/api/clientsClient";
+import ServiceFeeItemsEditor, {
+  createEmptyFeeItemDraft,
+  draftsFromFeeItems,
+  feeItemsFromDrafts,
+  type ServiceFeeItemDraft,
+} from "@/components/Admin/ServiceFeeItemsEditor";
 import { PAYMENT_METHODS } from "@/config/paymentMethods";
 import type {
   ClientServiceWithInvoices,
@@ -52,24 +59,39 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
   const [serviceDate, setServiceDate] = useState(
     () => new Date().toISOString().slice(0, 10)
   );
-  const [serviceFee, setServiceFee] = useState("");
+  const [serviceFeeItems, setServiceFeeItems] = useState<ServiceFeeItemDraft[]>(
+    () => [createEmptyFeeItemDraft()]
+  );
+  const [editingFeeServiceId, setEditingFeeServiceId] = useState<string | null>(
+    null
+  );
+  const [editFeeItems, setEditFeeItems] = useState<ServiceFeeItemDraft[]>([]);
   const [serviceDocUrl, setServiceDocUrl] = useState("");
   const [serviceNotes, setServiceNotes] = useState("");
 
   const [invoiceAmount, setInvoiceAmount] = useState("");
   const [invoiceMethod, setInvoiceMethod] = useState<PaymentMethodId>("zelle");
   const [invoiceDescription, setInvoiceDescription] = useState("");
+  const [invoiceNotes, setInvoiceNotes] = useState("");
   const [invoiceDueDate, setInvoiceDueDate] = useState("");
+  const [draftInvoiceNotes, setDraftInvoiceNotes] = useState<
+    Record<string, string>
+  >({});
 
-  const load = useCallback(async () => {
-    setLoading(true);
+  const load = useCallback(async (options?: { silent?: boolean }) => {
+    const silent = options?.silent ?? false;
+    if (!silent) {
+      setLoading(true);
+    }
     try {
       const data = await fetchClientServices(clientId);
       setServices(data.services);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not load services");
     } finally {
-      setLoading(false);
+      if (!silent) {
+        setLoading(false);
+      }
     }
   }, [clientId]);
 
@@ -81,20 +103,20 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
     setServiceTitle("");
     setServiceProvider("");
     setServiceDate(new Date().toISOString().slice(0, 10));
-    setServiceFee("");
+    setServiceFeeItems([createEmptyFeeItemDraft()]);
     setServiceDocUrl("");
     setServiceNotes("");
   };
 
   const handleCreateService = async (event: React.FormEvent) => {
     event.preventDefault();
-    const totalFeeCents = parseDollarsToCents(serviceFee);
+    const feeItems = feeItemsFromDrafts(serviceFeeItems);
     if (!serviceTitle.trim()) {
       toast.error("Service title is required");
       return;
     }
-    if (totalFeeCents === null) {
-      toast.error("Enter a valid total fee");
+    if (!feeItems) {
+      toast.error("Add at least one fee line with a label and amount");
       return;
     }
 
@@ -104,14 +126,14 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
         title: serviceTitle.trim(),
         providerName: serviceProvider.trim(),
         serviceDate,
-        totalFeeCents,
+        feeItems,
         googleDocUrl: serviceDocUrl.trim() || null,
         notes: serviceNotes.trim(),
       });
       toast.success("Service added");
       resetServiceForm();
       setShowAddServiceForm(false);
-      await load();
+      await load({ silent: true });
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not add service");
@@ -139,14 +161,16 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
         amountCents,
         paymentMethod: invoiceMethod,
         description: invoiceDescription.trim() || undefined,
+        notes: invoiceNotes.trim() || undefined,
         dueDate: invoiceDueDate || null,
         send: options?.send ?? true,
       });
-      toast.success("Invoice created");
+      toast.success(options?.send === false ? "Invoice saved as draft" : "Invoice sent");
       setInvoiceAmount("");
       setInvoiceDescription("");
+      setInvoiceNotes("");
       setInvoiceDueDate("");
-      await load();
+      await load({ silent: true });
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not create invoice");
@@ -155,22 +179,86 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
     }
   };
 
+  const startEditingFeeBreakdown = (service: ClientServiceWithInvoices) => {
+    setEditingFeeServiceId(service.serviceId);
+    setEditFeeItems(
+      service.feeItems.length > 0
+        ? draftsFromFeeItems(service.feeItems)
+        : [
+            {
+              id: crypto.randomUUID(),
+              label: "Service fee",
+              amount: (service.totalFeeCents / 100).toFixed(2),
+            },
+          ]
+    );
+  };
+
+  const handleSaveFeeBreakdown = async (serviceId: string) => {
+    const feeItems = feeItemsFromDrafts(editFeeItems);
+    if (!feeItems) {
+      toast.error("Add at least one fee line with a label and amount");
+      return;
+    }
+
+    setSaving(true);
+    try {
+      await updateClientService(clientId, serviceId, { feeItems });
+      toast.success("Fee breakdown updated");
+      setEditingFeeServiceId(null);
+      setEditFeeItems([]);
+      await load({ silent: true });
+      onChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not update breakdown");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleInvoiceAction = async (
     serviceId: string,
     invoiceId: string,
-    action: "markSent" | "markPaid"
+    action: "markSent" | "markPaid" | "resend",
+    options?: { notes?: string }
   ) => {
     setSaving(true);
     try {
       await updateServiceInvoice(clientId, serviceId, invoiceId, {
         markSent: action === "markSent",
         markPaid: action === "markPaid",
+        resend: action === "resend",
+        notes: options?.notes,
       });
-      toast.success(action === "markPaid" ? "Marked paid" : "Invoice sent");
-      await load();
+      toast.success(
+        action === "markPaid"
+          ? "Marked paid"
+          : action === "resend"
+            ? "Invoice resent"
+            : "Invoice sent"
+      );
+      await load({ silent: true });
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveDraftInvoiceNotes = async (
+    serviceId: string,
+    invoiceId: string
+  ) => {
+    setSaving(true);
+    try {
+      await updateServiceInvoice(clientId, serviceId, invoiceId, {
+        notes: draftInvoiceNotes[invoiceId] ?? "",
+      });
+      toast.success("Invoice notes saved");
+      await load({ silent: true });
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save notes");
     } finally {
       setSaving(false);
     }
@@ -242,16 +330,11 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
               className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
             />
           </label>
-          <label className="block">
-            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-              Total fee (USD)
-            </span>
-            <input
-              value={serviceFee}
-              onChange={(e) => setServiceFee(e.target.value)}
-              placeholder="154.25"
-              inputMode="decimal"
-              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+          <label className="block sm:col-span-2">
+            <ServiceFeeItemsEditor
+              items={serviceFeeItems}
+              onChange={setServiceFeeItems}
+              disabled={saving}
             />
           </label>
           <label className="block sm:col-span-2">
@@ -364,6 +447,79 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                     ) : null}
 
                     <div>
+                      <div className="flex flex-wrap items-center justify-between gap-2 mb-2">
+                        <h5 className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+                          Fee breakdown
+                        </h5>
+                        {editingFeeServiceId !== service.serviceId ? (
+                          <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() => startEditingFeeBreakdown(service)}
+                            className="text-xs font-semibold text-nurture-sage-dark hover:underline disabled:opacity-60"
+                          >
+                            Edit breakdown
+                          </button>
+                        ) : null}
+                      </div>
+                      {editingFeeServiceId === service.serviceId ? (
+                        <div className="rounded-xl border border-nurture-sage/20 bg-white p-3 space-y-3">
+                          <ServiceFeeItemsEditor
+                            items={editFeeItems}
+                            onChange={setEditFeeItems}
+                            disabled={saving}
+                          />
+                          <div className="flex flex-wrap gap-2">
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={() =>
+                                void handleSaveFeeBreakdown(service.serviceId)
+                              }
+                              className="rounded-full bg-nurture-sage px-4 py-2 text-xs font-semibold text-white hover:bg-nurture-sage-dark disabled:opacity-60"
+                            >
+                              Save breakdown
+                            </button>
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={() => {
+                                setEditingFeeServiceId(null);
+                                setEditFeeItems([]);
+                              }}
+                              className="rounded-full border border-nurture-sage/30 px-4 py-2 text-xs font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10 disabled:opacity-60"
+                            >
+                              Cancel
+                            </button>
+                          </div>
+                        </div>
+                      ) : service.feeItems.length > 0 ? (
+                        <ul className="rounded-xl border border-nurture-sage/15 bg-white divide-y divide-nurture-sage/10 text-xs">
+                          {service.feeItems.map((item) => (
+                            <li
+                              key={item.id}
+                              className="flex items-center justify-between gap-3 px-3 py-2"
+                            >
+                              <span className="text-nurture-charcoal">{item.label}</span>
+                              <span className="font-semibold text-nurture-charcoal">
+                                {formatMoney(item.amountCents)}
+                              </span>
+                            </li>
+                          ))}
+                          <li className="flex items-center justify-between gap-3 px-3 py-2 bg-nurture-cream/40 font-semibold">
+                            <span className="text-nurture-charcoal">Total</span>
+                            <span>{formatMoney(service.totalFeeCents)}</span>
+                          </li>
+                        </ul>
+                      ) : (
+                        <p className="text-xs text-nurture-charcoal/60">
+                          {formatMoney(service.totalFeeCents)} total — click Edit breakdown
+                          to itemize (Doula fee, TNP, transportation, etc.).
+                        </p>
+                      )}
+                    </div>
+
+                    <div>
                       <h5 className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50 mb-2">
                         Invoices
                       </h5>
@@ -374,8 +530,9 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                           {service.invoices.map((invoice) => (
                             <li
                               key={invoice.invoiceId}
-                              className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-nurture-sage/15 bg-white px-3 py-2 text-xs"
+                              className="rounded-xl border border-nurture-sage/15 bg-white px-3 py-2 text-xs space-y-2"
                             >
+                              <div className="flex flex-wrap items-center justify-between gap-2">
                               <div>
                                 <p className="font-semibold text-nurture-charcoal">
                                   {invoice.invoiceNumber}
@@ -386,6 +543,12 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     (m) => m.id === invoice.paymentMethod
                                   )?.label ?? invoice.paymentMethod}
                                 </p>
+                                {invoice.notes && invoice.status !== "draft" ? (
+                                  <p className="mt-1 text-nurture-charcoal/70 whitespace-pre-wrap">
+                                    <span className="font-semibold">Notes:</span>{" "}
+                                    {invoice.notes}
+                                  </p>
+                                ) : null}
                               </div>
                               <div className="flex flex-wrap items-center gap-2">
                                 <span className="font-semibold">
@@ -396,6 +559,34 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                 >
                                   {invoice.status.replace(/_/g, " ")}
                                 </span>
+                                {invoice.pdfDownloadUrl ? (
+                                  <a
+                                    href={invoice.pdfDownloadUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-nurture-sage-dark font-medium hover:underline"
+                                  >
+                                    Client PDF link
+                                  </a>
+                                ) : null}
+                                {invoice.status !== "draft" ? (
+                                  <a
+                                    href={`/api/admin/clients/${clientId}/services/${service.serviceId}/invoices/${invoice.invoiceId}/document`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-nurture-sage-dark font-medium hover:underline"
+                                  >
+                                    View / print
+                                  </a>
+                                ) : null}
+                                {invoice.lastEmailError ? (
+                                  <span
+                                    className="text-rose-700"
+                                    title={invoice.lastEmailError}
+                                  >
+                                    Email failed
+                                  </span>
+                                ) : null}
                                 {invoice.status === "draft" ? (
                                   <button
                                     type="button"
@@ -404,12 +595,40 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                       void handleInvoiceAction(
                                         service.serviceId,
                                         invoice.invoiceId,
-                                        "markSent"
+                                        "markSent",
+                                        {
+                                          notes:
+                                            draftInvoiceNotes[invoice.invoiceId] ??
+                                            invoice.notes,
+                                        }
                                       )
                                     }
                                     className="text-nurture-sage-dark font-medium hover:underline disabled:opacity-60"
                                   >
                                     Send
+                                  </button>
+                                ) : null}
+                                {invoice.status === "paid" ||
+                                invoice.status === "sent" ||
+                                invoice.status === "pending_payment" ? (
+                                  <button
+                                    type="button"
+                                    disabled={saving}
+                                    onClick={() =>
+                                      void handleInvoiceAction(
+                                        service.serviceId,
+                                        invoice.invoiceId,
+                                        "resend",
+                                        {
+                                          notes:
+                                            draftInvoiceNotes[invoice.invoiceId] ??
+                                            invoice.notes,
+                                        }
+                                      )
+                                    }
+                                    className="text-violet-700 font-medium hover:underline disabled:opacity-60"
+                                  >
+                                    Resend
                                   </button>
                                 ) : null}
                                 {invoice.status !== "paid" &&
@@ -431,6 +650,42 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                   </button>
                                 ) : null}
                               </div>
+                              </div>
+                              {invoice.status === "draft" ? (
+                                <label className="block">
+                                  <span className="text-nurture-charcoal/60">
+                                    Notes (included in client email)
+                                  </span>
+                                  <textarea
+                                    rows={2}
+                                    value={
+                                      draftInvoiceNotes[invoice.invoiceId] ??
+                                      invoice.notes
+                                    }
+                                    onChange={(e) =>
+                                      setDraftInvoiceNotes((current) => ({
+                                        ...current,
+                                        [invoice.invoiceId]: e.target.value,
+                                      }))
+                                    }
+                                    placeholder="Insurance submission details, reimbursement codes, special instructions…"
+                                    className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+                                  />
+                                  <button
+                                    type="button"
+                                    disabled={saving}
+                                    onClick={() =>
+                                      void handleSaveDraftInvoiceNotes(
+                                        service.serviceId,
+                                        invoice.invoiceId
+                                      )
+                                    }
+                                    className="mt-1 text-nurture-sage-dark font-medium hover:underline disabled:opacity-60"
+                                  >
+                                    Save notes
+                                  </button>
+                                </label>
+                              ) : null}
                             </li>
                           ))}
                         </ul>
@@ -481,6 +736,18 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                               value={invoiceDescription}
                               onChange={(e) => setInvoiceDescription(e.target.value)}
                               placeholder="Deposit, installment 2…"
+                              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+                            />
+                          </label>
+                          <label className="block sm:col-span-2">
+                            <span className="text-xs text-nurture-charcoal/60">
+                              Notes (included in client email)
+                            </span>
+                            <textarea
+                              rows={2}
+                              value={invoiceNotes}
+                              onChange={(e) => setInvoiceNotes(e.target.value)}
+                              placeholder="Insurance submission details, reimbursement codes, special instructions…"
                               className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
                             />
                           </label>
