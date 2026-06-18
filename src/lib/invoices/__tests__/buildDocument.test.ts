@@ -69,6 +69,9 @@ const invoice: ServiceInvoice = {
   serviceId: "svc-1",
   clientId: "client-1",
   invoiceNumber: "TNP-2026-0042",
+  subtotalCents: 7425,
+  processingFeeCents: 0,
+  processingFeePercent: null,
   amountCents: 7425,
   description: "Installment 1 of 2",
   dueDate: "2026-03-01",
@@ -197,5 +200,23 @@ describe("buildInvoiceDocument", () => {
     expect(html).toContain("@thenestingplace");
     expect(html).toContain("/branding/payments/venmo-qr.jpg");
     expect(html).toContain("info@nesting-place.com");
+  });
+
+  it("renders processing fee line when present", () => {
+    const html = buildInvoiceHtmlDocument(
+      docInput({
+        invoice: {
+          ...invoice,
+          subtotalCents: 10000,
+          processingFeeCents: 300,
+          processingFeePercent: 3,
+          amountCents: 10300,
+        },
+      })
+    );
+    expect(html).toContain("Processing fee (3%)");
+    expect(html).toContain("$100.00");
+    expect(html).toContain("$3.00");
+    expect(html).toContain("$103.00");
   });
 });

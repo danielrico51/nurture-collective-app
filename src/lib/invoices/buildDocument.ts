@@ -91,18 +91,40 @@ const buildPaymentBlock = (
   return `<p style="${instructionStyle}">${escapeHtml(paymentInstructions)}</p>`;
 };
 
-const buildInvoiceLineItemRow = (input: InvoiceDocumentInput): string => {
+const buildInvoiceLineItemRows = (input: InvoiceDocumentInput): string => {
   const { invoice, service } = input;
-  return `<tr>
+  const subtotalCents =
+    invoice.subtotalCents > 0 ? invoice.subtotalCents : invoice.amountCents;
+  const serviceRow = `<tr>
             <td style="padding:14px 12px;border-top:1px solid #e8e2da;vertical-align:top;font-size:14px;line-height:1.5;color:#2f2a26;">
               <strong>${escapeHtml(invoice.description || service.title)}</strong>
               ${service.providerName ? `<br /><span style="font-size:13px;color:#6b6560;">Provider: ${escapeHtml(service.providerName)}</span>` : ""}
               ${service.serviceDate ? `<br /><span style="font-size:13px;color:#6b6560;">Service date: ${escapeHtml(formatDate(service.serviceDate))}</span>` : ""}
             </td>
             <td style="padding:14px 12px;border-top:1px solid #e8e2da;text-align:right;font-weight:600;white-space:nowrap;font-size:14px;color:#2f2a26;">
-              ${escapeHtml(formatMoney(invoice.amountCents))}
+              ${escapeHtml(formatMoney(subtotalCents))}
             </td>
           </tr>`;
+
+  if ((invoice.processingFeeCents ?? 0) <= 0) {
+    return serviceRow;
+  }
+
+  const feeLabel =
+    invoice.processingFeePercent != null
+      ? `Processing fee (${invoice.processingFeePercent}%)`
+      : "Processing fee";
+
+  const feeRow = `<tr>
+            <td style="padding:14px 12px;border-top:1px solid #e8e2da;vertical-align:top;font-size:14px;line-height:1.5;color:#6b6560;">
+              ${escapeHtml(feeLabel)}
+            </td>
+            <td style="padding:14px 12px;border-top:1px solid #e8e2da;text-align:right;font-weight:600;white-space:nowrap;font-size:14px;color:#2f2a26;">
+              ${escapeHtml(formatMoney(invoice.processingFeeCents))}
+            </td>
+          </tr>`;
+
+  return `${serviceRow}${feeRow}`;
 };
 
 const statusBadgeStyle = (label: string): string => {
@@ -203,7 +225,7 @@ const buildInvoiceLineItemsTable = (input: InvoiceDocumentInput): string =>
           </tr>
         </thead>
         <tbody>
-          ${buildInvoiceLineItemRow(input)}
+          ${buildInvoiceLineItemRows(input)}
         </tbody>
         <tfoot>
           <tr>
@@ -310,6 +332,12 @@ export const buildInvoicePlainText = (input: InvoiceDocumentInput): string => {
     `Balance remaining: ${formatMoney(serviceContext.balanceDueCents)}`,
     "",
     `Line item: ${invoice.description}`,
+    ...(invoice.processingFeeCents > 0
+      ? [
+          `Service amount: ${formatMoney(invoice.subtotalCents)}`,
+          `Processing fee${invoice.processingFeePercent != null ? ` (${invoice.processingFeePercent}%)` : ""}: ${formatMoney(invoice.processingFeeCents)}`,
+        ]
+      : []),
     `Amount due on this invoice: ${formatMoney(invoice.amountCents)}`,
     `Due date: ${formatDate(invoice.dueDate)}`,
     "",

@@ -14,12 +14,17 @@ import ServiceFeeItemsEditor, {
   type ServiceFeeItemDraft,
 } from "@/components/Admin/ServiceFeeItemsEditor";
 import { PAYMENT_METHODS } from "@/config/paymentMethods";
+import {
+  DEFAULT_PROCESSING_FEE_PERCENT,
+  paymentMethodSupportsProcessingFee,
+  resolveInvoiceAmounts,
+} from "@/lib/invoices/processingFee";
 import type {
   ClientServiceWithInvoices,
   PaymentMethodId,
   ServiceInvoiceStatus,
 } from "@/types/clientService";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
 interface ClientServicesTabProps {
@@ -45,6 +50,48 @@ const parseDollarsToCents = (value: string): number | null => {
   const dollars = Number(value);
   if (!Number.isFinite(dollars) || dollars <= 0) return null;
   return Math.round(dollars * 100);
+};
+
+interface InvoiceFormDraft {
+  amount: string;
+  method: PaymentMethodId;
+  description: string;
+  notes: string;
+  dueDate: string;
+  applyProcessingFee: boolean;
+  processingFeePercent: string;
+}
+
+const invoiceFormDraftFromInvoice = (invoice: {
+  subtotalCents: number;
+  processingFeeCents: number;
+  processingFeePercent: number | null;
+  paymentMethod: PaymentMethodId;
+  description: string;
+  notes: string;
+  dueDate: string | null;
+}): InvoiceFormDraft => ({
+  amount: (invoice.subtotalCents / 100).toFixed(2),
+  method: invoice.paymentMethod,
+  description: invoice.description,
+  notes: invoice.notes,
+  dueDate: invoice.dueDate ?? "",
+  applyProcessingFee: invoice.processingFeeCents > 0,
+  processingFeePercent: String(
+    invoice.processingFeePercent ?? DEFAULT_PROCESSING_FEE_PERCENT
+  ),
+});
+
+const previewInvoiceAmounts = (draft: InvoiceFormDraft) => {
+  const subtotalCents = parseDollarsToCents(draft.amount) ?? 0;
+  const feePercent = Number(draft.processingFeePercent);
+  return resolveInvoiceAmounts({
+    subtotalCents,
+    applyProcessingFee:
+      draft.applyProcessingFee &&
+      paymentMethodSupportsProcessingFee(draft.method),
+    processingFeePercent: Number.isFinite(feePercent) ? feePercent : DEFAULT_PROCESSING_FEE_PERCENT,
+  });
 };
 
 const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
@@ -74,9 +121,48 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
   const [invoiceDescription, setInvoiceDescription] = useState("");
   const [invoiceNotes, setInvoiceNotes] = useState("");
   const [invoiceDueDate, setInvoiceDueDate] = useState("");
+  const [invoiceApplyProcessingFee, setInvoiceApplyProcessingFee] = useState(false);
+  const [invoiceProcessingFeePercent, setInvoiceProcessingFeePercent] = useState(
+    String(DEFAULT_PROCESSING_FEE_PERCENT)
+  );
+  const [editingInvoiceKey, setEditingInvoiceKey] = useState<string | null>(null);
+  const [editInvoiceDraft, setEditInvoiceDraft] = useState<InvoiceFormDraft | null>(
+    null
+  );
   const [draftInvoiceNotes, setDraftInvoiceNotes] = useState<
     Record<string, string>
   >({});
+
+  useEffect(() => {
+    setInvoiceApplyProcessingFee(paymentMethodSupportsProcessingFee(invoiceMethod));
+  }, [invoiceMethod]);
+
+  const newInvoicePreview = useMemo(
+    () =>
+      previewInvoiceAmounts({
+        amount: invoiceAmount,
+        method: invoiceMethod,
+        description: invoiceDescription,
+        notes: invoiceNotes,
+        dueDate: invoiceDueDate,
+        applyProcessingFee: invoiceApplyProcessingFee,
+        processingFeePercent: invoiceProcessingFeePercent,
+      }),
+    [
+      invoiceAmount,
+      invoiceMethod,
+      invoiceDescription,
+      invoiceNotes,
+      invoiceDueDate,
+      invoiceApplyProcessingFee,
+      invoiceProcessingFeePercent,
+    ]
+  );
+
+  const editInvoicePreview = useMemo(
+    () => (editInvoiceDraft ? previewInvoiceAmounts(editInvoiceDraft) : null),
+    [editInvoiceDraft]
+  );
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;
@@ -146,19 +232,34 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
     service: ClientServiceWithInvoices,
     options?: { fullBalance?: boolean; send?: boolean }
   ) => {
-    const amountCents = options?.fullBalance
+    const subtotalCents = options?.fullBalance
       ? service.balanceDueCents
       : parseDollarsToCents(invoiceAmount);
 
-    if (amountCents === null || amountCents <= 0) {
+    if (subtotalCents === null || subtotalCents <= 0) {
       toast.error("Enter a valid invoice amount");
       return;
     }
 
+    const feePercent = Number(invoiceProcessingFeePercent);
+    const amounts = resolveInvoiceAmounts({
+      subtotalCents,
+      applyProcessingFee:
+        invoiceApplyProcessingFee &&
+        paymentMethodSupportsProcessingFee(invoiceMethod),
+      processingFeePercent: Number.isFinite(feePercent)
+        ? feePercent
+        : DEFAULT_PROCESSING_FEE_PERCENT,
+    });
+
     setSaving(true);
     try {
       await createServiceInvoice(clientId, service.serviceId, {
-        amountCents,
+        amountCents: amounts.subtotalCents,
+        applyProcessingFee:
+          invoiceApplyProcessingFee &&
+          paymentMethodSupportsProcessingFee(invoiceMethod),
+        processingFeePercent: amounts.processingFeePercent,
         paymentMethod: invoiceMethod,
         description: invoiceDescription.trim() || undefined,
         notes: invoiceNotes.trim() || undefined,
@@ -170,6 +271,10 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
       setInvoiceDescription("");
       setInvoiceNotes("");
       setInvoiceDueDate("");
+      setInvoiceApplyProcessingFee(
+        paymentMethodSupportsProcessingFee(invoiceMethod)
+      );
+      setInvoiceProcessingFeePercent(String(DEFAULT_PROCESSING_FEE_PERCENT));
       await load({ silent: true });
       onChanged?.();
     } catch (err) {
@@ -262,6 +367,297 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const startEditingInvoice = (
+    serviceId: string,
+    invoice: ClientServiceWithInvoices["invoices"][number]
+  ) => {
+    setEditingInvoiceKey(`${serviceId}:${invoice.invoiceId}`);
+    setEditInvoiceDraft(invoiceFormDraftFromInvoice(invoice));
+  };
+
+  const cancelEditingInvoice = () => {
+    setEditingInvoiceKey(null);
+    setEditInvoiceDraft(null);
+  };
+
+  const handleSaveInvoiceEdit = async (
+    serviceId: string,
+    invoiceId: string,
+    options: { markSent?: boolean; saveAndResend?: boolean }
+  ) => {
+    if (!editInvoiceDraft) return;
+
+    const subtotalCents = parseDollarsToCents(editInvoiceDraft.amount);
+    if (subtotalCents === null || subtotalCents <= 0) {
+      toast.error("Enter a valid invoice amount");
+      return;
+    }
+
+    const feePercent = Number(editInvoiceDraft.processingFeePercent);
+    const amounts = resolveInvoiceAmounts({
+      subtotalCents,
+      applyProcessingFee:
+        editInvoiceDraft.applyProcessingFee &&
+        paymentMethodSupportsProcessingFee(editInvoiceDraft.method),
+      processingFeePercent: Number.isFinite(feePercent)
+        ? feePercent
+        : DEFAULT_PROCESSING_FEE_PERCENT,
+    });
+
+    setSaving(true);
+    try {
+      await updateServiceInvoice(clientId, serviceId, invoiceId, {
+        amountCents: amounts.subtotalCents,
+        applyProcessingFee:
+          editInvoiceDraft.applyProcessingFee &&
+          paymentMethodSupportsProcessingFee(editInvoiceDraft.method),
+        processingFeePercent: amounts.processingFeePercent,
+        paymentMethod: editInvoiceDraft.method,
+        description: editInvoiceDraft.description.trim(),
+        notes: editInvoiceDraft.notes.trim(),
+        dueDate: editInvoiceDraft.dueDate || null,
+        markSent: options.markSent,
+        saveAndResend: options.saveAndResend,
+      });
+      toast.success(
+        options.saveAndResend
+          ? "Invoice updated and resent"
+          : options.markSent
+            ? "Invoice sent"
+            : "Invoice saved"
+      );
+      cancelEditingInvoice();
+      await load({ silent: true });
+      onChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not save invoice");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const renderProcessingFeeFields = (
+    draft: {
+      method: PaymentMethodId;
+      applyProcessingFee: boolean;
+      processingFeePercent: string;
+    },
+    preview: ReturnType<typeof previewInvoiceAmounts>,
+    onChange: (updates: Partial<InvoiceFormDraft>) => void
+  ) => {
+    if (!paymentMethodSupportsProcessingFee(draft.method)) return null;
+
+    return (
+      <div className="sm:col-span-2 space-y-2 rounded-xl border border-nurture-sage/15 bg-nurture-cream/30 p-3">
+        <label className="flex items-start gap-2 text-sm text-nurture-charcoal">
+          <input
+            type="checkbox"
+            checked={draft.applyProcessingFee}
+            onChange={(e) =>
+              onChange({ applyProcessingFee: e.target.checked })
+            }
+            className="mt-0.5 rounded border-nurture-sage/40"
+          />
+          <span>
+            Add processing fee for card/Venmo payments (default{" "}
+            {DEFAULT_PROCESSING_FEE_PERCENT}%)
+          </span>
+        </label>
+        {draft.applyProcessingFee ? (
+          <label className="block max-w-xs">
+            <span className="text-xs text-nurture-charcoal/60">
+              Processing fee (%)
+            </span>
+            <input
+              value={draft.processingFeePercent}
+              onChange={(e) =>
+                onChange({ processingFeePercent: e.target.value })
+              }
+              inputMode="decimal"
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+            />
+          </label>
+        ) : null}
+        {preview.subtotalCents > 0 && draft.applyProcessingFee ? (
+          <p className="text-xs text-nurture-charcoal/70">
+            Service {formatMoney(preview.subtotalCents)}
+            {preview.processingFeeCents > 0
+              ? ` + fee ${formatMoney(preview.processingFeeCents)}`
+              : ""}{" "}
+            = <strong>{formatMoney(preview.amountCents)}</strong> total due
+          </p>
+        ) : null}
+      </div>
+    );
+  };
+
+  const renderInvoiceEditForm = (
+    serviceId: string,
+    invoice: ClientServiceWithInvoices["invoices"][number],
+    status: ServiceInvoiceStatus
+  ) => {
+    if (!editInvoiceDraft || editingInvoiceKey !== `${serviceId}:${invoice.invoiceId}`) {
+      return null;
+    }
+
+    const preview = editInvoicePreview ?? previewInvoiceAmounts(editInvoiceDraft);
+    const canEditAmount = status !== "paid";
+
+    return (
+      <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-3 space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-violet-800">
+          Edit invoice
+        </p>
+        <div className="grid gap-3 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-xs text-nurture-charcoal/60">
+              Amount (USD, before fee)
+            </span>
+            <input
+              value={editInvoiceDraft.amount}
+              onChange={(e) =>
+                setEditInvoiceDraft((current) =>
+                  current ? { ...current, amount: e.target.value } : current
+                )
+              }
+              disabled={!canEditAmount}
+              inputMode="decimal"
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm disabled:bg-nurture-charcoal/5"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs text-nurture-charcoal/60">Payment method</span>
+            <select
+              value={editInvoiceDraft.method}
+              onChange={(e) => {
+                const method = e.target.value as PaymentMethodId;
+                setEditInvoiceDraft((current) =>
+                  current
+                    ? {
+                        ...current,
+                        method,
+                        applyProcessingFee:
+                          paymentMethodSupportsProcessingFee(method),
+                      }
+                    : current
+                );
+              }}
+              disabled={!canEditAmount}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm disabled:bg-nurture-charcoal/5"
+            >
+              {PAYMENT_METHODS.map((method) => (
+                <option key={method.id} value={method.id}>
+                  {method.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          {canEditAmount
+            ? renderProcessingFeeFields(
+                editInvoiceDraft,
+                preview,
+                (updates) =>
+                  setEditInvoiceDraft((current) =>
+                    current ? { ...current, ...updates } : current
+                  )
+              )
+            : null}
+          <label className="block sm:col-span-2">
+            <span className="text-xs text-nurture-charcoal/60">Description</span>
+            <input
+              value={editInvoiceDraft.description}
+              onChange={(e) =>
+                setEditInvoiceDraft((current) =>
+                  current ? { ...current, description: e.target.value } : current
+                )
+              }
+              disabled={!canEditAmount}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm disabled:bg-nurture-charcoal/5"
+            />
+          </label>
+          <label className="block sm:col-span-2">
+            <span className="text-xs text-nurture-charcoal/60">
+              Notes (included in client email)
+            </span>
+            <textarea
+              rows={2}
+              value={editInvoiceDraft.notes}
+              onChange={(e) =>
+                setEditInvoiceDraft((current) =>
+                  current ? { ...current, notes: e.target.value } : current
+                )
+              }
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs text-nurture-charcoal/60">Due date</span>
+            <input
+              type="date"
+              value={editInvoiceDraft.dueDate}
+              onChange={(e) =>
+                setEditInvoiceDraft((current) =>
+                  current ? { ...current, dueDate: e.target.value } : current
+                )
+              }
+              disabled={!canEditAmount}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm disabled:bg-nurture-charcoal/5"
+            />
+          </label>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          {status === "draft" ? (
+            <>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() =>
+                  void handleSaveInvoiceEdit(serviceId, invoice.invoiceId, {})
+                }
+                className="rounded-full border border-nurture-sage/30 px-3 py-1.5 text-xs font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10 disabled:opacity-60"
+              >
+                Save draft
+              </button>
+              <button
+                type="button"
+                disabled={saving}
+                onClick={() =>
+                  void handleSaveInvoiceEdit(serviceId, invoice.invoiceId, {
+                    markSent: true,
+                  })
+                }
+                className="rounded-full bg-nurture-sage px-3 py-1.5 text-xs font-semibold text-white hover:bg-nurture-sage-dark disabled:opacity-60"
+              >
+                Save & send
+              </button>
+            </>
+          ) : status === "sent" || status === "pending_payment" ? (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() =>
+                void handleSaveInvoiceEdit(serviceId, invoice.invoiceId, {
+                  saveAndResend: true,
+                })
+              }
+              className="rounded-full bg-violet-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-violet-800 disabled:opacity-60"
+            >
+              Save & resend
+            </button>
+          ) : null}
+          <button
+            type="button"
+            disabled={saving}
+            onClick={cancelEditingInvoice}
+            className="rounded-full border border-nurture-sage/30 px-3 py-1.5 text-xs font-semibold text-nurture-charcoal/70 hover:bg-nurture-charcoal/5 disabled:opacity-60"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
   };
 
   if (loading) {
@@ -543,6 +939,13 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     (m) => m.id === invoice.paymentMethod
                                   )?.label ?? invoice.paymentMethod}
                                 </p>
+                                {invoice.processingFeeCents > 0 ? (
+                                  <p className="text-nurture-charcoal/60">
+                                    {formatMoney(invoice.subtotalCents)} +{" "}
+                                    {formatMoney(invoice.processingFeeCents)} fee (
+                                    {invoice.processingFeePercent}%)
+                                  </p>
+                                ) : null}
                                 {invoice.notes && invoice.status !== "draft" ? (
                                   <p className="mt-1 text-nurture-charcoal/70 whitespace-pre-wrap">
                                     <span className="font-semibold">Notes:</span>{" "}
@@ -608,6 +1011,22 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     Send
                                   </button>
                                 ) : null}
+                                {(invoice.status === "draft" ||
+                                  invoice.status === "sent" ||
+                                  invoice.status === "pending_payment") &&
+                                editingInvoiceKey !==
+                                  `${service.serviceId}:${invoice.invoiceId}` ? (
+                                  <button
+                                    type="button"
+                                    disabled={saving}
+                                    onClick={() =>
+                                      startEditingInvoice(service.serviceId, invoice)
+                                    }
+                                    className="text-nurture-charcoal font-medium hover:underline disabled:opacity-60"
+                                  >
+                                    Edit
+                                  </button>
+                                ) : null}
                                 {invoice.status === "paid" ||
                                 invoice.status === "sent" ||
                                 invoice.status === "pending_payment" ? (
@@ -651,7 +1070,14 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                 ) : null}
                               </div>
                               </div>
-                              {invoice.status === "draft" ? (
+                              {renderInvoiceEditForm(
+                                service.serviceId,
+                                invoice,
+                                invoice.status
+                              )}
+                              {invoice.status === "draft" &&
+                              editingInvoiceKey !==
+                                `${service.serviceId}:${invoice.invoiceId}` ? (
                                 <label className="block">
                                   <span className="text-nurture-charcoal/60">
                                     Notes (included in client email)
@@ -700,7 +1126,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                         <div className="grid gap-3 sm:grid-cols-2">
                           <label className="block">
                             <span className="text-xs text-nurture-charcoal/60">
-                              Amount (USD)
+                              Amount (USD, before fee)
                             </span>
                             <input
                               value={invoiceAmount}
@@ -728,6 +1154,26 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                               ))}
                             </select>
                           </label>
+                          {renderProcessingFeeFields(
+                            {
+                              method: invoiceMethod,
+                              applyProcessingFee: invoiceApplyProcessingFee,
+                              processingFeePercent: invoiceProcessingFeePercent,
+                            },
+                            newInvoicePreview,
+                            (updates) => {
+                              if (updates.applyProcessingFee !== undefined) {
+                                setInvoiceApplyProcessingFee(
+                                  updates.applyProcessingFee
+                                );
+                              }
+                              if (updates.processingFeePercent !== undefined) {
+                                setInvoiceProcessingFeePercent(
+                                  updates.processingFeePercent
+                                );
+                              }
+                            }
+                          )}
                           <label className="block sm:col-span-2">
                             <span className="text-xs text-nurture-charcoal/60">
                               Description

@@ -12,6 +12,9 @@ const invoice = (
   serviceId: "svc-1",
   clientId: "client-1",
   invoiceNumber: "TNP-2026-0001",
+  subtotalCents: overrides.subtotalCents ?? overrides.amountCents,
+  processingFeeCents: overrides.processingFeeCents ?? 0,
+  processingFeePercent: overrides.processingFeePercent ?? null,
   description: "Test",
   dueDate: null,
   paymentMethod: "zelle",
@@ -59,5 +62,19 @@ describe("client service balances", () => {
       invoice({ amountCents: 40000, status: "refunded" }),
     ];
     expect(computeServiceBalanceDueCents(40000, invoices)).toBe(40000);
+  });
+
+  it("uses subtotal toward service balance when processing fee is present", () => {
+    const invoices = [
+      invoice({
+        subtotalCents: 10000,
+        processingFeeCents: 300,
+        processingFeePercent: 3,
+        amountCents: 10300,
+        status: "paid",
+      }),
+    ];
+    expect(sumPaidInvoiceCents(invoices)).toBe(10000);
+    expect(computeServiceBalanceDueCents(15000, invoices)).toBe(5000);
   });
 });

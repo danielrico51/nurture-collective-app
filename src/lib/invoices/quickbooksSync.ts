@@ -58,6 +58,30 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
     email: customerEmail,
   });
 
+  const qbLineItems = [
+    {
+      amount: centsToDollars(input.invoice.subtotalCents),
+      description: input.invoice.description || input.service.title,
+      quantity: 1,
+      unitPrice: centsToDollars(input.invoice.subtotalCents),
+      itemId: serverQuickBooksConfig.defaultItemId || undefined,
+    },
+  ];
+
+  if ((input.invoice.processingFeeCents ?? 0) > 0) {
+    const feeLabel =
+      input.invoice.processingFeePercent != null
+        ? `Processing fee (${input.invoice.processingFeePercent}%)`
+        : "Processing fee";
+    qbLineItems.push({
+      amount: centsToDollars(input.invoice.processingFeeCents),
+      description: feeLabel,
+      quantity: 1,
+      unitPrice: centsToDollars(input.invoice.processingFeeCents),
+      itemId: serverQuickBooksConfig.defaultItemId || undefined,
+    });
+  }
+
   const qbInvoice = await createQuickBooksInvoice({
     customerId: customer.Id,
     docNumber: input.invoice.invoiceNumber.slice(0, 21),
@@ -67,15 +91,7 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
     billEmail: customerEmail,
     allowOnlineCreditCardPayment: true,
     allowOnlineAchPayment: true,
-    lineItems: [
-      {
-        amount: centsToDollars(input.invoice.amountCents),
-        description: input.invoice.description || input.service.title,
-        quantity: 1,
-        unitPrice: centsToDollars(input.invoice.amountCents),
-        itemId: serverQuickBooksConfig.defaultItemId || undefined,
-      },
-    ],
+    lineItems: qbLineItems,
   });
 
   const paymentLink = await resolveQuickBooksInvoicePaymentLink(qbInvoice.Id);

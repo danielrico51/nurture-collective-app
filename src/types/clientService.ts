@@ -55,6 +55,13 @@ export interface ServiceInvoice {
   clientId: string;
   /** Sequential formal number, e.g. TNP-2026-0042 */
   invoiceNumber: string;
+  /** Service charge before processing fee. */
+  subtotalCents: number;
+  /** Card/Venmo processing fee added to subtotal when applicable. */
+  processingFeeCents: number;
+  /** Percent used when processingFeeCents > 0 (e.g. 3). */
+  processingFeePercent: number | null;
+  /** Total due (subtotal + processing fee). */
   amountCents: number;
   description: string;
   dueDate: string | null;
@@ -151,7 +158,10 @@ export interface UpdateClientServiceInput {
 }
 
 export interface CreateServiceInvoiceInput {
+  /** Base amount before processing fee. */
   amountCents: number;
+  applyProcessingFee?: boolean;
+  processingFeePercent?: number | null;
   description?: string;
   dueDate?: string | null;
   paymentMethod: PaymentMethodId;
@@ -165,6 +175,8 @@ export interface CreateServiceInvoiceInput {
 export interface UpdateServiceInvoiceInput {
   status?: ServiceInvoiceStatus;
   amountCents?: number;
+  applyProcessingFee?: boolean;
+  processingFeePercent?: number | null;
   description?: string;
   dueDate?: string | null;
   paymentMethod?: PaymentMethodId;
@@ -173,4 +185,6 @@ export interface UpdateServiceInvoiceInput {
   markPaid?: boolean;
   /** Resend email + refresh PDF for sent or paid invoices (e.g. insurance). */
   resend?: boolean;
+  /** Update fields on a sent invoice and resend corrected copy to the client. */
+  saveAndResend?: boolean;
 }

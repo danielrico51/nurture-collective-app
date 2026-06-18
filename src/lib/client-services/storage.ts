@@ -31,6 +31,10 @@ import {
   dispatchServiceInvoice,
   InvoiceDispatchError,
 } from "@/lib/invoices/dispatchInvoice";
+import {
+  normalizeStoredInvoiceAmounts,
+  resolveInvoiceAmountFieldsFromInput,
+} from "@/lib/invoices/processingFee";
 import type {
   ClientService,
   ClientServiceWithInvoices,
@@ -148,19 +152,23 @@ const resolveTotalFeeCentsFromInput = (
 const normalizeServiceInvoice = (
   record: ServiceInvoice,
   key: string
-): ServiceInvoice => ({
-  ...record,
-  customerName: record.customerName ?? "",
-  customerEmail: record.customerEmail ?? "",
-  paymentInstructions: record.paymentInstructions ?? "",
-  paymentLink: record.paymentLink ?? null,
-  documentStorageKey: record.documentStorageKey ?? null,
-  pdfDownloadUrl: record.pdfDownloadUrl ?? null,
-  pdfAccessExpiresAt: record.pdfAccessExpiresAt ?? null,
-  notes: record.notes ?? "",
-  lastEmailError: record.lastEmailError ?? null,
-  storageKey: key,
-});
+): ServiceInvoice => {
+  const amounts = normalizeStoredInvoiceAmounts(record);
+  return {
+    ...record,
+    ...amounts,
+    customerName: record.customerName ?? "",
+    customerEmail: record.customerEmail ?? "",
+    paymentInstructions: record.paymentInstructions ?? "",
+    paymentLink: record.paymentLink ?? null,
+    documentStorageKey: record.documentStorageKey ?? null,
+    pdfDownloadUrl: record.pdfDownloadUrl ?? null,
+    pdfAccessExpiresAt: record.pdfAccessExpiresAt ?? null,
+    notes: record.notes ?? "",
+    lastEmailError: record.lastEmailError ?? null,
+    storageKey: key,
+  };
+};
 
 export const readServiceInvoice = async (
   clientId: string,
@@ -317,6 +325,70 @@ export const updateClientService = async (
   return { ...updated, storageKey: key };
 };
 
+const assertInvoiceSubtotalWithinBalance = async (
+  clientId: string,
+  serviceId: string,
+  serviceTotalFeeCents: number,
+  subtotalCents: number,
+  excludeInvoiceId?: string
+): Promise<void> => {
+  const existingInvoices = await listInvoicesForService(clientId, serviceId);
+  const filtered = excludeInvoiceId
+    ? existingInvoices.filter((inv) => inv.invoiceId !== excludeInvoiceId)
+    : existingInvoices;
+  const balanceDue = computeServiceBalanceDueCents(
+    serviceTotalFeeCents,
+    filtered
+  );
+  if (subtotalCents > balanceDue) {
+    throw new ClientServiceValidationError(
+      `Invoice amount exceeds remaining balance (${balanceDue} cents)`
+    );
+  }
+};
+
+const mergeInvoiceFieldUpdates = (
+  existing: ServiceInvoice,
+  raw: UpdateServiceInvoiceInput
+): ServiceInvoice => {
+  const paymentMethod = raw.paymentMethod ?? existing.paymentMethod;
+  if (raw.paymentMethod && !isKnownPaymentMethod(raw.paymentMethod)) {
+    throw new ClientServiceValidationError("Unknown payment method");
+  }
+
+  let amountFields;
+  try {
+    amountFields = resolveInvoiceAmountFieldsFromInput({
+      amountCents: raw.amountCents,
+      applyProcessingFee: raw.applyProcessingFee,
+      processingFeePercent: raw.processingFeePercent,
+      paymentMethod,
+      existing,
+    });
+  } catch (error) {
+    throw new ClientServiceValidationError(
+      error instanceof Error ? error.message : "Invalid invoice amount"
+    );
+  }
+
+  if (amountFields.subtotalCents <= 0) {
+    throw new ClientServiceValidationError("Invoice amount must be greater than zero");
+  }
+
+  return {
+    ...existing,
+    ...amountFields,
+    description:
+      raw.description !== undefined
+        ? String(raw.description).trim()
+        : existing.description,
+    dueDate: raw.dueDate !== undefined ? raw.dueDate : existing.dueDate,
+    paymentMethod,
+    notes: raw.notes !== undefined ? String(raw.notes).trim() : existing.notes,
+    updatedAt: new Date().toISOString(),
+  };
+};
+
 const saveInvoice = async (
   clientId: string,
   serviceId: string,
@@ -345,21 +417,30 @@ export const createServiceInvoice = async (
     throw new ClientServiceValidationError("Unknown payment method");
   }
 
-  const amountCents = parseMoneyCents(raw.amountCents, "amountCents");
-  if (amountCents <= 0) {
+  let amountFields;
+  try {
+    amountFields = resolveInvoiceAmountFieldsFromInput({
+      amountCents: raw.amountCents,
+      applyProcessingFee: raw.applyProcessingFee,
+      processingFeePercent: raw.processingFeePercent,
+      paymentMethod: paymentMethod as ServiceInvoice["paymentMethod"],
+    });
+  } catch (error) {
+    throw new ClientServiceValidationError(
+      error instanceof Error ? error.message : "Invalid invoice amount"
+    );
+  }
+
+  if (amountFields.subtotalCents <= 0) {
     throw new ClientServiceValidationError("Invoice amount must be greater than zero");
   }
 
-  const existingInvoices = await listInvoicesForService(clientId, serviceId);
-  const balanceDue = computeServiceBalanceDueCents(
+  await assertInvoiceSubtotalWithinBalance(
+    clientId,
+    serviceId,
     service.totalFeeCents,
-    existingInvoices
+    amountFields.subtotalCents
   );
-  if (amountCents > balanceDue) {
-    throw new ClientServiceValidationError(
-      `Invoice amount exceeds remaining balance (${balanceDue} cents)`
-    );
-  }
 
   const now = new Date().toISOString();
   const invoiceId = crypto.randomUUID();
@@ -372,7 +453,7 @@ export const createServiceInvoice = async (
     serviceId,
     clientId,
     invoiceNumber,
-    amountCents,
+    ...amountFields,
     description:
       String(raw.description ?? "").trim() ||
       (raw.installmentIndex
@@ -424,11 +505,38 @@ export const updateServiceInvoice = async (
   const existing = await readServiceInvoice(clientId, serviceId, invoiceId);
   if (!existing) throw new ClientServiceValidationError("Invoice not found");
 
+  const service = await readClientService(clientId, serviceId);
+  if (!service) throw new ClientServiceValidationError("Service not found");
+
   const now = new Date().toISOString();
   let status = raw.status ?? existing.status;
   let sentAt = existing.sentAt;
   let paidAt = existing.paidAt;
   let invoice: ServiceInvoice = { ...existing };
+
+  const hasFieldEdits =
+    raw.amountCents !== undefined ||
+    raw.applyProcessingFee !== undefined ||
+    raw.processingFeePercent !== undefined ||
+    raw.description !== undefined ||
+    raw.dueDate !== undefined ||
+    raw.paymentMethod !== undefined ||
+    raw.notes !== undefined;
+
+  if (
+    existing.status === "paid" &&
+    hasFieldEdits &&
+    (raw.amountCents !== undefined ||
+      raw.applyProcessingFee !== undefined ||
+      raw.processingFeePercent !== undefined ||
+      raw.paymentMethod !== undefined ||
+      raw.description !== undefined ||
+      raw.dueDate !== undefined)
+  ) {
+    throw new ClientServiceValidationError(
+      "Paid invoices cannot be edited. Use Resend to send a copy with updated notes."
+    );
+  }
 
   if (raw.markSent) {
     if (!dispatchOptions) {
@@ -436,17 +544,53 @@ export const updateServiceInvoice = async (
         "Invoice dispatch requires an authenticated actor"
       );
     }
-    const toSend: ServiceInvoice = {
-      ...existing,
-      notes:
-        raw.notes !== undefined ? String(raw.notes).trim() : existing.notes,
-    };
+    const toSend = mergeInvoiceFieldUpdates(existing, raw);
+    await assertInvoiceSubtotalWithinBalance(
+      clientId,
+      serviceId,
+      service.totalFeeCents,
+      toSend.subtotalCents,
+      invoiceId
+    );
     invoice = await dispatchServiceInvoice({
       clientId,
       serviceId,
       invoice: toSend,
       actor: dispatchOptions.actor,
       origin: dispatchOptions.origin,
+    });
+    return saveInvoice(clientId, serviceId, invoice);
+  }
+
+  if (raw.saveAndResend) {
+    if (!dispatchOptions) {
+      throw new ClientServiceValidationError(
+        "Invoice dispatch requires an authenticated actor"
+      );
+    }
+    if (
+      existing.status !== "sent" &&
+      existing.status !== "pending_payment"
+    ) {
+      throw new ClientServiceValidationError(
+        "Only sent or pending invoices can be edited and resent"
+      );
+    }
+    const toSend = mergeInvoiceFieldUpdates(existing, raw);
+    await assertInvoiceSubtotalWithinBalance(
+      clientId,
+      serviceId,
+      service.totalFeeCents,
+      toSend.subtotalCents,
+      invoiceId
+    );
+    invoice = await dispatchServiceInvoice({
+      clientId,
+      serviceId,
+      invoice: toSend,
+      actor: dispatchOptions.actor,
+      origin: dispatchOptions.origin,
+      resend: true,
     });
     return saveInvoice(clientId, serviceId, invoice);
   }
@@ -484,19 +628,27 @@ export const updateServiceInvoice = async (
     if (!sentAt) sentAt = now;
   }
 
+  if (hasFieldEdits) {
+    invoice = mergeInvoiceFieldUpdates(existing, raw);
+    if (
+      raw.amountCents !== undefined ||
+      raw.applyProcessingFee !== undefined ||
+      raw.processingFeePercent !== undefined
+    ) {
+      await assertInvoiceSubtotalWithinBalance(
+        clientId,
+        serviceId,
+        service.totalFeeCents,
+        invoice.subtotalCents,
+        invoiceId
+      );
+    }
+  } else {
+    invoice = { ...existing };
+  }
+
   const updated: ServiceInvoice = {
-    ...existing,
-    amountCents:
-      raw.amountCents !== undefined
-        ? parseMoneyCents(raw.amountCents, "amountCents")
-        : existing.amountCents,
-    description:
-      raw.description !== undefined
-        ? String(raw.description).trim()
-        : existing.description,
-    dueDate: raw.dueDate !== undefined ? raw.dueDate : existing.dueDate,
-    paymentMethod: raw.paymentMethod ?? existing.paymentMethod,
-    notes: raw.notes !== undefined ? String(raw.notes).trim() : existing.notes,
+    ...invoice,
     status,
     sentAt,
     paidAt,
