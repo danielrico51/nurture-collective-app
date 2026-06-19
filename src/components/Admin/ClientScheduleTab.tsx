@@ -13,7 +13,9 @@ import {
   updateClientEngagement,
   updatePaymentExpectation,
 } from "@/lib/api/scheduleClient";
+import { PAYMENT_METHODS } from "@/config/paymentMethods";
 import { fetchAdminProviders } from "@/lib/api/providersClient";
+import type { PaymentMethodId } from "@/types/clientService";
 import type { ProviderRecord } from "@/types/provider";
 import type { ClientsCrmStorageScope } from "@/types/client";
 import type {
@@ -35,6 +37,9 @@ const formatDate = (value: string | null | undefined): string => {
   if (Number.isNaN(date.getTime())) return value;
   return date.toLocaleDateString();
 };
+
+const paymentMethodLabel = (method: PaymentMethodId | null | undefined): string =>
+  PAYMENT_METHODS.find((item) => item.id === method)?.label ?? "Not set";
 
 const STATUS_BADGE: Record<EngagementStatus, string> = {
   booked: "bg-sky-100 text-sky-800",
@@ -78,6 +83,9 @@ const ClientScheduleTab = ({
   const [balanceAmount, setBalanceAmount] = useState("");
   const [balanceDueDate, setBalanceDueDate] = useState("");
   const [balanceDueLabel, setBalanceDueLabel] = useState("");
+  const [preferredPaymentMethod, setPreferredPaymentMethod] = useState<
+    PaymentMethodId | ""
+  >("");
 
   const load = useCallback(async () => {
     setError(null);
@@ -117,6 +125,7 @@ const ClientScheduleTab = ({
     setBalanceAmount("");
     setBalanceDueDate("");
     setBalanceDueLabel("");
+    setPreferredPaymentMethod("");
   };
 
   const handleCreate = async (event: React.FormEvent) => {
@@ -135,6 +144,7 @@ const ClientScheduleTab = ({
         primaryProviderId: primaryProviderId || null,
         estimatedDate: estimatedDate || null,
         estimatedNotes,
+        preferredPaymentMethod: preferredPaymentMethod || null,
         package: {
           clientFeeCents,
           hoursTotal: hoursTotal ? Number(hoursTotal) : null,
@@ -347,6 +357,23 @@ const ClientScheduleTab = ({
               Client payments (optional)
             </legend>
             <div className="mt-2 grid gap-4 sm:grid-cols-2">
+              <label className="block text-sm sm:col-span-2">
+                <span className="font-medium">Preferred payment method</span>
+                <select
+                  value={preferredPaymentMethod}
+                  onChange={(event) =>
+                    setPreferredPaymentMethod(event.target.value as PaymentMethodId | "")
+                  }
+                  className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+                >
+                  <option value="">Not specified</option>
+                  {PAYMENT_METHODS.map((method) => (
+                    <option key={method.id} value={method.id}>
+                      {method.label}
+                    </option>
+                  ))}
+                </select>
+              </label>
               <label className="block text-sm">
                 <span className="font-medium">Deposit ($)</span>
                 <input
@@ -447,6 +474,13 @@ const ClientScheduleTab = ({
                       {primaryPackage?.schedulePattern
                         ? ` · ${primaryPackage.schedulePattern}`
                         : ""}
+                      {engagement.preferredPaymentMethod ? (
+                        <span className="font-normal text-nurture-charcoal/60">
+                          {" "}
+                          · pay via{" "}
+                          {paymentMethodLabel(engagement.preferredPaymentMethod)}
+                        </span>
+                      ) : null}
                     </p>
                   </div>
                   <span
@@ -515,6 +549,15 @@ const ClientScheduleTab = ({
                         ) : null}
                       </div>
                     ))}
+
+                    {engagement.preferredPaymentMethod ? (
+                      <p className="text-sm text-nurture-charcoal/70">
+                        Preferred payment:{" "}
+                        <span className="font-medium text-nurture-charcoal">
+                          {paymentMethodLabel(engagement.preferredPaymentMethod)}
+                        </span>
+                      </p>
+                    ) : null}
 
                     {engagement.expectations.length > 0 ? (
                       <div className="space-y-2">

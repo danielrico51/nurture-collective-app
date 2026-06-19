@@ -110,14 +110,39 @@ const ClassRegistrationForm = ({
               <strong>@{paymentInfo.venmoHandle?.replace(/^@/, "")}</strong> and
               include the class name in the note so we can match your payment.
             </p>
-            <a
-              href={paymentInfo.venmoUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex rounded-full bg-[#008CFF] px-5 py-2 text-sm font-semibold text-white hover:bg-[#0075d6]"
-            >
-              Open Venmo
-            </a>
+            {paymentInfo.venmoProfileUrl ? (
+              <p className="text-sm text-nurture-charcoal/75">
+                Find us on Venmo:{" "}
+                <a
+                  href={paymentInfo.venmoProfileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="font-medium text-nurture-sage-dark underline"
+                >
+                  {paymentInfo.venmoProfileUrl}
+                </a>
+              </p>
+            ) : null}
+            <div className="flex flex-wrap gap-3">
+              {paymentInfo.venmoProfileUrl ? (
+                <a
+                  href={paymentInfo.venmoProfileUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex rounded-full border border-[#008CFF] px-5 py-2 text-sm font-semibold text-[#008CFF] hover:bg-[#008CFF]/5"
+                >
+                  Open Venmo profile
+                </a>
+              ) : null}
+              <a
+                href={paymentInfo.venmoUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex rounded-full bg-[#008CFF] px-5 py-2 text-sm font-semibold text-white hover:bg-[#0075d6]"
+              >
+                Pay in Venmo
+              </a>
+            </div>
             <p className="text-xs text-nurture-charcoal/60">
               Your spot is held while payment is pending. Our team will confirm once
               Venmo is received.

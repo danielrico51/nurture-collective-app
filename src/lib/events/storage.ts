@@ -8,6 +8,10 @@ import {
 } from "@aws-sdk/client-s3";
 import { isValidSlug } from "@/lib/blog/slug";
 import { buildCreateEvent, normalizeEventItem } from "@/lib/events/normalize";
+import {
+  applyEventProviderLink,
+  EventProviderLinkError,
+} from "@/lib/events/providerLink";
 import { SAMPLE_EVENTS } from "@/lib/events/samples";
 import {
   emptyEventsDocument,
@@ -153,7 +157,8 @@ export const getEventBySlug = async (
 export const createEvent = async (input: CreateEventInput): Promise<EventItem> => {
   const doc = await readEventsDocument();
   const slugs = doc.items.map((item) => item.slug);
-  const item = buildCreateEvent(input, slugs);
+  const linked = await applyEventProviderLink(input);
+  const item = buildCreateEvent(linked, slugs);
   if (!item.title) throw new Error("Title is required");
   await writeEventsDocument({
     ...doc,
@@ -172,9 +177,13 @@ export const updateEvent = async (
   if (index < 0) return null;
 
   const current = doc.items[index];
-  const next = normalizeEventItem({
+  const linked = await applyEventProviderLink({
     ...current,
     ...input,
+    title: input.title?.trim() || current.title,
+  });
+  const next = normalizeEventItem({
+    ...linked,
     slug: current.slug,
     createdAt: current.createdAt,
     updatedAt: new Date().toISOString(),
@@ -194,3 +203,5 @@ export const deleteEvent = async (slug: string): Promise<boolean> => {
   await writeEventsDocument({ ...doc, items });
   return true;
 };
+
+export { EventProviderLinkError };

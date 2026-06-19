@@ -35,8 +35,9 @@ export class ClassRegistrationCapacityError extends Error {
 
 const normalizeEmail = (email: string) => email.trim().toLowerCase();
 
-export const isOnlineRegistrationEnabled = (event: EventItem): boolean =>
-  event.registrationMode === "online";
+export const isOnlineRegistrationEnabled = (
+  event: Pick<EventItem, "registrationMode">
+): boolean => event.registrationMode === "online";
 
 export const countOccupyingRegistrations = (
   registrations: ClassRegistration[]

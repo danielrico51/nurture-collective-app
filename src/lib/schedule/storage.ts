@@ -91,7 +91,13 @@ const readEngagementRecord = async (
 ): Promise<ServiceEngagement | null> => {
   const key = buildEngagementKey(clientId, engagementId);
   const record = await readJson<ServiceEngagement>(key);
-  return record ? { ...record, storageKey: key } : null;
+  return record
+    ? {
+        ...record,
+        preferredPaymentMethod: record.preferredPaymentMethod ?? null,
+        storageKey: key,
+      }
+    : null;
 };
 
 const listEngagementIds = async (clientId: string): Promise<string[]> => {
@@ -292,6 +298,7 @@ export const createServiceEngagement = async (
     estimatedDate: input.estimatedDate ?? null,
     estimatedNotes: input.estimatedNotes ?? "",
     status: input.status ?? "booked",
+    preferredPaymentMethod: input.preferredPaymentMethod ?? null,
     createdAt: now,
     updatedAt: now,
   };
@@ -376,6 +383,10 @@ export const updateServiceEngagement = async (
         ? updates.estimatedNotes
         : existing.estimatedNotes,
     status: updates.status ?? existing.status,
+    preferredPaymentMethod:
+      updates.preferredPaymentMethod !== undefined
+        ? updates.preferredPaymentMethod
+        : existing.preferredPaymentMethod ?? null,
     updatedAt: new Date().toISOString(),
   };
 

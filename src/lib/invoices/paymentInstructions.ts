@@ -27,8 +27,9 @@ export const buildVenmoInvoiceInstructions = (
 ): string =>
   [
     `Pay ${formatMoney(invoice.amountCents)} via Venmo to ${clientInvoicePaymentDetails.venmoHandle}.`,
+    `Find us at ${clientInvoicePaymentDetails.venmoProfileUrl}.`,
     `Include invoice ${invoice.invoiceNumber} in the payment note.`,
-    `Scan the Venmo QR code in this email or open the Venmo app and search for ${clientInvoicePaymentDetails.venmoHandle}.`,
+    `Scan the Venmo QR code in this email, open ${clientInvoicePaymentDetails.venmoProfileUrl}, or search for ${clientInvoicePaymentDetails.venmoHandle} in the Venmo app.`,
   ].join(" ");
 
 export const buildZelleInvoiceInstructions = (
@@ -76,6 +77,7 @@ export const buildManualPaymentHtml = (input: {
 
   if (invoice.paymentMethod === "venmo") {
     const payUrl = invoice.paymentLink;
+    const profileUrl = clientInvoicePaymentDetails.venmoProfileUrl;
     const qrUrl = clientInvoicePaymentAssetUrl(
       clientInvoicePaymentDetails.venmoQrPath
     );
@@ -84,13 +86,18 @@ export const buildManualPaymentHtml = (input: {
         <strong>${escapeHtml(clientInvoicePaymentDetails.venmoHandle)}</strong>.
       </p>
       <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#6b6560;">
+        Find us on Venmo:
+        <a href="${escapeHtml(profileUrl)}" style="color:#6b8f7a;">${escapeHtml(profileUrl)}</a>
+      </p>
+      <p style="margin:0 0 8px;font-size:13px;line-height:1.5;color:#6b6560;">
         Include invoice <strong>${escapeHtml(invoice.invoiceNumber)}</strong> in the payment note.
       </p>
       ${qrImageHtml(qrUrl, `Venmo QR code for ${clientInvoicePaymentDetails.venmoHandle}`)}
       ${
         payUrl
           ? `<p style="margin:8px 0 0;font-size:13px;line-height:1.5;color:#6b6560;">
-              Or pay in Venmo: <a href="${escapeHtml(payUrl)}" style="color:#6b8f7a;">${escapeHtml(payUrl)}</a>
+              Or pay with amount pre-filled:
+              <a href="${escapeHtml(payUrl)}" style="color:#6b8f7a;">${escapeHtml(payUrl)}</a>
             </p>`
           : ""
       }`;

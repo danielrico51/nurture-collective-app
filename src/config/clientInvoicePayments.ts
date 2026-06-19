@@ -3,6 +3,7 @@ import { clientInvoiceConfig } from "@/config/clientInvoices";
 /** Official payment details from The Nesting Place payment methods sheet. */
 export const clientInvoicePaymentDetails = {
   venmoHandle: clientInvoiceConfig.venmoHandle,
+  venmoProfileUrl: clientInvoiceConfig.venmoProfileUrl,
   zelleHandle: clientInvoiceConfig.zelleHandle,
   venmoQrPath: "/branding/payments/venmo-qr.jpg",
   zelleQrPath: "/branding/payments/zelle-qr.jpg",

@@ -1,5 +1,5 @@
 import type { ClientsCrmStorageScope } from "@/types/client";
-import type { ClientServiceWithInvoices } from "@/types/clientService";
+import type { ClientServiceWithInvoices, PaymentMethodId } from "@/types/clientService";
 
 export type EngagementServiceType = "postpartum" | "birth" | "other";
 
@@ -50,6 +50,8 @@ export interface ServiceEngagement {
   estimatedDate: string | null;
   estimatedNotes: string;
   status: EngagementStatus;
+  /** Default payment method when invoicing the linked service. */
+  preferredPaymentMethod: PaymentMethodId | null;
   importSource?: { file: string; rowStart: number };
   createdAt: string;
   updatedAt: string;
@@ -191,6 +193,7 @@ export interface CreateServiceEngagementInput {
   estimatedDate?: string | null;
   estimatedNotes?: string;
   status?: EngagementStatus;
+  preferredPaymentMethod?: PaymentMethodId | null;
   package: CreateEngagementPackageInput;
   deposit?: CreatePaymentExpectationInput;
   balance?: CreatePaymentExpectationInput;
@@ -208,6 +211,7 @@ export interface UpdateServiceEngagementInput {
   estimatedDate?: string | null;
   estimatedNotes?: string;
   status?: EngagementStatus;
+  preferredPaymentMethod?: PaymentMethodId | null;
 }
 
 export interface UpdateEngagementPackageInput {

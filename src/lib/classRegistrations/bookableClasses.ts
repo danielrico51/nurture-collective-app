@@ -1,19 +1,25 @@
 import "server-only";
 
+import { toPublicEventItem } from "@/lib/events/publicEvent";
 import {
   getClassAvailabilityForEvent,
   isOnlineRegistrationEnabled,
 } from "@/lib/classRegistrations/service";
 import { listPublishedEvents } from "@/lib/events/storage";
 import type { ClassAvailability } from "@/types/classRegistration";
-import type { EventItem } from "@/types/event";
+import type { EventItem, PublicEventItem } from "@/types/event";
 
 export type BookableClassListing = {
-  event: EventItem;
+  event: PublicEventItem;
   availability: ClassAvailability;
 };
 
-export const isBookableClassListing = (event: EventItem): boolean =>
+export const isBookableClassListing = (
+  event: Pick<
+    EventItem,
+    "kind" | "status" | "listingStatus" | "registrationMode"
+  >
+): boolean =>
   event.kind === "class" &&
   event.status === "published" &&
   event.listingStatus !== "completed" &&
@@ -25,7 +31,7 @@ export const listBookableClasses = async (): Promise<BookableClassListing[]> => 
 
   const listings = await Promise.all(
     candidates.map(async (event) => ({
-      event,
+      event: toPublicEventItem(event),
       availability: await getClassAvailabilityForEvent(event),
     }))
   );

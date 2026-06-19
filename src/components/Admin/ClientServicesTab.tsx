@@ -7,6 +7,7 @@ import {
   updateClientService,
   updateServiceInvoice,
 } from "@/lib/api/clientsClient";
+import { fetchClientEngagements } from "@/lib/api/scheduleClient";
 import ServiceFeeItemsEditor, {
   createEmptyFeeItemDraft,
   draftsFromFeeItems,
@@ -25,6 +26,7 @@ import type {
   PaymentMethodId,
   ServiceInvoiceStatus,
 } from "@/types/clientService";
+import type { ServiceEngagementWithDetails } from "@/types/serviceEngagement";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -97,6 +99,9 @@ const previewInvoiceAmounts = (draft: InvoiceFormDraft) => {
 
 const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
   const [services, setServices] = useState<ClientServiceWithInvoices[]>([]);
+  const [engagements, setEngagements] = useState<ServiceEngagementWithDetails[]>(
+    []
+  );
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
@@ -138,6 +143,24 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
     setInvoiceApplyProcessingFee(paymentMethodSupportsProcessingFee(invoiceMethod));
   }, [invoiceMethod]);
 
+  const preferredPaymentMethodByServiceId = useMemo(() => {
+    const map = new Map<string, PaymentMethodId>();
+    for (const engagement of engagements) {
+      if (engagement.preferredPaymentMethod) {
+        map.set(engagement.serviceId, engagement.preferredPaymentMethod);
+      }
+    }
+    return map;
+  }, [engagements]);
+
+  useEffect(() => {
+    if (!expandedId) return;
+    const preferred = preferredPaymentMethodByServiceId.get(expandedId);
+    if (preferred) {
+      setInvoiceMethod(preferred);
+    }
+  }, [expandedId, preferredPaymentMethodByServiceId]);
+
   const newInvoicePreview = useMemo(
     () =>
       previewInvoiceAmounts({
@@ -171,8 +194,12 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
       setLoading(true);
     }
     try {
-      const data = await fetchClientServices(clientId);
+      const [data, engagementsData] = await Promise.all([
+        fetchClientServices(clientId),
+        fetchClientEngagements(clientId),
+      ]);
       setServices(data.services);
+      setEngagements(engagementsData.engagements);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not load services");
     } finally {
@@ -1160,6 +1187,18 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                         <h5 className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
                           New invoice
                         </h5>
+                        {preferredPaymentMethodByServiceId.get(service.serviceId) ? (
+                          <p className="text-xs text-nurture-charcoal/60">
+                            Engagement preference:{" "}
+                            {PAYMENT_METHODS.find(
+                              (method) =>
+                                method.id ===
+                                preferredPaymentMethodByServiceId.get(
+                                  service.serviceId
+                                )
+                            )?.label}
+                          </p>
+                        ) : null}
                         <div className="grid gap-3 sm:grid-cols-2">
                           <label className="block">
                             <span className="text-xs text-nurture-charcoal/60">

@@ -39,4 +39,23 @@ describe("validateCreateServiceEngagementInput", () => {
       })
     ).toThrow(ScheduleValidationError);
   });
+
+  it("parses preferred payment method", () => {
+    const input = validateCreateServiceEngagementInput({
+      bookDate: "2026-01-06",
+      package: { clientFeeCents: 540000 },
+      preferredPaymentMethod: "venmo",
+    });
+    expect(input.preferredPaymentMethod).toBe("venmo");
+  });
+
+  it("rejects invalid preferred payment method", () => {
+    expect(() =>
+      validateCreateServiceEngagementInput({
+        bookDate: "2026-01-06",
+        package: { clientFeeCents: 100 },
+        preferredPaymentMethod: "cash",
+      })
+    ).toThrow(ScheduleValidationError);
+  });
 });

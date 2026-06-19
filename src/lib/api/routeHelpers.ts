@@ -368,6 +368,11 @@ export const handleCoverageStorageError = (error: unknown) => {
 
 export const handleEventsStorageError = (error: unknown) => {
   console.error("[events] storage error:", error);
+
+  if (error instanceof Error && error.name === "EventProviderLinkError") {
+    return NextResponse.json({ error: error.message }, { status: 400 });
+  }
+
   const message = getErrorMessage(error);
   const bucket = eventsStorageConfig.bucket;
   const key = eventsStorageConfig.s3Key;

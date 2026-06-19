@@ -23,6 +23,8 @@ import {
   type UpdateScheduleShiftInput,
   type UpdateServiceEngagementInput,
 } from "@/types/serviceEngagement";
+import { isKnownPaymentMethod } from "@/config/paymentMethods";
+import type { PaymentMethodId } from "@/types/clientService";
 
 export class ScheduleValidationError extends Error {
   constructor(message: string) {
@@ -125,6 +127,23 @@ const parseExpectationInput = (
   };
 };
 
+const parsePreferredPaymentMethod = (
+  value: unknown,
+  optional: boolean
+): PaymentMethodId | null | undefined => {
+  if (value === undefined) {
+    return optional ? undefined : null;
+  }
+  if (value === null || value === "") {
+    return null;
+  }
+  const id = String(value).trim();
+  if (!isKnownPaymentMethod(id)) {
+    throw new ScheduleValidationError("Invalid preferredPaymentMethod");
+  }
+  return id;
+};
+
 export const validateCreateServiceEngagementInput = (
   raw: unknown
 ): CreateServiceEngagementInput => {
@@ -165,6 +184,8 @@ export const validateCreateServiceEngagementInput = (
     estimatedDate: parseOptionalIsoDate(body.estimatedDate),
     estimatedNotes: String(body.estimatedNotes ?? "").trim(),
     status,
+    preferredPaymentMethod:
+      parsePreferredPaymentMethod(body.preferredPaymentMethod, true) ?? null,
     package: parsePackageInput(body.package),
     serviceTitle: body.serviceTitle ? String(body.serviceTitle).trim() : undefined,
     linkExistingServiceId: body.linkExistingServiceId
@@ -225,6 +246,10 @@ export const validateUpdateServiceEngagementInput = (
       throw new ScheduleValidationError("Invalid status");
     }
     updates.status = status;
+  }
+  if (body.preferredPaymentMethod !== undefined) {
+    updates.preferredPaymentMethod =
+      parsePreferredPaymentMethod(body.preferredPaymentMethod, false) ?? null;
   }
 
   return updates;

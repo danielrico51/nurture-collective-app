@@ -8,7 +8,9 @@ import {
   updateEngagementPackage,
   updatePaymentExpectation,
 } from "@/lib/api/scheduleClient";
+import { PAYMENT_METHODS } from "@/config/paymentMethods";
 import type { ProviderRecord } from "@/types/provider";
+import type { PaymentMethodId } from "@/types/clientService";
 import type {
   EngagementServiceType,
   ServiceEngagementWithDetails,
@@ -85,6 +87,9 @@ const EngagementEditForm = ({
   const [balanceDueLabel, setBalanceDueLabel] = useState(
     balanceExpectation?.dueLabel ?? ""
   );
+  const [preferredPaymentMethod, setPreferredPaymentMethod] = useState<
+    PaymentMethodId | ""
+  >(engagement.preferredPaymentMethod ?? "");
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -119,6 +124,7 @@ const EngagementEditForm = ({
         primaryProviderId: primaryProviderId || null,
         estimatedDate: estimatedDate || null,
         estimatedNotes,
+        preferredPaymentMethod: preferredPaymentMethod || null,
       });
 
       if (primaryPackage) {
@@ -293,6 +299,23 @@ const EngagementEditForm = ({
             placeholder="B 1/19, ind 2/4"
             className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
           />
+        </label>
+        <label className="block text-sm sm:col-span-2">
+          <span className="font-medium">Preferred payment method</span>
+          <select
+            value={preferredPaymentMethod}
+            onChange={(event) =>
+              setPreferredPaymentMethod(event.target.value as PaymentMethodId | "")
+            }
+            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+          >
+            <option value="">Not specified</option>
+            {PAYMENT_METHODS.map((method) => (
+              <option key={method.id} value={method.id}>
+                {method.label}
+              </option>
+            ))}
+          </select>
         </label>
       </div>
 

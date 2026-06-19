@@ -29,6 +29,12 @@ export interface EventItem {
   capacity?: number;
   waitlistEnabled?: boolean;
   priceCents?: number;
+  /** CRM provider assigned to teach or lead this session (admin only). */
+  providerId?: string | null;
+  /** Per-session provider payout in cents (admin only, not shown publicly). */
+  providerFeeCents?: number | null;
+  /** Per-session platform fee in cents (admin only, not shown publicly). */
+  platformFeeCents?: number | null;
   instructorName?: string;
   instructorEmail?: string;
   faq?: EventFaqItem[];
@@ -63,11 +69,20 @@ export type CreateEventInput = {
   capacity?: number;
   waitlistEnabled?: boolean;
   priceCents?: number;
+  providerId?: string | null;
+  providerFeeCents?: number | null;
+  platformFeeCents?: number | null;
   instructorName?: string;
   instructorEmail?: string;
   faq?: EventFaqItem[];
   slug?: string;
 };
+
+/** Published event shape with admin-only fields removed. */
+export type PublicEventItem = Omit<
+  EventItem,
+  "providerId" | "providerFeeCents" | "platformFeeCents"
+>;
 
 export type UpdateEventInput = Partial<
   Omit<EventItem, "slug" | "createdAt" | "updatedAt">

@@ -13,6 +13,8 @@ import toast from "react-hot-toast";
 interface EventPaymentsPanelProps {
   eventSlug: string;
   priceCents?: number;
+  providerFeeCents?: number | null;
+  platformFeeCents?: number | null;
 }
 
 const PAYMENT_STATUS_LABELS: Record<ClassRegistrationPaymentStatus, string> = {
@@ -30,7 +32,12 @@ const isPaymentRelevant = (registration: ClassRegistration) =>
   registration.paymentStatus === "pending" ||
   registration.paymentStatus === "refunded";
 
-const EventPaymentsPanel = ({ eventSlug, priceCents }: EventPaymentsPanelProps) => {
+const EventPaymentsPanel = ({
+  eventSlug,
+  priceCents,
+  providerFeeCents,
+  platformFeeCents,
+}: EventPaymentsPanelProps) => {
   const [registrations, setRegistrations] = useState<ClassRegistration[]>([]);
   const [loading, setLoading] = useState(true);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
@@ -73,6 +80,20 @@ const EventPaymentsPanel = ({ eventSlug, priceCents }: EventPaymentsPanelProps) 
 
     return { paidCents, pendingCount, unpaidCount };
   }, [registrations]);
+
+  const feeSplitSummary = useMemo(() => {
+    const paidCount = registrations.filter(
+      (registration) => registration.paymentStatus === "paid"
+    ).length;
+    const providerPerSeat = providerFeeCents ?? 0;
+    const platformPerSeat = platformFeeCents ?? 0;
+    return {
+      paidCount,
+      providerTotalCents: paidCount * providerPerSeat,
+      platformTotalCents: paidCount * platformPerSeat,
+      hasSplit: providerPerSeat > 0 || platformPerSeat > 0,
+    };
+  }, [registrations, providerFeeCents, platformFeeCents]);
 
   const handlePaymentStatusChange = async (
     registration: ClassRegistration,
@@ -144,6 +165,25 @@ const EventPaymentsPanel = ({ eventSlug, priceCents }: EventPaymentsPanelProps) 
           </p>
         </div>
       </div>
+
+      {feeSplitSummary.hasSplit ? (
+        <div className="rounded-xl border border-amber-200/80 bg-amber-50/40 p-4">
+          <p className="text-xs font-semibold uppercase tracking-wide text-amber-900/80">
+            Internal fee split
+          </p>
+          <p className="mt-1 text-sm text-nurture-charcoal/70">
+            Per seat: provider {formatEventPrice(providerFeeCents ?? undefined) ?? "$0.00"} ·
+            our fee {formatEventPrice(platformFeeCents ?? undefined) ?? "$0.00"}
+          </p>
+          <p className="mt-2 text-sm font-medium text-nurture-charcoal">
+            From {feeSplitSummary.paidCount} paid registration
+            {feeSplitSummary.paidCount === 1 ? "" : "s"}: provider{" "}
+            {formatEventPrice(feeSplitSummary.providerTotalCents) ?? "$0.00"} ·
+            our fee{" "}
+            {formatEventPrice(feeSplitSummary.platformTotalCents) ?? "$0.00"}
+          </p>
+        </div>
+      ) : null}
 
       {registrations.length === 0 ? (
         <p className="text-sm text-nurture-charcoal/60">
