@@ -18,6 +18,7 @@ export {
   fetchQuickBooksInvoicePaymentLink,
   resolveQuickBooksInvoicePaymentLink,
   sendQuickBooksInvoice,
+  voidQuickBooksInvoice,
 } from "@/lib/integrations/quickbooks/invoices";
 export { createQuickBooksSalesReceipt } from "@/lib/integrations/quickbooks/salesReceipts";
 export { verifyQuickBooksWebhookSignature } from "@/lib/integrations/quickbooks/webhooks";

@@ -23,6 +23,7 @@ const LeadContactEditForm = ({
   disabled = false,
   onSaved,
 }: LeadContactEditFormProps) => {
+  const [expanded, setExpanded] = useState(false);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [name, setName] = useState(lead.name);
@@ -60,12 +61,32 @@ const LeadContactEditForm = ({
       )
       .join(", ") || "—";
 
+  const summaryLine = [
+    lead.name || "Unnamed",
+    lead.email || "No email",
+    lead.phone || null,
+    lead.locationZip || null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const toggleInterest = (interest: SupportInterest) => {
     setSupportInterests((current) =>
       current.includes(interest)
         ? current.filter((item) => item !== interest)
         : [...current, interest]
     );
+  };
+
+  const startEditing = () => {
+    resetForm();
+    setExpanded(true);
+    setEditing(true);
+  };
+
+  const cancelEditing = () => {
+    resetForm();
+    setEditing(false);
   };
 
   const handleSubmit = async (event: React.FormEvent) => {
@@ -84,6 +105,7 @@ const LeadContactEditForm = ({
       toast.success("Contact information updated");
       onSaved(updated);
       setEditing(false);
+      setExpanded(true);
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not save contact info");
     } finally {
@@ -91,210 +113,228 @@ const LeadContactEditForm = ({
     }
   };
 
-  if (!editing) {
+  if (editing) {
     return (
-      <div className="mb-5 rounded-xl border border-nurture-sage/15 bg-white p-4">
-        <div className="flex flex-wrap items-start justify-between gap-3">
+      <form
+        onSubmit={(event) => void handleSubmit(event)}
+        className="mb-5 space-y-4 overflow-hidden rounded-xl border border-nurture-sage/20 bg-white p-4"
+      >
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <p className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
-            Contact information
+            Edit contact information
           </p>
           <button
             type="button"
-            disabled={disabled}
-            onClick={() => {
-              resetForm();
-              setEditing(true);
-            }}
-            className="rounded-full border border-nurture-sage/30 px-3 py-1 text-xs font-medium text-nurture-sage-dark disabled:opacity-50"
+            disabled={saving}
+            onClick={cancelEditing}
+            className="text-xs font-medium text-nurture-charcoal/60 hover:text-nurture-charcoal"
           >
-            Edit
+            Cancel
           </button>
         </div>
-        <dl className="mt-3 grid gap-3 sm:grid-cols-2">
-          <div>
-            <dt className="text-xs text-nurture-charcoal/50">Name</dt>
-            <dd className="text-sm font-medium text-nurture-charcoal">
-              {lead.name || "—"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-nurture-charcoal/50">Email</dt>
-            <dd className="text-sm text-nurture-charcoal/80">{lead.email || "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-nurture-charcoal/50">Phone</dt>
-            <dd className="text-sm text-nurture-charcoal/80">{lead.phone || "—"}</dd>
-          </div>
-          <div>
-            <dt className="text-xs text-nurture-charcoal/50">ZIP</dt>
-            <dd className="text-sm text-nurture-charcoal/80">
-              {lead.locationZip || "—"}
-            </dd>
-          </div>
-          <div>
-            <dt className="text-xs text-nurture-charcoal/50">Maternal stage</dt>
-            <dd className="text-sm text-nurture-charcoal/80">{stageLabel}</dd>
-          </div>
-          <div className="sm:col-span-2">
-            <dt className="text-xs text-nurture-charcoal/50">Support interests</dt>
-            <dd className="text-sm text-nurture-charcoal/80">{interestsLabel}</dd>
-          </div>
-          {lead.challengesSummary ? (
-            <div className="sm:col-span-2">
-              <dt className="text-xs text-nurture-charcoal/50">Challenges / notes</dt>
-              <dd className="mt-0.5 whitespace-pre-wrap text-sm text-nurture-charcoal/80">
-                {lead.challengesSummary}
-              </dd>
+
+        <div className="grid gap-4 sm:grid-cols-2">
+          <label className="block sm:col-span-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Name *
+            </span>
+            <input
+              required
+              value={name}
+              onChange={(event) => setName(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Email
+            </span>
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Phone
+            </span>
+            <input
+              type="tel"
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            />
+          </label>
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Maternal stage
+            </span>
+            <select
+              value={maternalStage}
+              onChange={(event) => setMaternalStage(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            >
+              <option value="">Not specified</option>
+              {MATERNAL_STAGES.map((item) => (
+                <option key={item.value} value={item.value}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              ZIP code
+            </span>
+            <input
+              value={locationZip}
+              onChange={(event) => setLocationZip(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            />
+          </label>
+          <fieldset className="block sm:col-span-2">
+            <legend className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Support interests
+            </legend>
+            <div className="mt-2 flex flex-wrap gap-2">
+              {SUPPORT_INTERESTS.map((item) => {
+                const active = supportInterests.includes(item.value);
+                return (
+                  <button
+                    key={item.value}
+                    type="button"
+                    onClick={() => toggleInterest(item.value)}
+                    className={`rounded-full px-3 py-1 text-xs font-medium transition ${
+                      active
+                        ? "bg-nurture-sage text-white"
+                        : "border border-nurture-sage/25 text-nurture-charcoal/70 hover:bg-nurture-sage/10"
+                    }`}
+                  >
+                    {item.label}
+                  </button>
+                );
+              })}
             </div>
-          ) : null}
-        </dl>
-        {lead.isGuest ? (
-          <p className="mt-3 text-xs text-nurture-charcoal/45">
-            Updates apply to this lead record in the CRM.
-          </p>
-        ) : (
-          <p className="mt-3 text-xs text-nurture-charcoal/45">
-            Updates the lead profile here. Member intake answers in the panel below
-            are unchanged unless updated separately.
-          </p>
-        )}
-      </div>
+          </fieldset>
+          <label className="block sm:col-span-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Challenges / context
+            </span>
+            <textarea
+              rows={3}
+              value={challengesSummary}
+              onChange={(event) => setChallengesSummary(event.target.value)}
+              placeholder="Brief summary for coordinators…"
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            />
+          </label>
+        </div>
+
+        <p className="text-xs text-nurture-charcoal/45">
+          Phone or email is required.
+        </p>
+
+        <button
+          type="submit"
+          disabled={disabled || saving}
+          className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-semibold text-white hover:bg-nurture-sage-dark disabled:opacity-60"
+        >
+          {saving ? "Saving…" : "Save contact info"}
+        </button>
+      </form>
     );
   }
 
   return (
-    <form
-      onSubmit={(event) => void handleSubmit(event)}
-      className="mb-5 space-y-4 rounded-xl border border-nurture-sage/20 bg-white p-4"
-    >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <p className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
-          Edit contact information
-        </p>
-        <button
-          type="button"
-          disabled={saving}
-          onClick={() => {
-            resetForm();
-            setEditing(false);
-          }}
-          className="text-xs font-medium text-nurture-charcoal/60 hover:text-nurture-charcoal"
-        >
-          Cancel
-        </button>
-      </div>
-
-      <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block sm:col-span-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-            Name *
-          </span>
-          <input
-            required
-            value={name}
-            onChange={(event) => setName(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-            Email
-          </span>
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-            Phone
-          </span>
-          <input
-            type="tel"
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-          />
-        </label>
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-            Maternal stage
-          </span>
-          <select
-            value={maternalStage}
-            onChange={(event) => setMaternalStage(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-          >
-            <option value="">Not specified</option>
-            {MATERNAL_STAGES.map((item) => (
-              <option key={item.value} value={item.value}>
-                {item.label}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-            ZIP code
-          </span>
-          <input
-            value={locationZip}
-            onChange={(event) => setLocationZip(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-          />
-        </label>
-        <fieldset className="block sm:col-span-2">
-          <legend className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-            Support interests
-          </legend>
-          <div className="mt-2 flex flex-wrap gap-2">
-            {SUPPORT_INTERESTS.map((item) => {
-              const active = supportInterests.includes(item.value);
-              return (
-                <button
-                  key={item.value}
-                  type="button"
-                  onClick={() => toggleInterest(item.value)}
-                  className={`rounded-full px-3 py-1 text-xs font-medium transition ${
-                    active
-                      ? "bg-nurture-sage text-white"
-                      : "border border-nurture-sage/25 text-nurture-charcoal/70 hover:bg-nurture-sage/10"
-                  }`}
-                >
-                  {item.label}
-                </button>
-              );
-            })}
-          </div>
-        </fieldset>
-        <label className="block sm:col-span-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-            Challenges / context
-          </span>
-          <textarea
-            rows={3}
-            value={challengesSummary}
-            onChange={(event) => setChallengesSummary(event.target.value)}
-            placeholder="Brief summary for coordinators…"
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-          />
-        </label>
-      </div>
-
-      <p className="text-xs text-nurture-charcoal/45">
-        Phone or email is required.
-      </p>
-
+    <div className="mb-5 overflow-hidden rounded-xl border border-nurture-sage/15 bg-white">
       <button
-        type="submit"
-        disabled={disabled || saving}
-        className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-semibold text-white hover:bg-nurture-sage-dark disabled:opacity-60"
+        type="button"
+        onClick={() => setExpanded((current) => !current)}
+        aria-expanded={expanded}
+        className="flex w-full items-start gap-3 px-4 py-3 text-left transition hover:bg-nurture-cream/40"
       >
-        {saving ? "Saving…" : "Save contact info"}
+        <span
+          className="mt-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-nurture-charcoal/45"
+          aria-hidden
+        >
+          {expanded ? "▲" : "▼"}
+        </span>
+        <span className="min-w-0 flex-1 space-y-1">
+          <span className="block text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+            Contact information
+          </span>
+          {!expanded ? (
+            <span className="block truncate text-sm text-nurture-charcoal/75">
+              {summaryLine}
+            </span>
+          ) : null}
+        </span>
       </button>
-    </form>
+
+      {expanded ? (
+        <div className="border-t border-nurture-sage/10 px-4 pb-4 pt-3">
+          <div className="mb-3 flex justify-end">
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={startEditing}
+              className="rounded-full border border-nurture-sage/30 px-3 py-1 text-xs font-medium text-nurture-sage-dark disabled:opacity-50"
+            >
+              Edit
+            </button>
+          </div>
+          <dl className="grid gap-3 sm:grid-cols-2">
+            <div>
+              <dt className="text-xs text-nurture-charcoal/50">Name</dt>
+              <dd className="text-sm font-medium text-nurture-charcoal">
+                {lead.name || "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-nurture-charcoal/50">Email</dt>
+              <dd className="text-sm text-nurture-charcoal/80">
+                {lead.email || "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-nurture-charcoal/50">Phone</dt>
+              <dd className="text-sm text-nurture-charcoal/80">
+                {lead.phone || "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-nurture-charcoal/50">ZIP</dt>
+              <dd className="text-sm text-nurture-charcoal/80">
+                {lead.locationZip || "—"}
+              </dd>
+            </div>
+            <div>
+              <dt className="text-xs text-nurture-charcoal/50">Maternal stage</dt>
+              <dd className="text-sm text-nurture-charcoal/80">{stageLabel}</dd>
+            </div>
+            <div className="sm:col-span-2">
+              <dt className="text-xs text-nurture-charcoal/50">Support interests</dt>
+              <dd className="text-sm text-nurture-charcoal/80">{interestsLabel}</dd>
+            </div>
+            {lead.challengesSummary ? (
+              <div className="sm:col-span-2">
+                <dt className="text-xs text-nurture-charcoal/50">Challenges / notes</dt>
+                <dd className="mt-0.5 whitespace-pre-wrap text-sm text-nurture-charcoal/80">
+                  {lead.challengesSummary}
+                </dd>
+              </div>
+            ) : null}
+          </dl>
+          <p className="mt-3 text-xs text-nurture-charcoal/45">
+            {lead.isGuest
+              ? "Updates apply to this lead record in the CRM."
+              : "Updates the lead profile here. Member intake answers in the panel below are unchanged unless updated separately."}
+          </p>
+        </div>
+      ) : null}
+    </div>
   );
 };
 

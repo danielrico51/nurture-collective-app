@@ -126,3 +126,15 @@ export const sendQuickBooksInvoice = async (
 ): Promise<void> => {
   await quickBooksPost(`/invoice/${invoiceId}/send`, email ? { Email: email } : {});
 };
+
+export const voidQuickBooksInvoice = async (
+  invoice: QuickBooksInvoice
+): Promise<void> => {
+  if (!invoice.Id || invoice.SyncToken == null) {
+    throw new Error("QuickBooks invoice Id and SyncToken are required to void");
+  }
+  await quickBooksPost("/invoice?operation=void", {
+    Id: invoice.Id,
+    SyncToken: invoice.SyncToken,
+  });
+};

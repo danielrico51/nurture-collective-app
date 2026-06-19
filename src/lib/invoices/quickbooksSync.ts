@@ -3,10 +3,16 @@ import "server-only";
 import { serverQuickBooksConfig } from "@/config/quickbooks";
 import { saveInvoice } from "@/lib/client-services/storage";
 import {
+  buildServiceInvoiceQuickBooksLineItems,
+  resolveQuickBooksInvoiceAmounts,
+} from "@/lib/invoices/quickbooksInvoiceAmounts";
+import {
   createQuickBooksInvoice,
   createQuickBooksSalesReceipt,
   ensureQuickBooksCustomer,
+  getQuickBooksInvoice,
   resolveQuickBooksInvoicePaymentLink,
+  voidQuickBooksInvoice,
 } from "@/lib/integrations/quickbooks";
 import { readQuickBooksTokens } from "@/lib/integrations/quickbooks/tokenStorage";
 import { forwardToN8n } from "@/lib/webhooks/n8n";
@@ -17,49 +23,17 @@ import type {
   ServiceInvoiceQuickBooksRef,
 } from "@/types/clientService";
 
-const centsToDollars = (cents: number): number => cents / 100;
-
 export const serviceInvoiceUsesQuickBooksPaymentSync = (
   invoice: ServiceInvoice
 ): boolean =>
   invoice.paymentMethod === "stripe" || invoice.paymentMethod === "quickbooks";
-
-const buildServiceInvoiceQuickBooksLineItems = (input: {
-  invoice: ServiceInvoice;
-  service: ClientService;
-}) => {
-  const lineItems = [
-    {
-      amount: centsToDollars(input.invoice.subtotalCents),
-      description: input.invoice.description || input.service.title,
-      quantity: 1,
-      unitPrice: centsToDollars(input.invoice.subtotalCents),
-      itemId: serverQuickBooksConfig.defaultItemId || undefined,
-    },
-  ];
-
-  if ((input.invoice.processingFeeCents ?? 0) > 0) {
-    const feeLabel =
-      input.invoice.processingFeePercent != null
-        ? `Processing fee (${input.invoice.processingFeePercent}%)`
-        : "Processing fee";
-    lineItems.push({
-      amount: centsToDollars(input.invoice.processingFeeCents),
-      description: feeLabel,
-      quantity: 1,
-      unitPrice: centsToDollars(input.invoice.processingFeeCents),
-      itemId: serverQuickBooksConfig.defaultItemId || undefined,
-    });
-  }
-
-  return lineItems;
-};
 
 const buildQuickBooksInvoiceRef = (
   customerId: string,
   invoiceId: string,
   invoiceNumber: string,
   paymentLink: string | null,
+  amounts: ReturnType<typeof resolveQuickBooksInvoiceAmounts>,
   existing?: ServiceInvoiceQuickBooksRef | null
 ): ServiceInvoiceQuickBooksRef => ({
   ...existing,
@@ -67,9 +41,84 @@ const buildQuickBooksInvoiceRef = (
   invoiceId,
   invoiceNumber,
   paymentLink,
+  syncedSubtotalCents: amounts.subtotalCents,
+  syncedAmountCents: amounts.amountCents,
   syncStatus: "synced",
   lastSyncAt: new Date().toISOString(),
+  lastError: undefined,
 });
+
+const quickBooksTotalCents = (totalAmt: number | undefined): number =>
+  Math.round((totalAmt ?? 0) * 100);
+
+const invoiceFullyUnpaid = (balance: number | undefined, totalAmt: number | undefined): boolean => {
+  if (balance == null || totalAmt == null) return false;
+  return balance >= totalAmt && totalAmt > 0;
+};
+
+const refreshExistingQuickBooksInvoice = async (
+  existing: ServiceInvoiceQuickBooksRef,
+  amounts: ReturnType<typeof resolveQuickBooksInvoiceAmounts>
+): Promise<ServiceInvoiceQuickBooksRef> => {
+  const paymentLink =
+    existing.paymentLink ??
+    (existing.invoiceId
+      ? await resolveQuickBooksInvoicePaymentLink(existing.invoiceId)
+      : null);
+
+  return {
+    ...existing,
+    paymentLink,
+    syncedSubtotalCents: amounts.subtotalCents,
+    syncedAmountCents: amounts.amountCents,
+    syncStatus: "synced",
+    lastSyncAt: new Date().toISOString(),
+    lastError: undefined,
+  };
+};
+
+const voidStaleQuickBooksInvoice = async (
+  invoiceId: string
+): Promise<void> => {
+  try {
+    const qbInvoice = await getQuickBooksInvoice(invoiceId);
+    if (invoiceFullyUnpaid(qbInvoice.Balance, qbInvoice.TotalAmt)) {
+      await voidQuickBooksInvoice(qbInvoice);
+    }
+  } catch (error) {
+    console.warn(
+      "[service-invoices] Could not void stale QuickBooks invoice:",
+      error
+    );
+  }
+};
+
+const shouldReuseQuickBooksInvoice = async (
+  existing: ServiceInvoiceQuickBooksRef,
+  amounts: ReturnType<typeof resolveQuickBooksInvoiceAmounts>
+): Promise<boolean> => {
+  if (!existing.invoiceId || existing.syncStatus !== "synced") {
+    return false;
+  }
+
+  if (
+    existing.syncedAmountCents === amounts.amountCents &&
+    existing.syncedSubtotalCents === amounts.subtotalCents
+  ) {
+    return true;
+  }
+
+  try {
+    const qbInvoice = await getQuickBooksInvoice(existing.invoiceId);
+    const qbTotalCents = quickBooksTotalCents(qbInvoice.TotalAmt);
+    return (
+      qbTotalCents === amounts.amountCents &&
+      (qbInvoice.Balance ?? 0) > 0
+    );
+  } catch {
+    return false;
+  }
+};
 
 const forwardServiceInvoicePaymentToN8n = async (
   input: {
@@ -81,6 +130,8 @@ const forwardServiceInvoicePaymentToN8n = async (
 ): Promise<void> => {
   const webhookUrl = serverQuickBooksConfig.billingWebhookUrl;
   if (!webhookUrl) return;
+
+  const amounts = resolveQuickBooksInvoiceAmounts(input.invoice);
 
   await forwardToN8n(
     webhookUrl,
@@ -101,7 +152,9 @@ const forwardServiceInvoicePaymentToN8n = async (
       payment: {
         provider: payment.provider,
         reference: payment.reference,
-        amountCents: input.invoice.amountCents,
+        amountCents: amounts.amountCents,
+        subtotalCents: amounts.subtotalCents,
+        processingFeeCents: amounts.processingFeeCents,
       },
     }
   );
@@ -114,16 +167,21 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
 }): Promise<ServiceInvoiceQuickBooksRef> => {
   const customerEmail = input.client.email.trim().toLowerCase();
   const existing = input.invoice.quickbooks;
+  const amounts = resolveQuickBooksInvoiceAmounts(input.invoice);
+  const lineItems = buildServiceInvoiceQuickBooksLineItems({
+    invoice: input.invoice,
+    serviceTitle: input.service.title,
+  }).map((item) => ({
+    ...item,
+    itemId: serverQuickBooksConfig.defaultItemId || undefined,
+  }));
 
-  if (existing?.invoiceId && existing.syncStatus === "synced") {
-    const paymentLink =
-      existing.paymentLink ??
-      (await resolveQuickBooksInvoicePaymentLink(existing.invoiceId));
-    return {
-      ...existing,
-      paymentLink,
-      lastSyncAt: new Date().toISOString(),
-    };
+  if (existing?.invoiceId && (await shouldReuseQuickBooksInvoice(existing, amounts))) {
+    return refreshExistingQuickBooksInvoice(existing, amounts);
+  }
+
+  if (existing?.invoiceId) {
+    await voidStaleQuickBooksInvoice(existing.invoiceId);
   }
 
   const displayName =
@@ -136,16 +194,22 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
     email: customerEmail,
   });
 
+  const baseDocNumber = input.invoice.invoiceNumber.slice(0, 21);
+  const docNumber =
+    existing?.invoiceId && existing.syncedAmountCents !== amounts.amountCents
+      ? `${baseDocNumber.slice(0, 18)}-R`.slice(0, 21)
+      : baseDocNumber;
+
   const qbInvoice = await createQuickBooksInvoice({
     customerId: customer.Id,
-    docNumber: input.invoice.invoiceNumber.slice(0, 21),
+    docNumber,
     dueDate: input.invoice.dueDate ?? undefined,
     privateNote: `TNP service invoice ${input.invoice.invoiceId}`,
     customerMemo: input.invoice.description || input.service.title,
     billEmail: customerEmail,
     allowOnlineCreditCardPayment: true,
     allowOnlineAchPayment: true,
-    lineItems: buildServiceInvoiceQuickBooksLineItems(input),
+    lineItems,
   });
 
   const paymentLink = await resolveQuickBooksInvoicePaymentLink(qbInvoice.Id);
@@ -153,9 +217,10 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
   return buildQuickBooksInvoiceRef(
     customer.Id,
     qbInvoice.Id,
-    qbInvoice.DocNumber ?? input.invoice.invoiceNumber,
+    qbInvoice.DocNumber ?? docNumber,
     paymentLink,
-    existing
+    amounts,
+    existing?.invoiceId ? { ...existing, invoiceId: undefined } : existing
   );
 };
 
@@ -170,6 +235,7 @@ const syncServiceInvoiceSalesReceiptDirect = async (input: {
     return existing;
   }
 
+  const amounts = resolveQuickBooksInvoiceAmounts(input.invoice);
   const customerEmail = input.client.email.trim().toLowerCase();
   const displayName =
     input.client.name?.trim() ||
@@ -190,7 +256,13 @@ const syncServiceInvoiceSalesReceiptDirect = async (input: {
     docNumber: input.invoice.invoiceNumber.slice(0, 21),
     privateNote: `Service invoice ${input.invoice.invoiceNumber}${paymentNote}`,
     customerMemo: input.invoice.description || input.service.title,
-    lineItems: buildServiceInvoiceQuickBooksLineItems(input),
+    lineItems: buildServiceInvoiceQuickBooksLineItems({
+      invoice: input.invoice,
+      serviceTitle: input.service.title,
+    }).map((item) => ({
+      ...item,
+      itemId: serverQuickBooksConfig.defaultItemId || undefined,
+    })),
   });
 
   return {
@@ -198,6 +270,8 @@ const syncServiceInvoiceSalesReceiptDirect = async (input: {
     customerId: customer.Id,
     salesReceiptId: receipt.Id,
     salesReceiptNumber: receipt.DocNumber,
+    syncedSubtotalCents: amounts.subtotalCents,
+    syncedAmountCents: amounts.amountCents,
     syncStatus: "synced",
     lastSyncAt: new Date().toISOString(),
     lastError: undefined,

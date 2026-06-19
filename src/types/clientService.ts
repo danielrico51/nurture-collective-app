@@ -40,6 +40,10 @@ export interface ServiceInvoiceQuickBooksRef {
   salesReceiptNumber?: string;
   /** QBO customer pay URL (InvoiceLink). */
   paymentLink?: string | null;
+  /** Subtotal (before fee) last synced to QuickBooks. */
+  syncedSubtotalCents?: number;
+  /** Total (subtotal + fee) last synced to QuickBooks. */
+  syncedAmountCents?: number;
   syncStatus?: "pending" | "synced" | "failed";
   lastSyncAt?: string;
   lastError?: string;
