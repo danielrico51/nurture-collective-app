@@ -5,6 +5,7 @@ export type AdminAppIcon =
   | "intakes"
   | "leads"
   | "clients"
+  | "providers"
   | "coverage"
   | "blog"
   | "events"
@@ -42,6 +43,15 @@ export const ADMIN_APPS: AdminApp[] = [
     icon: "clients",
   },
   {
+    id: "providers",
+    title: "Providers",
+    description:
+      "Registry of doulas and educators — names, roles, rates, and aliases for schedule matching.",
+    href: "/admin/providers",
+    status: "available",
+    icon: "providers",
+  },
+    {
     id: "coverage",
     title: "Coverage map",
     description: "Plan service regions and ZIP areas for internal use (not shown on the public site).",

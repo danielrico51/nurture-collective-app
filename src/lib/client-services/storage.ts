@@ -107,6 +107,8 @@ export const readClientService = async (
   return {
     ...record,
     feeItems: record.feeItems ?? [],
+    engagementId: record.engagementId ?? null,
+    providerId: record.providerId ?? null,
     storageKey: key,
   };
 };
@@ -273,6 +275,8 @@ export const createClientService = async (
     googleDocUrl: raw.googleDocUrl?.trim() || null,
     status: raw.status ?? "active",
     notes: String(raw.notes ?? "").trim(),
+    engagementId: raw.engagementId ?? null,
+    providerId: raw.providerId ?? null,
     createdAt: now,
     updatedAt: now,
   };
@@ -313,6 +317,10 @@ export const updateClientService = async (
         : existing.googleDocUrl,
     status: raw.status ?? existing.status,
     notes: raw.notes !== undefined ? String(raw.notes).trim() : existing.notes,
+    engagementId:
+      raw.engagementId !== undefined ? raw.engagementId : existing.engagementId,
+    providerId:
+      raw.providerId !== undefined ? raw.providerId : existing.providerId,
     updatedAt: new Date().toISOString(),
   };
 

@@ -112,10 +112,13 @@ export interface ClientDetailResponse {
 
 export interface AdminClientsResponse {
   clients: ClientRecord[];
-  storage?: {
-    deploymentEnvironment: string;
-    scope: string;
-  };
+  storage?: ClientsCrmStorageScope;
+}
+
+/** Shared deployment scope for Client CRM, providers, and service schedule data. */
+export interface ClientsCrmStorageScope {
+  deploymentEnvironment: string;
+  scope: string;
 }
 
 /** How a client first reached us when entered manually (mirrors lead channels). */

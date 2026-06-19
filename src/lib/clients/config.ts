@@ -1,4 +1,5 @@
 import path from "path";
+import type { ClientsCrmStorageScope } from "@/types/client";
 import { resolveDeploymentEnvironment } from "@/lib/storage/deploymentEnvironment";
 
 const normalizePrefix = (value: string): string =>
@@ -52,6 +53,22 @@ export const clientsCrmStorageConfig = {
     resolveDeploymentEnvironment()
   ),
 } as const;
+
+/** API/UI payload describing where CRM-linked data (clients, providers, schedule) is stored. */
+export const getClientsCrmStorageScope = (): ClientsCrmStorageScope => ({
+  deploymentEnvironment: resolveDeploymentEnvironment(),
+  scope: resolveClientsCrmPrefix(),
+});
+
+export const describeClientsCrmStorageScope = (
+  storage: ClientsCrmStorageScope,
+  options?: { prodLabel?: string }
+): string => {
+  if (storage.deploymentEnvironment === "prod") {
+    return options?.prodLabel ?? "Production data";
+  }
+  return `Isolated ${storage.deploymentEnvironment} scope (${storage.scope}) — changes here do not affect prod.`;
+};
 
 export const isClientsCrmStorageConfigured = (): boolean =>
   clientsCrmStorageConfig.useLocalStorage || Boolean(getClientsCrmBucket());

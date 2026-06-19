@@ -1,99 +1,81 @@
 "use client";
 
 import ClientsCrmStorageNote from "@/components/Admin/ClientsCrmStorageNote";
-import ClientDetailPanel from "@/components/Admin/ClientDetailPanel";
-import ClientManualForm from "@/components/Admin/ClientManualForm";
-import { fetchAdminClients } from "@/lib/api/clientsClient";
-import { fetchTeamMembers } from "@/lib/api/tasksClient";
-import type { ClientRecord, ClientStatus, AdminClientsResponse } from "@/types/client";
-import { CLIENT_STATUSES } from "@/types/client";
-import type { TeamMember } from "@/types/teamMember";
+import ProviderDetailPanel from "@/components/Admin/ProviderDetailPanel";
+import ProviderManualForm from "@/components/Admin/ProviderManualForm";
+import ProviderPayoutReport from "@/components/Admin/ProviderPayoutReport";
+import {
+  fetchAdminProviders,
+  PROVIDER_ROLE_LABELS,
+  PROVIDER_STATUS_LABELS,
+} from "@/lib/api/providersClient";
+import type {
+  AdminProvidersResponse,
+  ProviderRecord,
+  ProviderRole,
+  ProviderStatus,
+} from "@/types/provider";
+import { PROVIDER_ROLES, PROVIDER_STATUSES } from "@/types/provider";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
-interface ClientQueueProps {
-  coordinatorId: string;
-  coordinatorEmail: string;
-}
-
 type QueueFilter = "active" | "archived" | "all";
-type StatusFilter = "all" | ClientStatus;
+type RoleFilter = "all" | ProviderRole;
+type StatusFilter = "all" | ProviderStatus;
 
-const statusLabel = (status: ClientStatus): string =>
-  status.charAt(0).toUpperCase() + status.slice(1);
-
-const STATUS_BADGE: Record<ClientStatus, string> = {
-  prospect: "bg-amber-100 text-amber-800",
-  onboarding: "bg-sky-100 text-sky-800",
+const STATUS_BADGE: Record<ProviderStatus, string> = {
   active: "bg-emerald-100 text-emerald-800",
   inactive: "bg-nurture-cream text-nurture-charcoal/70",
   archived: "bg-nurture-charcoal/10 text-nurture-charcoal/60",
 };
 
-const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
-  const [clients, setClients] = useState<ClientRecord[]>([]);
-  const [members, setMembers] = useState<TeamMember[]>([]);
-  const [membersLoading, setMembersLoading] = useState(true);
+const ProviderQueue = () => {
+  const [providers, setProviders] = useState<ProviderRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [queueFilter, setQueueFilter] = useState<QueueFilter>("active");
+  const [roleFilter, setRoleFilter] = useState<RoleFilter>("all");
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showManualForm, setShowManualForm] = useState(false);
   const [storageScope, setStorageScope] = useState<
-    AdminClientsResponse["storage"] | null
+    AdminProvidersResponse["storage"] | null
   >(null);
 
-  const loadClients = useCallback(async (options?: { background?: boolean }) => {
+  const loadProviders = useCallback(async (options?: { background?: boolean }) => {
     const background = options?.background ?? false;
     setError(null);
-    if (!background) {
-      setLoading(true);
-    }
+    if (!background) setLoading(true);
     try {
-      const data = await fetchAdminClients(true);
-      setClients(data.clients);
+      const data = await fetchAdminProviders(true);
+      setProviders(data.providers);
       setStorageScope(data.storage ?? null);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not load clients");
+      setError(err instanceof Error ? err.message : "Could not load providers");
     } finally {
-      if (!background) {
-        setLoading(false);
-      }
-    }
-  }, []);
-
-  const loadMembers = useCallback(async () => {
-    setMembersLoading(true);
-    try {
-      const data = await fetchTeamMembers();
-      setMembers(data.members);
-    } catch {
-      // Non-fatal: coordinator assignment just shows unassigned.
-    } finally {
-      setMembersLoading(false);
+      if (!background) setLoading(false);
     }
   }, []);
 
   useEffect(() => {
-    void loadClients();
-    void loadMembers();
-  }, [loadClients, loadMembers]);
+    void loadProviders();
+  }, [loadProviders]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
-    return clients.filter((client) => {
-      if (queueFilter === "active" && client.archivedAt) return false;
-      if (queueFilter === "archived" && !client.archivedAt) return false;
-      if (statusFilter !== "all" && client.status !== statusFilter) return false;
+    return providers.filter((provider) => {
+      if (queueFilter === "active" && provider.archivedAt) return false;
+      if (queueFilter === "archived" && !provider.archivedAt) return false;
+      if (statusFilter !== "all" && provider.status !== statusFilter) return false;
+      if (roleFilter !== "all" && !provider.roles.includes(roleFilter)) return false;
       if (query) {
         const haystack = [
-          client.name,
-          client.email,
-          client.phone,
-          client.clientId,
-          client.tags.join(" "),
+          provider.displayName,
+          ...provider.aliases,
+          provider.email,
+          provider.phone,
+          provider.notes,
         ]
           .join(" ")
           .toLowerCase();
@@ -101,27 +83,21 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
       }
       return true;
     });
-  }, [clients, queueFilter, statusFilter, search]);
-
-  const handleCreated = () => {
-    setShowManualForm(false);
-    void loadClients();
-    toast.success("Client list refreshed");
-  };
+  }, [providers, queueFilter, roleFilter, statusFilter, search]);
 
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="font-serif text-2xl font-semibold text-nurture-charcoal">
-            Client CRM
+            Providers
           </h1>
           <p className="mt-1 max-w-xl text-sm text-nurture-charcoal/65">
-            Manage active clients, link leads and app users, and track
-            proposals, billing, and communications in one place.
+            Registry of postpartum and birth doulas, backup coverage, and educators.
+            Used by the service schedule and linked to client engagements.
             <ClientsCrmStorageNote
               storage={storageScope}
-              prodLabel="Production client data"
+              prodLabel="Production provider data"
             />
           </p>
         </div>
@@ -131,11 +107,11 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
             onClick={() => setShowManualForm((current) => !current)}
             className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-semibold text-white transition hover:bg-nurture-sage-dark"
           >
-            {showManualForm ? "Close" : "Add client"}
+            {showManualForm ? "Close" : "Add provider"}
           </button>
           <button
             type="button"
-            onClick={() => void loadClients({ background: true })}
+            onClick={() => void loadProviders({ background: true })}
             className="rounded-full border border-nurture-sage/30 px-4 py-2 text-sm font-medium text-nurture-sage-dark transition hover:bg-nurture-sage/10"
           >
             Refresh
@@ -144,115 +120,127 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
       </div>
 
       {showManualForm ? (
-        <ClientManualForm
-          members={members}
-          membersLoading={membersLoading}
-          defaultCoordinatorId={coordinatorId}
-          onCreated={handleCreated}
+        <ProviderManualForm
+          onCreated={() => {
+            setShowManualForm(false);
+            void loadProviders();
+            toast.success("Provider list refreshed");
+          }}
           onCancel={() => setShowManualForm(false)}
         />
+      ) : null}
+
+      {!loading && !error ? (
+        <ProviderPayoutReport providers={providers.filter((p) => !p.archivedAt)} />
       ) : null}
 
       <div className="flex flex-wrap items-center gap-3">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
-          placeholder="Search name, email, phone, tag…"
+          placeholder="Search name, alias, email…"
           className="min-w-[220px] flex-1 rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
         />
         <select
           value={queueFilter}
           onChange={(event) => setQueueFilter(event.target.value as QueueFilter)}
-          className="rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+          className="rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
         >
           <option value="active">Active</option>
           <option value="archived">Archived</option>
           <option value="all">All</option>
         </select>
         <select
+          value={roleFilter}
+          onChange={(event) => setRoleFilter(event.target.value as RoleFilter)}
+          className="rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+        >
+          <option value="all">All roles</option>
+          {PROVIDER_ROLES.map((role) => (
+            <option key={role} value={role}>
+              {PROVIDER_ROLE_LABELS[role]}
+            </option>
+          ))}
+        </select>
+        <select
           value={statusFilter}
           onChange={(event) =>
             setStatusFilter(event.target.value as StatusFilter)
           }
-          className="rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+          className="rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
         >
           <option value="all">All statuses</option>
-          {CLIENT_STATUSES.map((status) => (
+          {PROVIDER_STATUSES.map((status) => (
             <option key={status} value={status}>
-              {statusLabel(status)}
+              {PROVIDER_STATUS_LABELS[status]}
             </option>
           ))}
         </select>
         <span className="text-xs text-nurture-charcoal/50">
-          {filtered.length} of {clients.length}
+          {filtered.length} of {providers.length}
         </span>
       </div>
 
       {loading ? (
-        <p className="text-sm text-nurture-charcoal/60">Loading clients…</p>
+        <p className="text-sm text-nurture-charcoal/60">Loading providers…</p>
       ) : error ? (
         <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
           {error}
         </div>
       ) : filtered.length === 0 ? (
         <p className="text-sm text-nurture-charcoal/60">
-          No clients match these filters.
+          No providers match these filters.
         </p>
       ) : (
         <ul className="space-y-3">
-          {filtered.map((client) => {
-            const expanded = expandedId === client.clientId;
+          {filtered.map((provider) => {
+            const expanded = expandedId === provider.providerId;
             return (
               <li
-                key={client.clientId}
+                key={provider.providerId}
                 className="overflow-hidden rounded-2xl border border-nurture-sage/20 bg-white shadow-sm"
               >
                 <button
                   type="button"
                   onClick={() =>
-                    setExpandedId(expanded ? null : client.clientId)
+                    setExpandedId(expanded ? null : provider.providerId)
                   }
                   className="flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left"
                 >
                   <div className="min-w-0">
                     <div className="flex flex-wrap items-center gap-2">
                       <span className="font-semibold text-nurture-charcoal">
-                        {client.name || "Unnamed client"}
+                        {provider.displayName}
                       </span>
-                      {client.leadId ? (
+                      {provider.aliases.length > 1 ? (
                         <span className="rounded-full bg-nurture-sage/10 px-2 py-0.5 text-[11px] font-medium text-nurture-sage-dark">
-                          Lead linked
+                          {provider.aliases.length - 1} alias
+                          {provider.aliases.length - 1 === 1 ? "" : "es"}
                         </span>
                       ) : null}
-                      {client.cognitoSub ? (
-                        <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-medium text-sky-800">
-                          App user
-                        </span>
-                      ) : null}
-                      {client.archivedAt ? (
+                      {provider.archivedAt ? (
                         <span className="rounded-full bg-nurture-charcoal/10 px-2 py-0.5 text-[11px] font-medium text-nurture-charcoal/60">
                           Archived
                         </span>
                       ) : null}
                     </div>
                     <p className="mt-1 truncate text-sm text-nurture-charcoal/60">
-                      {client.email || client.phone || "No contact info"}
+                      {provider.roles.map((role) => PROVIDER_ROLE_LABELS[role]).join(" · ") ||
+                        "No roles"}
+                      {provider.email ? ` · ${provider.email}` : ""}
                     </p>
                   </div>
                   <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE[client.status]}`}
+                    className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE[provider.status]}`}
                   >
-                    {statusLabel(client.status)}
+                    {PROVIDER_STATUS_LABELS[provider.status]}
                   </span>
                 </button>
-
                 {expanded ? (
                   <div className="border-t border-nurture-sage/15 bg-nurture-cream/30 px-5 py-5">
-                    <ClientDetailPanel
-                      clientId={client.clientId}
-                      members={members}
-                      membersLoading={membersLoading}
-                      onChanged={() => void loadClients({ background: true })}
+                    <ProviderDetailPanel
+                      provider={provider}
+                      onChanged={() => void loadProviders({ background: true })}
                     />
                   </div>
                 ) : null}
@@ -261,12 +249,8 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
           })}
         </ul>
       )}
-
-      <p className="text-xs text-nurture-charcoal/40">
-        Signed in as {coordinatorEmail || coordinatorId}
-      </p>
     </div>
   );
 };
 
-export default ClientQueue;
+export default ProviderQueue;

@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import {
   clientsCrmStorageConfig,
+  describeClientsCrmStorageScope,
+  getClientsCrmStorageScope,
   getClientsStorageMode,
   resolveClientsCrmPrefix,
 } from "@/lib/clients/config";
@@ -58,5 +60,29 @@ describe("clientsCrmStorageConfig", () => {
   it("exposes deploymentEnvironment on the config object", () => {
     expect(clientsCrmStorageConfig.deploymentEnvironment).toBeTruthy();
     expect(clientsCrmStorageConfig.s3Prefix.endsWith("/")).toBe(true);
+  });
+});
+
+describe("getClientsCrmStorageScope", () => {
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
+  it("returns the active deployment scope for API responses", () => {
+    vi.stubEnv("AMPLIFY_BRANCH", "dev");
+    vi.stubEnv("NODE_ENV", "production");
+    expect(getClientsCrmStorageScope()).toEqual({
+      deploymentEnvironment: "dev",
+      scope: "crm/dev/",
+    });
+  });
+
+  it("describes non-prod scopes as isolated from prod", () => {
+    expect(
+      describeClientsCrmStorageScope({
+        deploymentEnvironment: "dev",
+        scope: "crm/dev/",
+      })
+    ).toContain("do not affect prod");
   });
 });

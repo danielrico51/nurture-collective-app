@@ -124,6 +124,10 @@ export interface ClientService {
   googleDocUrl: string | null;
   status: ClientServiceStatus;
   notes: string;
+  /** Linked service schedule engagement (when booked via schedule CRM). */
+  engagementId: string | null;
+  /** Provider registry id — `providerName` kept for display / legacy rows. */
+  providerId: string | null;
   createdAt: string;
   updatedAt: string;
   storageKey?: string;
@@ -146,6 +150,8 @@ export interface CreateClientServiceInput {
   googleDocUrl?: string | null;
   status?: ClientServiceStatus;
   notes?: string;
+  engagementId?: string | null;
+  providerId?: string | null;
 }
 
 export interface UpdateClientServiceInput {
@@ -158,6 +164,8 @@ export interface UpdateClientServiceInput {
   googleDocUrl?: string | null;
   status?: ClientServiceStatus;
   notes?: string;
+  engagementId?: string | null;
+  providerId?: string | null;
 }
 
 export interface CreateServiceInvoiceInput {

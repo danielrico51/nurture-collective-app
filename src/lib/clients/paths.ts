@@ -1,4 +1,4 @@
-import { clientsCrmStorageConfig } from "@/lib/clients/config";
+import { resolveClientsCrmPrefix } from "@/lib/clients/config";
 
 const CLIENTS_SEGMENT = "clients/";
 const INDEX_SEGMENT = "index/";
@@ -15,7 +15,7 @@ export const normalizeEmailKey = (email: string): string =>
 
 /** Deployment-scoped CRM root, e.g. `crm/dev/` or `crm/` on prod. */
 export const buildClientsCrmRootPrefix = (): string =>
-  clientsCrmStorageConfig.s3Prefix;
+  resolveClientsCrmPrefix();
 
 export const buildClientRootPrefix = (clientId: string): string =>
   `${buildClientsCrmRootPrefix()}${CLIENTS_SEGMENT}client_id=${sanitizeClientSegment(clientId)}/`;

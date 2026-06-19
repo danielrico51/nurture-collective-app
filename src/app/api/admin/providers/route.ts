@@ -3,10 +3,12 @@ import {
   handleClientsStorageError,
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
-import { createManualClient, listClients } from "@/lib/clients/storage";
 import { getClientsCrmStorageScope } from "@/lib/clients/config";
-import { ClientValidationError } from "@/lib/clients/manualClient";
-import { CoordinatorAssignmentError } from "@/lib/leads/coordinatorAssignment";
+import {
+  createProvider,
+  listProviders,
+  ProviderValidationError,
+} from "@/lib/providers/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -17,11 +19,9 @@ export async function GET(request: NextRequest) {
   try {
     const includeArchived =
       request.nextUrl.searchParams.get("includeArchived") === "true";
-    const clients = (await listClients()).filter(
-      (client) => includeArchived || !client.archivedAt
-    );
+    const providers = await listProviders({ includeArchived });
     return NextResponse.json({
-      clients,
+      providers,
       storage: getClientsCrmStorageScope(),
     });
   } catch (error) {
@@ -31,7 +31,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   const auth = await requireManagementAuth(request);
-  if (auth.error || !auth.user) return auth.error;
+  if (auth.error) return auth.error;
 
   let body: unknown;
   try {
@@ -41,16 +41,10 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const client = await createManualClient(body, {
-      id: auth.user.sub,
-      email: auth.user.email,
-    });
-    return NextResponse.json({ client }, { status: 201 });
+    const provider = await createProvider(body);
+    return NextResponse.json({ provider }, { status: 201 });
   } catch (error) {
-    if (error instanceof ClientValidationError) {
-      return NextResponse.json({ error: error.message }, { status: 400 });
-    }
-    if (error instanceof CoordinatorAssignmentError) {
+    if (error instanceof ProviderValidationError) {
       return NextResponse.json({ error: error.message }, { status: 400 });
     }
     return handleClientsStorageError(error);

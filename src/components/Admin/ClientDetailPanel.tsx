@@ -1,6 +1,7 @@
 "use client";
 
 import ClientCommunicationsTab from "@/components/Admin/ClientCommunicationsTab";
+import ClientScheduleTab from "@/components/Admin/ClientScheduleTab";
 import ClientServicesTab from "@/components/Admin/ClientServicesTab";
 import LeadCoordinatorSelect from "@/components/Admin/LeadCoordinatorSelect";
 import ProposalPanel from "@/components/Admin/ProposalPanel";
@@ -30,6 +31,7 @@ interface ClientDetailPanelProps {
 type DetailTab =
   | "overview"
   | "proposals"
+  | "schedule"
   | "services"
   | "communications"
   | "notes";
@@ -81,6 +83,7 @@ const ClientDetailPanel = ({
   const [profileTags, setProfileTags] = useState("");
   const [profileNotesSummary, setProfileNotesSummary] = useState("");
   const [editingProfile, setEditingProfile] = useState(false);
+  const [scheduleCount, setScheduleCount] = useState(0);
 
   const syncProfileFromClient = useCallback((client: ClientDetailResponse["client"]) => {
     setProfileName(client.name);
@@ -257,6 +260,7 @@ const ClientDetailPanel = ({
   const tabLabel = (item: DetailTab): string => {
     if (item === "overview") return "Overview";
     if (item === "proposals") return `Proposals (${proposals.length})`;
+    if (item === "schedule") return `Schedule (${scheduleCount})`;
     if (item === "services") return `Services (${services.length})`;
     if (item === "communications")
       return `Communications (${communications.length})`;
@@ -270,6 +274,7 @@ const ClientDetailPanel = ({
           [
             "overview",
             "proposals",
+            "schedule",
             "services",
             "communications",
             "notes",
@@ -592,6 +597,15 @@ const ClientDetailPanel = ({
           </p>
           <ProposalPanel clientId={client.clientId} signerEmail={client.email} />
         </div>
+      ) : tab === "schedule" ? (
+        <ClientScheduleTab
+          clientId={client.clientId}
+          onCountChange={setScheduleCount}
+          onChanged={() => {
+            void load({ silent: true });
+            onChanged();
+          }}
+        />
       ) : tab === "services" ? (
         <ClientServicesTab
           clientId={client.clientId}
