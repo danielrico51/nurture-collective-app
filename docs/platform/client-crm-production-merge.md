@@ -20,6 +20,15 @@ Amplify builds `main` with `APP_ENV=prod` automatically (`amplify.yml` uses `AWS
 | **dev** | `nurture-clients-dev-{accountId}` | `crm/dev/` | `crm/dev/clients/client_id=…/profile/…/client.json` |
 | **main** | `nurture-clients-prod-{accountId}` | `crm/` (legacy root) | `crm/clients/client_id=…/profile/…/client.json` |
 
+Providers and service schedule (engagements, shifts, payouts) use the **same bucket and prefix** as Client CRM:
+
+| Branch | Providers path | Schedule path |
+|--------|----------------|---------------|
+| **dev** | `crm/dev/providers/` | `crm/dev/clients/client_id=…/engagements/…` |
+| **main** | `crm/providers/` | `crm/clients/client_id=…/engagements/…` |
+
+**No new Amplify env vars** are required for providers or schedule — they reuse `NURTURE_CLIENTS_BUCKET` and `APP_ENV` / branch detection from `amplify.yml`.
+
 Dev test clients **do not** appear on production when:
 
 - `main` uses the **prod** bucket (`NURTURE_CLIENTS_BUCKET=nurture-clients-prod-*`)
@@ -28,7 +37,33 @@ Dev test clients **do not** appear on production when:
 
 **Gap:** proposals (`clients/…`) and billing orders (`billing/orders/…`) are **not** under `crm/{env}/` — isolation relies on **separate buckets**. Never point the dev branch at the prod bucket.
 
-Admin UI shows scope via `GET /api/admin/clients` → `storage.deploymentEnvironment` and `storage.scope`.
+Admin UI shows scope via `GET /api/admin/clients`, `GET /api/admin/providers`, and client engagement APIs → `storage.deploymentEnvironment` and `storage.scope`.
+
+### Verify main branch env (Amplify Console or CLI)
+
+Check that required keys **exist** on the `main` branch (values are secrets — verify in Console):
+
+```bash
+aws amplify get-branch --app-id d9588bqvrp5xs --branch-name main \
+  --query 'branch.environmentVariables' --output json \
+  | jq '[
+      "APP_ENV",
+      "NURTURE_CLIENTS_BUCKET",
+      "BILLING_SYNC_MODE",
+      "CLIENT_COMMS_EMAIL_FROM",
+      "CLIENT_INVOICE_ACCESS_SECRET",
+      "QBO_ENVIRONMENT",
+      "QBO_CLIENT_ID",
+      "QBO_CLIENT_SECRET",
+      "QBO_DEFAULT_ITEM_ID",
+      "RESEND_API_KEY",
+      "NEXT_PUBLIC_APP_URL"
+    ] | map({key: ., set: (. as $k | input | has($k))})' -
+```
+
+Expected on **main**: `APP_ENV=prod`, prod clients bucket, `BILLING_SYNC_MODE=direct`, QBO production credentials connected after deploy.
+
+**Must be absent on main:** `CLIENTS_CRM_S3_PREFIX=crm/dev/`, dev bucket name, `APP_ENV=dev`.
 
 ## Amplify env — main branch
 
@@ -62,6 +97,7 @@ QBO_DEFAULT_ITEM_ID=<prod-service-item-id> \
 | `CLIENT_COMMS_EMAIL_FROM` | Invoice + communications sender |
 | `CLIENT_INVOICE_ACCESS_SECRET` | Signed PDF download links (unique per branch) |
 | `CLIENT_INVOICE_VENMO_HANDLE` / `CLIENT_INVOICE_ZELLE_EMAIL` | Manual payment instructions |
+| `CLIENT_INVOICE_ACH_*` | Bank wire details in invoice emails (QuickBooks payment method) |
 | `GIFT_CARD_EMAIL_*`, `RESEND_API_KEY` | Email delivery (app-level) |
 | `QBO_CLIENT_ID`, `QBO_CLIENT_SECRET`, `QBO_ENVIRONMENT=production` | QuickBooks API |
 | `QBO_REDIRECT_URI` | `https://www.nesting-place.com/api/integrations/quickbooks/oauth/callback` |
@@ -106,6 +142,18 @@ npm run migrate:clients
 
 Never run migration against the dev bucket unless intentionally migrating dev test data.
 
+### Optional: seed provider registry (prod bucket only)
+
+Import doula names from exported schedule HTML into `crm/providers/`:
+
+```bash
+APP_ENV=prod NURTURE_CLIENTS_BUCKET=nurture-clients-prod-{accountId} \
+  npm run seed:providers -- --dry-run
+# Then, if output looks correct:
+SEED_PROVIDERS_ALLOW_PROD=true APP_ENV=prod NURTURE_CLIENTS_BUCKET=nurture-clients-prod-{accountId} \
+  npm run seed:providers
+```
+
 ## Cognito clients group
 
 If not deployed:
@@ -120,11 +168,15 @@ Adds confirmed app sign-ups to the `clients` Cognito group.
 
 1. **Redeploy main** in Amplify Console after env var changes.
 2. **Admin → Client CRM** — banner shows production scope / `crm/`; bucket is `nurture-clients-prod-*`.
-3. **Dev branch** — same admin page shows `crm/dev/` scope; dev test clients must not appear on main.
-4. Create or convert a client on **main**; add a service; send Venmo/Zelle invoice → email + PDF link.
-5. Connect QuickBooks on main → send QuickBooks invoice → pay link in email (requires QBO Payments).
-6. **Proposals tab** — shows **Experimental** badge; preview-only, not client-facing.
-7. Regression: leads, classes, gift cards still work (see [events-classes-production-merge.md](./events-classes-production-merge.md)).
+3. **Admin → Providers** — banner shows production scope; list loads; payout report section works.
+4. **Admin → Clients → Schedule** — book engagement, edit details, add shifts and payout batch.
+5. **Admin → Leads** — expand lead → edit contact info → save; list header updates.
+6. **Admin → Clients → Services** — payment methods: Venmo, Zelle, Debit/Credit/ACH/Bank Wire (QuickBooks), Stripe (no standalone ACH option).
+7. **Dev branch** — same admin pages show `crm/dev/` scope; dev test data must not appear on main.
+8. Create or convert a client on **main**; add a service; send Venmo/Zelle invoice → email + PDF link.
+9. Connect QuickBooks on main → send QuickBooks invoice → pay link in email (requires QBO Payments).
+10. **Proposals tab** — shows **Experimental** badge; preview-only, not client-facing.
+11. Regression: leads, classes, gift cards still work (see [events-classes-production-merge.md](./events-classes-production-merge.md)).
 
 ## Rollback
 
