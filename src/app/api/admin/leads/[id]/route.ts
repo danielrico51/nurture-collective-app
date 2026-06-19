@@ -9,8 +9,13 @@ import {
   archiveLead,
   getLeadDetail,
   restoreLead,
+  updateLeadContactInfo,
   updateLeadStatus,
 } from "@/lib/leads/storage";
+import {
+  LeadContactValidationError,
+  validateUpdateLeadContactInput,
+} from "@/lib/leads/contactUpdate";
 import type { LeadStatus } from "@/types/lead";
 import { LEAD_STATUSES } from "@/types/lead";
 
@@ -42,6 +47,13 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     coordinatorId?: string;
     archive?: boolean;
     restore?: boolean;
+    name?: string;
+    email?: string;
+    phone?: string;
+    locationZip?: string | null;
+    maternalStage?: string | null;
+    supportInterests?: string[];
+    challengesSummary?: string;
   };
   try {
     body = await request.json();
@@ -73,9 +85,27 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ lead });
     }
 
+    const hasContactUpdate =
+      body.name !== undefined ||
+      body.email !== undefined ||
+      body.phone !== undefined ||
+      body.locationZip !== undefined ||
+      body.maternalStage !== undefined ||
+      body.supportInterests !== undefined ||
+      body.challengesSummary !== undefined;
+
+    if (hasContactUpdate) {
+      const contact = validateUpdateLeadContactInput(body);
+      const lead = await updateLeadContactInfo(params.id, contact);
+      return NextResponse.json({ lead });
+    }
+
     return NextResponse.json({ error: "No update specified" }, { status: 400 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Update failed";
+    if (error instanceof LeadContactValidationError) {
+      return NextResponse.json({ error: message }, { status: 400 });
+    }
     if (error instanceof CoordinatorAssignmentError) {
       return NextResponse.json({ error: message }, { status: 400 });
     }

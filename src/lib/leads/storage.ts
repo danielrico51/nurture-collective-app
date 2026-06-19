@@ -408,6 +408,18 @@ export const updateLead = async (
     phone: input.phone !== undefined ? input.phone : existing.phone,
     locationZip:
       input.locationZip !== undefined ? input.locationZip : existing.locationZip,
+    maternalStage:
+      input.maternalStage !== undefined
+        ? input.maternalStage
+        : existing.maternalStage,
+    supportInterests:
+      input.supportInterests !== undefined
+        ? input.supportInterests
+        : existing.supportInterests,
+    challengesSummary:
+      input.challengesSummary !== undefined
+        ? input.challengesSummary
+        : existing.challengesSummary,
     coordinatorId: input.coordinatorId !== undefined
       ? input.coordinatorId
       : existing.coordinatorId,
@@ -447,5 +459,14 @@ export const updateLeadStatus = async (
 /** Sync contact fields from Client CRM without changing lead status. */
 export const updateLeadContactInfo = async (
   leadId: string,
-  input: Pick<UpdateLeadInput, "name" | "email" | "phone" | "locationZip">
+  input: Pick<
+    UpdateLeadInput,
+    | "name"
+    | "email"
+    | "phone"
+    | "locationZip"
+    | "maternalStage"
+    | "supportInterests"
+    | "challengesSummary"
+  >
 ): Promise<LeadRecord> => updateLead(leadId, input);

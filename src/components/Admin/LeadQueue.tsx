@@ -1,6 +1,7 @@
 "use client";
 
 import ConversationAdminPanel from "@/components/Admin/ConversationAdminPanel";
+import LeadContactEditForm from "@/components/Admin/LeadContactEditForm";
 import LeadCoordinatorSelect from "@/components/Admin/LeadCoordinatorSelect";
 import ManualLeadForm from "@/components/Admin/ManualLeadForm";
 import ProposalPanel from "@/components/Admin/ProposalPanel";
@@ -826,6 +827,18 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
                         }
                       />
                     </div>
+
+                    <LeadContactEditForm
+                      lead={lead}
+                      disabled={savingId === lead.leadId}
+                      onSaved={(updated) => {
+                        setLeads((current) =>
+                          current.map((item) =>
+                            item.leadId === updated.leadId ? updated : item
+                          )
+                        );
+                      }}
+                    />
 
                     <div className="mb-5 flex flex-wrap gap-2">
                       {!lead.archivedAt ? (

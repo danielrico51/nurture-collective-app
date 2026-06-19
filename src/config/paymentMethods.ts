@@ -23,13 +23,8 @@ export const PAYMENT_METHODS: PaymentMethodDefinition[] = [
     manualConfirmation: true,
   },
   {
-    id: "ach",
-    label: "ACH / Bank transfer",
-    manualConfirmation: true,
-  },
-  {
     id: "quickbooks",
-    label: "QuickBooks (card / debit)",
+    label: "Debit/Credit/ACH/Bank Wire (QuickBooks)",
     usesQuickBooks: true,
   },
   {

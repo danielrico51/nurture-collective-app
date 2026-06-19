@@ -81,6 +81,13 @@ export const updateAdminLead = async (
     coordinatorId?: string;
     archive?: boolean;
     restore?: boolean;
+    name?: string;
+    email?: string;
+    phone?: string;
+    locationZip?: string | null;
+    maternalStage?: string | null;
+    supportInterests?: string[];
+    challengesSummary?: string;
   }
 ): Promise<{ lead: LeadRecord }> => {
   const response = await fetch(`/api/admin/leads/${encodeURIComponent(leadId)}`, {

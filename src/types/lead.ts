@@ -114,6 +114,9 @@ export interface UpdateLeadInput {
   email?: string;
   phone?: string;
   locationZip?: string | null;
+  maternalStage?: string | null;
+  supportInterests?: string[];
+  challengesSummary?: string;
   coordinatorId?: string;
   coordinatorEmail?: string;
   archivedAt?: string | null;

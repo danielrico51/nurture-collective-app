@@ -1,6 +1,7 @@
 "use client";
 
 import ClientsCrmStorageNote from "@/components/Admin/ClientsCrmStorageNote";
+import EngagementEditForm from "@/components/Admin/EngagementEditForm";
 import EngagementOperationsPanel from "@/components/Admin/EngagementOperationsPanel";
 import {
   createClientEngagement,
@@ -56,6 +57,7 @@ const ClientScheduleTab = ({
   const [showForm, setShowForm] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
   const [storageScope, setStorageScope] = useState<ClientsCrmStorageScope | null>(
     null
   );
@@ -417,9 +419,10 @@ const ClientScheduleTab = ({
               >
                 <button
                   type="button"
-                  onClick={() =>
-                    setExpandedId(expanded ? null : engagement.engagementId)
-                  }
+                  onClick={() => {
+                    setExpandedId(expanded ? null : engagement.engagementId);
+                    if (expanded) setEditingId(null);
+                  }}
                   className="flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left"
                 >
                   <div>
@@ -455,7 +458,7 @@ const ClientScheduleTab = ({
 
                 {expanded ? (
                   <div className="space-y-4 border-t border-nurture-sage/15 bg-nurture-cream/30 px-5 py-5">
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap items-center gap-2">
                       {(["booked", "active", "completed", "cancelled"] as EngagementStatus[]).map(
                         (status) => (
                           <button
@@ -469,8 +472,31 @@ const ClientScheduleTab = ({
                           </button>
                         )
                       )}
+                      {editingId !== engagement.engagementId ? (
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => setEditingId(engagement.engagementId)}
+                          className="rounded-full border border-nurture-sage/30 px-3 py-1 text-xs font-medium text-nurture-sage-dark disabled:opacity-50"
+                        >
+                          Edit details
+                        </button>
+                      ) : null}
                     </div>
 
+                    {editingId === engagement.engagementId ? (
+                      <EngagementEditForm
+                        clientId={clientId}
+                        engagement={engagement}
+                        providers={providers}
+                        onSaved={async () => {
+                          await load();
+                          onChanged?.();
+                        }}
+                        onCancel={() => setEditingId(null)}
+                      />
+                    ) : (
+                      <>
                     {engagement.packages.map((pkg) => (
                       <div
                         key={pkg.packageId}
@@ -543,6 +569,8 @@ const ClientScheduleTab = ({
                         ))}
                       </div>
                     ) : null}
+                      </>
+                    )}
 
                     <EngagementOperationsPanel
                       clientId={clientId}

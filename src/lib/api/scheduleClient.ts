@@ -254,3 +254,8 @@ export const parseDollarsToCents = (value: string): number | null => {
   if (!Number.isFinite(amount)) return null;
   return Math.round(amount * 100);
 };
+
+export const formatCentsToDollars = (cents: number | null | undefined): string => {
+  if (cents == null || cents === 0) return "";
+  return String(cents / 100);
+};
