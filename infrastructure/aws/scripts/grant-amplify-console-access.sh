@@ -154,6 +154,44 @@ main() {
       --policy-arn "arn:aws:iam::aws:policy/AdministratorAccess-Amplify"
   fi
 
+  log "Attaching IAMUserChangePassword (required for first console login password change)"
+  run aws iam attach-user-policy \
+    --user-name "$iam_user" \
+    --policy-arn "arn:aws:iam::aws:policy/IAMUserChangePassword"
+
+  log "Attaching AmplifyBackendDeployFullAccess (branch/backend deploy from console)"
+  run aws iam attach-user-policy \
+    --user-name "$iam_user" \
+    --policy-arn "arn:aws:iam::aws:policy/service-role/AmplifyBackendDeployFullAccess"
+
+  local cdk_ssm_policy
+  cdk_ssm_policy="$(jq -n \
+    --arg account "$account_id" \
+    '{
+      Version: "2012-10-17",
+      Statement: [
+        {
+          Effect: "Allow",
+          Action: [
+            "ssm:GetParameter",
+            "ssm:GetParameters",
+            "ssm:GetParametersByPath"
+          ],
+          Resource: ("arn:aws:ssm:*:" + $account + ":parameter/cdk-bootstrap/*")
+        },
+        {
+          Effect: "Allow",
+          Action: "ssm:DescribeParameters",
+          Resource: "*"
+        }
+      ]
+    }')"
+  log "Ensuring CDK bootstrap SSM read policy"
+  run aws iam put-user-policy \
+    --user-name "$iam_user" \
+    --policy-name "NurtureCdkBootstrapRead" \
+    --policy-document "$cdk_ssm_policy"
+
   local created_login_profile=false
   if aws iam get-login-profile --user-name "$iam_user" >/dev/null 2>&1; then
     log "Console login profile already exists (password unchanged)"
