@@ -18,6 +18,90 @@ const formatDate = (value: string): string => {
   return Number.isNaN(date.getTime()) ? "—" : date.toLocaleString();
 };
 
+const formatShortDate = (value: string): string => {
+  const date = new Date(value);
+  return Number.isNaN(date.getTime())
+    ? "—"
+    : date.toLocaleDateString(undefined, {
+        month: "short",
+        day: "numeric",
+        year: "numeric",
+      });
+};
+
+const statusClass = (status: ClientCommunication["status"]): string => {
+  if (status === "failed") return "text-red-600";
+  if (status === "sent") return "text-emerald-700";
+  return "text-nurture-charcoal/60";
+};
+
+function CommunicationHistoryItem({
+  comm,
+  expanded,
+  onToggle,
+}: {
+  comm: ClientCommunication;
+  expanded: boolean;
+  onToggle: () => void;
+}) {
+  return (
+    <li className="rounded-xl border border-nurture-sage/15 bg-white overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        aria-expanded={expanded}
+        className="flex w-full items-start gap-3 px-3 py-2.5 text-left transition hover:bg-nurture-cream/40"
+      >
+        <span
+          className="mt-0.5 shrink-0 text-[10px] font-semibold uppercase tracking-wide text-nurture-charcoal/45"
+          aria-hidden
+        >
+          {expanded ? "▲" : "▼"}
+        </span>
+        <span className="min-w-0 flex-1 space-y-1">
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
+            <span className="text-[10px] font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+              {comm.channel} · {comm.direction}
+            </span>
+            <span
+              className={`text-[10px] font-semibold uppercase tracking-wide ${statusClass(comm.status)}`}
+            >
+              {comm.status}
+            </span>
+            <span className="text-[10px] text-nurture-charcoal/40">
+              {formatShortDate(comm.createdAt)}
+            </span>
+          </span>
+          <span className="block truncate text-sm font-medium text-nurture-charcoal">
+            {comm.subject || "(No subject)"}
+          </span>
+          {!expanded && comm.body ? (
+            <span className="block truncate text-xs text-nurture-charcoal/55">
+              {comm.body.replace(/\s+/g, " ").trim()}
+            </span>
+          ) : null}
+        </span>
+      </button>
+
+      {expanded ? (
+        <div className="border-t border-nurture-sage/10 px-3 pb-3 pt-2">
+          <p className="whitespace-pre-wrap text-sm text-nurture-charcoal/75">
+            {comm.body}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-nurture-charcoal/50">
+            <span>To {comm.to}</span>
+            <span>{formatDate(comm.createdAt)}</span>
+            {comm.sentByEmail ? <span>by {comm.sentByEmail}</span> : null}
+          </div>
+          {comm.error ? (
+            <p className="mt-2 text-xs text-red-600">{comm.error}</p>
+          ) : null}
+        </div>
+      ) : null}
+    </li>
+  );
+}
+
 const ClientCommunicationsTab = ({
   clientId,
   defaultEmail,
@@ -28,6 +112,7 @@ const ClientCommunicationsTab = ({
   const [to, setTo] = useState(defaultEmail);
   const [subject, setSubject] = useState("");
   const [bodyText, setBodyText] = useState("");
+  const [expandedCommId, setExpandedCommId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -170,43 +255,36 @@ const ClientCommunicationsTab = ({
           No communications logged yet.
         </p>
       ) : (
-        <ul className="space-y-3">
-          {comms.map((comm) => (
-            <li
-              key={comm.id}
-              className="rounded-2xl border border-nurture-sage/15 bg-white p-4"
-            >
-              <div className="flex flex-wrap items-center justify-between gap-2 text-xs text-nurture-charcoal/50">
-                <span className="font-semibold uppercase tracking-wide">
-                  {comm.channel} · {comm.direction}
-                </span>
-                <span
-                  className={
-                    comm.status === "failed"
-                      ? "font-semibold text-red-600"
-                      : "text-emerald-700"
-                  }
-                >
-                  {comm.status}
-                </span>
-              </div>
-              <p className="mt-2 text-sm font-semibold text-nurture-charcoal">
-                {comm.subject}
-              </p>
-              <p className="mt-1 whitespace-pre-wrap text-sm text-nurture-charcoal/75">
-                {comm.body}
-              </p>
-              <div className="mt-2 flex flex-wrap gap-4 text-xs text-nurture-charcoal/50">
-                <span>To {comm.to}</span>
-                <span>{formatDate(comm.createdAt)}</span>
-                {comm.sentByEmail ? <span>by {comm.sentByEmail}</span> : null}
-              </div>
-              {comm.error ? (
-                <p className="mt-2 text-xs text-red-600">{comm.error}</p>
-              ) : null}
-            </li>
-          ))}
-        </ul>
+        <div className="space-y-2">
+          <div className="flex items-center justify-between gap-2">
+            <h4 className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+              History ({comms.length})
+            </h4>
+            {expandedCommId ? (
+              <button
+                type="button"
+                onClick={() => setExpandedCommId(null)}
+                className="text-xs font-medium text-nurture-sage-dark hover:underline"
+              >
+                Collapse all
+              </button>
+            ) : null}
+          </div>
+          <ul className="space-y-1.5">
+            {comms.map((comm) => (
+              <CommunicationHistoryItem
+                key={comm.id}
+                comm={comm}
+                expanded={expandedCommId === comm.id}
+                onToggle={() =>
+                  setExpandedCommId((current) =>
+                    current === comm.id ? null : comm.id
+                  )
+                }
+              />
+            ))}
+          </ul>
+        </div>
       )}
     </div>
   );
