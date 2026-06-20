@@ -15,6 +15,8 @@ import {
 } from "@/lib/api/scheduleClient";
 import { PAYMENT_METHODS } from "@/config/paymentMethods";
 import { fetchAdminProviders } from "@/lib/api/providersClient";
+import type { ScheduleTourBookDraft } from "@/tour/clientsScheduleTourDemo";
+import { useClientsScheduleTourActions } from "@/tour/useClientsScheduleTourActions";
 import type { PaymentMethodId } from "@/types/clientService";
 import type { ProviderRecord } from "@/types/provider";
 import type { ClientsCrmStorageScope } from "@/types/client";
@@ -60,6 +62,7 @@ const ClientScheduleTab = ({
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [showForm, setShowForm] = useState(false);
+  const [tourBookDemo, setTourBookDemo] = useState(false);
   const [saving, setSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -110,7 +113,7 @@ const ClientScheduleTab = ({
     void load();
   }, [load]);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setBookDate(new Date().toISOString().slice(0, 10));
     setEstimatedDate("");
     setEstimatedNotes("");
@@ -126,7 +129,34 @@ const ClientScheduleTab = ({
     setBalanceDueDate("");
     setBalanceDueLabel("");
     setPreferredPaymentMethod("");
-  };
+  }, []);
+
+  const applyBookDraft = useCallback((draft: ScheduleTourBookDraft) => {
+    setBookDate(draft.bookDate);
+    setEstimatedDate(draft.estimatedDate);
+    setEstimatedNotes(draft.estimatedNotes);
+    setPrimaryProviderId(draft.primaryProviderId);
+    setScheduleYear(draft.scheduleYear);
+    setClientFee(draft.clientFee);
+    setHoursTotal(draft.hoursTotal);
+    setSchedulePattern(draft.schedulePattern);
+    setDoulaFee(draft.doulaFee);
+    setDepositAmount(draft.depositAmount);
+    setDepositPaidAt(draft.depositPaidAt);
+    setBalanceAmount(draft.balanceAmount);
+    setBalanceDueDate(draft.balanceDueDate);
+    setBalanceDueLabel(draft.balanceDueLabel);
+    setPreferredPaymentMethod(draft.preferredPaymentMethod);
+  }, []);
+
+  useClientsScheduleTourActions({
+    engagements,
+    setShowForm,
+    setExpandedId,
+    setTourBookDemo,
+    applyBookDraft,
+    resetForm,
+  });
 
   const handleCreate = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -169,6 +199,7 @@ const ClientScheduleTab = ({
       });
       toast.success("Engagement created — linked service and billing record added");
       setShowForm(false);
+      setTourBookDemo(false);
       resetForm();
       await load();
       onChanged?.();
@@ -217,22 +248,13 @@ const ClientScheduleTab = ({
     }
   };
 
-  if (loading) {
-    return <p className="text-sm text-nurture-charcoal/60">Loading schedule…</p>;
-  }
-
-  if (error) {
-    return (
-      <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-        {error}
-      </div>
-    );
-  }
-
   return (
-    <div className="space-y-5">
+    <div id="tour-schedule" className="space-y-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm text-nurture-charcoal/65">
+        <p
+          id="tour-schedule-intro"
+          className="text-sm text-nurture-charcoal/65"
+        >
           Book postpartum engagements with package details, deposit/balance schedule,
           visit shifts, provider payouts, and a linked service for invoicing.
           <ClientsCrmStorageNote
@@ -241,6 +263,7 @@ const ClientScheduleTab = ({
           />
         </p>
         <button
+          id="tour-schedule-book"
           type="button"
           onClick={() => setShowForm((current) => !current)}
           className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-semibold text-white"
@@ -251,13 +274,22 @@ const ClientScheduleTab = ({
 
       {showForm ? (
         <form
+          id="tour-schedule-book-form"
           onSubmit={(event) => void handleCreate(event)}
           className="space-y-4 rounded-2xl border border-nurture-sage/20 bg-white p-5"
         >
           <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
             New engagement
           </h3>
-          <div className="grid gap-4 sm:grid-cols-2">
+
+          {tourBookDemo ? (
+            <p className="rounded-xl border border-amber-200/80 bg-amber-50/50 px-3 py-2 text-xs text-nurture-charcoal/75">
+              Tour demo data is pre-filled below. Close the form or edit before
+              saving a real engagement.
+            </p>
+          ) : null}
+
+          <div id="tour-schedule-form-dates" className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm">
               <span className="font-medium">Book date</span>
               <input
@@ -289,6 +321,9 @@ const ClientScheduleTab = ({
                 className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
               />
             </label>
+          </div>
+
+          <div id="tour-schedule-form-provider">
             <label className="block text-sm">
               <span className="font-medium">Primary provider</span>
               <select
@@ -304,6 +339,9 @@ const ClientScheduleTab = ({
                 ))}
               </select>
             </label>
+          </div>
+
+          <div id="tour-schedule-form-package" className="grid gap-4 sm:grid-cols-2">
             <label className="block text-sm">
               <span className="font-medium">Client fee ($)</span>
               <input
@@ -341,7 +379,10 @@ const ClientScheduleTab = ({
                 className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
               />
             </label>
-            <label className="block text-sm sm:col-span-2">
+          </div>
+
+          <div id="tour-schedule-form-notes">
+            <label className="block text-sm">
               <span className="font-medium">Estimated notes</span>
               <input
                 value={estimatedNotes}
@@ -352,7 +393,10 @@ const ClientScheduleTab = ({
             </label>
           </div>
 
-          <fieldset className="rounded-xl border border-nurture-sage/15 p-4">
+          <fieldset
+            id="tour-schedule-form-payments"
+            className="rounded-xl border border-nurture-sage/15 p-4"
+          >
             <legend className="px-1 text-sm font-semibold text-nurture-charcoal">
               Client payments (optional)
             </legend>
@@ -420,28 +464,38 @@ const ClientScheduleTab = ({
             </div>
           </fieldset>
 
-          <button
-            type="submit"
-            disabled={saving}
-            className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
-          >
-            {saving ? "Saving…" : "Create engagement"}
-          </button>
+          <div id="tour-schedule-form-actions">
+            <button
+              type="submit"
+              disabled={saving}
+              className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-semibold text-white disabled:opacity-60"
+            >
+              {saving ? "Saving…" : "Create engagement"}
+            </button>
+          </div>
         </form>
       ) : null}
 
-      {engagements.length === 0 ? (
-        <p className="text-sm text-nurture-charcoal/60">
-          No engagements yet. Book one to replace a spreadsheet row.
-        </p>
-      ) : (
-        <ul className="space-y-3">
-          {engagements.map((engagement) => {
+      <div id="tour-schedule-engagement-list">
+        {loading ? (
+          <p className="text-sm text-nurture-charcoal/60">Loading schedule…</p>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        ) : engagements.length === 0 ? (
+          <p className="text-sm text-nurture-charcoal/60">
+            No engagements yet. Book one to replace a spreadsheet row.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {engagements.map((engagement, index) => {
             const expanded = expandedId === engagement.engagementId;
             const primaryPackage = engagement.packages[0];
             return (
               <li
                 key={engagement.engagementId}
+                id={index === 0 ? "tour-schedule-first-engagement" : undefined}
                 className="overflow-hidden rounded-2xl border border-nurture-sage/20 bg-white shadow-sm"
               >
                 <button
@@ -491,7 +545,12 @@ const ClientScheduleTab = ({
                 </button>
 
                 {expanded ? (
-                  <div className="space-y-4 border-t border-nurture-sage/15 bg-nurture-cream/30 px-5 py-5">
+                  <div
+                    id={
+                      index === 0 ? "tour-schedule-engagement-detail" : undefined
+                    }
+                    className="space-y-4 border-t border-nurture-sage/15 bg-nurture-cream/30 px-5 py-5"
+                  >
                     <div className="flex flex-wrap items-center gap-2">
                       {(["booked", "active", "completed", "cancelled"] as EngagementStatus[]).map(
                         (status) => (
@@ -637,8 +696,9 @@ const ClientScheduleTab = ({
               </li>
             );
           })}
-        </ul>
-      )}
+          </ul>
+        )}
+      </div>
     </div>
   );
 };

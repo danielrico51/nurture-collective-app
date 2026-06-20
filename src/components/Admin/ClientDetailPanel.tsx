@@ -18,6 +18,7 @@ import type {
 } from "@/types/client";
 import { CLIENT_STATUSES } from "@/types/client";
 import type { TeamMember } from "@/types/teamMember";
+import type { ClientTourDetailTab } from "@/tour/clientsTourDemo";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -25,6 +26,7 @@ interface ClientDetailPanelProps {
   clientId: string;
   members: TeamMember[];
   membersLoading?: boolean;
+  tourRequestedTab?: ClientTourDetailTab | null;
   onChanged: () => void;
 }
 
@@ -35,6 +37,12 @@ type DetailTab =
   | "services"
   | "communications"
   | "notes";
+
+const TAB_TOUR_IDS: Partial<Record<DetailTab, string>> = {
+  schedule: "tour-clients-tab-schedule",
+  services: "tour-clients-tab-services",
+  communications: "tour-clients-tab-communications",
+};
 
 const formatDate = (value: string | null | undefined): string => {
   if (!value) return "—";
@@ -65,6 +73,7 @@ const ClientDetailPanel = ({
   clientId,
   members,
   membersLoading = false,
+  tourRequestedTab = null,
   onChanged,
 }: ClientDetailPanelProps) => {
   const [detail, setDetail] = useState<ClientDetailResponse | null>(null);
@@ -116,6 +125,12 @@ const ClientDetailPanel = ({
       }
     }
   }, [clientId]);
+
+  useEffect(() => {
+    if (tourRequestedTab) {
+      setTab(tourRequestedTab);
+    }
+  }, [tourRequestedTab]);
 
   useEffect(() => {
     setEditingProfile(false);
@@ -239,25 +254,16 @@ const ClientDetailPanel = ({
     }
   };
 
-  if (loading) {
-    return (
-      <p className="px-1 py-4 text-sm text-nurture-charcoal/60">
-        Loading client…
-      </p>
-    );
-  }
-
-  if (error || !detail) {
-    return (
-      <div className="px-1 py-4 text-sm text-red-600">
-        {error ?? "Client not found"}
-      </div>
-    );
-  }
-
-  const { client, notes, lead, proposals, services, communications } = detail;
-
   const tabLabel = (item: DetailTab): string => {
+    if (!detail) {
+      if (item === "overview") return "Overview";
+      if (item === "proposals") return "Proposals";
+      if (item === "schedule") return "Schedule";
+      if (item === "services") return "Services";
+      if (item === "communications") return "Communications";
+      return "Notes";
+    }
+    const { notes, proposals, services, communications } = detail;
     if (item === "overview") return "Overview";
     if (item === "proposals") return `Proposals (${proposals.length})`;
     if (item === "schedule") return `Schedule (${scheduleCount})`;
@@ -267,50 +273,41 @@ const ClientDetailPanel = ({
     return `Notes (${notes.length})`;
   };
 
-  return (
-    <div className="space-y-5">
-      <div className="flex flex-wrap items-center gap-2 border-b border-nurture-sage/15 pb-2">
-        {(
-          [
-            "overview",
-            "proposals",
-            "schedule",
-            "services",
-            "communications",
-            "notes",
-          ] as DetailTab[]
-        ).map((item) => (
-          <button
-            key={item}
-            type="button"
-            onClick={() => setTab(item)}
-            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
-              tab === item
-                ? "bg-nurture-sage text-white"
-                : "bg-nurture-cream text-nurture-charcoal/70 hover:bg-nurture-sage/10"
-            }`}
-          >
-            <span className="inline-flex items-center gap-1.5">
-              {tabLabel(item)}
-              {item === "proposals" ? (
-                <span
-                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
-                    tab === item
-                      ? "bg-white/25 text-white"
-                      : "bg-amber-100 text-amber-800"
-                  }`}
-                >
-                  Experimental
-                </span>
-              ) : null}
-            </span>
-          </button>
-        ))}
-      </div>
+  const detailTabs: DetailTab[] = [
+    "overview",
+    "proposals",
+    "schedule",
+    "services",
+    "communications",
+    "notes",
+  ];
 
-      {tab === "overview" ? (
+  const renderTabContent = () => {
+    if (loading) {
+      return (
+        <p className="px-1 py-4 text-sm text-nurture-charcoal/60">
+          Loading client…
+        </p>
+      );
+    }
+
+    if (error || !detail) {
+      return (
+        <div className="px-1 py-4 text-sm text-red-600">
+          {error ?? "Client not found"}
+        </div>
+      );
+    }
+
+    const { client, notes, lead, proposals, services, communications } = detail;
+
+    if (tab === "overview") {
+      return (
         <div className="space-y-5">
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div
+            id="tour-clients-overview-status"
+            className="grid gap-4 sm:grid-cols-2"
+          >
             <label className="block">
               <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
                 Status
@@ -340,6 +337,7 @@ const ClientDetailPanel = ({
             />
           </div>
 
+          <div id="tour-clients-overview-profile">
           {editingProfile ? (
           <form
             onSubmit={handleProfileSave}
@@ -478,6 +476,7 @@ const ClientDetailPanel = ({
             </div>
           </div>
           )}
+          </div>
 
           <div className="grid gap-4 rounded-2xl border border-nurture-sage/15 bg-white p-4 sm:grid-cols-2">
             <DetailItem label="Client ID" value={client.clientId} />
@@ -486,6 +485,7 @@ const ClientDetailPanel = ({
             <DetailItem label="Updated" value={formatDate(client.updatedAt)} />
           </div>
 
+          <div id="tour-clients-overview-links" className="space-y-4">
           <div className="rounded-2xl border border-nurture-sage/15 bg-white p-4">
             <h4 className="text-sm font-semibold text-nurture-charcoal">
               Linked lead
@@ -577,6 +577,7 @@ const ClientDetailPanel = ({
               </div>
             )}
           </div>
+          </div>
 
           <div>
             <button
@@ -589,7 +590,11 @@ const ClientDetailPanel = ({
             </button>
           </div>
         </div>
-      ) : tab === "proposals" ? (
+      );
+    }
+
+    if (tab === "proposals") {
+      return (
         <div className="space-y-4">
           <p className="rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-2.5 text-xs text-amber-900">
             <span className="font-semibold">Experimental</span> — proposals are
@@ -597,7 +602,11 @@ const ClientDetailPanel = ({
           </p>
           <ProposalPanel clientId={client.clientId} signerEmail={client.email} />
         </div>
-      ) : tab === "schedule" ? (
+      );
+    }
+
+    if (tab === "schedule") {
+      return (
         <ClientScheduleTab
           clientId={client.clientId}
           onCountChange={setScheduleCount}
@@ -606,7 +615,11 @@ const ClientDetailPanel = ({
             onChanged();
           }}
         />
-      ) : tab === "services" ? (
+      );
+    }
+
+    if (tab === "services") {
+      return (
         <ClientServicesTab
           clientId={client.clientId}
           onChanged={() => {
@@ -614,12 +627,19 @@ const ClientDetailPanel = ({
             onChanged();
           }}
         />
-      ) : tab === "communications" ? (
+      );
+    }
+
+    if (tab === "communications") {
+      return (
         <ClientCommunicationsTab
           clientId={client.clientId}
           defaultEmail={client.email}
         />
-      ) : (
+      );
+    }
+
+    return (
         <div className="space-y-4">
           <div className="rounded-2xl border border-nurture-sage/15 bg-white p-4">
             <textarea
@@ -682,7 +702,46 @@ const ClientDetailPanel = ({
             </ul>
           )}
         </div>
-      )}
+    );
+  };
+
+  return (
+    <div id="tour-clients-detail" className="space-y-5">
+      <div
+        id="tour-clients-detail-tabs"
+        className="flex flex-wrap items-center gap-2 border-b border-nurture-sage/15 pb-2"
+      >
+        {detailTabs.map((item) => (
+          <button
+            key={item}
+            id={TAB_TOUR_IDS[item]}
+            type="button"
+            onClick={() => setTab(item)}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+              tab === item
+                ? "bg-nurture-sage text-white"
+                : "bg-nurture-cream text-nurture-charcoal/70 hover:bg-nurture-sage/10"
+            }`}
+          >
+            <span className="inline-flex items-center gap-1.5">
+              {tabLabel(item)}
+              {item === "proposals" ? (
+                <span
+                  className={`rounded-full px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide ${
+                    tab === item
+                      ? "bg-white/25 text-white"
+                      : "bg-amber-100 text-amber-800"
+                  }`}
+                >
+                  Experimental
+                </span>
+              ) : null}
+            </span>
+          </button>
+        ))}
+      </div>
+
+      <div id="tour-clients-detail-content">{renderTabContent()}</div>
     </div>
   );
 };

@@ -115,7 +115,7 @@ const ProviderDetailPanel = ({
   };
 
   return (
-    <div className="space-y-4">
+    <div id="tour-providers-detail" className="space-y-4">
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm">
           <span className="font-medium text-nurture-charcoal">Display name</span>
@@ -203,7 +203,7 @@ const ProviderDetailPanel = ({
           className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
         />
       </label>
-      <div className="flex flex-wrap gap-2">
+      <div id="tour-providers-detail-actions" className="flex flex-wrap gap-2">
         <button
           type="button"
           disabled={saving}

@@ -5,15 +5,32 @@ import {
   PROVIDER_ROLE_LABELS,
 } from "@/lib/api/providersClient";
 import { PROVIDER_ROLES, type ProviderRole } from "@/types/provider";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
+
+export interface ProviderFormDraft {
+  displayName: string;
+  aliases: string;
+  roles: ProviderRole[];
+  email: string;
+  phone: string;
+  defaultHourlyRateCents: number | null;
+  notes: string;
+}
 
 interface ProviderManualFormProps {
   onCreated: () => void;
   onCancel: () => void;
+  initialDraft?: ProviderFormDraft | null;
+  tourDemo?: boolean;
 }
 
-const ProviderManualForm = ({ onCreated, onCancel }: ProviderManualFormProps) => {
+const ProviderManualForm = ({
+  onCreated,
+  onCancel,
+  initialDraft,
+  tourDemo = false,
+}: ProviderManualFormProps) => {
   const [displayName, setDisplayName] = useState("");
   const [aliases, setAliases] = useState("");
   const [roles, setRoles] = useState<ProviderRole[]>(["postpartum_doula"]);
@@ -22,6 +39,21 @@ const ProviderManualForm = ({ onCreated, onCancel }: ProviderManualFormProps) =>
   const [hourlyRate, setHourlyRate] = useState("");
   const [notes, setNotes] = useState("");
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!initialDraft) return;
+    setDisplayName(initialDraft.displayName);
+    setAliases(initialDraft.aliases);
+    setRoles(initialDraft.roles.length ? initialDraft.roles : ["postpartum_doula"]);
+    setEmail(initialDraft.email);
+    setPhone(initialDraft.phone);
+    setHourlyRate(
+      initialDraft.defaultHourlyRateCents != null
+        ? String(initialDraft.defaultHourlyRateCents / 100)
+        : ""
+    );
+    setNotes(initialDraft.notes);
+  }, [initialDraft]);
 
   const toggleRole = (role: ProviderRole) => {
     setRoles((current) =>
@@ -60,14 +92,21 @@ const ProviderManualForm = ({ onCreated, onCancel }: ProviderManualFormProps) =>
 
   return (
     <form
+      id="tour-providers-add-form"
       onSubmit={(event) => void handleSubmit(event)}
       className="rounded-2xl border border-nurture-sage/25 bg-white p-5 shadow-sm space-y-4"
     >
       <h2 className="font-serif text-lg font-semibold text-nurture-charcoal">
         Add provider
       </h2>
+      {tourDemo ? (
+        <p className="rounded-xl border border-amber-200/80 bg-amber-50/50 px-3 py-2 text-xs text-nurture-charcoal/75">
+          Tour demo data is pre-filled below. Cancel or edit before saving a real
+          provider.
+        </p>
+      ) : null}
       <div className="grid gap-4 sm:grid-cols-2">
-        <label className="block text-sm">
+        <label id="tour-providers-form-name" className="block text-sm">
           <span className="font-medium text-nurture-charcoal">Display name</span>
           <input
             required
@@ -77,7 +116,7 @@ const ProviderManualForm = ({ onCreated, onCancel }: ProviderManualFormProps) =>
             placeholder="Paula"
           />
         </label>
-        <label className="block text-sm">
+        <label id="tour-providers-form-aliases" className="block text-sm">
           <span className="font-medium text-nurture-charcoal">Aliases (comma-separated)</span>
           <input
             value={aliases}
@@ -86,24 +125,26 @@ const ProviderManualForm = ({ onCreated, onCancel }: ProviderManualFormProps) =>
             placeholder="LZ/LL, Laura L"
           />
         </label>
-        <label className="block text-sm">
-          <span className="font-medium text-nurture-charcoal">Email</span>
-          <input
-            type="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
-          />
-        </label>
-        <label className="block text-sm">
-          <span className="font-medium text-nurture-charcoal">Phone</span>
-          <input
-            value={phone}
-            onChange={(event) => setPhone(event.target.value)}
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
-          />
-        </label>
-        <label className="block text-sm">
+        <div id="tour-providers-form-contact" className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+          <label className="block text-sm">
+            <span className="font-medium text-nurture-charcoal">Email</span>
+            <input
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+            />
+          </label>
+          <label className="block text-sm">
+            <span className="font-medium text-nurture-charcoal">Phone</span>
+            <input
+              value={phone}
+              onChange={(event) => setPhone(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+            />
+          </label>
+        </div>
+        <label id="tour-providers-form-rate" className="block text-sm">
           <span className="font-medium text-nurture-charcoal">Default hourly rate ($)</span>
           <input
             type="number"
@@ -115,7 +156,7 @@ const ProviderManualForm = ({ onCreated, onCancel }: ProviderManualFormProps) =>
           />
         </label>
       </div>
-      <fieldset>
+      <fieldset id="tour-providers-form-roles">
         <legend className="text-sm font-medium text-nurture-charcoal">Roles</legend>
         <div className="mt-2 flex flex-wrap gap-2">
           {PROVIDER_ROLES.map((role) => (
@@ -142,7 +183,7 @@ const ProviderManualForm = ({ onCreated, onCancel }: ProviderManualFormProps) =>
           className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
         />
       </label>
-      <div className="flex flex-wrap gap-2">
+      <div id="tour-providers-form-actions" className="flex flex-wrap gap-2">
         <button
           type="submit"
           disabled={saving}
