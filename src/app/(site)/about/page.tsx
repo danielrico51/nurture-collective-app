@@ -6,6 +6,7 @@ import { TeamSection } from "@/components/Common/TeamSection";
 import JsonLd from "@/components/Seo/JsonLd";
 import { buildCareStartHref } from "@/config/carePaths";
 import { buildPageMetadata } from "@/config/seo";
+import { aboutStory } from "@/content/aboutStory";
 import { brands } from "@/content/site";
 import { teamMembers } from "@/content/team";
 import { buildAboutPageJsonLd } from "@/lib/seo/jsonLd";
@@ -15,7 +16,7 @@ import type { Metadata } from "next";
 export const metadata: Metadata = buildPageMetadata({
   title: "About The Nesting Place | Maternal Wellness Team",
   description:
-    "Meet The Nesting Place team — experienced birth doulas, postpartum professionals, and lactation consultants supporting families across Northern New Jersey, New York, Connecticut, and Pennsylvania.",
+    "Learn our story and meet Alex Burleigh and Barbara Hayer — leadership supporting families across Northern New Jersey, New York, Connecticut, and Pennsylvania.",
   path: "/about",
   keywords: [
     "The Nesting Place team",
@@ -72,6 +73,28 @@ export default function AboutPage() {
 
             <div className="mt-14">
               <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
+                {aboutStory.title}
+              </h2>
+              <p className="mt-4 text-nurture-charcoal/80">{aboutStory.intro}</p>
+              <div className="mt-8 space-y-8">
+                {aboutStory.chapters.map((chapter) => (
+                  <article
+                    key={chapter.heading}
+                    className="rounded-2xl border border-nurture-sage/15 bg-white p-6 shadow-sm"
+                  >
+                    <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
+                      {chapter.heading}
+                    </h3>
+                    <p className="mt-3 text-sm leading-relaxed text-nurture-charcoal/75">
+                      {chapter.body}
+                    </p>
+                  </article>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-14">
+              <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
                 Our values
               </h2>
               <ul className="mt-8 space-y-6">
@@ -108,7 +131,12 @@ export default function AboutPage() {
           </div>
         </div>
       </section>
-      <TeamSection members={teamMembers} className="bg-nurture-sage/5" />
+      <TeamSection
+        title="Leadership & ownership"
+        subtitle="Alex and Barb lead The Nesting Place today — with our entire team continuing the hands-on care families know and trust."
+        members={teamMembers}
+        className="bg-nurture-sage/5"
+      />
       <CoverageMap
         title="Where we serve families"
         subtitle={brands.nestingPlace.serviceArea}
