@@ -15,6 +15,10 @@ import {
 } from "@/lib/client-services/feeItems";
 import { allocateInvoiceNumber } from "@/lib/client-services/invoiceSequence";
 import {
+  applyClientServiceProviderFields,
+  ClientServiceProviderLinkError,
+} from "@/lib/client-services/providerLink";
+import {
   buildClientServiceKey,
   buildClientServiceListPrefix,
   buildServiceInvoiceKey,
@@ -263,11 +267,25 @@ export const createClientService = async (
   const key = buildClientServiceKey(clientId, serviceId);
   const feeItems = resolveFeeItemsFromInput(raw);
   const totalFeeCents = resolveTotalFeeCentsFromInput(feeItems, raw);
+
+  let providerFields: { providerId: string | null; providerName: string };
+  try {
+    providerFields = await applyClientServiceProviderFields({
+      providerId: raw.providerId,
+      providerName: raw.providerName,
+    });
+  } catch (error) {
+    if (error instanceof ClientServiceProviderLinkError) {
+      throw new ClientServiceValidationError(error.message);
+    }
+    throw error;
+  }
+
   const service: ClientService = {
     serviceId,
     clientId,
     title,
-    providerName: String(raw.providerName ?? "").trim(),
+    providerName: providerFields.providerName,
     serviceDate: parseServiceDate(raw.serviceDate),
     totalFeeCents,
     feeItems,
@@ -276,7 +294,7 @@ export const createClientService = async (
     status: raw.status ?? "active",
     notes: String(raw.notes ?? "").trim(),
     engagementId: raw.engagementId ?? null,
-    providerId: raw.providerId ?? null,
+    providerId: providerFields.providerId,
     createdAt: now,
     updatedAt: now,
   };
@@ -296,13 +314,34 @@ export const updateClientService = async (
   const feeItems = resolveFeeItemsFromInput(raw, existing);
   const totalFeeCents = resolveTotalFeeCentsFromInput(feeItems, raw, existing);
 
+  const providerInputProvided =
+    raw.providerId !== undefined || raw.providerName !== undefined;
+  let providerFields = {
+    providerId: existing.providerId,
+    providerName: existing.providerName,
+  };
+  if (providerInputProvided) {
+    try {
+      providerFields = await applyClientServiceProviderFields({
+        providerId:
+          raw.providerId !== undefined ? raw.providerId : existing.providerId,
+        providerName:
+          raw.providerName !== undefined
+            ? raw.providerName
+            : existing.providerName,
+      });
+    } catch (error) {
+      if (error instanceof ClientServiceProviderLinkError) {
+        throw new ClientServiceValidationError(error.message);
+      }
+      throw error;
+    }
+  }
+
   const updated: ClientService = {
     ...existing,
     title: raw.title !== undefined ? String(raw.title).trim() : existing.title,
-    providerName:
-      raw.providerName !== undefined
-        ? String(raw.providerName).trim()
-        : existing.providerName,
+    providerName: providerFields.providerName,
     serviceDate:
       raw.serviceDate !== undefined
         ? parseServiceDate(raw.serviceDate)
@@ -319,8 +358,7 @@ export const updateClientService = async (
     notes: raw.notes !== undefined ? String(raw.notes).trim() : existing.notes,
     engagementId:
       raw.engagementId !== undefined ? raw.engagementId : existing.engagementId,
-    providerId:
-      raw.providerId !== undefined ? raw.providerId : existing.providerId,
+    providerId: providerFields.providerId,
     updatedAt: new Date().toISOString(),
   };
 
