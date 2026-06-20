@@ -7,6 +7,9 @@ import {
   updateClientService,
   updateServiceInvoice,
 } from "@/lib/api/clientsClient";
+import { fetchClientEngagements } from "@/lib/api/scheduleClient";
+import { fetchAdminProviders } from "@/lib/api/providersClient";
+import { matchProviderByLabel } from "@/lib/providers/matching";
 import ServiceFeeItemsEditor, {
   createEmptyFeeItemDraft,
   draftsFromFeeItems,
@@ -25,6 +28,8 @@ import type {
   PaymentMethodId,
   ServiceInvoiceStatus,
 } from "@/types/clientService";
+import type { ServiceEngagementWithDetails } from "@/types/serviceEngagement";
+import type { ProviderRecord } from "@/types/provider";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -97,13 +102,17 @@ const previewInvoiceAmounts = (draft: InvoiceFormDraft) => {
 
 const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
   const [services, setServices] = useState<ClientServiceWithInvoices[]>([]);
+  const [engagements, setEngagements] = useState<ServiceEngagementWithDetails[]>(
+    []
+  );
+  const [providers, setProviders] = useState<ProviderRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showAddServiceForm, setShowAddServiceForm] = useState(false);
 
   const [serviceTitle, setServiceTitle] = useState("");
-  const [serviceProvider, setServiceProvider] = useState("");
+  const [serviceProviderId, setServiceProviderId] = useState("");
   const [serviceDate, setServiceDate] = useState(
     () => new Date().toISOString().slice(0, 10)
   );
@@ -138,6 +147,54 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
     setInvoiceApplyProcessingFee(paymentMethodSupportsProcessingFee(invoiceMethod));
   }, [invoiceMethod]);
 
+  const providersById = useMemo(() => {
+    const map = new Map<string, ProviderRecord>();
+    for (const provider of providers) {
+      map.set(provider.providerId, provider);
+    }
+    return map;
+  }, [providers]);
+
+  const serviceProviderLabel = useCallback(
+    (service: ClientServiceWithInvoices): string => {
+      if (service.providerId) {
+        return (
+          providersById.get(service.providerId)?.displayName ??
+          service.providerName ??
+          "—"
+        );
+      }
+      return service.providerName || "—";
+    },
+    [providersById]
+  );
+
+  const suggestedProviderForService = useCallback(
+    (service: ClientServiceWithInvoices): ProviderRecord | null => {
+      if (service.providerId || !service.providerName.trim()) return null;
+      return matchProviderByLabel(service.providerName, providers);
+    },
+    [providers]
+  );
+
+  const preferredPaymentMethodByServiceId = useMemo(() => {
+    const map = new Map<string, PaymentMethodId>();
+    for (const engagement of engagements) {
+      if (engagement.preferredPaymentMethod) {
+        map.set(engagement.serviceId, engagement.preferredPaymentMethod);
+      }
+    }
+    return map;
+  }, [engagements]);
+
+  useEffect(() => {
+    if (!expandedId) return;
+    const preferred = preferredPaymentMethodByServiceId.get(expandedId);
+    if (preferred) {
+      setInvoiceMethod(preferred);
+    }
+  }, [expandedId, preferredPaymentMethodByServiceId]);
+
   const newInvoicePreview = useMemo(
     () =>
       previewInvoiceAmounts({
@@ -171,8 +228,14 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
       setLoading(true);
     }
     try {
-      const data = await fetchClientServices(clientId);
+      const [data, engagementsData, providerData] = await Promise.all([
+        fetchClientServices(clientId),
+        fetchClientEngagements(clientId),
+        fetchAdminProviders(),
+      ]);
       setServices(data.services);
+      setEngagements(engagementsData.engagements);
+      setProviders(providerData.providers.filter((provider) => !provider.archivedAt));
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not load services");
     } finally {
@@ -188,7 +251,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
 
   const resetServiceForm = () => {
     setServiceTitle("");
-    setServiceProvider("");
+    setServiceProviderId("");
     setServiceDate(new Date().toISOString().slice(0, 10));
     setServiceFeeItems([createEmptyFeeItemDraft()]);
     setServiceDocUrl("");
@@ -211,7 +274,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
     try {
       await createClientService(clientId, {
         title: serviceTitle.trim(),
-        providerName: serviceProvider.trim(),
+        providerId: serviceProviderId || null,
         serviceDate,
         feeItems,
         googleDocUrl: serviceDocUrl.trim() || null,
@@ -224,6 +287,26 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not add service");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUpdateServiceProvider = async (
+    serviceId: string,
+    providerId: string
+  ) => {
+    setSaving(true);
+    try {
+      await updateClientService(clientId, serviceId, {
+        providerId: providerId || null,
+        ...(providerId ? {} : { providerName: "" }),
+      });
+      toast.success(providerId ? "Provider linked" : "Provider cleared");
+      await load({ silent: true });
+      onChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not update provider");
     } finally {
       setSaving(false);
     }
@@ -719,12 +802,18 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
             <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
               Provider
             </span>
-            <input
-              value={serviceProvider}
-              onChange={(e) => setServiceProvider(e.target.value)}
-              placeholder="Amanda, Rachel…"
+            <select
+              value={serviceProviderId}
+              onChange={(event) => setServiceProviderId(event.target.value)}
               className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-            />
+            >
+              <option value="">Unassigned</option>
+              {providers.map((provider) => (
+                <option key={provider.providerId} value={provider.providerId}>
+                  {provider.displayName}
+                </option>
+              ))}
+            </select>
           </label>
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
@@ -818,7 +907,10 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                         {service.title}
                       </p>
                       <p className="text-xs text-nurture-charcoal/60 mt-0.5">
-                        {service.providerName || "—"} · {service.serviceDate}
+                        {serviceProviderLabel(service)} · {service.serviceDate}
+                        {!service.providerId && service.providerName ? (
+                          <span className="ml-1 text-amber-700">· unlinked</span>
+                        ) : null}
                       </p>
                     </div>
                     <div className="text-right text-xs">
@@ -851,6 +943,59 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                       <p className="text-xs text-nurture-charcoal/70 whitespace-pre-wrap">
                         {service.notes}
                       </p>
+                    ) : null}
+
+                    {!service.engagementId ? (
+                      <div className="rounded-xl border border-nurture-sage/15 bg-white p-3 space-y-2">
+                        <h5 className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+                          Provider
+                        </h5>
+                        <select
+                          value={service.providerId ?? ""}
+                          disabled={saving}
+                          onChange={(event) =>
+                            void handleUpdateServiceProvider(
+                              service.serviceId,
+                              event.target.value
+                            )
+                          }
+                          className="w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage disabled:opacity-60"
+                        >
+                          <option value="">Unassigned</option>
+                          {providers.map((provider) => (
+                            <option
+                              key={provider.providerId}
+                              value={provider.providerId}
+                            >
+                              {provider.displayName}
+                            </option>
+                          ))}
+                        </select>
+                        {!service.providerId && service.providerName ? (
+                          <p className="text-xs text-nurture-charcoal/60">
+                            Legacy label: {service.providerName}
+                          </p>
+                        ) : null}
+                        {(() => {
+                          const suggested = suggestedProviderForService(service);
+                          if (!suggested) return null;
+                          return (
+                            <button
+                              type="button"
+                              disabled={saving}
+                              onClick={() =>
+                                void handleUpdateServiceProvider(
+                                  service.serviceId,
+                                  suggested.providerId
+                                )
+                              }
+                              className="text-xs font-semibold text-nurture-sage-dark hover:underline disabled:opacity-60"
+                            >
+                              Link suggested match: {suggested.displayName}
+                            </button>
+                          );
+                        })()}
+                      </div>
                     ) : null}
 
                     <div>
@@ -1160,6 +1305,18 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                         <h5 className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
                           New invoice
                         </h5>
+                        {preferredPaymentMethodByServiceId.get(service.serviceId) ? (
+                          <p className="text-xs text-nurture-charcoal/60">
+                            Engagement preference:{" "}
+                            {PAYMENT_METHODS.find(
+                              (method) =>
+                                method.id ===
+                                preferredPaymentMethodByServiceId.get(
+                                  service.serviceId
+                                )
+                            )?.label}
+                          </p>
+                        ) : null}
                         <div className="grid gap-3 sm:grid-cols-2">
                           <label className="block">
                             <span className="text-xs text-nurture-charcoal/60">

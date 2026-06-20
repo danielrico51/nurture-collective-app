@@ -81,6 +81,13 @@ export function AdminShell({ children }: AdminShellProps) {
                 return (
                   <Link
                     key={app.id}
+                    id={
+                      app.id === "providers"
+                        ? "tour-admin-nav-providers"
+                        : app.id === "clients"
+                          ? "tour-admin-nav-clients"
+                          : undefined
+                    }
                     href={app.href}
                     className={`flex shrink-0 items-center gap-2 rounded-xl px-3 py-2.5 text-sm font-medium transition lg:px-4 ${
                       active

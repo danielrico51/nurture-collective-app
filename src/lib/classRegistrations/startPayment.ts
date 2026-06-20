@@ -55,8 +55,9 @@ export const startClassRegistrationPayment = async (
       method: "venmo",
       venmoUrl,
       venmoHandle: handle,
+      venmoProfileUrl: classRegistrationPaymentConfig.venmoProfileUrl,
       amountCents: registration.amountCents,
-      message: `Send ${(registration.amountCents / 100).toFixed(2)} via Venmo to @${handle.replace(/^@/, "")} and include your registration note.`,
+      message: `Send ${(registration.amountCents / 100).toFixed(2)} via Venmo to @${handle.replace(/^@/, "")}. Find us at ${classRegistrationPaymentConfig.venmoProfileUrl} and include your registration note.`,
     };
   }
 

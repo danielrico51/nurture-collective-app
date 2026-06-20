@@ -19,6 +19,9 @@ export const clientInvoiceConfig = {
     process.env.CLIENT_INVOICE_VENMO_HANDLE?.trim() ||
     classRegistrationPaymentConfig.venmoHandle ||
     "@thenestingplace",
+  venmoProfileUrl:
+    process.env.CLIENT_INVOICE_VENMO_PROFILE_URL?.trim() ||
+    "https://www.venmo.com/u/thenestingplace",
   zelleHandle:
     process.env.CLIENT_INVOICE_ZELLE_HANDLE?.trim() ||
     process.env.CLIENT_INVOICE_VENMO_HANDLE?.trim() ||

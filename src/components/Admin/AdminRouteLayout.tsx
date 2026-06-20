@@ -3,6 +3,7 @@
 import { AdminAccessDenied } from "@/components/Admin/AdminAccessDenied";
 import { AdminShell } from "@/components/Admin/AdminShell";
 import { useRequireAdmin } from "@/hooks/useRequireAdmin";
+import AdminTourHost from "@/tour/AdminTourHost";
 
 const AdminRouteLayout = ({ children }: { children: React.ReactNode }) => {
   const { ready, loading, denied, groups, refreshGroups, refreshing } =
@@ -30,7 +31,12 @@ const AdminRouteLayout = ({ children }: { children: React.ReactNode }) => {
     return null;
   }
 
-  return <AdminShell>{children}</AdminShell>;
+  return (
+    <AdminShell>
+      <AdminTourHost />
+      {children}
+    </AdminShell>
+  );
 };
 
 export default AdminRouteLayout;

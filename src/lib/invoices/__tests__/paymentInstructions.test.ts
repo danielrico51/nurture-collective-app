@@ -68,6 +68,9 @@ describe("paymentInstructions", () => {
     expect(buildVenmoInvoiceInstructions(invoice, client)).toContain(
       "@thenestingplace"
     );
+    expect(buildVenmoInvoiceInstructions(invoice, client)).toContain(
+      "https://www.venmo.com/u/thenestingplace"
+    );
     expect(buildZelleInvoiceInstructions(
       { ...invoice, paymentMethod: "zelle" },
       client

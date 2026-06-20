@@ -59,6 +59,7 @@ export interface ClassRegistrationPaymentInfo {
   checkoutUrl?: string;
   venmoUrl?: string;
   venmoHandle?: string;
+  venmoProfileUrl?: string;
   amountCents?: number;
   message?: string;
 }

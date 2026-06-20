@@ -2,16 +2,19 @@
 
 import LeadCoordinatorSelect from "@/components/Admin/LeadCoordinatorSelect";
 import { createAdminClient } from "@/lib/api/clientsClient";
+import type { ClientTourFormDraft } from "@/tour/clientsTourDemo";
 import type { ManualClientChannel } from "@/types/client";
 import { MANUAL_CLIENT_CHANNELS } from "@/types/client";
 import type { TeamMember } from "@/types/teamMember";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
 interface ClientManualFormProps {
   members: TeamMember[];
   membersLoading?: boolean;
   defaultCoordinatorId?: string;
+  initialDraft?: ClientTourFormDraft | null;
+  tourDemo?: boolean;
   onCreated: () => void;
   onCancel: () => void;
 }
@@ -31,11 +34,27 @@ const ClientManualForm = ({
   members,
   membersLoading = false,
   defaultCoordinatorId = "",
+  initialDraft,
+  tourDemo = false,
   onCreated,
   onCancel,
 }: ClientManualFormProps) => {
   const [form, setForm] = useState(emptyForm(defaultCoordinatorId));
   const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    if (!initialDraft) return;
+    setForm({
+      name: initialDraft.name,
+      email: initialDraft.email,
+      phone: initialDraft.phone,
+      channel: initialDraft.channel,
+      locationZip: initialDraft.locationZip,
+      tags: initialDraft.tags,
+      notes: initialDraft.notes,
+      coordinatorId: initialDraft.coordinatorId || defaultCoordinatorId,
+    });
+  }, [initialDraft, defaultCoordinatorId]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -66,6 +85,7 @@ const ClientManualForm = ({
 
   return (
     <form
+      id="tour-clients-add-form"
       onSubmit={handleSubmit}
       className="rounded-2xl border border-nurture-sage/20 bg-white p-5 shadow-sm"
     >
@@ -88,8 +108,15 @@ const ClientManualForm = ({
         </button>
       </div>
 
+      {tourDemo ? (
+        <p className="mt-3 rounded-xl border border-amber-200/80 bg-amber-50/50 px-3 py-2 text-xs text-nurture-charcoal/75">
+          Tour demo data is pre-filled below. Cancel or edit before saving a real
+          client.
+        </p>
+      ) : null}
+
       <div className="mt-5 grid gap-4 sm:grid-cols-2">
-        <label className="block sm:col-span-2">
+        <label id="tour-clients-form-name" className="block sm:col-span-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
             Name *
           </span>
@@ -103,35 +130,37 @@ const ClientManualForm = ({
           />
         </label>
 
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-            Email
-          </span>
-          <input
-            type="email"
-            value={form.email}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, email: event.target.value }))
-            }
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-          />
-        </label>
+        <div id="tour-clients-form-contact" className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Email
+            </span>
+            <input
+              type="email"
+              value={form.email}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, email: event.target.value }))
+              }
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            />
+          </label>
 
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-            Phone
-          </span>
-          <input
-            type="tel"
-            value={form.phone}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, phone: event.target.value }))
-            }
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-          />
-        </label>
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Phone
+            </span>
+            <input
+              type="tel"
+              value={form.phone}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, phone: event.target.value }))
+              }
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            />
+          </label>
+        </div>
 
-        <label className="block sm:col-span-2">
+        <label id="tour-clients-form-channel" className="block sm:col-span-2">
           <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
             How they reached us *
           </span>
@@ -154,67 +183,71 @@ const ClientManualForm = ({
           </select>
         </label>
 
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-            ZIP code
-          </span>
-          <input
-            value={form.locationZip}
-            onChange={(event) =>
-              setForm((current) => ({
-                ...current,
-                locationZip: event.target.value,
-              }))
-            }
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-          />
-        </label>
+        <div id="tour-clients-form-meta" className="grid gap-4 sm:col-span-2 sm:grid-cols-2">
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              ZIP code
+            </span>
+            <input
+              value={form.locationZip}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  locationZip: event.target.value,
+                }))
+              }
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            />
+          </label>
 
-        <label className="block">
-          <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-            Tags (comma separated)
-          </span>
-          <input
-            value={form.tags}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, tags: event.target.value }))
-            }
-            placeholder="postpartum, vip"
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-          />
-        </label>
+          <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Tags (comma separated)
+            </span>
+            <input
+              value={form.tags}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, tags: event.target.value }))
+              }
+              placeholder="postpartum, vip"
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            />
+          </label>
 
-        <label className="block sm:col-span-2">
-          <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-            Notes
-          </span>
-          <textarea
-            rows={3}
-            value={form.notes}
-            onChange={(event) =>
-              setForm((current) => ({ ...current, notes: event.target.value }))
-            }
-            placeholder="Context, referral details, or next steps…"
-            className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-          />
-        </label>
+          <label className="block sm:col-span-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Notes
+            </span>
+            <textarea
+              rows={3}
+              value={form.notes}
+              onChange={(event) =>
+                setForm((current) => ({ ...current, notes: event.target.value }))
+              }
+              placeholder="Context, referral details, or next steps…"
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            />
+          </label>
+        </div>
 
-        <LeadCoordinatorSelect
-          value={form.coordinatorId}
-          members={members}
-          membersLoading={membersLoading}
-          onChange={(coordinatorId) =>
-            setForm((current) => ({ ...current, coordinatorId }))
-          }
-          className="sm:col-span-2"
-        />
+        <div id="tour-clients-form-coordinator" className="sm:col-span-2">
+          <LeadCoordinatorSelect
+            value={form.coordinatorId}
+            members={members}
+            membersLoading={membersLoading}
+            onChange={(coordinatorId) =>
+              setForm((current) => ({ ...current, coordinatorId }))
+            }
+            className="sm:col-span-2"
+          />
+        </div>
       </div>
 
       <p className="mt-3 text-xs text-nurture-charcoal/50">
         Provide at least a phone number or email address.
       </p>
 
-      <div className="mt-5 flex flex-wrap gap-3">
+      <div id="tour-clients-form-actions" className="mt-5 flex flex-wrap gap-3">
         <button
           type="submit"
           disabled={saving}

@@ -4,6 +4,10 @@ import ClientsCrmStorageNote from "@/components/Admin/ClientsCrmStorageNote";
 import ProviderDetailPanel from "@/components/Admin/ProviderDetailPanel";
 import ProviderManualForm from "@/components/Admin/ProviderManualForm";
 import ProviderPayoutReport from "@/components/Admin/ProviderPayoutReport";
+import { PROVIDERS_TOUR } from "@/tour/providersTourSteps";
+import { type ProviderTourFormDraft } from "@/tour/providersTourDemo";
+import TourHelpButton from "@/tour/TourHelpButton";
+import { useProvidersTourActions } from "@/tour/useProvidersTourActions";
 import {
   fetchAdminProviders,
   PROVIDER_ROLE_LABELS,
@@ -39,6 +43,9 @@ const ProviderQueue = () => {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showManualForm, setShowManualForm] = useState(false);
+  const [tourFormDraft, setTourFormDraft] = useState<ProviderTourFormDraft | null>(
+    null
+  );
   const [storageScope, setStorageScope] = useState<
     AdminProvidersResponse["storage"] | null
   >(null);
@@ -85,9 +92,19 @@ const ProviderQueue = () => {
     });
   }, [providers, queueFilter, roleFilter, statusFilter, search]);
 
+  useProvidersTourActions({
+    filtered,
+    setShowManualForm,
+    setExpandedId,
+    setTourFormDraft,
+  });
+
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div
+        id="tour-providers-header"
+        className="flex flex-wrap items-start justify-between gap-4"
+      >
         <div>
           <h1 className="font-serif text-2xl font-semibold text-nurture-charcoal">
             Providers
@@ -102,7 +119,9 @@ const ProviderQueue = () => {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <TourHelpButton tour={PROVIDERS_TOUR} disabled={loading} />
           <button
+            id="tour-providers-add"
             type="button"
             onClick={() => setShowManualForm((current) => !current)}
             className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-semibold text-white transition hover:bg-nurture-sage-dark"
@@ -121,20 +140,37 @@ const ProviderQueue = () => {
 
       {showManualForm ? (
         <ProviderManualForm
+          initialDraft={tourFormDraft ?? undefined}
+          tourDemo={Boolean(tourFormDraft)}
           onCreated={() => {
             setShowManualForm(false);
+            setTourFormDraft(null);
             void loadProviders();
             toast.success("Provider list refreshed");
           }}
-          onCancel={() => setShowManualForm(false)}
+          onCancel={() => {
+            setShowManualForm(false);
+            setTourFormDraft(null);
+          }}
         />
       ) : null}
 
-      {!loading && !error ? (
-        <ProviderPayoutReport providers={providers.filter((p) => !p.archivedAt)} />
-      ) : null}
+      <div id="tour-providers-payout">
+        {!loading && !error ? (
+          <ProviderPayoutReport providers={providers.filter((p) => !p.archivedAt)} />
+        ) : (
+          <section className="space-y-2 rounded-2xl border border-nurture-sage/20 bg-white/70 p-5">
+            <h2 className="font-serif text-lg font-semibold text-nurture-charcoal">
+              Payout report
+            </h2>
+            <p className="text-sm text-nurture-charcoal/60">
+              {loading ? "Loading payout data…" : "Load providers to view payouts."}
+            </p>
+          </section>
+        )}
+      </div>
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div id="tour-providers-filters" className="flex flex-wrap items-center gap-3">
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -181,23 +217,25 @@ const ProviderQueue = () => {
         </span>
       </div>
 
-      {loading ? (
-        <p className="text-sm text-nurture-charcoal/60">Loading providers…</p>
-      ) : error ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
-      ) : filtered.length === 0 ? (
-        <p className="text-sm text-nurture-charcoal/60">
-          No providers match these filters.
-        </p>
-      ) : (
-        <ul className="space-y-3">
-          {filtered.map((provider) => {
+      <div id="tour-providers-list">
+        {loading ? (
+          <p className="text-sm text-nurture-charcoal/60">Loading providers…</p>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-nurture-charcoal/60">
+            No providers match these filters.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+          {filtered.map((provider, index) => {
             const expanded = expandedId === provider.providerId;
             return (
               <li
                 key={provider.providerId}
+                id={index === 0 ? "tour-providers-first-row" : undefined}
                 className="overflow-hidden rounded-2xl border border-nurture-sage/20 bg-white shadow-sm"
               >
                 <button
@@ -247,8 +285,9 @@ const ProviderQueue = () => {
               </li>
             );
           })}
-        </ul>
-      )}
+          </ul>
+        )}
+      </div>
     </div>
   );
 };

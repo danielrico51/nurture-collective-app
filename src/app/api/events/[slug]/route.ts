@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { handleEventsStorageError } from "@/lib/api/routeHelpers";
+import { toPublicEventItem } from "@/lib/events/publicEvent";
 import { getEventBySlug } from "@/lib/events/storage";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export async function GET(
     if (!item) {
       return NextResponse.json({ error: "Not found" }, { status: 404 });
     }
-    return NextResponse.json({ item });
+    return NextResponse.json({ item: toPublicEventItem(item) });
   } catch (error) {
     return handleEventsStorageError(error);
   }

@@ -84,7 +84,15 @@ export const TeamSection = ({
           <p className="mt-4 text-lg text-nurture-charcoal/70">{subtitle}</p>
         ) : null}
       </div>
-      <div className="mt-12 grid gap-8 md:grid-cols-3">
+      <div
+        className={`mt-12 grid gap-8 ${
+          members.length >= 4
+            ? "sm:grid-cols-2 xl:grid-cols-4"
+            : members.length === 3
+              ? "md:grid-cols-3"
+              : "md:grid-cols-2 max-w-3xl mx-auto"
+        }`}
+      >
         {members.map((member) => (
           <TeamMemberCard key={member.id} member={member} compact={compact} />
         ))}

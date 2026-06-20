@@ -200,6 +200,7 @@ describe("buildInvoiceDocument", () => {
       })
     );
     expect(html).toContain("@thenestingplace");
+    expect(html).toContain("https://www.venmo.com/u/thenestingplace");
     expect(html).toContain("/branding/payments/venmo-qr.jpg");
     expect(html).toContain("info@nesting-place.com");
   });

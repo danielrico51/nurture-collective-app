@@ -5,6 +5,9 @@ node_modules
 .next/
 out/
 
+# TypeScript
+*.tsbuildinfo
+
 # Env
 .env*.local
 infrastructure/aws/cognito-social-auth.env

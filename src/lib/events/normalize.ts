@@ -42,6 +42,14 @@ const parseOptionalPositiveInt = (value: unknown): number | undefined => {
   return Math.round(parsed);
 };
 
+const parseOptionalMoneyCents = (value: unknown): number | null | undefined => {
+  if (value === undefined) return undefined;
+  if (value === null || value === "") return null;
+  const parsed = Number(value);
+  if (!Number.isFinite(parsed) || parsed < 0) return null;
+  return Math.round(parsed);
+};
+
 const normalizeFaq = (value: unknown): EventFaqItem[] | undefined => {
   if (!Array.isArray(value)) return undefined;
   const items = value
@@ -88,6 +96,9 @@ export const normalizeEventItem = (
     capacity: parseOptionalPositiveInt(raw.capacity),
     waitlistEnabled: raw.waitlistEnabled === true,
     priceCents: parseOptionalPositiveInt(raw.priceCents),
+    providerId: raw.providerId?.trim() || null,
+    providerFeeCents: parseOptionalMoneyCents(raw.providerFeeCents) ?? null,
+    platformFeeCents: parseOptionalMoneyCents(raw.platformFeeCents) ?? null,
     instructorName: raw.instructorName?.trim() || undefined,
     instructorEmail: raw.instructorEmail?.trim() || undefined,
     faq: normalizeFaq(raw.faq),

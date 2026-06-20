@@ -12,6 +12,7 @@ import {
   fetchAdminEvents,
   updateAdminEvent,
 } from "@/lib/api/eventsClient";
+import { fetchAdminProviders } from "@/lib/api/providersClient";
 import {
   filterAdminEvents,
   type EventKindFilter,
@@ -22,6 +23,7 @@ import {
 import { buildDuplicateEventDraft } from "@/lib/events/duplicate";
 import {
   formatEventDate,
+  formatEventPrice,
   kindLabel,
   LISTING_STATUS_LABELS,
   listingStatusBadgeClass,
@@ -37,6 +39,7 @@ import type {
   EventPublishStatus,
   EventRegistrationMode,
 } from "@/types/event";
+import type { ProviderRecord } from "@/types/provider";
 import Link from "next/link";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -57,6 +60,9 @@ const emptyDraft = (): Partial<EventItem> => ({
   capacity: undefined,
   waitlistEnabled: false,
   priceCents: undefined,
+  providerId: null,
+  providerFeeCents: null,
+  platformFeeCents: null,
   startTime: "",
   durationMinutes: undefined,
   instructorName: "",
@@ -77,7 +83,12 @@ const centsFromDollars = (value: string): number | undefined => {
   return Math.round(parsed * 100);
 };
 
-const buildEventPayload = (form: Partial<EventItem>, priceDollars: string) => ({
+const buildEventPayload = (
+  form: Partial<EventItem>,
+  priceDollars: string,
+  providerFeeDollars: string,
+  platformFeeDollars: string
+) => ({
   title: form.title,
   excerpt: form.excerpt ?? "",
   body: form.body ?? "",
@@ -94,6 +105,9 @@ const buildEventPayload = (form: Partial<EventItem>, priceDollars: string) => ({
   capacity: form.capacity,
   waitlistEnabled: form.waitlistEnabled,
   priceCents: centsFromDollars(priceDollars),
+  providerId: form.providerId || null,
+  providerFeeCents: centsFromDollars(providerFeeDollars) ?? null,
+  platformFeeCents: centsFromDollars(platformFeeDollars) ?? null,
   instructorName: form.instructorName?.trim() || undefined,
   instructorEmail: form.instructorEmail?.trim() || undefined,
   faq: form.faq?.filter((entry) => entry.question.trim() && entry.answer.trim()),
@@ -104,12 +118,15 @@ type ListingTab = "details" | "registrations" | "payments" | "calendar";
 
 const EventsManager = () => {
   const [items, setItems] = useState<EventItem[]>([]);
+  const [providers, setProviders] = useState<ProviderRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [selectedSlug, setSelectedSlug] = useState<string | null>(null);
   const [isNew, setIsNew] = useState(false);
   const [form, setForm] = useState<Partial<EventItem>>(emptyDraft());
   const [priceDollars, setPriceDollars] = useState("");
+  const [providerFeeDollars, setProviderFeeDollars] = useState("");
+  const [platformFeeDollars, setPlatformFeeDollars] = useState("");
   const [hubView, setHubView] = useState<HubView>("listings");
   const [listingTab, setListingTab] = useState<ListingTab>("details");
   const [searchQuery, setSearchQuery] = useState("");
@@ -121,8 +138,12 @@ const EventsManager = () => {
   const loadItems = useCallback(async (seed = false) => {
     setLoading(true);
     try {
-      const { items: next } = await fetchAdminEvents(seed);
+      const [{ items: next }, providersResponse] = await Promise.all([
+        fetchAdminEvents(seed),
+        fetchAdminProviders(),
+      ]);
       setItems(next);
+      setProviders(providersResponse.providers);
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to load events");
     } finally {
@@ -134,6 +155,14 @@ const EventsManager = () => {
     void loadItems(true);
   }, [loadItems]);
 
+  const providerNameById = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const provider of providers) {
+      map.set(provider.providerId, provider.displayName);
+    }
+    return map;
+  }, [providers]);
+
   const selectItem = (item: EventItem) => {
     setHubView("listings");
     setListingTab("details");
@@ -141,6 +170,8 @@ const EventsManager = () => {
     setSelectedSlug(item.slug);
     setForm({ ...item, faq: item.faq ?? [] });
     setPriceDollars(dollarsFromCents(item.priceCents));
+    setProviderFeeDollars(dollarsFromCents(item.providerFeeCents ?? undefined));
+    setPlatformFeeDollars(dollarsFromCents(item.platformFeeCents ?? undefined));
   };
 
   const startNew = () => {
@@ -150,6 +181,8 @@ const EventsManager = () => {
     setSelectedSlug(null);
     setForm(emptyDraft());
     setPriceDollars("");
+    setProviderFeeDollars("");
+    setPlatformFeeDollars("");
   };
 
   const startDuplicate = (item: EventItem) => {
@@ -160,6 +193,8 @@ const EventsManager = () => {
     setSelectedSlug(null);
     setForm({ ...draft, faq: draft.faq ?? [] });
     setPriceDollars(dollarsFromCents(draft.priceCents));
+    setProviderFeeDollars(dollarsFromCents(draft.providerFeeCents ?? undefined));
+    setPlatformFeeDollars(dollarsFromCents(draft.platformFeeCents ?? undefined));
     toast.success("Copied into a new draft — update the date and save");
   };
 
@@ -211,6 +246,28 @@ const EventsManager = () => {
     }));
   };
 
+  const handleProviderChange = (providerId: string) => {
+    if (!providerId) {
+      updateField("providerId", null);
+      return;
+    }
+    const provider = providers.find((entry) => entry.providerId === providerId);
+    setForm((prev) => ({
+      ...prev,
+      providerId,
+      instructorName: provider?.displayName ?? prev.instructorName,
+      instructorEmail: provider?.email ?? prev.instructorEmail,
+    }));
+  };
+
+  const feeSplitPreview = useMemo(() => {
+    const priceCents = centsFromDollars(priceDollars) ?? 0;
+    const providerCents = centsFromDollars(providerFeeDollars) ?? 0;
+    const platformCents = centsFromDollars(platformFeeDollars) ?? 0;
+    const splitTotal = providerCents + platformCents;
+    return { priceCents, providerCents, platformCents, splitTotal };
+  }, [priceDollars, providerFeeDollars, platformFeeDollars]);
+
   const handleSave = async () => {
     if (!form.title?.trim()) {
       toast.error("Title is required");
@@ -219,7 +276,12 @@ const EventsManager = () => {
     setSaving(true);
     try {
       const title = form.title.trim();
-      const payload = buildEventPayload({ ...form, title }, priceDollars);
+      const payload = buildEventPayload(
+        { ...form, title },
+        priceDollars,
+        providerFeeDollars,
+        platformFeeDollars
+      );
       if (isNew) {
         const { item } = await createAdminEvent({
           ...payload,
@@ -461,6 +523,9 @@ const EventsManager = () => {
                     </span>
                     <span className="mt-0.5 block text-xs text-nurture-charcoal/50">
                       {formatEventDate(item.eventDate)}
+                      {item.providerId
+                        ? ` · ${providerNameById.get(item.providerId) ?? "Provider"}`
+                        : ""}
                       {item.status === "draft" ? " · draft" : ""}
                     </span>
                   </button>
@@ -757,6 +822,27 @@ const EventsManager = () => {
                     Enable waitlist when full
                   </span>
                 </label>
+                <label className="block sm:col-span-2">
+                  <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/55">
+                    Assigned provider
+                  </span>
+                  <select
+                    value={form.providerId ?? ""}
+                    onChange={(event) => handleProviderChange(event.target.value)}
+                    className="mt-1 w-full rounded-lg border border-nurture-sage/25 px-3 py-2 text-sm"
+                  >
+                    <option value="">Not assigned</option>
+                    {providers.map((provider) => (
+                      <option key={provider.providerId} value={provider.providerId}>
+                        {provider.displayName}
+                      </option>
+                    ))}
+                  </select>
+                  <span className="mt-1 block text-xs text-nurture-charcoal/50">
+                    Links this listing to the provider registry. Name and email below
+                    auto-fill from the provider but can be overridden.
+                  </span>
+                </label>
                 <label className="block">
                   <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/55">
                     Instructor name
@@ -779,6 +865,52 @@ const EventsManager = () => {
                     className="mt-1 w-full rounded-lg border border-nurture-sage/25 px-3 py-2 text-sm"
                   />
                 </label>
+                <fieldset className="rounded-xl border border-amber-200/80 bg-amber-50/40 p-4 sm:col-span-2">
+                  <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-amber-900/80">
+                    Internal fee split (admin only)
+                  </legend>
+                  <p className="mt-1 text-xs text-nurture-charcoal/60">
+                    Track how class revenue is divided between the provider and The
+                    Nesting Place. Never shown on public pages.
+                  </p>
+                  <div className="mt-3 grid gap-4 sm:grid-cols-2">
+                    <label className="block">
+                      <span className="text-xs font-medium text-nurture-charcoal/70">
+                        Provider fee (USD)
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={providerFeeDollars}
+                        onChange={(event) => setProviderFeeDollars(event.target.value)}
+                        placeholder="0.00"
+                        className="mt-1 w-full rounded-lg border border-nurture-sage/25 px-3 py-2 text-sm"
+                      />
+                    </label>
+                    <label className="block">
+                      <span className="text-xs font-medium text-nurture-charcoal/70">
+                        Our fee (USD)
+                      </span>
+                      <input
+                        type="text"
+                        inputMode="decimal"
+                        value={platformFeeDollars}
+                        onChange={(event) => setPlatformFeeDollars(event.target.value)}
+                        placeholder="0.00"
+                        className="mt-1 w-full rounded-lg border border-nurture-sage/25 px-3 py-2 text-sm"
+                      />
+                    </label>
+                  </div>
+                  {feeSplitPreview.splitTotal > 0 ||
+                  feeSplitPreview.priceCents > 0 ? (
+                    <p className="mt-3 text-xs text-nurture-charcoal/65">
+                      Split total: {formatEventPrice(feeSplitPreview.splitTotal)}
+                      {feeSplitPreview.priceCents > 0
+                        ? ` · class price: ${formatEventPrice(feeSplitPreview.priceCents)}`
+                        : ""}
+                    </p>
+                  ) : null}
+                </fieldset>
                 <div className="sm:col-span-2">
                   <div className="flex items-center justify-between gap-3">
                     <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/55">
@@ -875,6 +1007,8 @@ const EventsManager = () => {
                 <EventPaymentsPanel
                   eventSlug={selectedSlug}
                   priceCents={form.priceCents}
+                  providerFeeCents={form.providerFeeCents}
+                  platformFeeCents={form.platformFeeCents}
                 />
               ) : null}
 

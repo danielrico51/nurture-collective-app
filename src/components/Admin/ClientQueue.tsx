@@ -5,6 +5,13 @@ import ClientDetailPanel from "@/components/Admin/ClientDetailPanel";
 import ClientManualForm from "@/components/Admin/ClientManualForm";
 import { fetchAdminClients } from "@/lib/api/clientsClient";
 import { fetchTeamMembers } from "@/lib/api/tasksClient";
+import { CLIENTS_TOUR } from "@/tour/clientsTourSteps";
+import {
+  type ClientTourDetailTab,
+  type ClientTourFormDraft,
+} from "@/tour/clientsTourDemo";
+import TourHelpButton from "@/tour/TourHelpButton";
+import { useClientsTourActions } from "@/tour/useClientsTourActions";
 import type { ClientRecord, ClientStatus, AdminClientsResponse } from "@/types/client";
 import { CLIENT_STATUSES } from "@/types/client";
 import type { TeamMember } from "@/types/teamMember";
@@ -41,6 +48,12 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
   const [search, setSearch] = useState("");
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [showManualForm, setShowManualForm] = useState(false);
+  const [tourFormDraft, setTourFormDraft] = useState<ClientTourFormDraft | null>(
+    null
+  );
+  const [tourDetailTab, setTourDetailTab] = useState<ClientTourDetailTab | null>(
+    null
+  );
   const [storageScope, setStorageScope] = useState<
     AdminClientsResponse["storage"] | null
   >(null);
@@ -103,15 +116,27 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
     });
   }, [clients, queueFilter, statusFilter, search]);
 
+  useClientsTourActions({
+    filtered,
+    setShowManualForm,
+    setExpandedId,
+    setTourFormDraft,
+    setTourDetailTab,
+  });
+
   const handleCreated = () => {
     setShowManualForm(false);
+    setTourFormDraft(null);
     void loadClients();
     toast.success("Client list refreshed");
   };
 
   return (
     <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-4">
+      <div
+        id="tour-clients-header"
+        className="flex flex-wrap items-start justify-between gap-4"
+      >
         <div>
           <h1 className="font-serif text-2xl font-semibold text-nurture-charcoal">
             Client CRM
@@ -126,7 +151,9 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
           </p>
         </div>
         <div className="flex flex-wrap gap-2">
+          <TourHelpButton tour={CLIENTS_TOUR} disabled={loading} />
           <button
+            id="tour-clients-add"
             type="button"
             onClick={() => setShowManualForm((current) => !current)}
             className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-semibold text-white transition hover:bg-nurture-sage-dark"
@@ -148,12 +175,20 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
           members={members}
           membersLoading={membersLoading}
           defaultCoordinatorId={coordinatorId}
+          initialDraft={tourFormDraft ?? undefined}
+          tourDemo={Boolean(tourFormDraft)}
           onCreated={handleCreated}
-          onCancel={() => setShowManualForm(false)}
+          onCancel={() => {
+            setShowManualForm(false);
+            setTourFormDraft(null);
+          }}
         />
       ) : null}
 
-      <div className="flex flex-wrap items-center gap-3">
+      <div
+        id="tour-clients-filters"
+        className="flex flex-wrap items-center gap-3"
+      >
         <input
           value={search}
           onChange={(event) => setSearch(event.target.value)}
@@ -188,79 +223,85 @@ const ClientQueue = ({ coordinatorId, coordinatorEmail }: ClientQueueProps) => {
         </span>
       </div>
 
-      {loading ? (
-        <p className="text-sm text-nurture-charcoal/60">Loading clients…</p>
-      ) : error ? (
-        <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
-          {error}
-        </div>
-      ) : filtered.length === 0 ? (
-        <p className="text-sm text-nurture-charcoal/60">
-          No clients match these filters.
-        </p>
-      ) : (
-        <ul className="space-y-3">
-          {filtered.map((client) => {
-            const expanded = expandedId === client.clientId;
-            return (
-              <li
-                key={client.clientId}
-                className="overflow-hidden rounded-2xl border border-nurture-sage/20 bg-white shadow-sm"
-              >
-                <button
-                  type="button"
-                  onClick={() =>
-                    setExpandedId(expanded ? null : client.clientId)
-                  }
-                  className="flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left"
+      <div id="tour-clients-list">
+        {loading ? (
+          <p className="text-sm text-nurture-charcoal/60">Loading clients…</p>
+        ) : error ? (
+          <div className="rounded-2xl border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+            {error}
+          </div>
+        ) : filtered.length === 0 ? (
+          <p className="text-sm text-nurture-charcoal/60">
+            No clients match these filters.
+          </p>
+        ) : (
+          <ul className="space-y-3">
+            {filtered.map((client, index) => {
+              const expanded = expandedId === client.clientId;
+              return (
+                <li
+                  key={client.clientId}
+                  id={index === 0 ? "tour-clients-first-row" : undefined}
+                  className="overflow-hidden rounded-2xl border border-nurture-sage/20 bg-white shadow-sm"
                 >
-                  <div className="min-w-0">
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-nurture-charcoal">
-                        {client.name || "Unnamed client"}
-                      </span>
-                      {client.leadId ? (
-                        <span className="rounded-full bg-nurture-sage/10 px-2 py-0.5 text-[11px] font-medium text-nurture-sage-dark">
-                          Lead linked
-                        </span>
-                      ) : null}
-                      {client.cognitoSub ? (
-                        <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-medium text-sky-800">
-                          App user
-                        </span>
-                      ) : null}
-                      {client.archivedAt ? (
-                        <span className="rounded-full bg-nurture-charcoal/10 px-2 py-0.5 text-[11px] font-medium text-nurture-charcoal/60">
-                          Archived
-                        </span>
-                      ) : null}
-                    </div>
-                    <p className="mt-1 truncate text-sm text-nurture-charcoal/60">
-                      {client.email || client.phone || "No contact info"}
-                    </p>
-                  </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE[client.status]}`}
+                  <button
+                    type="button"
+                    onClick={() =>
+                      setExpandedId(expanded ? null : client.clientId)
+                    }
+                    className="flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left"
                   >
-                    {statusLabel(client.status)}
-                  </span>
-                </button>
+                    <div className="min-w-0">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-nurture-charcoal">
+                          {client.name || "Unnamed client"}
+                        </span>
+                        {client.leadId ? (
+                          <span className="rounded-full bg-nurture-sage/10 px-2 py-0.5 text-[11px] font-medium text-nurture-sage-dark">
+                            Lead linked
+                          </span>
+                        ) : null}
+                        {client.cognitoSub ? (
+                          <span className="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-medium text-sky-800">
+                            App user
+                          </span>
+                        ) : null}
+                        {client.archivedAt ? (
+                          <span className="rounded-full bg-nurture-charcoal/10 px-2 py-0.5 text-[11px] font-medium text-nurture-charcoal/60">
+                            Archived
+                          </span>
+                        ) : null}
+                      </div>
+                      <p className="mt-1 truncate text-sm text-nurture-charcoal/60">
+                        {client.email || client.phone || "No contact info"}
+                      </p>
+                    </div>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE[client.status]}`}
+                    >
+                      {statusLabel(client.status)}
+                    </span>
+                  </button>
 
-                {expanded ? (
-                  <div className="border-t border-nurture-sage/15 bg-nurture-cream/30 px-5 py-5">
-                    <ClientDetailPanel
-                      clientId={client.clientId}
-                      members={members}
-                      membersLoading={membersLoading}
-                      onChanged={() => void loadClients({ background: true })}
-                    />
-                  </div>
-                ) : null}
-              </li>
-            );
-          })}
-        </ul>
-      )}
+                  {expanded ? (
+                    <div className="border-t border-nurture-sage/15 bg-nurture-cream/30 px-5 py-5">
+                      <ClientDetailPanel
+                        clientId={client.clientId}
+                        members={members}
+                        membersLoading={membersLoading}
+                        tourRequestedTab={
+                          expandedId === client.clientId ? tourDetailTab : null
+                        }
+                        onChanged={() => void loadClients({ background: true })}
+                      />
+                    </div>
+                  ) : null}
+                </li>
+              );
+            })}
+          </ul>
+        )}
+      </div>
 
       <p className="text-xs text-nurture-charcoal/40">
         Signed in as {coordinatorEmail || coordinatorId}

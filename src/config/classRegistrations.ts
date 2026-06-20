@@ -13,6 +13,11 @@ const readVenmoHandle = () =>
   process.env.NEXT_PUBLIC_CLASS_REGISTRATION_VENMO_HANDLE?.trim() ||
   "";
 
+const readVenmoProfileUrl = () =>
+  process.env.CLIENT_INVOICE_VENMO_PROFILE_URL?.trim() ||
+  process.env.CLASS_REGISTRATION_VENMO_PROFILE_URL?.trim() ||
+  "https://www.venmo.com/u/thenestingplace";
+
 const readStripeEnabled = () => {
   const explicit = process.env.CLASS_REGISTRATION_STRIPE_ENABLED?.trim();
   if (explicit === "false") return false;
@@ -36,6 +41,7 @@ export const classRegistrationPaymentConfig = {
   stripeEnabled: readStripeEnabled(),
   venmoEnabled: Boolean(readVenmoHandle()),
   venmoHandle: readVenmoHandle(),
+  venmoProfileUrl: readVenmoProfileUrl(),
   stripeSecretKey: serverGiftCardConfig.stripeSecretKey,
 } as const;
 
@@ -51,6 +57,7 @@ export const classRegistrationCheckoutConfig = {
     process.env.NEXT_PUBLIC_GIFT_CARD_PAYMENTS_ENABLED?.trim() === "true",
   venmoHandle:
     process.env.NEXT_PUBLIC_CLASS_REGISTRATION_VENMO_HANDLE?.trim() || "",
+  venmoProfileUrl: readVenmoProfileUrl(),
 } as const;
 
 export const hasClassRegistrationEmailDelivery = () => {
