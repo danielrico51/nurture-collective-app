@@ -19,7 +19,7 @@ export function MemberShell({
   const isHub = pathname === MEMBER_APPS_HREF;
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:py-12">
+    <div className="floating-header-offset mx-auto max-w-screen-xl px-4 pb-10 sm:px-6 sm:pb-12">
       <div className="relative overflow-hidden rounded-3xl border border-nurture-blush/30 bg-white shadow-sm">
         <div className="relative overflow-hidden bg-gradient-to-br from-nurture-blush via-nurture-sage to-nurture-sage-dark px-6 py-8 text-white sm:px-8">
           <div

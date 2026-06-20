@@ -37,13 +37,15 @@ const BookingEmbed = ({
           </h2>
           <p className="mt-3 text-nurture-charcoal/70">{subtitle}</p>
         </div>
-        <div className="mx-auto mt-10 max-w-4xl overflow-hidden rounded-2xl border border-nurture-sage/15 bg-white shadow-sm">
-          <iframe
-            src={embedUrl}
-            title="Schedule a call with The Nesting Place"
-            className="h-[600px] w-full border-0"
-            loading="lazy"
-          />
+        <div className="booking-embed-brush mx-auto mt-10 max-w-4xl">
+          <div className="booking-embed-brush__inner">
+            <iframe
+              src={embedUrl}
+              title="Schedule a call with The Nesting Place"
+              className="h-[600px] w-full border-0"
+              loading="lazy"
+            />
+          </div>
         </div>
       </div>
     </section>

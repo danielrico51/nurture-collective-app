@@ -15,7 +15,7 @@ export function AdminShell({ children }: AdminShellProps) {
   const isHub = pathname === "/admin";
 
   return (
-    <div className="mx-auto max-w-screen-xl px-4 py-10 sm:px-6 lg:py-12">
+    <div className="floating-header-offset mx-auto max-w-screen-xl px-4 pb-10 sm:px-6 sm:pb-12">
       <div className="relative overflow-hidden rounded-3xl border border-nurture-sage/20 bg-white shadow-sm">
         <div className="relative overflow-hidden bg-gradient-to-br from-nurture-sage via-nurture-sage-dark to-nurture-charcoal px-6 py-8 text-white sm:px-8">
           <div

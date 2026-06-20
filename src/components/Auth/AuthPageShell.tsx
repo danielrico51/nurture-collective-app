@@ -31,7 +31,7 @@ export function AuthPageShell({
 }: AuthPageShellProps) {
   if (layout === "centered") {
     return (
-      <div className="relative overflow-hidden bg-gradient-to-br from-nurture-cream via-white to-nurture-sage/20 px-4 py-8 sm:py-12">
+      <div className="floating-header-offset relative overflow-hidden bg-gradient-to-br from-nurture-cream via-white to-nurture-sage/20 px-4 pb-8 sm:pb-12">
         <div
           aria-hidden
           className="pointer-events-none absolute -left-20 top-16 h-72 w-72 rounded-full bg-nurture-sage/25 blur-3xl"
@@ -71,7 +71,7 @@ export function AuthPageShell({
   }
 
   return (
-    <div className="relative overflow-hidden bg-gradient-to-br from-nurture-cream via-white to-nurture-sage/20 px-4 py-10 sm:py-14 lg:py-16">
+    <div className="floating-header-offset relative overflow-hidden bg-gradient-to-br from-nurture-cream via-white to-nurture-sage/20 px-4 pb-10 sm:pb-14 lg:pb-16">
       <div
         aria-hidden
         className="pointer-events-none absolute -left-20 top-16 h-72 w-72 rounded-full bg-nurture-sage/25 blur-3xl"

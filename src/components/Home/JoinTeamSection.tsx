@@ -1,9 +1,13 @@
 import Link from "next/link";
+import SectionWaveEdges from "@/components/Common/SectionWaveEdges";
+
+const NURTURE_CREAM = "#FAF7F2";
 
 const JoinTeamSection = () => {
   return (
-    <section className="border-t border-nurture-sage/10 py-16">
-      <div className="mx-auto max-w-screen-xl px-4 text-center sm:px-6 lg:px-8">
+    <section className="relative overflow-hidden bg-white pb-16 pt-20 sm:pb-20 sm:pt-24">
+      <SectionWaveEdges topOnly topFill={NURTURE_CREAM} />
+      <div className="relative mx-auto max-w-screen-xl px-4 text-center sm:px-6 lg:px-8">
         <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
           We&apos;re growing
         </p>
@@ -16,7 +20,7 @@ const JoinTeamSection = () => {
         </p>
         <Link
           href="/for-providers"
-          className="mt-6 inline-block rounded-full border border-nurture-sage px-8 py-3 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+          className="btn-primary-lg mt-6"
         >
           Learn about joining our team
         </Link>

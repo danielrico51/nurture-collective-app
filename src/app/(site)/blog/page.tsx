@@ -26,9 +26,9 @@ export default async function BlogIndexPage() {
   const posts = await fetchPublishedBlogPosts();
 
   return (
-    <>
+    <div className="overflow-x-hidden bg-nurture-cream">
       <Breadcrumb pageName="Blog" />
-      <section className="py-16">
+      <section className="py-10 sm:py-12 lg:py-14">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <SectionTitle
             title="Stories & guidance for your journey"
@@ -82,6 +82,6 @@ export default async function BlogIndexPage() {
           )}
         </div>
       </section>
-    </>
+    </div>
   );
 }

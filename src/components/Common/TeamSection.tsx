@@ -1,3 +1,5 @@
+import MarketingSection from "@/components/Common/MarketingSection";
+import { MARKETING_CREAM } from "@/config/marketingDesign";
 import type { TeamMemberProfile } from "@/content/team";
 import Image from "next/image";
 import Link from "next/link";
@@ -16,21 +18,21 @@ const TeamMemberCard = ({ member, compact = false }: TeamMemberCardProps) => (
     {member.imageSrc ? (
       <div
         className={`relative shrink-0 overflow-hidden rounded-full border border-nurture-sage/20 bg-nurture-cream ${
-          compact ? "h-16 w-16" : "h-20 w-20"
+          compact ? "h-16 w-16" : "h-28 w-28"
         }`}
       >
         <Image
           src={member.imageSrc}
           alt={member.imageAlt ?? `${member.name}, ${member.role}`}
           fill
-          sizes={compact ? "64px" : "80px"}
+          sizes={compact ? "64px" : "112px"}
           className="object-cover object-center"
         />
       </div>
     ) : (
       <div
         className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-nurture-blush to-nurture-sage/30 font-serif font-semibold text-nurture-sage-dark ${
-          compact ? "h-16 w-16 text-xl" : "h-20 w-20 text-2xl"
+          compact ? "h-16 w-16 text-xl" : "h-28 w-28 text-3xl"
         }`}
         aria-hidden
       >
@@ -44,7 +46,7 @@ const TeamMemberCard = ({ member, compact = false }: TeamMemberCardProps) => (
       {member.role}
     </p>
     <p
-      className={`mt-3 text-nurture-charcoal/70 ${
+      className={`mt-3 text-justify text-nurture-charcoal/70 ${
         compact ? "line-clamp-4 text-sm" : "text-sm"
       }`}
     >
@@ -60,6 +62,7 @@ interface TeamSectionProps {
   showMeetLink?: boolean;
   compact?: boolean;
   className?: string;
+  organicWaves?: boolean;
 }
 
 export const TeamSection = ({
@@ -69,8 +72,9 @@ export const TeamSection = ({
   showMeetLink = false,
   compact = false,
   className = "",
-}: TeamSectionProps) => (
-  <section className={`py-20 ${className}`}>
+  organicWaves = false,
+}: TeamSectionProps) => {
+  const inner = (
     <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
         <h2 className="font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl">
@@ -96,7 +100,22 @@ export const TeamSection = ({
         </div>
       ) : null}
     </div>
-  </section>
-);
+  );
+
+  if (organicWaves) {
+    return (
+      <MarketingSection
+        waves="both"
+        waveTopFill={MARKETING_CREAM}
+        waveBottomFill={MARKETING_CREAM}
+        className={`py-16 sm:py-20 ${className}`}
+      >
+        {inner}
+      </MarketingSection>
+    );
+  }
+
+  return <section className={`py-16 sm:py-20 ${className}`}>{inner}</section>;
+};
 
 export default TeamMemberCard;

@@ -1,12 +1,12 @@
 import BookingEmbed from "@/components/Common/BookingEmbed";
+import MarketingSection from "@/components/Common/MarketingSection";
 import JsonLd from "@/components/Seo/JsonLd";
 import ServicesCtaBanner from "@/components/Services/ServicesCtaBanner";
-import ServicesDecor from "@/components/Services/ServicesDecor";
 import ServicesHero from "@/components/Services/ServicesHero";
 import ServicesJumpNav from "@/components/Services/ServicesJumpNav";
 import ServicesLandingCard from "@/components/Services/ServicesLandingCard";
+import { MARKETING_CREAM } from "@/config/marketingDesign";
 import { buildPageMetadata } from "@/config/seo";
-import { servicesPageDecor } from "@/config/servicesDecor";
 import { publishedCoreServices } from "@/content/site";
 import type { CoreService } from "@/content/site";
 import { fetchPublishedBlogPosts } from "@/lib/blog/public";
@@ -40,12 +40,15 @@ const chunkServices = (services: CoreService[]): CoreService[][] => {
   return rows;
 };
 
+const orphanCardClass =
+  "mx-auto w-full max-w-[15rem] sm:max-w-[17rem] md:col-start-2 md:mx-0 md:max-w-none";
+
 export default async function ServicesPage() {
   const blogPosts = await fetchPublishedBlogPosts();
   const serviceRows = chunkServices(publishedCoreServices);
 
   return (
-    <>
+    <div className="overflow-x-hidden bg-nurture-cream">
       <JsonLd
         data={[
           buildOrganizationJsonLd(),
@@ -54,53 +57,67 @@ export default async function ServicesPage() {
       />
       <ServicesHero />
 
-      <section className="relative -mt-8 overflow-hidden bg-gradient-to-b from-transparent via-nurture-rose-light/15 to-nurture-sage-light/10 pb-16 sm:-mt-10 sm:pb-20">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute inset-0 opacity-[0.045]"
-          style={{
-            backgroundImage: `url(${servicesPageDecor.patternTile})`,
-            backgroundSize: "280px 280px",
-            backgroundRepeat: "repeat",
-          }}
-        />
-        <ServicesDecor src={servicesPageDecor.edgeLeft} placement="edge-left" />
-        <ServicesDecor src={servicesPageDecor.edgeRight} placement="edge-right" />
-        <ServicesDecor
-          src={servicesPageDecor.cornerBottomRight}
-          placement="corner-bottom-right"
-          className="opacity-35"
-        />
-        <div className="relative z-[1] mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <ServicesJumpNav services={publishedCoreServices} />
+      <section className="bg-nurture-cream py-12 sm:py-14">
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <div className="mx-auto max-w-3xl text-center">
+            <h2 className="font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl">
+              Care for every stage of motherhood
+            </h2>
+            <p className="mt-3 text-lg text-nurture-charcoal/70">
+              From birth planning through the fourth trimester — explore what we
+              offer and request the support that fits your family.
+            </p>
+          </div>
 
-          <div className="mt-6 space-y-4">
-            {serviceRows.map((row, rowIndex) => (
-              <div
-                key={`service-row-${rowIndex}`}
-                className="grid gap-4 md:grid-cols-3"
-              >
-                {row.map((service) => {
-                  const cardData = buildServiceCardData(service.slug, blogPosts);
-                  return (
-                    <ServicesLandingCard
-                      key={service.slug}
-                      service={service}
-                      detail={cardData.detail}
-                      researchPoints={cardData.researchPoints}
-                      sources={cardData.sources}
-                      relatedPosts={cardData.relatedPosts}
-                    />
-                  );
-                })}
-              </div>
-            ))}
+          <div className="mt-10">
+            <ServicesJumpNav services={publishedCoreServices} />
+          </div>
+
+          <div className="mt-8 space-y-4">
+            {serviceRows.map((row, rowIndex) => {
+              const isSingleOrphan = row.length === 1;
+
+              return (
+                <div
+                  key={`service-row-${rowIndex}`}
+                  className="grid gap-4 md:grid-cols-3"
+                >
+                  {row.map((service) => {
+                    const cardData = buildServiceCardData(
+                      service.slug,
+                      blogPosts,
+                    );
+
+                    return (
+                      <div
+                        key={service.slug}
+                        className={isSingleOrphan ? orphanCardClass : undefined}
+                      >
+                        <ServicesLandingCard
+                          service={service}
+                          detail={cardData.detail}
+                          researchPoints={cardData.researchPoints}
+                          sources={cardData.sources}
+                          relatedPosts={cardData.relatedPosts}
+                        />
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
           </div>
         </div>
       </section>
 
-      <ServicesCtaBanner />
-      <BookingEmbed />
-    </>
+      <MarketingSection
+        waves="top"
+        waveTopFill={MARKETING_CREAM}
+        className="bg-white pb-0"
+      >
+        <ServicesCtaBanner />
+        <BookingEmbed className="!py-12 sm:!py-14" />
+      </MarketingSection>
+    </div>
   );
 }

@@ -41,7 +41,49 @@ def crop_baby_mark(wordmark: Image.Image) -> Image.Image:
     ox = (size - baby.width) // 2
     oy = (size - baby.height) // 2
     canvas.paste(baby, (ox, oy), baby)
-    return canvas
+    return remove_stray_ink(canvas)
+
+
+def remove_stray_ink(img: Image.Image, min_component: int = 40) -> Image.Image:
+    """Drop tiny disconnected ink specks (e.g. crop artifacts beside the mark)."""
+    from collections import deque
+
+    rgba = img.convert("RGBA")
+    w, h = rgba.size
+    px = rgba.load()
+
+    def is_ink(x: int, y: int) -> bool:
+        r, g, b, a = px[x, y]
+        return a > 10 and (r + g + b) < 720
+
+    visited = [[False] * w for _ in range(h)]
+    components: list[list[tuple[int, int]]] = []
+    for y in range(h):
+        for x in range(w):
+            if visited[y][x] or not is_ink(x, y):
+                continue
+            queue: deque[tuple[int, int]] = deque([(x, y)])
+            visited[y][x] = True
+            cells: list[tuple[int, int]] = []
+            while queue:
+                cx, cy = queue.popleft()
+                cells.append((cx, cy))
+                for nx, ny in ((cx + 1, cy), (cx - 1, cy), (cx, cy + 1), (cx, cy - 1)):
+                    if 0 <= nx < w and 0 <= ny < h and not visited[ny][nx] and is_ink(nx, ny):
+                        visited[ny][nx] = True
+                        queue.append((nx, ny))
+            components.append(cells)
+
+    if not components:
+        return rgba
+
+    components.sort(key=len, reverse=True)
+    for comp in components[1:]:
+        if len(comp) >= min_component:
+            continue
+        for x, y in comp:
+            px[x, y] = (0, 0, 0, 0)
+    return rgba
 
 
 def save_favicons(mark: Image.Image) -> None:

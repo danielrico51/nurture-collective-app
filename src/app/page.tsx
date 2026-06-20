@@ -32,7 +32,7 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function HomePage() {
   return (
-    <>
+    <div className="overflow-x-hidden bg-nurture-cream">
       <JsonLd
         data={[
           buildWebSiteJsonLd(),
@@ -48,12 +48,13 @@ export default function HomePage() {
         title="How it works for moms"
         subtitle="From first inquiry to ongoing support."
         steps={momHowItWorks}
-        className="bg-nurture-sage/5 py-20"
+        organicWaves
+        className="bg-nurture-sage/5"
       />
       <GoogleReviews className="bg-white" />
-      <FaqList items={momFaqs} />
+      <FaqList items={momFaqs} organicWaves waveTopFill="#FFFFFF" />
       <CallToAction />
       <JoinTeamSection />
-    </>
+    </div>
   );
 }

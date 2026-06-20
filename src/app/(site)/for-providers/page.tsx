@@ -48,13 +48,13 @@ export default function ForProvidersPage() {
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
               <Link
                 href="/contact?audience=provider"
-                className="rounded-full bg-nurture-sage px-8 py-3.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
+                className="btn-primary-lg"
               >
                 Apply to join
               </Link>
               <Link
                 href="/signin"
-                className="rounded-full border border-nurture-sage px-8 py-3.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+                className="btn-secondary-lg"
               >
                 Provider sign in
               </Link>
@@ -139,9 +139,15 @@ export default function ForProvidersPage() {
       <HowItWorksSteps
         title="Provider onboarding"
         steps={providerHowItWorks}
-        className="bg-nurture-sage/5 py-20"
+        organicWaves
+        className="bg-nurture-sage/5"
       />
-      <FaqList title="Questions from providers" items={providerFaqs} />
+      <FaqList
+        title="Questions from providers"
+        items={providerFaqs}
+        organicWaves
+        waveTopFill="#F6F3F0"
+      />
     </>
   );
 }

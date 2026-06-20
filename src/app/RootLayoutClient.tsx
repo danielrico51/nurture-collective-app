@@ -87,13 +87,15 @@ export default function RootLayoutClient({
       <main
         className={
           isIntakeChat
-            ? "fixed inset-x-0 bottom-0 top-20 overflow-hidden"
-            : "min-h-screen pt-20"
+            ? "fixed inset-x-0 bottom-0 top-24 overflow-hidden sm:top-28 md:top-32"
+            : "min-h-screen"
         }
       >
         {showSiteArtwork ? (
           <SiteArtworkBackground
-            intensity={pathname === "/services" ? "medium" : "subtle"}
+            intensity={
+              pathname === "/" || pathname === "/services" ? "light" : "subtle"
+            }
           >
             {children}
           </SiteArtworkBackground>

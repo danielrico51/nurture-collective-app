@@ -36,7 +36,7 @@ interface ContactOptionsProps {
 }
 
 const cardClassName =
-  "flex flex-col rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm";
+  "mx-auto flex w-full max-w-md flex-col items-center text-center rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm";
 
 const ContactOptions = ({
   formAnchorId = "contact-form",
@@ -64,10 +64,16 @@ const ContactOptions = ({
     "Hi! I'd like to learn more about support from The Nesting Place."
   );
 
+  const visibleCardCount = WHATSAPP_CONTACT_CARD_ENABLED ? 4 : 3;
+  const gridClassName =
+    visibleCardCount === 3
+      ? "grid gap-6 md:grid-cols-2 xl:grid-cols-3"
+      : "grid gap-6 md:grid-cols-2 xl:grid-cols-4";
+
   return (
     <div className={className}>
       <div
-        className="grid gap-6 md:grid-cols-2 xl:grid-cols-4"
+        className={gridClassName}
         aria-label={isIntake ? "Ways to start support" : "Contact options"}
       >
         <article className={cardClassName}>
@@ -84,7 +90,7 @@ const ContactOptions = ({
           </p>
           <Link
             href={isIntake ? intakeHref : (formHref ?? `#${formAnchorId}`)}
-            className="mt-6 inline-block rounded-full bg-nurture-sage px-6 py-2.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
+            className="mt-6 btn-primary"
           >
             {isIntake ? "Request support" : "Use contact form"}
           </Link>
@@ -106,7 +112,7 @@ const ContactOptions = ({
                 href={whatsappUrl!}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-6 inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+                className="mt-6 btn-secondary"
               >
                 Open WhatsApp
               </a>
@@ -129,16 +135,16 @@ const ContactOptions = ({
             Call our local line or text our toll-free number to reach our support
             concierge — we&apos;re here when you need a real person.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
             <a
               href={callHref}
-              className="inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+              className="btn-secondary"
             >
               Call us
             </a>
             <a
               href={textHref}
-              className="inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+              className="btn-secondary"
             >
               Text us
             </a>
@@ -160,14 +166,14 @@ const ContactOptions = ({
               href={bookingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-6 inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+              className="mt-6 btn-primary"
             >
               Schedule now
             </a>
           ) : (
             <Link
               href={isIntake ? buildCareStartHref() : "/contact"}
-              className="mt-6 inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+              className="mt-6 btn-primary"
             >
               {isIntake ? "Request support" : "Request a call"}
             </Link>

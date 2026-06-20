@@ -1,6 +1,8 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import ContactOptions from "@/components/Common/ContactOptions";
+import MarketingSection from "@/components/Common/MarketingSection";
 import SectionTitle from "@/components/Common/SectionTitle";
+import { MARKETING_CREAM } from "@/config/marketingDesign";
 import {
   benefitSections,
   benefitsEmployerNote,
@@ -76,19 +78,23 @@ export default function BenefitsAndInsurancePage() {
             </p>
           </div>
 
-          <div className="mt-16">
+          <MarketingSection
+            waves="top"
+            waveTopFill={MARKETING_CREAM}
+            className="bg-white pb-14 sm:pb-16"
+          >
             <SectionTitle
               title="Talk with our team"
               subtitle="We'll answer questions about coverage and documentation."
             />
-            <div className="mt-10">
+            <div className="mt-8">
               <ContactOptions
                 variant="contact"
                 formHref="/contact?topic=benefits&audience=mom"
                 whatsappMessage="Hi! I have a question about using my benefits with The Nesting Place."
               />
             </div>
-          </div>
+          </MarketingSection>
         </div>
       </section>
     </>

@@ -104,9 +104,9 @@ const ServiceCardExpandedContent = ({
       <div className="mt-4 flex items-center justify-between gap-3 border-t border-nurture-sage/10 pt-4">
         <Link
           href={buildCareStartHref(service.slug)}
-          className="inline-flex items-center gap-2 rounded-full bg-nurture-rose px-4 py-2 text-xs font-semibold text-white transition hover:bg-nurture-rose-dark"
+          className="btn-primary !px-4 !py-2 !text-xs"
         >
-          Get support for {service.title.toLowerCase()}
+          Request support for {service.title.toLowerCase()}
         </Link>
         <LeafMark className="h-4 w-4 opacity-65" />
       </div>

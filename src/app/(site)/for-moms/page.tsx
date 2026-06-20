@@ -54,10 +54,7 @@ export default function ForMomsPage() {
               childcare, and beyond.
             </p>
             <div className="mt-10 flex flex-col items-center justify-center gap-4 sm:flex-row">
-              <Link
-                href={buildCareStartHref()}
-                className="rounded-full bg-nurture-sage px-8 py-3.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
-              >
+              <Link href={buildCareStartHref()} className="btn-primary-lg">
                 Request support
               </Link>
             </div>
@@ -107,9 +104,15 @@ export default function ForMomsPage() {
       <HowItWorksSteps
         title="Your support journey"
         steps={momHowItWorks}
-        className="bg-nurture-sage/5 py-20"
+        organicWaves
+        className="bg-nurture-sage/5"
       />
-      <FaqList title="Questions from moms" items={momFaqs} />
+      <FaqList
+        title="Questions from moms"
+        items={momFaqs}
+        organicWaves
+        waveTopFill="#F6F3F0"
+      />
       <BookingEmbed />
     </>
   );

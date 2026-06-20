@@ -63,7 +63,7 @@ export const brands = {
     logoSrc: "/branding/nesting-place-wordmark.png",
     wordmarkSrc: "/branding/nesting-place-wordmark.png",
     wordmarkCreamSrc: "/branding/nesting-place-wordmark-cream.png",
-    markSrc: "/branding/nesting-place-baby-mark.png",
+    markSrc: "/branding/nesting-place-baby-2.png",
     serviceArea:
       "Serving North, Central, and South Jersey plus New York's Lower Hudson Valley — welcoming families across NJ, NY, CT, and PA",
     description:
@@ -196,7 +196,7 @@ export const coreServices: CoreService[] = [
     tag: "Support",
     benefit:
       "Relieve pregnancy discomfort and reconnect with your changing body in a calm, nurturing environment.",
-    availabilityNote: "Available in Ridgewood and select Northern NJ locations.",
+    availabilityNote: "Currently available in Ridgewood only.",
   },
   {
     slug: "postpartum-massage",

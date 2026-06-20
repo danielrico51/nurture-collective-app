@@ -24,7 +24,7 @@ export function AdminAccessDenied({
   };
 
   return (
-    <div className="mx-auto max-w-lg px-4 py-16 text-center sm:px-6">
+    <div className="floating-header-offset mx-auto max-w-lg px-4 pb-16 text-center sm:px-6">
       <div className="rounded-3xl border border-nurture-sage/20 bg-white p-8 shadow-sm">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-nurture-sage-dark">
           Admin workspace
