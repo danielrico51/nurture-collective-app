@@ -2,8 +2,11 @@
 
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import ContactOptions from "@/components/Common/ContactOptions";
+import PageIntroWithImage from "@/components/Common/PageIntroWithImage";
+import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { integrations } from "@/config/integrations";
+import { pageArtwork } from "@/config/pageArtwork";
 import { legalPaths } from "@/content/legal";
 import { mapContactFormToIntakeSubmit } from "@/lib/intake/mapContactForm";
 import { PREFERRED_CONTACT_OPTIONS, SERVICE_SLUGS } from "@/types/inquiry";
@@ -247,15 +250,25 @@ const ContactPageContent = () => (
     <Breadcrumb pageName="Contact" />
     <section className="py-16">
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          title="Let's connect"
-          subtitle="Tell us how we can support you — we'll respond within one business day."
-        />
+        <PageIntroWithImage
+          imageSrc={pageArtwork.contactHug.src}
+          imageAlt={pageArtwork.contactHug.alt}
+          blend="strong"
+        >
+          <SectionTitle
+            title="Let's connect"
+            subtitle="Tell us how we can support you — we'll respond within one business day."
+            centered={false}
+          />
+        </PageIntroWithImage>
         <ContactOptions className="mt-10" formAnchorId="contact-form" />
         <div className="mx-auto mt-16 max-w-xl">
-          <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
+          <ScrollRevealHeading
+            variant="quick"
+            className="font-serif text-2xl font-semibold text-nurture-charcoal"
+          >
             Send a message
-          </h2>
+          </ScrollRevealHeading>
           <Suspense
             fallback={
               <p className="mt-6 text-sm text-nurture-charcoal/60">Loading form…</p>

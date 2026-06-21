@@ -1,7 +1,12 @@
+"use client";
+
 import CoverageMap from "@/components/Common/CoverageMap";
+import PageIntroWithImage from "@/components/Common/PageIntroWithImage";
+import SectionTitle from "@/components/Common/SectionTitle";
 import { TeamSection } from "@/components/Common/TeamSection";
 import JsonLd from "@/components/Seo/JsonLd";
 import { buildCareStartHref } from "@/config/carePaths";
+import { pageArtwork } from "@/config/pageArtwork";
 import { buildPageMetadata } from "@/config/seo";
 import { aboutStory } from "@/content/aboutStory";
 import { brands } from "@/content/site";
@@ -39,27 +44,26 @@ const values = [
   },
 ] as const;
 
-/** Organic radii aligned with How it works step cards. */
-const VALUE_ORGANIC_RADIUS = [
-  "rounded-3xl md:rounded-[63%_37%_54%_46%/55%_48%_52%_45%]",
-  "rounded-3xl md:rounded-[58%_42%_48%_52%/52%_44%_56%_48%]",
-  "rounded-3xl md:rounded-[44%_56%_62%_38%/48%_56%_44%_52%]",
-] as const;
-
 export default function AboutPage() {
   return (
     <>
       <JsonLd data={buildAboutPageJsonLd(teamMembers)} />
 
-      <section className="floating-header-offset py-12 sm:py-14">
+      <section className="floating-header-offset pb-12 sm:pb-14">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-medium uppercase tracking-[0.22em] text-nurture-sage-dark">
+          <PageIntroWithImage
+            imageSrc={pageArtwork.aboutCoffee.src}
+            imageAlt={pageArtwork.aboutCoffee.alt}
+          >
+            <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
               {brands.nestingPlace.name}
             </p>
-            <h2 className="mt-4 font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl">
-              {brands.nestingPlace.byline}
-            </h2>
+            <SectionTitle
+              title={brands.nestingPlace.byline}
+              revealVariant="emphasis"
+              centered={false}
+              titleClassName="mt-4 font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl"
+            />
             <p className="mt-3 text-sm text-nurture-charcoal/65">
               {brands.nestingPlace.operatorLine}
             </p>
@@ -79,45 +83,47 @@ export default function AboutPage() {
                 are.
               </p>
             </div>
+          </PageIntroWithImage>
 
-            <div className="mt-12 sm:mt-14">
-              <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal sm:text-3xl">
-                {aboutStory.title}
-              </h2>
-              <p className="mt-4 text-nurture-charcoal/80">{aboutStory.intro}</p>
-              <div className="mt-8 space-y-8">
-                {aboutStory.chapters.map((chapter) => (
-                  <article
-                    key={chapter.heading}
-                    className="rounded-2xl border border-nurture-sage/15 bg-white p-6 shadow-sm"
-                  >
-                    <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
-                      {chapter.heading}
-                    </h3>
-                    <p className="mt-3 text-sm leading-relaxed text-nurture-charcoal/75">
-                      {chapter.body}
-                    </p>
-                  </article>
-                ))}
-              </div>
+          <div className="mx-auto mt-12 max-w-3xl text-center sm:mt-14">
+            <SectionTitle
+              title={aboutStory.title}
+              revealVariant="soft"
+              titleClassName="font-serif text-2xl font-semibold text-nurture-charcoal sm:text-3xl"
+            />
+            <p className="mt-4 text-nurture-charcoal/80">{aboutStory.intro}</p>
+            <div className="mt-8 space-y-8">
+              {aboutStory.chapters.map((chapter) => (
+                <article
+                  key={chapter.heading}
+                  className="rounded-2xl border border-nurture-sage/15 bg-white p-6 shadow-sm"
+                >
+                  <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
+                    {chapter.heading}
+                  </h3>
+                  <p className="mt-3 text-sm leading-relaxed text-nurture-charcoal/75">
+                    {chapter.body}
+                  </p>
+                </article>
+              ))}
             </div>
 
             <div className="mt-12 sm:mt-14">
-              <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal sm:text-3xl">
-                Our values
-              </h2>
-              <ul className="mt-8 grid gap-6 sm:grid-cols-3 sm:items-stretch sm:gap-4">
-                {values.map((value, index) => (
+              <SectionTitle
+                title="Our values"
+                revealVariant="gentle"
+                titleClassName="font-serif text-2xl font-semibold text-nurture-charcoal sm:text-3xl"
+              />
+              <ul className="mt-8 space-y-6">
+                {values.map((value) => (
                   <li
                     key={value.title}
-                    className={`flex h-full min-h-[11rem] flex-col items-center justify-center border border-nurture-sage/20 bg-[#F0EBE4] p-6 text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] sm:min-h-[12rem] sm:p-7 ${
-                      VALUE_ORGANIC_RADIUS[index % VALUE_ORGANIC_RADIUS.length]
-                    }`}
+                    className="rounded-2xl border border-nurture-sage/15 bg-white p-6 shadow-sm"
                   >
-                    <h3 className="text-center font-serif text-lg font-semibold text-nurture-charcoal">
+                    <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
                       {value.title}
                     </h3>
-                    <p className="mt-2 text-center text-sm leading-relaxed text-nurture-charcoal/75">
+                    <p className="mt-2 text-sm text-nurture-charcoal/75">
                       {value.description}
                     </p>
                   </li>
@@ -141,8 +147,7 @@ export default function AboutPage() {
         title="Leadership & ownership"
         subtitle="Alex and Barb lead The Nesting Place today — with our entire team continuing the hands-on care families know and trust."
         members={teamMembers}
-        className="bg-white"
-        organicWaves
+        className="bg-nurture-sage/5"
       />
 
       <section>

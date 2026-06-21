@@ -1,4 +1,7 @@
+"use client";
+
 import MarketingSection from "@/components/Common/MarketingSection";
+import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import { MARKETING_CREAM } from "@/config/marketingDesign";
 import type { TeamMemberProfile } from "@/content/team";
 import Image from "next/image";
@@ -77,9 +80,12 @@ export const TeamSection = ({
   const inner = (
     <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl">
+        <ScrollRevealHeading
+          variant="gentle"
+          className="font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl"
+        >
           {title}
-        </h2>
+        </ScrollRevealHeading>
         {subtitle ? (
           <p className="mt-4 text-lg text-nurture-charcoal/70">{subtitle}</p>
         ) : null}

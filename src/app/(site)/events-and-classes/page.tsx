@@ -2,6 +2,7 @@ import EventsCtaBanner from "@/components/Events/EventsCtaBanner";
 import EventsHero from "@/components/Events/EventsHero";
 import EventsJumpNav from "@/components/Events/EventsJumpNav";
 import EventsListingCard from "@/components/Events/EventsListingCard";
+import SectionTitle from "@/components/Common/SectionTitle";
 import SectionWaveEdges from "@/components/Common/SectionWaveEdges";
 import JsonLd from "@/components/Seo/JsonLd";
 import { MARKETING_CREAM } from "@/config/marketingDesign";
@@ -43,13 +44,12 @@ export default async function EventsAndClassesPage() {
       >
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <h2 className="font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl">
-              Sessions for every stage
-            </h2>
-            <p className="mt-3 text-lg text-nurture-charcoal/70">
-              Classes and community events from {brands.nestingPlace.name} —
-              in person, virtual, and hybrid.
-            </p>
+          <SectionTitle
+            title="Sessions for every stage"
+            subtitle={`Classes and community events from ${brands.nestingPlace.name} — in person, virtual, and hybrid.`}
+            revealVariant="gentle"
+            titleClassName="font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl"
+          />
           </div>
 
           {items.length > 0 ? (

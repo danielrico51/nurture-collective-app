@@ -1,9 +1,10 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import ContactOptions from "@/components/Common/ContactOptions";
 import MarketingSection from "@/components/Common/MarketingSection";
+import PageIntroWithImage from "@/components/Common/PageIntroWithImage";
 import SectionTitle from "@/components/Common/SectionTitle";
-import { MARKETING_CREAM } from "@/config/marketingDesign";
-import {
+import { pageArtwork } from "@/config/pageArtwork";
+import { MARKETING_CREAM } from "@/config/marketingDesign";import {
   benefitSections,
   benefitsEmployerNote,
   benefitsIntro,
@@ -29,8 +30,11 @@ export default function BenefitsAndInsurancePage() {
     <>
       <Breadcrumb pageName="Benefits & insurance" />
       <section className="py-16">
-        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
+      <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <PageIntroWithImage
+            imageSrc={pageArtwork.benefitsFamily.src}
+            imageAlt={pageArtwork.benefitsFamily.alt}
+          >
             <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
               Paying for support
             </p>
@@ -40,10 +44,9 @@ export default function BenefitsAndInsurancePage() {
             <p className="mt-6 text-lg leading-relaxed text-nurture-charcoal/80">
               {benefitsIntro}
             </p>
-          </div>
+          </PageIntroWithImage>
 
-          <div className="mx-auto mt-12 max-w-3xl space-y-8">
-            <article className="rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm">
+          <div className="mx-auto mt-12 max-w-3xl space-y-8">            <article className="rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm">
               <h3 className="font-serif text-xl font-semibold text-nurture-charcoal">
                 Employer family benefits
               </h3>
@@ -95,8 +98,8 @@ export default function BenefitsAndInsurancePage() {
               />
             </div>
           </MarketingSection>
-        </div>
-      </section>
+      </div>
+    </section>
     </>
   );
 }

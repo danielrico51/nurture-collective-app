@@ -1,3 +1,6 @@
+"use client";
+
+import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import SectionWaveEdges from "@/components/Common/SectionWaveEdges";
 import { MARKETING_CREAM } from "@/config/marketingDesign";
 
@@ -15,9 +18,13 @@ const Breadcrumb = ({ pageName }: BreadcrumbProps) => {
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-nurture-sage-dark">
           The Nesting Place
         </p>
-        <h1 className="mt-2 font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl">
+        <ScrollRevealHeading
+          as="h1"
+          variant="soft"
+          className="mt-2 font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl"
+        >
           {pageName}
-        </h1>
+        </ScrollRevealHeading>
       </div>
     </section>
   );

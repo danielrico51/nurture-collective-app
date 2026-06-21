@@ -25,18 +25,9 @@ const config: Config = {
         },
       },
       fontFamily: {
-        sans: [
-          "var(--font-plus-jakarta-sans)",
-          "Plus Jakarta Sans",
-          "system-ui",
-          "sans-serif",
-        ],
-        serif: [
-          "var(--font-instrument-serif)",
-          "Instrument Serif",
-          "Georgia",
-          "serif",
-        ],
+        sans: ["Inter", "system-ui", "sans-serif"],
+        serif: ["Lora", "Georgia", "serif"],
+        wordmark: ["Quicksand", "system-ui", "sans-serif"],
       },
       boxShadow: {
         auth: "0 8px 40px rgba(45, 52, 54, 0.1), 0 2px 8px rgba(45, 52, 54, 0.04)",
@@ -44,6 +35,9 @@ const config: Config = {
           "0 24px 48px -12px rgba(139, 123, 168, 0.16), 0 12px 28px -10px rgba(45, 52, 54, 0.08)",
         floatingCard:
           "0 24px 56px -16px rgba(139, 123, 168, 0.22), 0 12px 32px -12px rgba(45, 52, 54, 0.08)",
+      },
+      transitionTimingFunction: {
+        premium: "cubic-bezier(0.25, 1, 0.5, 1)",
       },
     },
   },

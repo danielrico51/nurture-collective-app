@@ -26,6 +26,7 @@ const ServiceIllustration = ({
   }
 
   const isCard = variant === "card";
+  const isSvg = src.endsWith(".svg");
 
   return (
     <div
@@ -39,9 +40,12 @@ const ServiceIllustration = ({
         src={src}
         alt={serviceIllustrationAlt[slug] ?? ""}
         fill
+        unoptimized={isSvg}
         className={
           isCard
-            ? "object-cover object-center"
+            ? isSvg
+              ? "object-contain object-center p-2 sm:p-3"
+              : "object-cover object-center"
             : "object-contain object-center p-1 sm:p-1.5"
         }
         sizes={

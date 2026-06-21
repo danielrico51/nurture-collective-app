@@ -87,7 +87,7 @@ export default function RootLayoutClient({
       <main
         className={
           isIntakeChat
-            ? "fixed inset-x-0 bottom-0 top-24 overflow-hidden sm:top-28 md:top-32"
+            ? "fixed inset-x-0 bottom-0 top-28 overflow-hidden sm:top-32 md:top-36"
             : "min-h-screen"
         }
       >

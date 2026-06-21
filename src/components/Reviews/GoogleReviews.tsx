@@ -2,8 +2,10 @@
 
 import SectionTitle from "@/components/Common/SectionTitle";
 import type { GoogleReview, GoogleReviewsPayload } from "@/types/googleReview";
-import { useEffect, useState } from "react";
+import Image from "next/image";
+import { useEffect, useState, type ReactNode } from "react";
 
+const BABY_PHOTO_SRC = "/branding/changingbaby.jpg";
 const StarRating = ({ rating }: { rating: number }) => (
   <div className="flex items-center gap-0.5" aria-label={`${rating} out of 5 stars`}>
     {Array.from({ length: 5 }).map((_, index) => (
@@ -19,27 +21,105 @@ const StarRating = ({ rating }: { rating: number }) => (
   </div>
 );
 
-const ReviewSnippet = ({ review }: { review: GoogleReview }) => (
-  <div>
-    <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
-      <span className="font-medium text-nurture-charcoal">{review.authorName}</span>
-      <StarRating rating={review.rating} />
-    </div>
-    {review.relativeTime ? (
-      <p className="mt-0.5 text-xs text-nurture-charcoal/50">{review.relativeTime}</p>
-    ) : null}
-    <p className="mt-2 text-sm leading-relaxed text-nurture-charcoal/80">{review.text}</p>
-  </div>
+const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
+  <svg
+    viewBox="0 0 20 20"
+    aria-hidden
+    className={`h-4 w-4 shrink-0 transition-transform ${expanded ? "rotate-180" : ""}`}
+    fill="none"
+    stroke="currentColor"
+    strokeWidth="2"
+  >
+    <path d="M5 8l5 5 5-5" strokeLinecap="round" strokeLinejoin="round" />
+  </svg>
 );
+
+interface ReviewSnippetProps {
+  review: GoogleReview;
+  isOpen: boolean;
+  onToggle: () => void;
+}
+
+const ReviewSnippet = ({ review, isOpen, onToggle }: ReviewSnippetProps) => {
+  const panelId = `review-${review.id}`;
+
+  return (
+    <div className="py-3">
+      <button
+        type="button"
+        className="flex w-full items-start justify-between gap-3 text-left"
+        aria-expanded={isOpen}
+        aria-controls={panelId}
+        onClick={onToggle}
+      >
+        <span className="min-w-0 flex-1">
+          <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+            <span className="font-medium text-nurture-charcoal">{review.authorName}</span>
+            <StarRating rating={review.rating} />
+          </span>
+          {review.relativeTime ? (
+            <span className="mt-0.5 block text-xs text-nurture-charcoal/50">
+              {review.relativeTime}
+            </span>
+          ) : null}
+        </span>
+        <span className="pt-0.5 text-nurture-sage-dark">
+          <ChevronIcon expanded={isOpen} />
+        </span>
+      </button>
+      <div
+        id={panelId}
+        aria-hidden={!isOpen}
+        className={
+          isOpen
+            ? "mt-2 text-sm leading-relaxed text-nurture-charcoal/75"
+            : "sr-only text-sm leading-relaxed text-nurture-charcoal/75"
+        }
+      >
+        {review.text}
+      </div>
+    </div>
+  );
+};
 
 interface GoogleReviewsProps {
   className?: string;
 }
 
+const ReviewsBackground = () => (
+  <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+    <Image
+      src={BABY_PHOTO_SRC}
+      alt=""
+      fill
+      quality={85}
+      sizes="100vw"
+      className="google-reviews-bg-photo object-cover object-center"
+    />
+    <div className="absolute inset-0 bg-white/82" />
+  </div>
+);
+
+const GoogleReviewsSection = ({
+  className,
+  children,
+}: {
+  className: string;
+  children: ReactNode;
+}) => (
+  <section className={`relative overflow-hidden py-8 sm:py-10 ${className}`}>
+    <ReviewsBackground />
+    <div className="relative z-[1] mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+      {children}
+    </div>
+  </section>
+);
+
 const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
   const [data, setData] = useState<GoogleReviewsPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [openReviewIds, setOpenReviewIds] = useState<Set<string>>(() => new Set());
 
   useEffect(() => {
     fetch("/api/reviews")
@@ -73,31 +153,26 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
 
   if (loading) {
     return (
-      <section className={`py-8 sm:py-10 ${className}`}>
-        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-nurture-charcoal/60">
-            Loading reviews…
-          </p>
-        </div>
-      </section>
+      <GoogleReviewsSection className={className}>
+        <p className="text-center text-sm text-nurture-charcoal/60">
+          Loading reviews…
+        </p>
+      </GoogleReviewsSection>
     );
   }
 
   if (error || !data) {
     return (
-      <section className={`py-8 sm:py-10 ${className}`}>
-        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-red-700/90">
-            {error ?? "Could not load reviews"}
-          </p>
-        </div>
-      </section>
+      <GoogleReviewsSection className={className}>
+        <p className="text-center text-sm text-red-700/90">
+          {error ?? "Could not load reviews"}
+        </p>
+      </GoogleReviewsSection>
     );
   }
 
   return (
-    <section className={`py-8 sm:py-10 ${className}`}>
-      <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+    <GoogleReviewsSection className={className}>
         {data.isPlaceholder ? (
           <div className="mb-4 rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-2.5 text-center text-sm text-amber-900/90">
             <span className="font-semibold">Preview only</span> — sample reviews
@@ -108,6 +183,7 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
 
         <SectionTitle
           title="What families are saying"
+          revealVariant="default"
           subtitle={
             data.isPlaceholder
               ? "Placeholder social proof — real Google reviews will appear here after integration."
@@ -140,9 +216,20 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
             {data.reviews.map((review) => (
               <article
                 key={review.id}
-                className="rounded-xl border border-nurture-sage/20 bg-[#F6F3EE] px-4 py-3 shadow-sm"
+                className="rounded-xl border border-nurture-sage/15 bg-white px-4 shadow-sm"
               >
-                <ReviewSnippet review={review} />
+                <ReviewSnippet
+                  review={review}
+                  isOpen={openReviewIds.has(review.id)}
+                  onToggle={() =>
+                    setOpenReviewIds((current) => {
+                      const next = new Set(current);
+                      if (next.has(review.id)) next.delete(review.id);
+                      else next.add(review.id);
+                      return next;
+                    })
+                  }
+                />
               </article>
             ))}
           </div>
@@ -161,8 +248,7 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
             when your Google Business Profile is ready.
           </p>
         ) : null}
-      </div>
-    </section>
+    </GoogleReviewsSection>
   );
 };
 

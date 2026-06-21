@@ -9,8 +9,8 @@ const BrandWordmarkText = ({
 }: BrandWordmarkTextProps) => {
   const textClass =
     size === "header"
-      ? "font-sans text-[clamp(0.9rem,2vw+0.4rem,1.375rem)] font-semibold leading-tight tracking-tight"
-      : "font-sans text-[0.6875rem] font-semibold tracking-tight sm:text-xs";
+      ? "font-wordmark text-[clamp(0.9rem,2vw+0.4rem,1.375rem)] font-semibold leading-tight tracking-tight"
+      : "font-wordmark text-sm font-semibold tracking-tight sm:text-base";
 
   return (
     <span className={`min-w-0 leading-tight ${textClass} ${className}`.trim()}>

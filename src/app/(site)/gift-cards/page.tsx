@@ -1,6 +1,8 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
+import PageIntroWithImage from "@/components/Common/PageIntroWithImage";
 import EGiftCardForm from "@/components/GiftCards/EGiftCardForm";
 import { GiftCardSuccessHandler } from "@/components/GiftCards/GiftCardSuccessHandler";
+import { pageArtwork } from "@/config/pageArtwork";
 import {
   giftCardFaqs,
   giftCardHowItWorks,
@@ -30,7 +32,11 @@ export default function GiftCardsPage() {
       <Breadcrumb pageName="Gift cards" />
       <section className="py-16">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
+          <PageIntroWithImage
+            imageSrc={pageArtwork.giftCard.src}
+            imageAlt={pageArtwork.giftCard.alt}
+            blend="strong"
+          >
             <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
               Give support
             </p>
@@ -38,7 +44,7 @@ export default function GiftCardsPage() {
               eGift cards for every stage of motherhood
             </h1>
             <p className="mt-6 text-lg text-nurture-charcoal/80">{giftCardsIntro}</p>
-          </div>
+          </PageIntroWithImage>
 
           <div className="mt-16 grid gap-12 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
             <div className="space-y-10">

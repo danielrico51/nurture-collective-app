@@ -94,6 +94,15 @@ export const serviceDetails: ServiceDetail[] = [
       "https://www.ajog.org/article/S0002-9378(24)00869-X/fulltext",
     ],
   },
+  {
+    slug: "placenta-encapsulation",
+    whatToExpect: [
+      "Clear guidance on timing, safety, and what to expect after birth",
+      "Professional handling, preparation, and encapsulation by trained specialists",
+      "Discreet pickup or in-home processing with labeled capsules and care instructions",
+    ],
+    sourceUrls: [],
+  },
 ];
 
 const serviceDetailsBySlug = Object.fromEntries(

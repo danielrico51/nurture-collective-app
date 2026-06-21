@@ -12,6 +12,7 @@ const SERVICE_SLUGS: ServiceSlug[] = [
   "postpartum-massage",
   "birth-photography",
   "childbirth-education",
+  "placenta-encapsulation",
 ];
 
 const isStatus = (value: unknown): value is BlogPostStatus =>

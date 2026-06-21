@@ -1,62 +1,38 @@
 "use client";
 
 import BrandBabyMark from "@/components/Common/BrandBabyMark";
+import SectionWaveEdges, {
+  FOOTER_WAVE_OVERLAP_CLASS,
+} from "@/components/Common/SectionWaveEdges";
 import { SocialIcon } from "@/components/Common/SocialIcon";
-import SectionWaveEdges from "@/components/Common/SectionWaveEdges";
-import {
-  MARKETING_CREAM,
-  MARKETING_FOOTER,
-  MARKETING_WHITE,
-} from "@/config/marketingDesign";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { brands, socialLinks } from "@/content/site";
-import { legalPaths } from "@/content/legal";
+import { MARKETING_FOOTER } from "@/config/marketingDesign";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
+import { legalPaths } from "@/content/legal";
+import { brands, socialLinks } from "@/content/site";
+import Link from "next/link";
 
 const footerLinkClass =
   "text-white/90 transition-colors hover:text-nurture-sage";
 
-/** Pages whose last section background is white (not cream). */
-const FOOTER_WAVE_WHITE_PATHS = new Set([
-  "/",
-  "/services",
-  "/benefits-and-insurance",
-]);
+const Footer = () => (
+  <footer className={`site-footer w-full ${FOOTER_WAVE_OVERLAP_CLASS}`}>
+    <SectionWaveEdges footerTop footerFill={MARKETING_FOOTER} />
+    <div className="site-footer__body w-full">
+      <div className="relative z-[2] mx-auto max-w-screen-xl px-4 pb-6 pt-10 sm:px-6 sm:pb-8 sm:pt-12 md:pt-14 lg:px-8">
+        <Link
+          href="/"
+          aria-label={brands.nestingPlace.name}
+          className="group inline-flex"
+        >
+          <BrandBabyMark size="footer" />
+        </Link>
 
-const Footer = () => {
-  const pathname = usePathname();
-  const waveTopFill = FOOTER_WAVE_WHITE_PATHS.has(pathname)
-    ? MARKETING_WHITE
-    : MARKETING_CREAM;
-
-  return (
-    <footer className="site-footer">
-      <SectionWaveEdges
-        topOnly
-        smoothTopFade
-        topFill={waveTopFill}
-        fadeThroughColor={MARKETING_FOOTER}
-      />
-      <div className="relative z-[2] mx-auto max-w-screen-xl px-4 pb-6 pt-16 sm:px-6 sm:pb-8 sm:pt-24 md:pt-28 lg:px-8">
-        <div className="grid gap-5 md:grid-cols-3 md:gap-x-8">
-          <div className="md:col-span-2">
-            <Link
-              href="/"
-              aria-label={brands.nestingPlace.name}
-              className="group inline-flex"
-            >
-              <BrandBabyMark size="footer" />
-            </Link>
-          </div>
-
-          <div className="hidden md:block" aria-hidden />
-
-          <div className="md:col-span-2">
-            <p className="font-serif text-base font-semibold text-nurture-sage-dark">
+        <div className="mt-4 flex flex-col gap-8 md:flex-row md:items-start md:justify-between md:gap-12">
+          <div className="max-w-lg">
+            <p className="font-serif text-xl font-semibold text-nurture-sage-dark sm:text-2xl">
               {brands.nestingPlace.byline}
             </p>
-            <p className="mt-2 max-w-lg text-sm text-white/90">
+            <p className="mt-2 text-sm text-white/90">
               {brands.nestingPlace.description}
             </p>
             <p className="mt-1.5 text-xs text-white/75">
@@ -73,7 +49,7 @@ const Footer = () => {
             </p>
           </div>
 
-          <div className="grid gap-5 sm:grid-cols-2 md:col-span-1 md:row-start-2">
+          <div className="grid shrink-0 gap-8 sm:grid-cols-2 sm:gap-12 md:pt-0.5">
             <div>
               <p className="text-sm font-semibold uppercase tracking-wide text-nurture-sage-dark">
                 Legal
@@ -130,6 +106,7 @@ const Footer = () => {
             </div>
           </div>
         </div>
+
         <div className="mt-5 flex items-center justify-center gap-4">
           {socialLinks.map((link) => (
             <a
@@ -152,8 +129,8 @@ const Footer = () => {
           {brands.nestingPlace.name}.
         </p>
       </div>
-    </footer>
-  );
-};
+    </div>
+  </footer>
+);
 
 export default Footer;

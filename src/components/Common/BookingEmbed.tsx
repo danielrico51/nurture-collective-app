@@ -7,6 +7,7 @@ import {
   hasBooking,
   LEGACY_CALENDLY_ANCHOR_ID,
 } from "@/config/bookings";
+import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import { brands } from "@/content/site";
 
 const defaultBookingSubtitle = `Pick a time that works for you — we'll learn about your needs and answer your questions. Calendar invites come from ${brands.nestingPlace.email}.`;
@@ -32,9 +33,12 @@ const BookingEmbed = ({
       <span id={LEGACY_CALENDLY_ANCHOR_ID} className="sr-only" aria-hidden />
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-serif text-3xl font-semibold text-nurture-charcoal">
+          <ScrollRevealHeading
+            variant="soft"
+            className="font-serif text-3xl font-semibold text-nurture-charcoal"
+          >
             {title}
-          </h2>
+          </ScrollRevealHeading>
           <p className="mt-3 text-nurture-charcoal/70">{subtitle}</p>
         </div>
         <div className="booking-embed-brush mx-auto mt-10 max-w-4xl">

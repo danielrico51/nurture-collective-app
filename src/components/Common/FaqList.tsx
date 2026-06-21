@@ -35,7 +35,7 @@ const FaqList = ({
     <section className={sectionClassName}>
       {organicWaves && <SectionWaveEdges topOnly topFill={waveTopFill} />}
       <div className="relative mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle title={title} />
+        <SectionTitle title={title} revealVariant="gentle" />
         <div className="mx-auto mt-8 max-w-2xl divide-y divide-nurture-sage/15">
           {items.map((faq, index) => {
             const isOpen = openIndex === index;

@@ -27,6 +27,7 @@ export const serviceCardBackgroundSrc: Partial<Record<ServiceSlug, string>> = {
   "prenatal-massage": `${base}/card-background-5.svg`,
   "postpartum-massage": `${base}/card-background-6.svg`,
   "childbirth-education": `${base}/card-background-7.svg`,
+  "placenta-encapsulation": `${base}/card-background-3.svg`,
 };
 
 /** Botanical corner frame per card (`21_package_card_corner_frame_*`). */
@@ -38,6 +39,7 @@ export const serviceCardCornerSrc: Partial<Record<ServiceSlug, string>> = {
   "prenatal-massage": `${base}/card-corner-5.svg`,
   "postpartum-massage": `${base}/card-corner-6.svg`,
   "childbirth-education": `${base}/card-corner-7.svg`,
+  "placenta-encapsulation": `${base}/card-corner-3.svg`,
 };
 
 /** Small thematic icon accent per service, matched by filename meaning. */
@@ -49,4 +51,5 @@ export const serviceCardIconSrc: Partial<Record<ServiceSlug, string>> = {
   "prenatal-massage": `${base}/icon-pregnancy-silhouette.svg`,
   "postpartum-massage": `${base}/icon-lotus-wellness.svg`,
   "childbirth-education": `${base}/icon-family-connection.svg`,
+  "placenta-encapsulation": `${base}/icon-parent-child-bond.svg`,
 };

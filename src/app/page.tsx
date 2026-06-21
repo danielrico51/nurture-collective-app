@@ -1,8 +1,7 @@
 import CallToAction from "@/components/Home/CallToAction";
 import JoinTeamSection from "@/components/Home/JoinTeamSection";
 import ServiceStatsSection from "@/components/Home/ServiceStatsSection";
-import TeamBylineBanner from "@/components/Home/TeamBylineBanner";
-import FaqList from "@/components/Common/FaqList";
+import TeamBylineBanner from "@/components/Home/TeamBylineBanner";import FaqList from "@/components/Common/FaqList";
 import Hero from "@/components/Home/Hero";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
 import GoogleReviews from "@/components/Reviews/GoogleReviews";

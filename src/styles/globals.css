@@ -1,27 +1,29 @@
+@import "@fontsource-variable/inter/wght.css";
+@import "@fontsource-variable/lora/wght.css";
+@import "@fontsource-variable/quicksand/wght.css";
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
-@layer base {
-  h1,
-  h2,
-  h3 {
-    @apply font-serif;
-  }
-
-  p {
-    @apply font-sans;
-  }
-
-  nav,
-  button {
-    @apply font-sans;
-  }
-}
-
 @layer components {
   .btn-hover-lift {
-    @apply shadow-md transition-all duration-300 ease-in-out hover:-translate-y-0.5 hover:scale-[1.02] hover:shadow-lg hover:brightness-105 disabled:transform-none disabled:shadow-md disabled:brightness-100 disabled:hover:translate-y-0 disabled:hover:scale-100 disabled:hover:shadow-md;
+    @apply shadow-md transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.035] hover:shadow-xl hover:brightness-110 disabled:transform-none disabled:shadow-md disabled:brightness-100 disabled:hover:translate-y-0 disabled:hover:scale-100 disabled:hover:shadow-md;
+  }
+
+  /* Site-wide pill CTAs that don't use btn-* utility classes */
+  a.rounded-full.font-semibold,
+  button.rounded-full.font-semibold,
+  a.rounded-full.font-medium,
+  button.rounded-full.font-medium {
+    @apply btn-hover-lift;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .btn-hover-lift:hover {
+      transform: none;
+      filter: none;
+    }
   }
 
   .btn-primary {
@@ -54,7 +56,12 @@ body {
 }
 
 .site-footer {
-  @apply relative overflow-hidden text-white;
+  @apply relative w-full text-white;
+  background-color: transparent;
+}
+
+.site-footer__body {
+  @apply w-full;
   background-color: #3a3348;
 }
 
@@ -123,6 +130,33 @@ body {
   );
 }
 
+/* Stronger edge fade for illustrations with visible corner artifacts */
+.hero-image-blend-strong {
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    radial-gradient(ellipse 86% 80% at 50% 48%, #000 50%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 7%, #000 93%, transparent 100%),
+    radial-gradient(ellipse 86% 80% at 50% 48%, #000 50%, transparent 100%);
+  mask-composite: intersect;
+}
+
+/* Home — Google reviews section background (subtle changing-baby photo) */
+.google-reviews-bg-photo {
+  opacity: 0.16;
+  -webkit-mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  -webkit-mask-composite: source-in;
+  mask-image:
+    linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%),
+    linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
+  mask-composite: intersect;
+}
+
 /* Hand-drawn marker highlights for hero service names */
 .hero-service-highlight {
   box-decoration-break: clone;
@@ -185,7 +219,7 @@ body {
 }
 
 .floating-header-offset {
-  @apply pt-24 sm:pt-28 md:pt-32;
+  @apply pt-28 sm:pt-32 md:pt-36;
 }
 
 /* Team byline floating card — soft transparent edges, organic shape */
@@ -204,36 +238,6 @@ body {
   .team-byline-card {
     border-radius: 3.25rem 2.35rem 2.85rem 2.55rem / 2.55rem 3.1rem 2.4rem 2.95rem;
   }
-}
-
-/* Dark purple brushstroke highlight for team byline heading */
-.team-byline-highlight {
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-  display: inline;
-  padding: 0.16em 0.44em 0.14em 0.4em;
-  margin: 0 -0.06em;
-  color: #ffffff;
-  background-color: rgba(58, 51, 72, 0.78);
-  background-image:
-    linear-gradient(
-      108deg,
-      rgba(74, 64, 92, 0.92) 0%,
-      rgba(58, 51, 72, 0.5) 34%,
-      rgba(90, 77, 112, 0.95) 68%,
-      rgba(58, 51, 72, 0.62) 100%
-    ),
-    linear-gradient(
-      168deg,
-      transparent 38%,
-      rgba(45, 38, 58, 0.42) 100%
-    );
-  border-radius: 74% 26% 61% 39% / 36% 64% 32% 68%;
-  transform: rotate(-0.45deg);
-  box-shadow:
-    0.07em 0.1em 0 rgba(45, 38, 58, 0.22),
-    -0.09em 0.05em 0 rgba(74, 64, 92, 0.16),
-    0.04em -0.05em 0 rgba(45, 38, 58, 0.1);
 }
 
 /* Slot-machine stat numbers — white text on brushstroke backgrounds */

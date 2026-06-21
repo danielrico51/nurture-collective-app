@@ -1,22 +1,22 @@
+"use client";
+
 import Link from "next/link";
+import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import ServiceStatsPointList from "@/components/Home/ServiceStatsPointList";
 import { buildCareStartHref, buildServiceSectionHref } from "@/config/carePaths";
-import { featuredServiceStats, type FeaturedServiceStats } from "@/content/serviceStats";
-
-const serviceTitleHighlight: Record<FeaturedServiceStats["slug"], string> = {
-  "birth-doula": "hero-service-highlight--a",
-  "overnight-newborn": "hero-service-highlight--b",
-  "postpartum-care": "hero-service-highlight--c",
-};
+import { featuredServiceStats } from "@/content/serviceStats";
 
 const ServiceStatsSection = () => {
   return (
     <section className="bg-nurture-cream py-12 sm:py-14">
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
-          <h2 className="font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl">
+          <ScrollRevealHeading
+            variant="default"
+            className="font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl"
+          >
             Support that makes a measurable difference
-          </h2>
+          </ScrollRevealHeading>
           <p className="mt-3 text-lg text-nurture-charcoal/70">
             Our core services are backed by research on better outcomes for moms
             and babies — with real people delivering every step of support.
@@ -30,12 +30,8 @@ const ServiceStatsSection = () => {
               className="grid gap-6 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-center lg:gap-8"
             >
               <div>
-                <h3 className="font-serif text-2xl sm:text-3xl">
-                  <span
-                    className={`hero-service-highlight ${serviceTitleHighlight[service.slug]} !font-semibold`}
-                  >
-                    {service.title}
-                  </span>
+                <h3 className="font-serif text-2xl font-semibold text-nurture-charcoal sm:text-3xl">
+                  {service.title}
                 </h3>
                 <p className="mt-3 text-base leading-relaxed text-nurture-charcoal/75">
                   {service.description}

@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import { buildCareStartHref } from "@/config/carePaths";
 import { brands } from "@/content/site";
 
@@ -9,16 +12,18 @@ const Hero = () => {
       <div className="relative mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
         <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
           <div className="relative z-10 text-left">
-            <p className="text-sm font-medium uppercase tracking-[0.22em] text-nurture-sage-dark">
+            <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
               {brands.nestingPlace.tagline}
             </p>
-            <h1
-              className="mt-4 font-serif text-[clamp(2rem,5vw+0.5rem,3.35rem)] font-normal leading-[1.12] tracking-tight text-nurture-slate sm:mt-6 sm:leading-[1.1] lg:text-[3.5rem] lg:leading-[1.06] xl:text-[3.75rem]"
+            <ScrollRevealHeading
+              as="h1"
+              variant="emphasis"
+              className="mt-4 font-serif text-4xl font-semibold leading-tight text-nurture-charcoal sm:mt-6 sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1] xl:text-[3.75rem]"
             >
               Maternal support, coordinated for every stage of{" "}
               <em className="italic">motherhood</em>
-            </h1>
-            <p className="mt-5 font-sans text-base font-light leading-[1.7] text-nurture-charcoal/75 sm:mt-6 sm:text-lg sm:leading-[1.75] lg:mt-8 lg:text-xl lg:leading-[1.8]">
+            </ScrollRevealHeading>
+            <p className="mt-5 text-base leading-relaxed text-nurture-charcoal/80 sm:mt-6 sm:text-lg lg:mt-8 lg:text-xl">
               An experienced maternal wellness and postpartum support practice offering{" "}
               <span className="hero-service-highlight hero-service-highlight--a">
                 birth doula support

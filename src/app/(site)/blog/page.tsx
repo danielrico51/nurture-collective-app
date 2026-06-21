@@ -1,6 +1,8 @@
 import { BlogDigest } from "@/components/Blog/BlogDigest";
 import Breadcrumb from "@/components/Common/Breadcrumb";
+import PageIntroWithImage from "@/components/Common/PageIntroWithImage";
 import SectionTitle from "@/components/Common/SectionTitle";
+import { pageArtwork } from "@/config/pageArtwork";
 import { formatBlogDate } from "@/lib/blog/format";
 import { fetchPublishedBlogPosts } from "@/lib/blog/public";
 import { brands } from "@/content/site";
@@ -30,11 +32,17 @@ export default async function BlogIndexPage() {
       <Breadcrumb pageName="Blog" />
       <section className="py-10 sm:py-12 lg:py-14">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <SectionTitle
-            title="Stories & guidance for your journey"
-            subtitle={`Practical support from ${brands.nestingPlace.name} — ${brands.nestingPlace.tagline.toLowerCase()}.`}
-            centered
-          />
+          <PageIntroWithImage
+            imageSrc={pageArtwork.blog.src}
+            imageAlt={pageArtwork.blog.alt}
+            blend="strong"
+          >
+            <SectionTitle
+              title="Stories & guidance for your journey"
+              subtitle={`Practical support from ${brands.nestingPlace.name} — ${brands.nestingPlace.tagline.toLowerCase()}.`}
+              centered={false}
+            />
+          </PageIntroWithImage>
 
           <BlogDigest articleCount={posts.length} />
 

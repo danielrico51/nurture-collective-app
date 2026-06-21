@@ -48,7 +48,7 @@ const HowItWorksSteps = ({
         <SectionWaveEdges topFill={waveTopFill} bottomFill={waveBottomFill} />
       )}
       <div className="relative mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle title={title} subtitle={subtitle} />
+        <SectionTitle title={title} subtitle={subtitle} revealVariant="quick" />
         <div
           className={`mt-10 grid gap-8 sm:grid-cols-2 ${
             steps.length === 3 ? "lg:grid-cols-3" : "lg:grid-cols-4"

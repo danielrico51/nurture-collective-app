@@ -22,7 +22,13 @@ interface ServicesLandingCardProps {
   researchPoints?: string[];
   sources?: SourceCitation[];
   relatedPosts?: RelatedBlogPost[];
+  layout?: "grid" | "accordion";
+  /** When true, card matches the width of peers in a three-up row instead of stretching full width. */
+  accordionOrphan?: boolean;
 }
+
+const ACCORDION_MOTION =
+  "transition-[flex] duration-500 ease-premium motion-reduce:transition-none";
 
 const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
   <svg
@@ -43,10 +49,13 @@ const ServicesLandingCard = ({
   researchPoints = [],
   sources = [],
   relatedPosts = [],
+  layout = "grid",
+  accordionOrphan = false,
 }: ServicesLandingCardProps) => {
   const [expanded, setExpanded] = useState(false);
   const [hashActive, setHashActive] = useState(false);
   const panelId = useId();
+  const isAccordion = layout === "accordion";
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -65,17 +74,32 @@ const ServicesLandingCard = ({
       detail?.whatToExpect.length ||
       researchPoints.length ||
       relatedPosts.length ||
-      sources.length
+      sources.length,
   );
+
+  const iconSrc = serviceCardIconSrc[service.slug];
+
+  const accordionHoverClass = hashActive
+    ? "md:flex-[2.75]"
+    : "md:hover:flex-[2.75] md:focus-within:flex-[2.75]";
+
+  const accordionSizeClass = accordionOrphan
+    ? "w-full"
+    : `md:min-w-0 md:flex-1 ${accordionHoverClass}`;
 
   return (
     <article
       id={service.slug}
-      className={`group relative flex min-h-full scroll-mt-24 flex-col overflow-hidden rounded-2xl border bg-white shadow-[0_14px_35px_rgba(45,52,54,0.07)] transition hover:border-nurture-rose/30 hover:shadow-[0_18px_45px_rgba(45,52,54,0.1)] sm:scroll-mt-28 md:scroll-mt-32 ${
+      tabIndex={isAccordion ? 0 : undefined}
+      className={`group/card relative flex min-h-full scroll-mt-24 flex-col overflow-hidden rounded-2xl border bg-white shadow-[0_14px_35px_rgba(45,52,54,0.07)] hover:border-nurture-rose/30 hover:shadow-[0_18px_45px_rgba(45,52,54,0.1)] sm:scroll-mt-28 md:scroll-mt-32 ${
         hashActive
           ? "border-nurture-sage/45 ring-2 ring-nurture-sage/25"
           : "border-nurture-sage/15"
-      } p-4 sm:p-5`}
+      } p-4 sm:p-5 ${
+        isAccordion
+          ? `w-full md:min-h-[22rem] ${ACCORDION_MOTION} ${accordionSizeClass}`
+          : ""
+      }`}
     >
       {serviceCardBackgroundSrc[service.slug] ? (
         <ServicesDecor
@@ -83,18 +107,14 @@ const ServicesLandingCard = ({
           placement="card-background"
         />
       ) : null}
-      {serviceCardIconSrc[service.slug] ? (
-        <ServicesDecor
-          src={serviceCardIconSrc[service.slug]!}
-          placement="card-icon"
-        />
-      ) : null}
+      {iconSrc ? <ServicesDecor src={iconSrc} placement="card-icon" /> : null}
       {serviceCardCornerSrc[service.slug] ? (
         <ServicesDecor
           src={serviceCardCornerSrc[service.slug]!}
           placement="card-corner"
         />
       ) : null}
+
       <div className="relative z-[1] flex min-h-0 flex-1 flex-col text-center">
         <ServiceIllustration
           slug={service.slug}
@@ -126,7 +146,7 @@ const ServicesLandingCard = ({
                 aria-expanded={expanded}
                 aria-controls={panelId}
                 onClick={() => setExpanded((open) => !open)}
-                className="btn-secondary !px-3 !py-1.5 !text-[11px] gap-1"
+                className="inline-flex items-center gap-1 rounded-full border border-nurture-sage/25 px-3 py-1.5 text-[11px] font-semibold text-nurture-sage-dark transition hover:border-nurture-sage/45 hover:bg-nurture-sage/5"
               >
                 {expanded ? "Show less" : "Learn more"}
                 <ChevronIcon expanded={expanded} />
@@ -134,7 +154,7 @@ const ServicesLandingCard = ({
             ) : null}
             <Link
               href={buildCareStartHref(service.slug)}
-              className="btn-primary !px-3 !py-1.5 !text-[11px]"
+              className="inline-flex items-center rounded-full bg-nurture-sage px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-nurture-sage-dark"
             >
               Request support
             </Link>
@@ -146,7 +166,7 @@ const ServicesLandingCard = ({
         <div
           id={panelId}
           aria-hidden={!expanded}
-          className={`border-t border-nurture-sage/10 pt-4 text-left ${
+          className={`relative z-[1] border-t border-nurture-sage/10 pt-4 text-left ${
             expanded
               ? "mt-4"
               : "sr-only mt-0 max-h-0 overflow-hidden border-0 pt-0"

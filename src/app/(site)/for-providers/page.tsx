@@ -2,6 +2,7 @@ import Breadcrumb from "@/components/Common/Breadcrumb";
 import ContactOptions from "@/components/Common/ContactOptions";
 import FaqList from "@/components/Common/FaqList";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
+import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import SectionTitle from "@/components/Common/SectionTitle";
 import {
   brands,
@@ -36,9 +37,13 @@ export default function ForProvidersPage() {
             <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
               For professionals
             </p>
-            <h1 className="mt-4 font-serif text-4xl font-semibold text-nurture-charcoal sm:text-5xl">
+            <ScrollRevealHeading
+              as="h1"
+              variant="emphasis"
+              className="mt-4 font-serif text-4xl font-semibold text-nurture-charcoal sm:text-5xl"
+            >
               Grow your practice with a team that puts moms first
-            </h1>
+            </ScrollRevealHeading>
             <p className="mt-6 text-lg text-nurture-charcoal/80">
               {brands.nestingPlace.name} is building a provider network with
               personal care coordinators who match exceptional providers with

@@ -17,7 +17,8 @@ export type ServiceSlug =
   | "prenatal-massage"
   | "postpartum-massage"
   | "birth-photography"
-  | "childbirth-education";
+  | "childbirth-education"
+  | "placenta-encapsulation";
 
 export interface CoreService {
   slug: ServiceSlug;
@@ -217,6 +218,15 @@ export const coreServices: CoreService[] = [
     benefit:
       "Walk into birth and early parenthood with knowledge, confidence, and a plan that reflects your values.",
   },
+  {
+    slug: "placenta-encapsulation",
+    title: "Placenta encapsulation",
+    description:
+      "Professional placenta preparation and encapsulation to support your postpartum recovery with care and transparency.",
+    tag: "Postpartum",
+    benefit:
+      "Honor your birth experience with a thoughtful, safety-focused process handled by trained professionals in your home or ours.",
+  },
 ];
 
 /** @deprecated Use coreServices — kept for any stale imports during refactor */
@@ -309,7 +319,7 @@ export const momFaqs = [
   },
   {
     q: "What services are available today?",
-    a: "We offer birth doula support, overnight newborn support, postpartum support, lactation support, prenatal massage, postpartum massage (Ridgewood), and childbirth education through our vetted provider network.",
+    a: "We offer birth doula support, overnight newborn support, postpartum support, lactation support, prenatal massage, postpartum massage (Ridgewood), childbirth education, and placenta encapsulation through our vetted provider network.",
   },
   {
     q: "What is the difference between overnight newborn care and postpartum support?",

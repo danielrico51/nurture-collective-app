@@ -36,7 +36,7 @@ interface ContactOptionsProps {
 }
 
 const cardClassName =
-  "mx-auto flex w-full max-w-md flex-col items-center text-center rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm";
+  "group/card flex w-full min-h-full flex-col items-center overflow-hidden rounded-2xl border border-nurture-sage/15 bg-white p-8 text-center shadow-sm transition-[flex,box-shadow,border-color] duration-500 ease-premium motion-reduce:transition-none hover:border-nurture-rose/30 hover:shadow-[0_18px_45px_rgba(45,52,54,0.1)] md:min-w-0 md:flex-1 md:hover:flex-[2.75] md:focus-within:flex-[2.75]";
 
 const ContactOptions = ({
   formAnchorId = "contact-form",
@@ -64,19 +64,16 @@ const ContactOptions = ({
     "Hi! I'd like to learn more about support from The Nesting Place."
   );
 
-  const visibleCardCount = WHATSAPP_CONTACT_CARD_ENABLED ? 4 : 3;
-  const gridClassName =
-    visibleCardCount === 3
-      ? "grid gap-6 md:grid-cols-2 xl:grid-cols-3"
-      : "grid gap-6 md:grid-cols-2 xl:grid-cols-4";
+  const rowClassName =
+    "flex w-full flex-col gap-4 md:flex-row md:items-stretch";
 
   return (
     <div className={className}>
       <div
-        className={gridClassName}
+        className={rowClassName}
         aria-label={isIntake ? "Ways to start support" : "Contact options"}
       >
-        <article className={cardClassName}>
+        <article className={cardClassName} tabIndex={0}>
           <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
             {isIntake ? "Guided intake" : "Email"}
           </p>
@@ -97,7 +94,7 @@ const ContactOptions = ({
         </article>
 
         {WHATSAPP_CONTACT_CARD_ENABLED ? (
-          <article className={cardClassName}>
+          <article className={cardClassName} tabIndex={0}>
             <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
               WhatsApp
             </p>
@@ -124,7 +121,7 @@ const ContactOptions = ({
           </article>
         ) : null}
 
-        <article className={cardClassName}>
+        <article className={cardClassName} tabIndex={0}>
           <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
             Phone
           </p>
@@ -151,7 +148,7 @@ const ContactOptions = ({
           </div>
         </article>
 
-        <article className={cardClassName}>
+        <article className={cardClassName} tabIndex={0}>
           <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
             {bookingLabel}
           </p>

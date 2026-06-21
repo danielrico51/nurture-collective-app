@@ -3,6 +3,7 @@ import BookingEmbed from "@/components/Common/BookingEmbed";
 import ContactOptions from "@/components/Common/ContactOptions";
 import FaqList from "@/components/Common/FaqList";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
+import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import GoogleReviewsSection from "@/components/Reviews/GoogleReviewsSection";
 import SectionTitle from "@/components/Common/SectionTitle";
 import JsonLd from "@/components/Seo/JsonLd";
@@ -44,9 +45,13 @@ export default function ForMomsPage() {
             <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
               For families
             </p>
-            <h1 className="mt-4 font-serif text-4xl font-semibold text-nurture-charcoal sm:text-5xl">
+            <ScrollRevealHeading
+              as="h1"
+              variant="emphasis"
+              className="mt-4 font-serif text-4xl font-semibold text-nurture-charcoal sm:text-5xl"
+            >
               Support that meets you where you are
-            </h1>
+            </ScrollRevealHeading>
             <p className="mt-6 text-lg text-nurture-charcoal/80">
               Start with evidence-based support from vetted providers. As{" "}
               {brands.nestingPlace.name} grows, {careCoordinator.possessive} will
