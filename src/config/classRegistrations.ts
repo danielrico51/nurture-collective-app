@@ -11,7 +11,7 @@ const readEnabled = () => {
 const readVenmoHandle = () =>
   process.env.CLASS_REGISTRATION_VENMO_HANDLE?.trim() ||
   process.env.NEXT_PUBLIC_CLASS_REGISTRATION_VENMO_HANDLE?.trim() ||
-  "";
+  "@thenestingplace";
 
 const readVenmoProfileUrl = () =>
   process.env.CLIENT_INVOICE_VENMO_PROFILE_URL?.trim() ||
@@ -56,7 +56,8 @@ export const classRegistrationCheckoutConfig = {
       "false" &&
     process.env.NEXT_PUBLIC_GIFT_CARD_PAYMENTS_ENABLED?.trim() === "true",
   venmoHandle:
-    process.env.NEXT_PUBLIC_CLASS_REGISTRATION_VENMO_HANDLE?.trim() || "",
+    process.env.NEXT_PUBLIC_CLASS_REGISTRATION_VENMO_HANDLE?.trim() ||
+    "@thenestingplace",
   venmoProfileUrl: readVenmoProfileUrl(),
 } as const;
 

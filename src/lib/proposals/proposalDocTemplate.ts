@@ -41,7 +41,7 @@ export const PROPOSAL_TEMPLATE_SECTIONS = [
   "• If services occur on a major holiday, additional fees may be charged at the discretion of TNP.",
   "• Payments can be made via Zelle, Cash App, Venmo, or cash. If paid by Venmo or credit card a processing fee of 3% will be added.",
   "• Venmo: @thenestingplace",
-  "• Zelle: thenestingplacenj@gmail.com",
+  "• Zelle: @thenestingplace",
   "• Cash App: $thenestingplace",
   "",
   "FAILURE TO PROVIDE SERVICES",
