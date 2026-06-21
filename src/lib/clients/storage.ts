@@ -183,8 +183,14 @@ export const getClientDetail = async (
 
   const notes =
     getClientsStorageMode() === "local"
-      ? await listLocalNotesForClient(clientId)
-      : await listS3NotesForClient(clientId);
+      ? await listLocalNotesForClient(clientId).catch((error) => {
+          console.error("[clients] notes load failed:", error);
+          return [] as ClientDetailResponse["notes"];
+        })
+      : await listS3NotesForClient(clientId).catch((error) => {
+          console.error("[clients] notes load failed:", error);
+          return [] as ClientDetailResponse["notes"];
+        });
 
   let lead: LeadRecord | null = null;
   if (client.leadId) {

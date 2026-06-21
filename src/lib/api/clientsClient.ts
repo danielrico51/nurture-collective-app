@@ -1,3 +1,4 @@
+import { fetchWithRetry } from "@/lib/api/fetchWithRetry";
 import type {
   AdminClientsResponse,
   ClientCommunication,
@@ -28,33 +29,51 @@ const authHeaders = async (): Promise<HeadersInit> => {
 };
 
 const handleResponse = async <T>(response: Response): Promise<T> => {
-  const data = await response.json().catch(() => ({}));
+  const text = await response.text();
+  let data: Record<string, unknown> = {};
+  if (text) {
+    try {
+      data = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      data = {};
+    }
+  }
   if (!response.ok) {
-    throw new Error(typeof data.error === "string" ? data.error : "Request failed");
+    const trimmed = text.trim();
+    const isHtmlError =
+      trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html");
+    const message =
+      typeof data.error === "string"
+        ? data.error
+        : isHtmlError
+          ? `Server error (${response.status}). Try again in a moment.`
+          : trimmed.slice(0, 200) || `Request failed (${response.status})`;
+    throw new Error(message);
   }
   return data as T;
+};
+
+const adminGet = async <T>(url: string): Promise<T> => {
+  const response = await fetchWithRetry(url, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  return handleResponse<T>(response);
 };
 
 export const fetchAdminClients = async (
   includeArchived = false
 ): Promise<AdminClientsResponse> => {
   const params = includeArchived ? "?includeArchived=true" : "";
-  const response = await fetch(`/api/admin/clients${params}`, {
-    headers: await authHeaders(),
-    cache: "no-store",
-  });
-  return handleResponse<AdminClientsResponse>(response);
+  return adminGet<AdminClientsResponse>(`/api/admin/clients${params}`);
 };
 
 export const fetchAdminClientDetail = async (
   clientId: string
-): Promise<ClientDetailResponse> => {
-  const response = await fetch(
-    `/api/admin/clients/${encodeURIComponent(clientId)}`,
-    { headers: await authHeaders(), cache: "no-store" }
+): Promise<ClientDetailResponse> =>
+  adminGet<ClientDetailResponse>(
+    `/api/admin/clients/${encodeURIComponent(clientId)}`
   );
-  return handleResponse<ClientDetailResponse>(response);
-};
 
 export const createAdminClient = async (
   payload: CreateClientInput
@@ -137,23 +156,17 @@ export const convertLeadToClientRequest = async (
 
 export const fetchClientByLeadId = async (
   leadId: string
-): Promise<{ client: ClientRecord | null }> => {
-  const response = await fetch(
-    `/api/admin/clients/by-lead/${encodeURIComponent(leadId)}`,
-    { headers: await authHeaders(), cache: "no-store" }
+): Promise<{ client: ClientRecord | null }> =>
+  adminGet<{ client: ClientRecord | null }>(
+    `/api/admin/clients/by-lead/${encodeURIComponent(leadId)}`
   );
-  return handleResponse<{ client: ClientRecord | null }>(response);
-};
 
 export const fetchClientServices = async (
   clientId: string
-): Promise<{ services: ClientServiceWithInvoices[] }> => {
-  const response = await fetch(
-    `/api/admin/clients/${encodeURIComponent(clientId)}/services`,
-    { headers: await authHeaders(), cache: "no-store" }
+): Promise<{ services: ClientServiceWithInvoices[] }> =>
+  adminGet<{ services: ClientServiceWithInvoices[] }>(
+    `/api/admin/clients/${encodeURIComponent(clientId)}/services`
   );
-  return handleResponse(response);
-};
 
 export const createClientService = async (
   clientId: string,
@@ -221,13 +234,10 @@ export const updateServiceInvoice = async (
 
 export const fetchClientBilling = async (
   clientId: string
-): Promise<{ orders: import("@/types/billing").PurchaseOrder[] }> => {
-  const response = await fetch(
-    `/api/admin/clients/${encodeURIComponent(clientId)}/billing`,
-    { headers: await authHeaders(), cache: "no-store" }
+): Promise<{ orders: import("@/types/billing").PurchaseOrder[] }> =>
+  adminGet<{ orders: import("@/types/billing").PurchaseOrder[] }>(
+    `/api/admin/clients/${encodeURIComponent(clientId)}/billing`
   );
-  return handleResponse<{ orders: import("@/types/billing").PurchaseOrder[] }>(response);
-};
 
 export const createClientBillingOrder = async (
   clientId: string,
@@ -251,13 +261,10 @@ export const createClientBillingOrder = async (
 
 export const fetchClientCommunications = async (
   clientId: string
-): Promise<{ communications: ClientCommunication[] }> => {
-  const response = await fetch(
-    `/api/admin/clients/${encodeURIComponent(clientId)}/communications`,
-    { headers: await authHeaders(), cache: "no-store" }
+): Promise<{ communications: ClientCommunication[] }> =>
+  adminGet<{ communications: ClientCommunication[] }>(
+    `/api/admin/clients/${encodeURIComponent(clientId)}/communications`
   );
-  return handleResponse<{ communications: ClientCommunication[] }>(response);
-};
 
 export const sendClientCommunication = async (
   clientId: string,

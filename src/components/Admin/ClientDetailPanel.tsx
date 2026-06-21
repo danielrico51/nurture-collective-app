@@ -11,6 +11,7 @@ import {
   linkAdminClient,
   updateAdminClient,
 } from "@/lib/api/clientsClient";
+import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import type {
   ClientDetailResponse,
   ClientNoteType,
@@ -19,7 +20,7 @@ import type {
 import { CLIENT_STATUSES } from "@/types/client";
 import type { TeamMember } from "@/types/teamMember";
 import type { ClientTourDetailTab } from "@/tour/clientsTourDemo";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
 interface ClientDetailPanelProps {
@@ -93,6 +94,7 @@ const ClientDetailPanel = ({
   const [profileNotesSummary, setProfileNotesSummary] = useState("");
   const [editingProfile, setEditingProfile] = useState(false);
   const [scheduleCount, setScheduleCount] = useState(0);
+  const loadGenerationRef = useRef(0);
 
   const syncProfileFromClient = useCallback((client: ClientDetailResponse["client"]) => {
     setProfileName(client.name);
@@ -105,14 +107,20 @@ const ClientDetailPanel = ({
 
   const load = useCallback(async (options?: { silent?: boolean }) => {
     const silent = options?.silent ?? false;
+    const generation = loadGenerationRef.current + 1;
+    loadGenerationRef.current = generation;
     if (!silent) {
+      setDetail(null);
       setLoading(true);
       setError(null);
     }
     try {
-      const data = await fetchAdminClientDetail(clientId);
+      const data = await runWithAutoRetry(() => fetchAdminClientDetail(clientId));
+      if (generation !== loadGenerationRef.current) return;
       setDetail(data);
+      setError(null);
     } catch (err) {
+      if (generation !== loadGenerationRef.current) return;
       const message = err instanceof Error ? err.message : "Could not load client";
       if (silent) {
         toast.error(message);
@@ -120,7 +128,7 @@ const ClientDetailPanel = ({
         setError(message);
       }
     } finally {
-      if (!silent) {
+      if (generation === loadGenerationRef.current && !silent) {
         setLoading(false);
       }
     }
@@ -134,6 +142,7 @@ const ClientDetailPanel = ({
 
   useEffect(() => {
     setEditingProfile(false);
+    setTab("overview");
   }, [clientId]);
 
   useEffect(() => {
@@ -293,8 +302,17 @@ const ClientDetailPanel = ({
 
     if (error || !detail) {
       return (
-        <div className="px-1 py-4 text-sm text-red-600">
-          {error ?? "Client not found"}
+        <div className="space-y-3 px-1 py-4">
+          <p className="text-sm text-red-600">{error ?? "Client not found"}</p>
+          {error ? (
+            <button
+              type="button"
+              onClick={() => void load()}
+              className="rounded-full border border-nurture-sage/30 px-4 py-2 text-xs font-semibold text-nurture-sage-dark transition hover:bg-nurture-sage/10"
+            >
+              Try again
+            </button>
+          ) : null}
         </div>
       );
     }
