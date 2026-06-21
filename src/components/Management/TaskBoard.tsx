@@ -79,7 +79,7 @@ const TaskBoard = ({
   const [members, setMembers] = useState<TeamMember[]>([]);
   const [membersLoading, setMembersLoading] = useState(true);
   const [loading, setLoading] = useState(true);
-  const [filter, setFilter] = useState<TaskFilter>("all");
+  const [filter, setFilter] = useState<TaskFilter>("active");
   const [ownershipFilter, setOwnershipFilter] =
     useState<TaskOwnershipFilter>("all");
   const [viewMode, setViewMode] = useState<TaskViewMode>("board");
