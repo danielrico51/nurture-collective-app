@@ -7,6 +7,7 @@ import {
   shouldNotifyStatusChange,
 } from "@/lib/integrations/slack/pipeline";
 import type { LeadRecord } from "@/types/lead";
+import { LEAD_SNAPSHOT_DEFAULTS } from "@/lib/leads/snapshotDefaults";
 
 const baseLead = (overrides: Partial<LeadRecord> = {}): LeadRecord => ({
   leadId: "guest_test",
@@ -25,6 +26,7 @@ const baseLead = (overrides: Partial<LeadRecord> = {}): LeadRecord => ({
   supportInterests: [],
   challengesSummary: "",
   locationZip: null,
+  ...LEAD_SNAPSHOT_DEFAULTS,
   archivedAt: null,
   conversationSessionId: null,
   createdAt: new Date().toISOString(),

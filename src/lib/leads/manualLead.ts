@@ -1,3 +1,4 @@
+import { LEAD_SNAPSHOT_DEFAULTS } from "@/lib/leads/snapshotDefaults";
 import { normalizePhone } from "@/lib/intake/submitService";
 import type { CreateManualLeadInput, LeadRecord } from "@/types/lead";
 import { MANUAL_LEAD_CHANNELS } from "@/types/lead";
@@ -99,6 +100,7 @@ export const buildManualLeadRecord = (input: {
     supportInterests: input.payload.supportInterests ?? [],
     challengesSummary: input.payload.notes ?? "",
     locationZip: input.payload.locationZip ?? null,
+    ...LEAD_SNAPSHOT_DEFAULTS,
     archivedAt: null,
     conversationSessionId: null,
     createdAt: now,

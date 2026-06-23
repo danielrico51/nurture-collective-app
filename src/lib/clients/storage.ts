@@ -46,6 +46,7 @@ import {
 import { getClientsStorageMode } from "@/lib/clients/config";
 import { listPurchaseOrdersForClient } from "@/lib/billing/listOrders";
 import { getLeadById } from "@/lib/leads/storage";
+import { buildClientNotesSummaryFromLead } from "@/lib/leads/snapshotView";
 import {
   listProposalIdsForClient,
   readProposalMetadata,
@@ -459,7 +460,7 @@ const buildClientFromLead = (
     coordinatorEmail: coordinator?.email ?? lead.coordinatorEmail ?? "",
     tags: [],
     locationZip: lead.locationZip,
-    notesSummary: lead.challengesSummary ?? "",
+    notesSummary: buildClientNotesSummaryFromLead(lead),
     billing: { ...EMPTY_CLIENT_BILLING_SUMMARY },
     archivedAt: null,
     createdAt: now,

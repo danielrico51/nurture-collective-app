@@ -3,6 +3,7 @@ import { buildProposalContext } from "@/lib/proposals/contextBuilder";
 import { retrieveProposalExamples } from "@/lib/proposals/library/retrieval";
 import type { IntakeProfile } from "@/types/intake";
 import type { ProposalContextPackage } from "@/types/proposal";
+import { LEAD_SNAPSHOT_DEFAULTS } from "@/lib/leads/snapshotDefaults";
 
 vi.mock("@/lib/leads/storage", () => ({
   getLeadDetail: vi.fn(),
@@ -29,6 +30,7 @@ describe("buildProposalContext", () => {
         challengesSummary: "Needs overnight support",
         maternalStage: "newly-postpartum",
         locationZip: "07030",
+        ...LEAD_SNAPSHOT_DEFAULTS,
         status: "consult_completed",
         source: "website",
         isGuest: true,

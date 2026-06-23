@@ -2,6 +2,7 @@
 
 import ConversationAdminPanel from "@/components/Admin/ConversationAdminPanel";
 import LeadContactEditForm from "@/components/Admin/LeadContactEditForm";
+import LeadSnapshotPanel from "@/components/Admin/LeadSnapshotPanel";
 import LeadCoordinatorSelect from "@/components/Admin/LeadCoordinatorSelect";
 import ManualLeadForm from "@/components/Admin/ManualLeadForm";
 import ProposalPanel from "@/components/Admin/ProposalPanel";
@@ -816,6 +817,19 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
 
                 {expanded ? (
                   <div className="border-t border-nurture-sage/10 bg-nurture-cream/30 px-5 py-5">
+                    <LeadSnapshotPanel
+                      lead={lead}
+                      intake={intake}
+                      disabled={savingId === lead.leadId}
+                      onSaved={(updated) => {
+                        setLeads((current) =>
+                          current.map((item) =>
+                            item.leadId === updated.leadId ? updated : item
+                          )
+                        );
+                      }}
+                    />
+
                     <div className="mb-5 max-w-md">
                       <LeadCoordinatorSelect
                         value={lead.coordinatorId}

@@ -38,6 +38,24 @@ export type CoordinatorNoteType =
   | "prep"
   | "follow_up";
 
+export type ExpectedBabyGender =
+  | "girl"
+  | "boy"
+  | "twins"
+  | "unknown"
+  | "surprise";
+
+export const EXPECTED_BABY_GENDER_OPTIONS: {
+  value: ExpectedBabyGender;
+  label: string;
+}[] = [
+  { value: "girl", label: "Girl" },
+  { value: "boy", label: "Boy" },
+  { value: "twins", label: "Twins" },
+  { value: "unknown", label: "Unknown" },
+  { value: "surprise", label: "Surprise" },
+];
+
 export interface LeadRecord {
   leadId: string;
   userId: string;
@@ -56,6 +74,16 @@ export interface LeadRecord {
   challengesSummary: string;
   /** US ZIP from intake / concierge (used for coverage + expansion alerts) */
   locationZip: string | null;
+  /** Coordinator snapshot — partner / birth plan context */
+  partnerName: string | null;
+  /** Expected due date (ISO YYYY-MM-DD) */
+  dueDate: string | null;
+  expectedBabyGender: ExpectedBabyGender | null;
+  hospitalName: string | null;
+  /** Street / city — ZIP may also be in locationZip */
+  locationAddress: string | null;
+  feeQuotedCents: number | null;
+  feeQuotedNotes: string | null;
   /** When set, lead is hidden from the default CRM queue */
   archivedAt: string | null;
   conversationSessionId: string | null;
@@ -120,6 +148,13 @@ export interface UpdateLeadInput {
   coordinatorId?: string;
   coordinatorEmail?: string;
   archivedAt?: string | null;
+  partnerName?: string | null;
+  dueDate?: string | null;
+  expectedBabyGender?: ExpectedBabyGender | null;
+  hospitalName?: string | null;
+  locationAddress?: string | null;
+  feeQuotedCents?: number | null;
+  feeQuotedNotes?: string | null;
 }
 
 /** Assign or clear coordinator using admin user id (empty string = unassigned). */

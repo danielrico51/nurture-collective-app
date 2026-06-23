@@ -1,4 +1,5 @@
 import { buildCoordinatorPrepFromSession } from "@/lib/leads/coordinatorPrep";
+import { withLeadSnapshotDefaults } from "@/lib/leads/snapshotDefaults";
 import {
   getConversationSession,
   getLatestConversationForUser,
@@ -268,10 +269,13 @@ export const listCrmLeads = async (): Promise<LeadRecord[]> => {
   );
 };
 
-export const getLeadById = async (leadId: string): Promise<LeadRecord | null> =>
-  getLeadsStorageMode() === "local"
-    ? getLatestLocalLeadProfile(leadId)
-    : getLatestS3LeadProfile(leadId);
+export const getLeadById = async (leadId: string): Promise<LeadRecord | null> => {
+  const lead =
+    getLeadsStorageMode() === "local"
+      ? await getLatestLocalLeadProfile(leadId)
+      : await getLatestS3LeadProfile(leadId);
+  return lead ? withLeadSnapshotDefaults(lead) : null;
+};
 
 /** Resolve a stored lead or build one from intake when the CRM list merged in a member profile. */
 const materializeLead = async (leadId: string): Promise<LeadRecord | null> => {
@@ -428,10 +432,31 @@ export const updateLead = async (
       : existing.coordinatorEmail,
     archivedAt:
       input.archivedAt !== undefined ? input.archivedAt : existing.archivedAt,
+    partnerName:
+      input.partnerName !== undefined ? input.partnerName : existing.partnerName,
+    dueDate: input.dueDate !== undefined ? input.dueDate : existing.dueDate,
+    expectedBabyGender:
+      input.expectedBabyGender !== undefined
+        ? input.expectedBabyGender
+        : existing.expectedBabyGender,
+    hospitalName:
+      input.hospitalName !== undefined ? input.hospitalName : existing.hospitalName,
+    locationAddress:
+      input.locationAddress !== undefined
+        ? input.locationAddress
+        : existing.locationAddress,
+    feeQuotedCents:
+      input.feeQuotedCents !== undefined
+        ? input.feeQuotedCents
+        : existing.feeQuotedCents,
+    feeQuotedNotes:
+      input.feeQuotedNotes !== undefined
+        ? input.feeQuotedNotes
+        : existing.feeQuotedNotes,
     updatedAt: new Date().toISOString(),
   };
 
-  const saved = await saveLeadProfile(updated);
+  const saved = withLeadSnapshotDefaults(await saveLeadProfile(updated));
 
   void notifyLeadPipelineEvent({
     previous: existing,
@@ -468,5 +493,24 @@ export const updateLeadContactInfo = async (
     | "maternalStage"
     | "supportInterests"
     | "challengesSummary"
+  >
+): Promise<LeadRecord> => updateLead(leadId, input);
+
+/** Update coordinator snapshot fields shown at the top of the lead CRM. */
+export const updateLeadSnapshot = async (
+  leadId: string,
+  input: Pick<
+    UpdateLeadInput,
+    | "name"
+    | "email"
+    | "phone"
+    | "locationZip"
+    | "partnerName"
+    | "dueDate"
+    | "expectedBabyGender"
+    | "hospitalName"
+    | "locationAddress"
+    | "feeQuotedCents"
+    | "feeQuotedNotes"
   >
 ): Promise<LeadRecord> => updateLead(leadId, input);
