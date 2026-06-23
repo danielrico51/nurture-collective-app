@@ -1,6 +1,6 @@
 import type { ClientServiceWithInvoices } from "@/types/clientService";
 import type { PurchaseOrder } from "@/types/billing";
-import type { LeadRecord } from "@/types/lead";
+import type { LeadRecord, CoordinatorNote } from "@/types/lead";
 import type { ProposalMetadata } from "@/types/proposal";
 
 /** Lifecycle of a managed client (distinct from the lead pipeline). */
@@ -108,6 +108,10 @@ export interface ClientDetailResponse {
   services: ClientServiceWithInvoices[];
   /** Communication log entries (email/sms/notes). */
   communications: ClientCommunication[];
+  /** Coordinator notes from the linked lead (Lead CRM). */
+  leadNotes: CoordinatorNote[];
+  /** Short rollup of linked lead coordinator notes. */
+  leadNotesSummary: string | null;
 }
 
 export interface AdminClientsResponse {

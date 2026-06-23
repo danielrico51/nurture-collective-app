@@ -1,6 +1,7 @@
 "use client";
 
 import ClientCommunicationsTab from "@/components/Admin/ClientCommunicationsTab";
+import ClientLeadNotesHistory from "@/components/Admin/ClientLeadNotesHistory";
 import ClientScheduleTab from "@/components/Admin/ClientScheduleTab";
 import ClientServicesTab from "@/components/Admin/ClientServicesTab";
 import LeadCoordinatorSelect from "@/components/Admin/LeadCoordinatorSelect";
@@ -11,6 +12,8 @@ import {
   linkAdminClient,
   updateAdminClient,
 } from "@/lib/api/clientsClient";
+import { isImportedLeadClientNote } from "@/lib/clients/leadNotesTransfer";
+import { fetchClientEngagements } from "@/lib/api/scheduleClient";
 import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import type {
   ClientDetailResponse,
@@ -20,6 +23,7 @@ import type {
 import { CLIENT_STATUSES } from "@/types/client";
 import type { TeamMember } from "@/types/teamMember";
 import type { ClientTourDetailTab } from "@/tour/clientsTourDemo";
+import type { ClientEngagementsResponse } from "@/types/serviceEngagement";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -113,11 +117,19 @@ const ClientDetailPanel = ({
       setDetail(null);
       setLoading(true);
       setError(null);
+      setScheduleCount(0);
     }
     try {
-      const data = await runWithAutoRetry(() => fetchAdminClientDetail(clientId));
+      const [data, engagementData] = await Promise.all([
+        runWithAutoRetry(() => fetchAdminClientDetail(clientId)),
+        runWithAutoRetry(() => fetchClientEngagements(clientId)).catch((error) => {
+          console.error("[clients] engagement count load failed:", error);
+          return { engagements: [] } satisfies ClientEngagementsResponse;
+        }),
+      ]);
       if (generation !== loadGenerationRef.current) return;
       setDetail(data);
+      setScheduleCount(engagementData.engagements.length);
       setError(null);
     } catch (err) {
       if (generation !== loadGenerationRef.current) return;
@@ -272,14 +284,15 @@ const ClientDetailPanel = ({
       if (item === "communications") return "Communications";
       return "Notes";
     }
-    const { notes, proposals, services, communications } = detail;
+    const { notes, proposals, services, communications, leadNotes } = detail;
+    const clientOnlyNotes = notes.filter((note) => !isImportedLeadClientNote(note));
     if (item === "overview") return "Overview";
     if (item === "proposals") return `Proposals (${proposals.length})`;
     if (item === "schedule") return `Schedule (${scheduleCount})`;
     if (item === "services") return `Services (${services.length})`;
     if (item === "communications")
       return `Communications (${communications.length})`;
-    return `Notes (${notes.length})`;
+    return `Notes (${clientOnlyNotes.length + leadNotes.length})`;
   };
 
   const detailTabs: DetailTab[] = [
@@ -317,7 +330,17 @@ const ClientDetailPanel = ({
       );
     }
 
-    const { client, notes, lead, proposals, services, communications } = detail;
+    const {
+      client,
+      notes,
+      lead,
+      leadNotes,
+      leadNotesSummary,
+      proposals,
+      services,
+      communications,
+    } = detail;
+    const clientOnlyNotes = notes.filter((note) => !isImportedLeadClientNote(note));
 
     if (tab === "overview") {
       return (
@@ -509,22 +532,43 @@ const ClientDetailPanel = ({
               Linked lead
             </h4>
             {client.leadId ? (
-              <div className="mt-2 flex flex-wrap items-center justify-between gap-2">
-                <p className="text-sm text-nurture-charcoal/80">
-                  {lead
-                    ? `${lead.name} · ${lead.status}`
-                    : `Lead ${client.leadId}`}
-                </p>
-                <button
-                  type="button"
-                  disabled={saving}
-                  onClick={() =>
-                    handleLink({ leadId: null }, "Lead unlinked")
-                  }
-                  className="text-xs font-medium text-red-600 hover:underline disabled:opacity-60"
-                >
-                  Unlink
-                </button>
+              <div className="mt-2 space-y-3">
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <p className="text-sm text-nurture-charcoal/80">
+                    {lead
+                      ? `${lead.name} · ${lead.status}`
+                      : `Lead ${client.leadId}`}
+                  </p>
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() =>
+                      handleLink({ leadId: null }, "Lead unlinked")
+                    }
+                    className="text-xs font-medium text-red-600 hover:underline disabled:opacity-60"
+                  >
+                    Unlink
+                  </button>
+                </div>
+                {leadNotesSummary ? (
+                  <div className="rounded-xl border border-violet-200/50 bg-violet-50/50 p-3">
+                    <p className="text-xs font-semibold uppercase tracking-wide text-violet-900/60">
+                      Lead CRM notes summary
+                    </p>
+                    <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-nurture-charcoal/80">
+                      {leadNotesSummary}
+                    </p>
+                    {leadNotes.length > 0 ? (
+                      <button
+                        type="button"
+                        onClick={() => setTab("notes")}
+                        className="mt-2 text-xs font-medium text-violet-900 hover:underline"
+                      >
+                        View full Lead CRM history →
+                      </button>
+                    ) : null}
+                  </div>
+                ) : null}
               </div>
             ) : (
               <div className="mt-2 flex flex-wrap gap-2">
@@ -659,7 +703,16 @@ const ClientDetailPanel = ({
 
     return (
         <div className="space-y-4">
+          <ClientLeadNotesHistory
+            leadId={client.leadId}
+            leadNotes={leadNotes}
+            leadNotesSummary={leadNotesSummary}
+          />
+
           <div className="rounded-2xl border border-nurture-sage/15 bg-white p-4">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+              Client notes
+            </p>
             <textarea
               rows={3}
               value={noteDraft}
@@ -692,11 +745,11 @@ const ClientDetailPanel = ({
             </div>
           </div>
 
-          {notes.length === 0 ? (
-            <p className="text-sm text-nurture-charcoal/60">No notes yet.</p>
+          {clientOnlyNotes.length === 0 ? (
+            <p className="text-sm text-nurture-charcoal/60">No client notes yet.</p>
           ) : (
             <ul className="space-y-3">
-              {notes.map((note) => (
+              {clientOnlyNotes.map((note) => (
                 <li
                   key={note.id}
                   className="rounded-2xl border border-nurture-sage/15 bg-white p-4"
