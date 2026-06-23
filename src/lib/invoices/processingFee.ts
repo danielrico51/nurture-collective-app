@@ -2,16 +2,20 @@ import type { PaymentMethodId } from "@/types/clientService";
 
 export const DEFAULT_PROCESSING_FEE_PERCENT = 3;
 
-/** Payment methods that may include a card-style processing fee. */
+/** Payment methods where the CRM adds a manual processing-fee line item. */
 export const PROCESSING_FEE_PAYMENT_METHODS: PaymentMethodId[] = [
   "venmo",
   "stripe",
-  "quickbooks",
 ];
 
 export const paymentMethodSupportsProcessingFee = (
   method: PaymentMethodId
 ): boolean => PROCESSING_FEE_PAYMENT_METHODS.includes(method);
+
+/** QuickBooks hosted pay links apply Intuit surcharging at checkout (when enabled in QBO). */
+export const usesQuickBooksNativeSurcharging = (
+  method: PaymentMethodId
+): boolean => method === "quickbooks";
 
 export const computeProcessingFeeCents = (
   subtotalCents: number,
