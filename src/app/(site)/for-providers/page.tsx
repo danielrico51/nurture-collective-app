@@ -2,16 +2,26 @@ import Breadcrumb from "@/components/Common/Breadcrumb";
 import ContactOptions from "@/components/Common/ContactOptions";
 import FaqList from "@/components/Common/FaqList";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
+import MarketingSection from "@/components/Common/MarketingSection";
 import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import SectionTitle from "@/components/Common/SectionTitle";
 import {
+  MARKETING_CREAM,
+  MARKETING_LILAC,
+  MARKETING_OAK_SURFACE,
+  marketingCard,
+  marketingCardCompact,
+  marketingEyebrow,
+  marketingLink,
+  marketingPageShell,
+} from "@/config/marketingDesign";
+import { buildPageMetadata } from "@/config/seo";
+import {
   brands,
-  careCoordinator,
   providerFaqs,
   providerHowItWorks,
   providerSpecialties,
 } from "@/content/site";
-import { buildPageMetadata } from "@/config/seo";
 import Link from "next/link";
 import type { Metadata } from "next";
 
@@ -29,14 +39,13 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function ForProvidersPage() {
   return (
-    <>
+    <div className={marketingPageShell}>
       <Breadcrumb pageName="For providers" />
-      <section className="py-16">
+
+      <section className="py-12 sm:py-14 lg:py-16">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
-              For professionals
-            </p>
+            <p className={marketingEyebrow}>For professionals</p>
             <ScrollRevealHeading
               as="h1"
               variant="emphasis"
@@ -57,16 +66,20 @@ export default function ForProvidersPage() {
               >
                 Apply to join
               </Link>
-              <Link
-                href="/signin"
-                className="btn-secondary-lg"
-              >
+              <Link href="/signin" className="btn-secondary-lg">
                 Provider sign in
               </Link>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="mt-20 rounded-2xl border border-nurture-sage/20 bg-white p-8 md:p-12">
+      <section
+        className="py-12 sm:py-14 lg:py-16"
+        style={{ backgroundColor: MARKETING_OAK_SURFACE }}
+      >
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <div className={marketingCard}>
             <SectionTitle
               title="Who we're recruiting"
               subtitle="Priority roles as we grow our provider network."
@@ -76,7 +89,7 @@ export default function ForProvidersPage() {
               {providerSpecialties.map((specialty) => (
                 <div
                   key={specialty.slug}
-                  className="rounded-xl border border-nurture-sage/15 bg-nurture-cream/40 px-5 py-4 text-sm font-medium text-nurture-charcoal"
+                  className="rounded-xl border border-nurture-lilac/25 bg-nurture-cream/80 px-5 py-4 text-sm font-medium text-nurture-charcoal"
                 >
                   {specialty.label}
                 </div>
@@ -86,7 +99,7 @@ export default function ForProvidersPage() {
               Don&apos;t see your specialty?{" "}
               <Link
                 href="/contact?audience=provider&specialty=other"
-                className="font-medium text-nurture-sage-dark hover:underline"
+                className={marketingLink}
               >
                 Tell us about your work
               </Link>
@@ -94,7 +107,7 @@ export default function ForProvidersPage() {
             </p>
           </div>
 
-          <div className="mt-20">
+          <div className="mt-16">
             <SectionTitle
               title="Why partner with us?"
               subtitle="A marketplace built for thoughtful matching — personal relationships, not automated lists."
@@ -117,11 +130,8 @@ export default function ForProvidersPage() {
                     "As we scale, our platform connects your expertise with moms who need exactly what you offer.",
                 },
               ].map((item) => (
-                <div
-                  key={item.title}
-                  className="rounded-2xl border border-nurture-sage/15 bg-white p-6 shadow-sm"
-                >
-                  <h3 className="font-serif text-lg font-semibold">
+                <div key={item.title} className={marketingCardCompact}>
+                  <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
                     {item.title}
                   </h3>
                   <p className="mt-3 text-sm text-nurture-charcoal/70">
@@ -131,28 +141,37 @@ export default function ForProvidersPage() {
               ))}
             </div>
           </div>
-
-          <div className="mt-20">
-            <ContactOptions
-              formHref="/contact?audience=provider#contact-form"
-              whatsappMessage="Hi! I'm interested in joining The Nesting Place provider network."
-            />
-          </div>
         </div>
       </section>
+
+      <MarketingSection
+        waves="both"
+        waveTopFill={MARKETING_OAK_SURFACE}
+        waveBottomFill={MARKETING_CREAM}
+        className="bg-nurture-lilac py-16 sm:py-20"
+      >
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <ContactOptions
+            formHref="/contact?audience=provider#contact-form"
+            whatsappMessage="Hi! I'm interested in joining The Nesting Place provider network."
+          />
+        </div>
+      </MarketingSection>
 
       <HowItWorksSteps
         title="Provider onboarding"
         steps={providerHowItWorks}
         organicWaves
-        className="bg-nurture-sage/5"
+        waveTopFill={MARKETING_CREAM}
+        waveBottomFill={MARKETING_CREAM}
+        className="bg-nurture-lilac"
       />
       <FaqList
         title="Questions from providers"
         items={providerFaqs}
         organicWaves
-        waveTopFill="#F6F3F0"
+        waveTopFill={MARKETING_LILAC}
       />
-    </>
+    </div>
   );
 }

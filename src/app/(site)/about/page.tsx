@@ -1,12 +1,10 @@
-"use client";
-
+import AboutHero from "@/components/About/AboutHero";
 import CoverageMap from "@/components/Common/CoverageMap";
-import PageIntroWithImage from "@/components/Common/PageIntroWithImage";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { TeamSection } from "@/components/Common/TeamSection";
 import JsonLd from "@/components/Seo/JsonLd";
 import { buildCareStartHref } from "@/config/carePaths";
-import { pageArtwork } from "@/config/pageArtwork";
+import { marketingCard, marketingPageShell, MARKETING_OAK_SURFACE } from "@/config/marketingDesign";
 import { buildPageMetadata } from "@/config/seo";
 import { aboutStory } from "@/content/aboutStory";
 import { brands } from "@/content/site";
@@ -46,46 +44,17 @@ const values = [
 
 export default function AboutPage() {
   return (
-    <>
+    <div className={marketingPageShell}>
       <JsonLd data={buildAboutPageJsonLd(teamMembers)} />
 
-      <section className="floating-header-offset pb-12 sm:pb-14">
+      <AboutHero />
+
+      <section
+        className="py-12 sm:py-14"
+        style={{ backgroundColor: MARKETING_OAK_SURFACE }}
+      >
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <PageIntroWithImage
-            imageSrc={pageArtwork.aboutCoffee.src}
-            imageAlt={pageArtwork.aboutCoffee.alt}
-          >
-            <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
-              {brands.nestingPlace.name}
-            </p>
-            <SectionTitle
-              title={brands.nestingPlace.byline}
-              revealVariant="emphasis"
-              centered={false}
-              titleClassName="mt-4 font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl"
-            />
-            <p className="mt-3 text-sm text-nurture-charcoal/65">
-              {brands.nestingPlace.operatorLine}
-            </p>
-
-            <div className="mt-8 space-y-5 text-base leading-relaxed text-nurture-charcoal/80 sm:mt-10">
-              <p>
-                Motherhood is one of life&apos;s most profound transitions — and
-                too often, families navigate it with fragmented resources and
-                little rest. {brands.nestingPlace.name} exists so every mother
-                has a team: vetted maternal wellness professionals and a
-                dedicated support coordinator who knows your name.
-              </p>
-              <p>
-                We began in Northern New Jersey and the Lower Hudson Valley with
-                a simple promise: every mother deserves a team and a coordinator
-                who knows her by name — and we welcome families wherever they
-                are.
-              </p>
-            </div>
-          </PageIntroWithImage>
-
-          <div className="mx-auto mt-12 max-w-3xl text-center sm:mt-14">
+          <div className="mx-auto max-w-3xl text-center">
             <SectionTitle
               title={aboutStory.title}
               revealVariant="soft"
@@ -96,7 +65,7 @@ export default function AboutPage() {
               {aboutStory.chapters.map((chapter) => (
                 <article
                   key={chapter.heading}
-                  className="rounded-2xl border border-nurture-sage/15 bg-white p-6 shadow-sm"
+                  className={marketingCard}
                 >
                   <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
                     {chapter.heading}
@@ -118,7 +87,7 @@ export default function AboutPage() {
                 {values.map((value) => (
                   <li
                     key={value.title}
-                    className="rounded-2xl border border-nurture-sage/15 bg-white p-6 shadow-sm"
+                    className={marketingCard}
                   >
                     <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
                       {value.title}
@@ -147,7 +116,8 @@ export default function AboutPage() {
         title="Leadership & ownership"
         subtitle="Alex and Barb lead The Nesting Place today — with our entire team continuing the hands-on care families know and trust."
         members={teamMembers}
-        className="bg-nurture-sage/5"
+        organicWaves
+        surface="lilac"
       />
 
       <section>
@@ -157,6 +127,6 @@ export default function AboutPage() {
           className="!py-12 sm:!py-14"
         />
       </section>
-    </>
+    </div>
   );
 }

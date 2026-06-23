@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import SectionTitle from "@/components/Common/SectionTitle";
-import SectionWaveEdges from "@/components/Common/SectionWaveEdges";
+import SectionWaveEdges, {
+  FOOTER_WAVE_OVERLAP_CLASS,
+} from "@/components/Common/SectionWaveEdges";
+import { MARKETING_CREAM } from "@/config/marketingDesign";
 
 interface FaqItem {
   q: string;
@@ -23,12 +26,12 @@ const FaqList = ({
   items,
   className = "",
   organicWaves = false,
-  waveTopFill = "#FFFFFF",
+  waveTopFill = MARKETING_CREAM,
 }: FaqListProps) => {
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const sectionClassName = organicWaves
-    ? `relative overflow-hidden pb-12 pt-16 sm:pb-14 sm:pt-20 ${className}`
+    ? `relative overflow-hidden bg-nurture-cream ${FOOTER_WAVE_OVERLAP_CLASS} pb-6 pt-20 sm:pb-8 sm:pt-24 ${className}`
     : `py-12 sm:py-14 ${className}`;
 
   return (
@@ -51,7 +54,7 @@ const FaqList = ({
                   onClick={() => setOpenIndex(isOpen ? null : index)}
                 >
                   {faq.q}
-                  <span className="text-nurture-sage-dark">{isOpen ? "−" : "+"}</span>
+                  <span className="text-nurture-grape">{isOpen ? "−" : "+"}</span>
                 </button>
                 <div
                   id={answerId}

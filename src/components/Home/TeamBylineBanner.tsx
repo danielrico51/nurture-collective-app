@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import { buildCareStartHref } from "@/config/carePaths";
 import { brands } from "@/content/site";
 
@@ -26,13 +25,9 @@ const TeamBylineBanner = () => {
         <div
           className="team-byline-card relative mx-auto max-w-5xl px-8 py-14 text-center text-white shadow-floatingCard sm:px-16 sm:py-16"
         >
-          <ScrollRevealHeading
-            as="h2"
-            variant="soft"
-            className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl sm:leading-[1.2]"
-          >
+          <h2 className="font-serif text-3xl font-semibold tracking-tight sm:text-4xl sm:leading-[1.2]">
             {brands.nestingPlace.byline}
-          </ScrollRevealHeading>
+          </h2>
           <p className="mx-auto mt-4 max-w-xl leading-relaxed text-white/90">
             {brands.nestingPlace.bylineDescription}
           </p>

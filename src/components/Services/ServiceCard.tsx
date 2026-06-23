@@ -17,21 +17,21 @@ const ServiceCard = ({
 
   return (
     <article
-      className={`flex flex-col rounded-2xl border border-nurture-sage/15 bg-white shadow-sm transition hover:border-nurture-sage/35 hover:shadow-md ${
+      className={`flex flex-col rounded-2xl border border-nurture-oak/35 bg-nurture-cream shadow-sm transition hover:border-nurture-lilac/40 hover:shadow-md ${
         compact ? "p-6" : "p-8"
       } ${isComingSoon ? "opacity-90" : ""}`}
     >
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-nurture-blush/60 text-nurture-sage-dark">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-nurture-lilac/25 text-nurture-grape">
           <ServiceIcon slug={service.slug} />
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
-            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-grape">
               {service.tag}
             </span>
             {isComingSoon ? (
-              <span className="rounded-full bg-nurture-blush/80 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-nurture-sage-dark">
+              <span className="rounded-lg bg-nurture-oak/50 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-nurture-grape">
                 Coming soon
               </span>
             ) : null}
@@ -51,7 +51,7 @@ const ServiceCard = ({
       </p>
 
       {showBenefit && service.benefit ? (
-        <p className="mt-3 text-sm font-medium text-nurture-sage-dark/90">
+        <p className="mt-3 text-sm font-medium text-nurture-grape/90">
           {service.benefit}
         </p>
       ) : null}
@@ -65,7 +65,7 @@ const ServiceCard = ({
       {isComingSoon ? (
         <Link
           href="/contact"
-          className="mt-6 inline-block text-sm font-semibold text-nurture-sage-dark hover:underline"
+          className="mt-6 inline-block text-sm font-semibold text-nurture-grape hover:underline"
         >
           Contact us →
         </Link>

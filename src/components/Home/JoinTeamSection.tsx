@@ -6,23 +6,26 @@ import SectionWaveEdges from "@/components/Common/SectionWaveEdges";
 import { pageArtwork } from "@/config/pageArtwork";
 import Link from "next/link";
 
-const NURTURE_CREAM = "#FAF7F2";
+import { MARKETING_CREAM, MARKETING_OAK_SURFACE, marketingEyebrow } from "@/config/marketingDesign";
 
 const JoinTeamSection = () => (
-  <section className="relative overflow-hidden bg-white pb-16 pt-20 sm:pb-20 sm:pt-24">
-    <SectionWaveEdges topOnly topFill={NURTURE_CREAM} />
+  <section
+    className="relative overflow-hidden pb-16 pt-20 sm:pb-20 sm:pt-24"
+    style={{ backgroundColor: MARKETING_OAK_SURFACE }}
+  >
+    <SectionWaveEdges topOnly topFill={MARKETING_CREAM} />
     <div className="relative mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
       <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
         <HeroBlendImage
           src={pageArtwork.homeClosing.src}
           alt={pageArtwork.homeClosing.alt}
           blend="strong"
-          blendSurface="white"
+          blendSurface="cream"
           className="lg:mx-0 lg:translate-x-0"
         />
 
         <div className="text-center lg:text-left">
-          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+          <p className={marketingEyebrow}>
             We&apos;re growing
           </p>
           <ScrollRevealHeading

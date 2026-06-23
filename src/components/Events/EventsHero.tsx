@@ -7,16 +7,20 @@ import {
   eventsHeroIllustrationAlt,
   eventsHeroIllustrationSrc,
 } from "@/config/eventsMarketing";
-import { MARKETING_CREAM } from "@/config/marketingDesign";
+import {
+  MARKETING_CREAM,
+  marketingEyebrow,
+  marketingHeroGradient,
+} from "@/config/marketingDesign";
 import { brands } from "@/content/site";
 import Link from "next/link";
 const EventsHero = () => (
-  <section className="floating-header-offset relative overflow-hidden bg-gradient-to-b from-nurture-rose-light/50 via-nurture-blush/30 to-nurture-cream pb-16 sm:pb-20">
+  <section className={`floating-header-offset relative overflow-hidden ${marketingHeroGradient} pb-16 sm:pb-20`}>
     <SectionWaveEdges bottomOnly bottomFill={MARKETING_CREAM} />
     <div className="relative z-[2] mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
       <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-14">
         <div className="relative z-10 text-left">
-          <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
+          <p className={marketingEyebrow}>
             {brands.nestingPlace.tagline}
           </p>
           <ScrollRevealHeading

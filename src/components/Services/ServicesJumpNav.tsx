@@ -12,9 +12,9 @@ const ServicesJumpNav = ({ services }: ServicesJumpNavProps) => {
   return (
     <nav
       aria-label="Jump to a service"
-      className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-4 shadow-sm backdrop-blur-sm sm:p-5"
+      className="rounded-2xl border border-nurture-lilac/25 bg-nurture-cream/90 p-4 shadow-sm backdrop-blur-sm sm:p-5"
     >
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-nurture-sage-dark">
+      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-nurture-grape">
         Explore our services
       </p>
       <p className="mt-1 text-sm text-nurture-charcoal/65">
@@ -30,7 +30,7 @@ const ServicesJumpNav = ({ services }: ServicesJumpNavProps) => {
               <li key={service.slug}>
                 <a
                   href={buildServiceSectionHref(service.slug)}
-                  className="inline-flex rounded-full border border-nurture-sage/25 bg-nurture-cream/50 px-4 py-2 text-sm font-medium text-nurture-charcoal transition hover:border-nurture-sage/45 hover:bg-nurture-sage/10 hover:text-nurture-sage-dark"
+                  className="inline-flex rounded-lg border border-nurture-oak/45 bg-nurture-cream px-4 py-2 text-sm font-medium text-nurture-charcoal transition hover:border-nurture-lilac hover:bg-nurture-lilac/15 hover:text-nurture-grape"
                 >
                   {service.title}
                 </a>

@@ -5,6 +5,16 @@ import ContactOptions from "@/components/Common/ContactOptions";
 import PageIntroWithImage from "@/components/Common/PageIntroWithImage";
 import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import SectionTitle from "@/components/Common/SectionTitle";
+import MarketingSection from "@/components/Common/MarketingSection";
+import { FOOTER_WAVE_OVERLAP_CLASS } from "@/components/Common/SectionWaveEdges";
+import {
+  MARKETING_CREAM,
+  MARKETING_OAK_SURFACE,
+  marketingCard,
+  marketingInput,
+  marketingLink,
+  marketingPageShell,
+} from "@/config/marketingDesign";
 import { integrations } from "@/config/integrations";
 import { pageArtwork } from "@/config/pageArtwork";
 import { legalPaths } from "@/content/legal";
@@ -15,8 +25,7 @@ import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
 import toast from "react-hot-toast";
 
-const inputClassName =
-  "mt-2 w-full rounded-lg border border-nurture-sage/30 px-4 py-2.5 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage";
+const inputClassName = marketingInput;
 
 function ContactForm() {
   const searchParams = useSearchParams();
@@ -85,17 +94,17 @@ function ContactForm() {
     <form
       id="contact-form"
       onSubmit={handleSubmit}
-      className="mt-10 space-y-6 rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm"
+      className={`mt-10 space-y-6 ${marketingCard}`}
     >
       {serviceLabel ? (
         <p className="rounded-lg bg-nurture-cream/80 px-4 py-3 text-sm text-nurture-charcoal/80">
           Interested in:{" "}
-          <span className="font-medium text-nurture-sage-dark">{serviceLabel}</span>
+          <span className="font-medium text-nurture-grape">{serviceLabel}</span>
         </p>
       ) : null}
 
       {submitted ? (
-        <p className="rounded-lg bg-nurture-sage/10 px-4 py-3 text-sm text-nurture-sage-dark">
+        <p className="rounded-lg bg-nurture-lilac/20 px-4 py-3 text-sm text-nurture-grape">
           Thank you! We typically respond within one business day.
         </p>
       ) : null}
@@ -147,7 +156,7 @@ function ContactForm() {
           checked={smsConsent}
           onChange={(event) => setSmsConsent(event.target.checked)}
           required
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-nurture-sage/40 text-nurture-sage focus:ring-nurture-sage"
+          className="mt-0.5 h-4 w-4 shrink-0 rounded border-nurture-oak/45 text-nurture-lilac focus:ring-nurture-lilac"
         />
         <label
           htmlFor="smsConsent"
@@ -160,7 +169,7 @@ function ContactForm() {
           opt out or HELP for help. See our{" "}
           <Link
             href={legalPaths.privacyPolicy}
-            className="font-medium text-nurture-sage-dark underline hover:text-nurture-sage"
+            className={`${marketingLink} underline`}
           >
             Privacy Policy
           </Link>
@@ -235,7 +244,7 @@ function ContactForm() {
         Or email us at{" "}
         <a
           href={`mailto:${integrations.contactEmail}`}
-          className="text-nurture-sage-dark hover:underline"
+          className="text-nurture-grape hover:underline"
         >
           {integrations.contactEmail}
         </a>
@@ -246,9 +255,10 @@ function ContactForm() {
 }
 
 const ContactPageContent = () => (
-  <>
+  <div className={marketingPageShell}>
     <Breadcrumb pageName="Contact" />
-    <section className="py-16">
+
+    <section className="py-12 sm:py-14 lg:py-16">
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
         <PageIntroWithImage
           imageSrc={pageArtwork.contactHug.src}
@@ -261,8 +271,26 @@ const ContactPageContent = () => (
             centered={false}
           />
         </PageIntroWithImage>
-        <ContactOptions className="mt-10" formAnchorId="contact-form" />
-        <div className="mx-auto mt-16 max-w-xl">
+      </div>
+    </section>
+
+    <MarketingSection
+      waves="both"
+      waveTopFill={MARKETING_CREAM}
+      waveBottomFill={MARKETING_OAK_SURFACE}
+      className="bg-nurture-lilac py-12 sm:py-14"
+    >
+      <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+        <ContactOptions className="mt-2" formAnchorId="contact-form" />
+      </div>
+    </MarketingSection>
+
+    <section
+      className={`relative overflow-hidden py-12 sm:py-14 lg:py-16 ${FOOTER_WAVE_OVERLAP_CLASS} pb-6 sm:pb-8`}
+      style={{ backgroundColor: MARKETING_OAK_SURFACE }}
+    >
+      <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-xl">
           <ScrollRevealHeading
             variant="quick"
             className="font-serif text-2xl font-semibold text-nurture-charcoal"
@@ -279,7 +307,7 @@ const ContactPageContent = () => (
         </div>
       </div>
     </section>
-  </>
+  </div>
 );
 
 export default ContactPageContent;

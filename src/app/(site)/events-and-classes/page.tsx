@@ -5,7 +5,7 @@ import EventsListingCard from "@/components/Events/EventsListingCard";
 import SectionTitle from "@/components/Common/SectionTitle";
 import SectionWaveEdges from "@/components/Common/SectionWaveEdges";
 import JsonLd from "@/components/Seo/JsonLd";
-import { MARKETING_CREAM } from "@/config/marketingDesign";
+import { MARKETING_CREAM, MARKETING_OAK_SURFACE, marketingCard, marketingPageShell } from "@/config/marketingDesign";
 import { classRefundPolicy } from "@/content/events";
 import { brands } from "@/content/site";
 import { buildPageMetadata } from "@/config/seo";
@@ -34,13 +34,14 @@ export default async function EventsAndClassesPage() {
   const events = items.filter((item) => item.kind === "event");
 
   return (
-    <div className="overflow-x-hidden bg-nurture-cream">
+    <div className={marketingPageShell}>
       <JsonLd data={buildOrganizationJsonLd()} />
       <EventsHero />
 
       <section
         id="events-listings"
-        className="scroll-mt-24 bg-nurture-cream py-10 sm:scroll-mt-28 sm:py-12 md:scroll-mt-32 md:py-14"
+        className="scroll-mt-24 py-10 sm:scroll-mt-28 sm:py-12 md:scroll-mt-32 md:py-14"
+        style={{ backgroundColor: MARKETING_OAK_SURFACE }}
       >
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
@@ -62,9 +63,7 @@ export default async function EventsAndClassesPage() {
           ) : null}
 
           {items.length === 0 ? (
-            <div
-              className="mx-auto mt-12 max-w-lg rounded-2xl border border-nurture-sage/15 bg-white p-8 text-center shadow-sm"
-            >
+            <div className={`mx-auto mt-12 max-w-lg ${marketingCard} text-center`}>
               <p className="text-nurture-charcoal/70">
                 New sessions are being scheduled. Contact us to get on the list.
               </p>
@@ -115,15 +114,16 @@ export default async function EventsAndClassesPage() {
         </div>
       </section>
 
-      <section className="relative overflow-hidden bg-white py-12 sm:py-14">
+      <section
+        className="relative overflow-hidden py-12 sm:py-14"
+        style={{ backgroundColor: MARKETING_CREAM }}
+      >
         <SectionWaveEdges
-          topFill={MARKETING_CREAM}
+          topFill={MARKETING_OAK_SURFACE}
           bottomFill={MARKETING_CREAM}
         />
         <div className="relative z-[2] mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <div
-            className="mx-auto max-w-3xl rounded-2xl border border-nurture-sage/15 bg-white p-6 shadow-[0_14px_35px_rgba(45,52,54,0.06)] sm:p-8"
-          >
+          <div className={`mx-auto max-w-3xl ${marketingCard}`}>
             <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal sm:text-3xl">
               {classRefundPolicy.title}
             </h2>

@@ -36,7 +36,7 @@ interface ContactOptionsProps {
 }
 
 const cardClassName =
-  "group/card flex w-full min-h-full flex-col items-center overflow-hidden rounded-2xl border border-nurture-sage/15 bg-white p-8 text-center shadow-sm transition-[flex,box-shadow,border-color] duration-500 ease-premium motion-reduce:transition-none hover:border-nurture-rose/30 hover:shadow-[0_18px_45px_rgba(45,52,54,0.1)] md:min-w-0 md:flex-1 md:hover:flex-[2.75] md:focus-within:flex-[2.75]";
+  "group/card flex w-full min-h-full flex-col items-center overflow-hidden rounded-2xl border border-nurture-lilac/25 bg-nurture-cream p-8 text-center shadow-sm transition-[flex,box-shadow,border-color] duration-500 ease-premium motion-reduce:transition-none hover:border-nurture-lilac/45 hover:shadow-[0_18px_45px_rgba(74,69,89,0.1)] md:min-w-0 md:flex-1 md:hover:flex-[2.75] md:focus-within:flex-[2.75]";
 
 const ContactOptions = ({
   formAnchorId = "contact-form",
@@ -74,7 +74,7 @@ const ContactOptions = ({
         aria-label={isIntake ? "Ways to start support" : "Contact options"}
       >
         <article className={cardClassName} tabIndex={0}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-grape">
             {isIntake ? "Guided intake" : "Email"}
           </p>
           <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
@@ -95,7 +95,7 @@ const ContactOptions = ({
 
         {WHATSAPP_CONTACT_CARD_ENABLED ? (
           <article className={cardClassName} tabIndex={0}>
-            <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+            <p className="text-xs font-semibold uppercase tracking-wide text-nurture-grape">
               WhatsApp
             </p>
             <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
@@ -122,7 +122,7 @@ const ContactOptions = ({
         ) : null}
 
         <article className={cardClassName} tabIndex={0}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-grape">
             Phone
           </p>
           <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
@@ -135,13 +135,13 @@ const ContactOptions = ({
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <a
               href={callHref}
-              className="btn-secondary"
+              className="btn-primary"
             >
               Call us
             </a>
             <a
               href={textHref}
-              className="btn-secondary"
+              className="btn-primary"
             >
               Text us
             </a>
@@ -149,7 +149,7 @@ const ContactOptions = ({
         </article>
 
         <article className={cardClassName} tabIndex={0}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-grape">
             {bookingLabel}
           </p>
           <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
@@ -183,7 +183,7 @@ const ContactOptions = ({
           Prefer email?{" "}
           <Link
             href="/contact?audience=mom"
-            className="font-medium text-nurture-sage-dark hover:underline"
+            className="font-medium text-nurture-grape hover:underline"
           >
             Use our contact form
           </Link>

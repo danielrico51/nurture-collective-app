@@ -1,5 +1,8 @@
 import SectionTitle from "@/components/Common/SectionTitle";
-import SectionWaveEdges from "@/components/Common/SectionWaveEdges";
+import SectionWaveEdges, {
+  FOOTER_WAVE_OVERLAP_CLASS,
+} from "@/components/Common/SectionWaveEdges";
+import { MARKETING_CREAM } from "@/config/marketingDesign";
 
 interface Step {
   step: string;
@@ -19,9 +22,6 @@ interface HowItWorksStepsProps {
   waveBottomFill?: string;
 }
 
-const NURTURE_CREAM = "#FAF7F2";
-const WHITE = "#FFFFFF";
-
 const STEP_ORGANIC_RADIUS = [
   "rounded-3xl md:rounded-[63%_37%_54%_46%/55%_48%_52%_45%]",
   "rounded-3xl md:rounded-[58%_42%_48%_52%/52%_44%_56%_48%]",
@@ -35,11 +35,11 @@ const HowItWorksSteps = ({
   steps,
   className = "",
   organicWaves = false,
-  waveTopFill = NURTURE_CREAM,
-  waveBottomFill = WHITE,
+  waveTopFill = MARKETING_CREAM,
+  waveBottomFill = MARKETING_CREAM,
 }: HowItWorksStepsProps) => {
   const sectionClassName = organicWaves
-    ? `relative overflow-hidden pt-24 pb-24 sm:pt-28 sm:pb-28 ${className}`
+    ? `relative overflow-hidden ${FOOTER_WAVE_OVERLAP_CLASS} pt-20 pb-24 sm:pt-24 sm:pb-28 ${className}`
     : className || "py-14 sm:py-16";
 
   return (
@@ -57,11 +57,11 @@ const HowItWorksSteps = ({
           {steps.map((item, index) => (
             <div
               key={item.step}
-              className={`bg-[#FAF8F5] p-8 text-center shadow-[0_8px_30px_rgb(0,0,0,0.04)] lg:p-10 ${
+              className={`how-it-works-step-card relative p-8 text-center lg:p-10 ${
                 STEP_ORGANIC_RADIUS[index % STEP_ORGANIC_RADIUS.length]
               }`}
             >
-              <span className="font-serif text-4xl font-semibold text-nurture-sage/40">
+              <span className="font-serif text-4xl font-semibold text-nurture-lilac">
                 {item.step}
               </span>
               <h3 className="mt-4 font-serif text-xl font-semibold text-nurture-charcoal">

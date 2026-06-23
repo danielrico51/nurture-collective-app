@@ -6,6 +6,42 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --color-primary: #b8a9c9;
+  --color-text: #2c2a3a;
+  --color-background: #f4f0eb;
+  --color-surface-alt: #d4bfa8;
+  --color-accent: #4a4559;
+  --color-cta: #ffdf67;
+  --color-cta-hover: #e6c852;
+}
+
+@layer base {
+  html {
+    font-size: 16px;
+  }
+
+  body {
+    @apply bg-nurture-cream text-nurture-charcoal antialiased;
+    font-size: 1rem;
+    line-height: 1.6;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
+    @apply text-nurture-charcoal;
+  }
+
+  p {
+    @apply text-base leading-relaxed text-nurture-charcoal;
+    line-height: 1.6;
+  }
+}
+
 @layer components {
   .btn-hover-lift {
     @apply shadow-md transition-all duration-300 ease-out hover:-translate-y-1 hover:scale-[1.035] hover:shadow-xl hover:brightness-110 disabled:transform-none disabled:shadow-md disabled:brightness-100 disabled:hover:translate-y-0 disabled:hover:scale-100 disabled:hover:shadow-md;
@@ -27,42 +63,46 @@
   }
 
   .btn-primary {
-    @apply btn-hover-lift inline-flex items-center justify-center rounded-full bg-nurture-sage px-6 py-2.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark;
+    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg bg-nurture-gold px-6 py-2.5 text-sm font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-gold-dark;
   }
 
   .btn-primary-lg {
-    @apply btn-hover-lift inline-flex items-center justify-center gap-2 rounded-full bg-nurture-sage px-6 py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark sm:px-8 sm:py-3.5;
+    @apply btn-hover-lift inline-flex items-center justify-center gap-2 rounded-lg bg-nurture-gold px-6 py-3 text-sm font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-gold-dark sm:px-8 sm:py-3.5;
+  }
+
+  .btn-primary-grape {
+    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg bg-nurture-grape px-6 py-2.5 text-sm font-semibold text-nurture-cream shadow-sm hover:brightness-110;
   }
 
   .btn-secondary {
-    @apply btn-hover-lift inline-flex items-center justify-center rounded-full border border-nurture-sage px-5 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10 sm:px-6;
+    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg border border-nurture-grape px-5 py-2.5 text-sm font-semibold text-nurture-grape hover:bg-nurture-grape/10 sm:px-6;
   }
 
   .btn-secondary-lg {
-    @apply btn-hover-lift inline-flex items-center justify-center rounded-full border border-nurture-sage px-6 py-3 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10 sm:px-8 sm:py-3.5;
+    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg border border-nurture-grape px-6 py-3 text-sm font-semibold text-nurture-grape hover:bg-nurture-grape/10 sm:px-8 sm:py-3.5;
   }
 
   .btn-nav-primary {
-    @apply btn-hover-lift inline-flex items-center justify-center rounded-full bg-nurture-sage px-3.5 py-1.5 text-sm font-medium text-white hover:bg-nurture-sage-dark;
+    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg bg-nurture-gold px-3.5 py-1.5 text-sm font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-gold-dark;
   }
 
   .btn-nav-secondary {
-    @apply btn-hover-lift inline-flex items-center justify-center rounded-full border border-nurture-sage px-3.5 py-1.5 text-sm font-medium text-nurture-sage-dark hover:bg-nurture-sage/10;
+    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg border border-nurture-lilac bg-nurture-lilac/15 px-3.5 py-1.5 text-sm font-semibold text-nurture-grape hover:bg-nurture-lilac/30;
+  }
+
+  .btn-nav-accent {
+    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg bg-nurture-lilac px-3.5 py-1.5 text-sm font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-lilac-dark;
   }
 }
 
-body {
-  @apply bg-nurture-cream text-nurture-charcoal antialiased;
-}
-
 .site-footer {
-  @apply relative w-full text-white;
-  background-color: transparent;
+  @apply relative w-full text-nurture-cream;
+  background-color: var(--color-accent);
 }
 
 .site-footer__body {
   @apply w-full;
-  background-color: #3a3348;
+  background-color: var(--color-accent);
 }
 
 .logo-icon-wrapper {
@@ -144,78 +184,47 @@ body {
   mask-composite: intersect;
 }
 
-/* Home — Google reviews section background (subtle changing-baby photo) */
-.google-reviews-bg-photo {
-  opacity: 0.16;
-  -webkit-mask-image:
-    linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%),
-    linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
-  -webkit-mask-composite: source-in;
-  mask-image:
-    linear-gradient(to bottom, transparent 0%, #000 12%, #000 88%, transparent 100%),
-    linear-gradient(to right, transparent 0%, #000 8%, #000 92%, transparent 100%);
-  mask-composite: intersect;
+.hero-intro-card {
+  @apply rounded-2xl border border-nurture-oak/50 bg-nurture-cream px-5 py-6 shadow-floatingCard backdrop-blur-sm sm:rounded-3xl sm:px-6 sm:py-7 lg:px-7 lg:py-8;
+  background-color: rgb(244 240 235 / 0.97);
 }
 
-/* Hand-drawn marker highlights for hero service names */
-.hero-service-highlight {
-  box-decoration-break: clone;
-  -webkit-box-decoration-break: clone;
-  padding: 0.12em 0.4em 0.1em 0.34em;
-  margin: 0 -0.06em;
-  font-weight: 500;
-  color: #2d3436;
-  background-color: rgba(107, 91, 132, 0.24);
-  background-image:
-    linear-gradient(
-      108deg,
-      rgba(139, 123, 168, 0.32) 0%,
-      rgba(107, 91, 132, 0.04) 32%,
-      rgba(139, 123, 168, 0.38) 68%,
-      rgba(107, 91, 132, 0.14) 100%
-    ),
-    linear-gradient(
-      168deg,
-      transparent 45%,
-      rgba(107, 91, 132, 0.22) 100%
-    );
-  box-shadow:
-    0.06em 0.12em 0 rgba(107, 91, 132, 0.1),
-    -0.1em 0.04em 0 rgba(139, 123, 168, 0.07);
+.hero-intro-card strong {
+  font-weight: 600;
+  color: inherit;
+  background: none;
+  box-shadow: none;
+  padding: 0;
+  margin: 0;
 }
 
-.hero-service-highlight--a {
-  border-radius: 74% 26% 61% 39% / 36% 64% 32% 68%;
-  padding: 0.18em 0.36em 0.06em 0.46em;
-  transform: rotate(-0.55deg);
+/* Organic step cards — cream surface fades into the lilac section background */
+.how-it-works-step-card {
+  background: transparent;
 }
 
-.hero-service-highlight--b {
-  border-radius: 22% 78% 68% 32% / 58% 24% 76% 42%;
-  padding: 0.22em 0.54em 0.02em 0.26em;
-  transform: rotate(-0.85deg) skewX(-0.8deg);
-  box-shadow:
-    0.1em 0.08em 0 rgba(107, 91, 132, 0.12),
-    -0.14em 0.06em 0 rgba(139, 123, 168, 0.09),
-    0.04em -0.06em 0 rgba(107, 91, 132, 0.06);
+.how-it-works-step-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  background-color: #f4f0eb;
+  -webkit-mask-image: radial-gradient(
+    ellipse 94% 88% at 50% 50%,
+    #000 62%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 94% 88% at 50% 50%,
+    #000 62%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
-.hero-service-highlight--c {
-  border-radius: 58% 42% 48% 52% / 52% 48% 54% 46%;
-  padding: 0.08em 0.34em 0.16em 0.42em;
-  transform: rotate(0.65deg);
-}
-
-.hero-service-highlight--d {
-  border-radius: 41% 59% 72% 28% / 64% 31% 69% 36%;
-  padding: 0.14em 0.48em 0.08em 0.3em;
-  transform: rotate(-0.35deg) skewX(0.6deg);
-}
-
-.hero-service-highlight--e {
-  border-radius: 69% 31% 54% 46% / 33% 67% 38% 62%;
-  padding: 0.2em 0.28em 0.04em 0.5em;
-  transform: rotate(0.45deg);
+.how-it-works-step-card > * {
+  position: relative;
+  z-index: 1;
 }
 
 .floating-header-offset {
@@ -258,37 +267,37 @@ body {
 }
 
 .slot-number--sage {
-  background-color: rgba(107, 91, 132, 0.92);
+  background-color: rgba(184, 169, 201, 0.95);
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 44' preserveAspectRatio='none'%3E%3Cpath fill='%238B7BA8' fill-opacity='0.55' d='M2,24 C22,8 38,32 58,18 C78,6 98,28 118,14 L118,32 C98,40 78,22 58,30 C38,38 18,26 2,34 Z'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 44' preserveAspectRatio='none'%3E%3Cpath fill='%234A4559' fill-opacity='0.35' d='M2,24 C22,8 38,32 58,18 C78,6 98,28 118,14 L118,32 C98,40 78,22 58,30 C38,38 18,26 2,34 Z'/%3E%3C/svg%3E"),
     linear-gradient(
       112deg,
-      rgba(139, 123, 168, 0.88) 0%,
-      rgba(107, 91, 132, 0.72) 38%,
-      rgba(122, 108, 148, 0.9) 72%,
-      rgba(90, 77, 112, 0.78) 100%
+      rgba(184, 169, 201, 0.92) 0%,
+      rgba(154, 138, 176, 0.78) 38%,
+      rgba(74, 69, 89, 0.82) 72%,
+      rgba(154, 138, 176, 0.88) 100%
     );
   background-size: 100% 100%, 100% 100%;
   box-shadow:
-    0.05em 0.08em 0 rgba(90, 77, 112, 0.18),
-    -0.06em 0.04em 0 rgba(139, 123, 168, 0.12);
+    0.05em 0.08em 0 rgba(74, 69, 89, 0.16),
+    -0.06em 0.04em 0 rgba(184, 169, 201, 0.14);
 }
 
 .slot-number--lilac {
-  background-color: rgba(166, 127, 145, 0.92);
+  background-color: rgba(212, 191, 168, 0.95);
   background-image:
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 44' preserveAspectRatio='none'%3E%3Cpath fill='%23C4A4B5' fill-opacity='0.58' d='M2,24 C22,8 38,32 58,18 C78,6 98,28 118,14 L118,32 C98,40 78,22 58,30 C38,38 18,26 2,34 Z'/%3E%3C/svg%3E"),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 44' preserveAspectRatio='none'%3E%3Cpath fill='%23B8A9C9' fill-opacity='0.55' d='M2,24 C22,8 38,32 58,18 C78,6 98,28 118,14 L118,32 C98,40 78,22 58,30 C38,38 18,26 2,34 Z'/%3E%3C/svg%3E"),
     linear-gradient(
       112deg,
-      rgba(196, 164, 181, 0.9) 0%,
-      rgba(166, 127, 145, 0.74) 38%,
-      rgba(184, 148, 168, 0.92) 72%,
-      rgba(152, 118, 136, 0.8) 100%
+      rgba(212, 191, 168, 0.92) 0%,
+      rgba(184, 169, 201, 0.76) 38%,
+      rgba(212, 191, 168, 0.9) 72%,
+      rgba(154, 138, 176, 0.82) 100%
     );
   background-size: 100% 100%, 100% 100%;
   box-shadow:
-    0.05em 0.08em 0 rgba(152, 118, 136, 0.2),
-    -0.06em 0.04em 0 rgba(196, 164, 181, 0.14);
+    0.05em 0.08em 0 rgba(74, 69, 89, 0.14),
+    -0.06em 0.04em 0 rgba(212, 191, 168, 0.18);
 }
 
 /* Booking calendar — soft transparent purple brushstroke frame */

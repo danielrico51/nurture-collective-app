@@ -15,7 +15,7 @@ const Breadcrumb = ({ pageName }: BreadcrumbProps) => {
     >
       <SectionWaveEdges bottomOnly bottomFill={MARKETING_CREAM} />
       <div className="relative z-[2] mx-auto max-w-screen-xl px-4 text-center sm:px-6 lg:px-8">
-        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-nurture-sage-dark">
+        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-nurture-grape">
           The Nesting Place
         </p>
         <ScrollRevealHeading

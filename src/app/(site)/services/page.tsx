@@ -8,7 +8,11 @@ import ServicesHero from "@/components/Services/ServicesHero";
 import ServicesJumpNav from "@/components/Services/ServicesJumpNav";
 import ServicesLandingCard from "@/components/Services/ServicesLandingCard";
 import ServicesOrphanCardShell from "@/components/Services/ServicesOrphanCardShell";
-import { MARKETING_CREAM } from "@/config/marketingDesign";
+import {
+  MARKETING_CREAM,
+  MARKETING_OAK_SURFACE,
+  marketingPageShell,
+} from "@/config/marketingDesign";
 import { buildPageMetadata } from "@/config/seo";
 import { publishedCoreServices } from "@/content/site";
 import type { CoreService } from "@/content/site";
@@ -48,7 +52,7 @@ export default async function ServicesPage() {
   const serviceRows = chunkServices(publishedCoreServices);
 
   return (
-    <div className="overflow-x-hidden bg-nurture-cream">
+    <div className={marketingPageShell}>
       <JsonLd
         data={[
           buildOrganizationJsonLd(),
@@ -57,7 +61,10 @@ export default async function ServicesPage() {
       />
       <ServicesHero />
 
-      <section className="bg-nurture-cream py-12 sm:py-14">
+      <section
+        className="py-12 sm:py-14"
+        style={{ backgroundColor: MARKETING_OAK_SURFACE }}
+      >
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
           <SectionTitle
@@ -115,9 +122,10 @@ export default async function ServicesPage() {
       </section>
 
       <MarketingSection
-        waves="top"
-        waveTopFill={MARKETING_CREAM}
-        className="bg-white pb-0"
+        waves="both"
+        waveTopFill={MARKETING_OAK_SURFACE}
+        waveBottomFill={MARKETING_CREAM}
+        className="bg-nurture-lilac pb-0"
       >
         <ServicesCtaBanner />
         <BookingEmbed className="!py-12 sm:!py-14" />

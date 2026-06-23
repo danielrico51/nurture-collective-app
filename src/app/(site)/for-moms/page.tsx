@@ -3,11 +3,20 @@ import BookingEmbed from "@/components/Common/BookingEmbed";
 import ContactOptions from "@/components/Common/ContactOptions";
 import FaqList from "@/components/Common/FaqList";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
+import MarketingSection from "@/components/Common/MarketingSection";
 import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import GoogleReviewsSection from "@/components/Reviews/GoogleReviewsSection";
 import SectionTitle from "@/components/Common/SectionTitle";
 import JsonLd from "@/components/Seo/JsonLd";
 import { buildCareStartHref } from "@/config/carePaths";
+import {
+  MARKETING_CREAM,
+  MARKETING_LILAC,
+  MARKETING_OAK_SURFACE,
+  marketingCard,
+  marketingEyebrow,
+  marketingPageShell,
+} from "@/config/marketingDesign";
 import { buildPageMetadata } from "@/config/seo";
 import {
   brands,
@@ -34,17 +43,16 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function ForMomsPage() {
   return (
-    <>
+    <div className={marketingPageShell}>
       <JsonLd
         data={[buildOrganizationJsonLd(), buildFaqPageJsonLd(momFaqs)]}
       />
       <Breadcrumb pageName="For moms" />
-      <section className="py-16">
+
+      <section className="py-12 sm:py-14 lg:py-16">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
-              For families
-            </p>
+            <p className={marketingEyebrow}>For families</p>
             <ScrollRevealHeading
               as="h1"
               variant="emphasis"
@@ -64,61 +72,77 @@ export default function ForMomsPage() {
               </Link>
             </div>
           </div>
+        </div>
+      </section>
 
-          <div className="mt-20">
-            <SectionTitle
-              title="Available services"
-              subtitle="Experienced, evidence-based Maternal Wellness support — reach out when you're ready."
-            />
-            <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
-              {publishedCoreServices.map((service) => (
-                <article
-                  key={service.slug}
-                  className="flex flex-col rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm"
-                >
-                  <span className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
-                    {service.tag}
-                  </span>
-                  <h2 className="mt-3 font-serif text-xl font-semibold">
-                    {service.title}
-                  </h2>
-                  <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
-                    {service.description}
-                  </p>
-                </article>
-              ))}
-            </div>
-          </div>
-
-          <div className="mt-20">
-            <SectionTitle
-              title="Ready to get started?"
-              subtitle="Reach out by phone, message, or schedule a call with our team."
-            />
-            <ContactOptions
-              variant="contact"
-              formHref="/contact?audience=mom"
-              whatsappMessage="Hi! I'm interested in maternal support through The Nesting Place."
-              className="mt-10"
-            />
+      <section
+        className="py-12 sm:py-14 lg:py-16"
+        style={{ backgroundColor: MARKETING_OAK_SURFACE }}
+      >
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <SectionTitle
+            title="Available services"
+            subtitle="Experienced, evidence-based Maternal Wellness support — reach out when you're ready."
+          />
+          <div className="mt-12 grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+            {publishedCoreServices.map((service) => (
+              <article key={service.slug} className={`flex flex-col ${marketingCard}`}>
+                <span className="text-xs font-semibold uppercase tracking-wide text-nurture-grape">
+                  {service.tag}
+                </span>
+                <h2 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
+                  {service.title}
+                </h2>
+                <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
+                  {service.description}
+                </p>
+              </article>
+            ))}
           </div>
         </div>
       </section>
 
-      <GoogleReviewsSection />
+      <MarketingSection
+        waves="both"
+        waveTopFill={MARKETING_OAK_SURFACE}
+        waveBottomFill={MARKETING_CREAM}
+        className="bg-nurture-lilac py-16 sm:py-20"
+      >
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <SectionTitle
+            title="Ready to get started?"
+            subtitle="Reach out by phone, message, or schedule a call with our team."
+          />
+          <ContactOptions
+            variant="contact"
+            formHref="/contact?audience=mom"
+            whatsappMessage="Hi! I'm interested in maternal support through The Nesting Place."
+            className="mt-10"
+          />
+        </div>
+      </MarketingSection>
+
+      <GoogleReviewsSection className="bg-nurture-cream" />
       <HowItWorksSteps
         title="Your support journey"
         steps={momHowItWorks}
         organicWaves
-        className="bg-nurture-sage/5"
+        waveTopFill={MARKETING_CREAM}
+        waveBottomFill={MARKETING_CREAM}
+        className="bg-nurture-lilac"
       />
       <FaqList
         title="Questions from moms"
         items={momFaqs}
         organicWaves
-        waveTopFill="#F6F3F0"
+        waveTopFill={MARKETING_LILAC}
       />
-      <BookingEmbed />
-    </>
+      <section
+        className="py-12 sm:py-14"
+        style={{ backgroundColor: MARKETING_OAK_SURFACE }}
+      >
+        <BookingEmbed className="!py-0" />
+      </section>
+    </div>
   );
 }

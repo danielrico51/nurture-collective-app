@@ -20,7 +20,7 @@ const ServiceStatsPointList = ({ slug, points }: ServiceStatsPointListProps) => 
 
   return (
     <ul
-      className="space-y-3 rounded-2xl border border-nurture-sage/10 bg-white p-5 shadow-sm sm:p-6"
+      className="space-y-3 rounded-2xl border border-nurture-lilac/25 bg-nurture-cream p-5 shadow-sm sm:p-6"
     >
       {points.map((point) => (
         <li
@@ -29,7 +29,7 @@ const ServiceStatsPointList = ({ slug, points }: ServiceStatsPointListProps) => 
         >
           <span
             aria-hidden
-            className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nurture-sage"
+            className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-nurture-lilac"
           />
           <span>
             {isSlotStatPoint(point) ? (

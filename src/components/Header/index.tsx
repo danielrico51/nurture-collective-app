@@ -1,11 +1,13 @@
 "use client";
 
 import NestingPlaceLogo from "@/components/Common/NestingPlaceLogo";
+import { buildBookingPageHref } from "@/config/bookings";
 import {
   buildGuestAccountSigninHref,
   buildGuestAccountSignupHref,
   isIntakeChatPath,
 } from "@/config/intakeAccess";
+import { buildSmsHref } from "@/config/integrations";
 import { primaryNavLinks } from "@/config/navigation";
 import { useUserGroups } from "@/hooks/useUserGroups";
 import { signOut } from "aws-amplify/auth";
@@ -57,13 +59,13 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   const navLinkClass = (href: string) =>
-    `text-sm font-medium transition-colors hover:text-nurture-sage-dark ${
-      isActive(href) ? "text-nurture-sage-dark" : "text-nurture-charcoal/85"
+    `rounded-md px-2 py-1 text-sm font-medium transition-colors ${
+      isActive(href)
+        ? "bg-nurture-lilac/25 text-nurture-grape"
+        : "text-nurture-charcoal hover:bg-nurture-lilac/15 hover:text-nurture-grape"
     }`;
 
-  const cardShadow = scrolled
-    ? "shadow-lg shadow-stone-900/10"
-    : "shadow-md shadow-stone-900/5";
+  const cardShadow = scrolled ? "shadow-nav" : "shadow-sm";
 
   return (
     <header
@@ -71,17 +73,17 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
       data-scrolled={scrolled ? "true" : "false"}
     >
       <div
-        className={`pointer-events-auto mx-auto max-w-7xl overflow-hidden rounded-lg bg-white transition-shadow duration-300 ${cardShadow}`}
+        className={`pointer-events-auto mx-auto max-w-7xl overflow-hidden rounded-lg border border-nurture-oak/30 bg-nurture-cream transition-shadow duration-300 ${cardShadow}`}
       >
-        <div className="flex items-center justify-between gap-2 px-4 py-1 sm:px-6 sm:py-1.5">
+        <div className="flex items-center justify-between gap-2 px-4 py-2 sm:px-6 sm:py-2.5">
           <span className="inline-flex shrink-0 sm:hidden">
             <NestingPlaceLogo variant="wordmark" compact priority />
           </span>
-          <span className="hidden min-w-0 sm:inline-flex shrink-0">
+          <span className="hidden min-w-0 shrink-0 sm:inline-flex">
             <NestingPlaceLogo variant="wordmark" priority />
           </span>
 
-          <nav className="hidden items-center gap-3 lg:gap-4 xl:flex">
+          <nav className="hidden items-center gap-1 lg:gap-1.5 xl:flex">
             {primaryNavLinks.map((link) => (
               <Link key={link.href} href={link.href} className={navLinkClass(link.href)}>
                 {link.label}
@@ -89,7 +91,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
             ))}
           </nav>
 
-          <div className="hidden items-center gap-2 sm:gap-3 lg:flex">
+          <div className="hidden items-center gap-2 sm:gap-2.5 lg:flex">
             {isAuthenticated ? (
               <>
                 <Link href="/apps" className={navLinkClass("/apps")}>
@@ -116,17 +118,11 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 <Link href={signinHref} className={navLinkClass(signinHref)}>
                   Sign in
                 </Link>
-                <Link
-                  href={signupHref}
-                  className="btn-nav-secondary"
-                >
-                  Sign up
-                </Link>
-                <Link
-                  href="/care/start"
-                  className="btn-nav-primary"
-                >
-                  Request support
+                <a href={buildSmsHref()} className="btn-nav-secondary whitespace-nowrap">
+                  Call or Text
+                </a>
+                <Link href={buildBookingPageHref()} className="btn-nav-primary whitespace-nowrap">
+                  Book Online
                 </Link>
               </>
             )}
@@ -134,7 +130,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
 
           <button
             type="button"
-            className="rounded-md p-1 text-nurture-charcoal transition-colors hover:bg-stone-100 lg:hidden"
+            className="rounded-md p-1 text-nurture-charcoal transition-colors hover:bg-nurture-lilac/15 lg:hidden"
             aria-expanded={menuOpen}
             aria-label="Toggle menu"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -146,16 +142,16 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
         </div>
 
         {menuOpen ? (
-          <div className="border-t border-stone-100 bg-white px-4 py-4 lg:hidden">
-            <nav className="flex flex-col">
+          <div className="border-t border-nurture-oak/25 bg-nurture-cream px-4 py-4 lg:hidden">
+            <nav className="flex flex-col gap-0.5">
               {primaryNavLinks.map((link) => (
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`rounded-md py-2.5 text-sm font-medium transition-colors hover:text-nurture-sage-dark ${
+                  className={`rounded-md px-2 py-2.5 text-sm font-medium transition-colors ${
                     isActive(link.href)
-                      ? "text-nurture-sage-dark"
-                      : "text-nurture-charcoal/85"
+                      ? "bg-nurture-lilac/25 text-nurture-grape"
+                      : "text-nurture-charcoal hover:bg-nurture-lilac/15 hover:text-nurture-grape"
                   }`}
                   onClick={() => setMenuOpen(false)}
                 >
@@ -163,19 +159,19 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 </Link>
               ))}
             </nav>
-            <div className="mt-3 flex flex-col gap-2 border-t border-stone-100 pt-3">
+            <div className="mt-3 flex flex-col gap-2 border-t border-nurture-oak/25 pt-3">
               {isAuthenticated ? (
                 <>
                   <Link
                     href="/apps"
-                    className="rounded-md py-2 text-sm font-medium text-nurture-charcoal/85"
+                    className="rounded-md px-2 py-2 text-sm font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
                     onClick={() => setMenuOpen(false)}
                   >
                     My apps
                   </Link>
                   <Link
                     href="/account/profile"
-                    className="rounded-md py-2 text-sm font-medium text-nurture-charcoal/85"
+                    className="rounded-md px-2 py-2 text-sm font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
                     onClick={() => setMenuOpen(false)}
                   >
                     Profile
@@ -183,7 +179,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                   {canAccessAdmin ? (
                     <Link
                       href="/admin"
-                      className="rounded-md py-2 text-sm font-medium text-nurture-charcoal/85"
+                      className="rounded-md px-2 py-2 text-sm font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
                       onClick={() => setMenuOpen(false)}
                     >
                       Admin
@@ -191,7 +187,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                   ) : null}
                   <button
                     type="button"
-                    className="rounded-md py-2 text-left text-sm font-medium text-nurture-charcoal/85"
+                    className="rounded-md px-2 py-2 text-left text-sm font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
                     onClick={handleSignOut}
                   >
                     Sign out
@@ -199,23 +195,30 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 </>
               ) : (
                 <>
-                  <Link
-                    href="/care/start"
-                    className="btn-primary w-full py-2.5 text-center"
+                  <a
+                    href={buildSmsHref()}
+                    className="btn-nav-secondary w-full py-2.5 text-center"
                     onClick={() => setMenuOpen(false)}
                   >
-                    Request support
+                    Call or Text
+                  </a>
+                  <Link
+                    href={buildBookingPageHref()}
+                    className="btn-nav-primary w-full py-2.5 text-center"
+                    onClick={() => setMenuOpen(false)}
+                  >
+                    Book Online
                   </Link>
                   <Link
                     href={signinHref}
-                    className="rounded-md py-2 text-sm font-medium text-nurture-charcoal/85"
+                    className="rounded-md px-2 py-2 text-sm font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
                     onClick={() => setMenuOpen(false)}
                   >
                     Sign in
                   </Link>
                   <Link
                     href={signupHref}
-                    className="rounded-md py-2 text-sm font-medium text-nurture-charcoal/85"
+                    className="rounded-md px-2 py-2 text-sm font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
                     onClick={() => setMenuOpen(false)}
                   >
                     Sign up

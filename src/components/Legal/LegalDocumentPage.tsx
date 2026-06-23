@@ -1,4 +1,8 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
+import {
+  marketingPageShell,
+  MARKETING_OAK_SURFACE,
+} from "@/config/marketingDesign";
 import type { LegalSection } from "@/content/legal";
 import { legalLastUpdated } from "@/content/legal";
 
@@ -15,12 +19,15 @@ export const LegalDocumentPage = ({
   subtitle,
   sections,
 }: LegalDocumentPageProps) => (
-  <>
+  <div className={marketingPageShell}>
     <Breadcrumb pageName={pageName} />
-    <article className="py-16">
+    <article
+      className="py-12 sm:py-14 lg:py-16"
+      style={{ backgroundColor: MARKETING_OAK_SURFACE }}
+    >
       <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8">
-        <header className="border-b border-nurture-sage/20 pb-8">
-          <h1 className="font-serif text-3xl font-semibold text-nurture-sage-dark sm:text-4xl">
+        <header className="border-b border-nurture-lilac/30 pb-8">
+          <h1 className="font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl">
             {title}
           </h1>
           <p className="mt-3 text-sm text-nurture-charcoal/70">{subtitle}</p>
@@ -52,5 +59,5 @@ export const LegalDocumentPage = ({
         </div>
       </div>
     </article>
-  </>
+  </div>
 );

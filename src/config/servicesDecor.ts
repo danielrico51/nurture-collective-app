@@ -53,3 +53,12 @@ export const serviceCardIconSrc: Partial<Record<ServiceSlug, string>> = {
   "childbirth-education": `${base}/icon-family-connection.svg`,
   "placenta-encapsulation": `${base}/icon-parent-child-bond.svg`,
 };
+
+/** Homepage impact accordion row icons (cropped from branded illustration set). */
+export const homepageServiceBulletIconSrc: Partial<
+  Record<"birth-doula" | "overnight-newborn" | "postpartum-care", string>
+> = {
+  "birth-doula": "/branding/supportformom.png",
+  "overnight-newborn": "/branding/overnight.png",
+  "postpartum-care": "/branding/birthdoula.png",
+};

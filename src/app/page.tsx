@@ -1,11 +1,13 @@
 import CallToAction from "@/components/Home/CallToAction";
 import JoinTeamSection from "@/components/Home/JoinTeamSection";
 import ServiceStatsSection from "@/components/Home/ServiceStatsSection";
-import TeamBylineBanner from "@/components/Home/TeamBylineBanner";import FaqList from "@/components/Common/FaqList";
+import FaqList from "@/components/Common/FaqList";
+import SectionWaveEdges from "@/components/Common/SectionWaveEdges";
 import Hero from "@/components/Home/Hero";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
 import GoogleReviews from "@/components/Reviews/GoogleReviews";
 import JsonLd from "@/components/Seo/JsonLd";
+import { MARKETING_CREAM, MARKETING_OAK_SURFACE } from "@/config/marketingDesign";
 import { buildPageMetadata } from "@/config/seo";
 import { momFaqs, momHowItWorks } from "@/content/site";
 import {
@@ -15,6 +17,7 @@ import {
   buildWebSiteJsonLd,
 } from "@/lib/seo/jsonLd";
 import type { Metadata } from "next";
+import Image from "next/image";
 
 export const metadata: Metadata = buildPageMetadata({
   title: "Birth Doula & Postpartum Support in NJ, NY, CT & PA",
@@ -41,17 +44,29 @@ export default function HomePage() {
         ]}
       />
       <Hero />
-      <TeamBylineBanner />
       <ServiceStatsSection />
       <HowItWorksSteps
         title="How it works for moms"
         subtitle="From first inquiry to ongoing support."
         steps={momHowItWorks}
         organicWaves
-        className="bg-nurture-sage/5"
+        waveTopFill={MARKETING_OAK_SURFACE}
+        waveBottomFill={MARKETING_CREAM}
+        className="bg-nurture-sage"
       />
-      <GoogleReviews className="bg-white" />
-      <FaqList items={momFaqs} organicWaves waveTopFill="#FFFFFF" />
+      <GoogleReviews className="bg-nurture-cream" />
+      <section className="relative left-1/2 h-[min(70vh,520px)] w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden sm:h-[min(75vh,600px)] lg:h-[min(80vh,720px)]">
+        <Image
+          src="/branding/changingbaby.jpg"
+          alt="Caregiver gently supporting a newborn during a changing moment"
+          fill
+          sizes="100vw"
+          quality={90}
+          className="object-cover object-center opacity-95"
+        />
+        <SectionWaveEdges bottomOnly bottomFill={MARKETING_CREAM} />
+      </section>
+      <FaqList items={momFaqs} organicWaves waveTopFill={MARKETING_CREAM} />
       <CallToAction />
       <JoinTeamSection />
     </div>

@@ -1,3 +1,5 @@
+import { MARKETING_CREAM, MARKETING_FOOTER, MARKETING_OAK_SURFACE } from "@/config/marketingDesign";
+
 interface SectionWaveEdgesProps {
   topFill?: string;
   bottomFill?: string;
@@ -15,6 +17,8 @@ interface SectionWaveEdgesProps {
    */
   footerTop?: boolean;
   footerFill?: string;
+  /** Section background above the footer wave — fills the SVG so body cream does not bleed through. */
+  footerTransitionFrom?: string;
 }
 
 const TOP_WAVE_PATH =
@@ -36,14 +40,15 @@ export const FOOTER_WAVE_OVERLAP_CLASS = "-mt-[5rem] sm:-mt-[7rem]";
  * Place inside a `relative overflow-hidden` container.
  */
 const SectionWaveEdges = ({
-  topFill = "#FAF7F2",
-  bottomFill = "#FFFFFF",
+  topFill = MARKETING_CREAM,
+  bottomFill = MARKETING_CREAM,
   topOnly = false,
   bottomOnly = false,
   smoothTopFade = false,
-  fadeThroughColor = "#3A3348",
+  fadeThroughColor = MARKETING_FOOTER,
   footerTop = false,
-  footerFill = "#3A3348",
+  footerFill = MARKETING_FOOTER,
+  footerTransitionFrom = MARKETING_OAK_SURFACE,
 }: SectionWaveEdgesProps) => {
   if (footerTop) {
     return (
@@ -53,6 +58,7 @@ const SectionWaveEdges = ({
         preserveAspectRatio="none"
         aria-hidden="true"
       >
+        <rect width="1200" height="120" fill={footerTransitionFrom} />
         <path fill={footerFill} d={FOOTER_TOP_WAVE_PATH} />
       </svg>
     );
