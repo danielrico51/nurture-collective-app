@@ -48,4 +48,14 @@ describe("buildClientNotesSummaryFromLead", () => {
     expect(summary).toContain("Fee quoted:");
     expect(summary).toContain("Full doula package");
   });
+
+  it("includes corporate benefits in client notes summary", () => {
+    const summary = buildClientNotesSummaryFromLead(
+      baseLead({
+        corporateBenefitPlatform: "carrot",
+      })
+    );
+
+    expect(summary).toContain("Corporate benefits: Carrot");
+  });
 });

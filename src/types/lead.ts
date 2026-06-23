@@ -56,6 +56,24 @@ export const EXPECTED_BABY_GENDER_OPTIONS: {
   { value: "surprise", label: "Surprise" },
 ];
 
+export type CorporateBenefitPlatform =
+  | "carrot"
+  | "maven"
+  | "progenyhealth"
+  | "other"
+  | "unknown";
+
+export const CORPORATE_BENEFIT_PLATFORM_OPTIONS: {
+  value: CorporateBenefitPlatform;
+  label: string;
+}[] = [
+  { value: "carrot", label: "Carrot" },
+  { value: "maven", label: "Maven Clinic" },
+  { value: "progenyhealth", label: "ProgenyHealth" },
+  { value: "other", label: "Other platform" },
+  { value: "unknown", label: "Unknown / not sure" },
+];
+
 export interface LeadRecord {
   leadId: string;
   userId: string;
@@ -84,6 +102,10 @@ export interface LeadRecord {
   locationAddress: string | null;
   feeQuotedCents: number | null;
   feeQuotedNotes: string | null;
+  /** Employer-sponsored benefits platform, if applicable */
+  corporateBenefitPlatform: CorporateBenefitPlatform | null;
+  /** Custom platform name when corporateBenefitPlatform is other */
+  corporateBenefitNotes: string | null;
   /** When set, lead is hidden from the default CRM queue */
   archivedAt: string | null;
   conversationSessionId: string | null;
@@ -155,6 +177,8 @@ export interface UpdateLeadInput {
   locationAddress?: string | null;
   feeQuotedCents?: number | null;
   feeQuotedNotes?: string | null;
+  corporateBenefitPlatform?: CorporateBenefitPlatform | null;
+  corporateBenefitNotes?: string | null;
 }
 
 /** Assign or clear coordinator using admin user id (empty string = unassigned). */

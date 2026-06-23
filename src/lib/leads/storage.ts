@@ -453,6 +453,14 @@ export const updateLead = async (
       input.feeQuotedNotes !== undefined
         ? input.feeQuotedNotes
         : existing.feeQuotedNotes,
+    corporateBenefitPlatform:
+      input.corporateBenefitPlatform !== undefined
+        ? input.corporateBenefitPlatform
+        : existing.corporateBenefitPlatform,
+    corporateBenefitNotes:
+      input.corporateBenefitNotes !== undefined
+        ? input.corporateBenefitNotes
+        : existing.corporateBenefitNotes,
     updatedAt: new Date().toISOString(),
   };
 
@@ -512,5 +520,7 @@ export const updateLeadSnapshot = async (
     | "locationAddress"
     | "feeQuotedCents"
     | "feeQuotedNotes"
+    | "corporateBenefitPlatform"
+    | "corporateBenefitNotes"
   >
 ): Promise<LeadRecord> => updateLead(leadId, input);

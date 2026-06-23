@@ -52,6 +52,26 @@ describe("validateUpdateLeadSnapshotInput", () => {
 
   it("detects snapshot fields in a payload", () => {
     expect(hasLeadSnapshotFields({ partnerName: "Sam" })).toBe(true);
+    expect(hasLeadSnapshotFields({ corporateBenefitPlatform: "carrot" })).toBe(true);
     expect(hasLeadSnapshotFields({ status: "new" })).toBe(false);
+  });
+
+  it("accepts corporate benefits platform updates", () => {
+    const result = validateUpdateLeadSnapshotInput({
+      corporateBenefitPlatform: "maven",
+    });
+
+    expect(result).toEqual({
+      corporateBenefitPlatform: "maven",
+      corporateBenefitNotes: null,
+    });
+  });
+
+  it("requires a platform name when other is selected", () => {
+    expect(() =>
+      validateUpdateLeadSnapshotInput({
+        corporateBenefitPlatform: "other",
+      })
+    ).toThrow("Platform name is required when Other is selected");
   });
 });

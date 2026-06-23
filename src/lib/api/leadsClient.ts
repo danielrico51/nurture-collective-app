@@ -2,6 +2,7 @@ import type {
   AdminLeadsResponse,
   CoordinatorNoteType,
   CreateManualLeadInput,
+  CorporateBenefitPlatform,
   ExpectedBabyGender,
   LeadDetailResponse,
   LeadRecord,
@@ -97,6 +98,8 @@ export const updateAdminLead = async (
     feeQuotedCents?: number | null;
     feeQuotedAmount?: string;
     feeQuotedNotes?: string | null;
+    corporateBenefitPlatform?: CorporateBenefitPlatform | null;
+    corporateBenefitNotes?: string | null;
   }
 ): Promise<{ lead: LeadRecord }> => {
   const response = await fetch(`/api/admin/leads/${encodeURIComponent(leadId)}`, {

@@ -9,7 +9,9 @@ import {
 } from "@/lib/leads/snapshotView";
 import type { IntakeProfile } from "@/types/intake";
 import {
+  CORPORATE_BENEFIT_PLATFORM_OPTIONS,
   EXPECTED_BABY_GENDER_OPTIONS,
+  type CorporateBenefitPlatform,
   type ExpectedBabyGender,
   type LeadRecord,
 } from "@/types/lead";
@@ -55,6 +57,12 @@ const LeadSnapshotPanel = ({
   const [feeQuotedNotes, setFeeQuotedNotes] = useState(
     lead.feeQuotedNotes ?? ""
   );
+  const [corporateBenefitPlatform, setCorporateBenefitPlatform] = useState<
+    CorporateBenefitPlatform | ""
+  >(lead.corporateBenefitPlatform ?? "");
+  const [corporateBenefitNotes, setCorporateBenefitNotes] = useState(
+    lead.corporateBenefitNotes ?? ""
+  );
 
   const resetForm = () => {
     setName(lead.name);
@@ -68,6 +76,8 @@ const LeadSnapshotPanel = ({
     setLocationZip(lead.locationZip ?? "");
     setFeeQuotedAmount(centsToDollars(lead.feeQuotedCents));
     setFeeQuotedNotes(lead.feeQuotedNotes ?? "");
+    setCorporateBenefitPlatform(lead.corporateBenefitPlatform ?? "");
+    setCorporateBenefitNotes(lead.corporateBenefitNotes ?? "");
   };
 
   useEffect(() => {
@@ -93,6 +103,11 @@ const LeadSnapshotPanel = ({
         locationZip: locationZip.trim() || null,
         feeQuotedAmount: feeQuotedAmount.trim(),
         feeQuotedNotes: feeQuotedNotes.trim() || null,
+        corporateBenefitPlatform: corporateBenefitPlatform || null,
+        corporateBenefitNotes:
+          corporateBenefitPlatform === "other"
+            ? corporateBenefitNotes.trim() || null
+            : null,
       });
       toast.success("Lead snapshot updated");
       onSaved(updated);
@@ -112,6 +127,14 @@ const LeadSnapshotPanel = ({
     snapshot.feeQuotedCents,
     snapshot.feeQuotedNotes
   );
+  const corporateBenefitLabel = snapshot.corporateBenefitLabel;
+
+  const corporateBenefitChipClass = (active: boolean) =>
+    `rounded-full px-3 py-1.5 text-xs font-medium transition ${
+      active
+        ? "bg-nurture-sage text-white"
+        : "border border-nurture-sage/25 text-nurture-charcoal/70 hover:bg-nurture-sage/10"
+    }`;
 
   if (editing) {
     return (
@@ -263,6 +286,58 @@ const LeadSnapshotPanel = ({
               className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
             />
           </label>
+
+          <fieldset className="block rounded-xl border border-nurture-sage/20 bg-nurture-cream/40 p-4 sm:col-span-2">
+            <legend className="px-1 text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Corporate benefits
+            </legend>
+            <p className="mt-1 text-xs text-nurture-charcoal/50">
+              Mark if the lead is using employer-sponsored benefits.
+            </p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {CORPORATE_BENEFIT_PLATFORM_OPTIONS.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => {
+                    setCorporateBenefitPlatform(option.value);
+                    if (option.value !== "other") {
+                      setCorporateBenefitNotes("");
+                    }
+                  }}
+                  className={corporateBenefitChipClass(
+                    corporateBenefitPlatform === option.value
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => {
+                  setCorporateBenefitPlatform("");
+                  setCorporateBenefitNotes("");
+                }}
+                className={corporateBenefitChipClass(!corporateBenefitPlatform)}
+              >
+                Not using / N/A
+              </button>
+            </div>
+            {corporateBenefitPlatform === "other" ? (
+              <label className="mt-3 block">
+                <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+                  Platform name *
+                </span>
+                <input
+                  required
+                  value={corporateBenefitNotes}
+                  onChange={(event) => setCorporateBenefitNotes(event.target.value)}
+                  placeholder="e.g. Included Health, WINFertility"
+                  className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+                />
+              </label>
+            ) : null}
+          </fieldset>
         </div>
 
         <p className="mt-3 text-xs text-nurture-charcoal/45">
@@ -356,6 +431,15 @@ const LeadSnapshotPanel = ({
           <dd className="text-sm text-nurture-charcoal/85">{feeLabel || "—"}</dd>
         </div>
       </dl>
+
+      <div className="mt-4 rounded-xl border border-nurture-sage/20 bg-nurture-cream/40 p-4">
+        <p className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+          Corporate benefits
+        </p>
+        <p className="mt-1 text-sm text-nurture-charcoal/85">
+          {corporateBenefitLabel || "Not marked"}
+        </p>
+      </div>
     </div>
   );
 };

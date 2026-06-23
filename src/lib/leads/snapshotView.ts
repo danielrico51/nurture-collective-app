@@ -1,5 +1,7 @@
 import {
+  CORPORATE_BENEFIT_PLATFORM_OPTIONS,
   EXPECTED_BABY_GENDER_OPTIONS,
+  type CorporateBenefitPlatform,
   type ExpectedBabyGender,
   type LeadRecord,
 } from "@/types/lead";
@@ -16,6 +18,9 @@ export interface LeadSnapshotDisplay {
   location: string | null;
   feeQuotedCents: number | null;
   feeQuotedNotes: string | null;
+  corporateBenefitPlatform: CorporateBenefitPlatform | null;
+  corporateBenefitNotes: string | null;
+  corporateBenefitLabel: string | null;
   /** True when a field is filled from intake/member data rather than lead snapshot */
   dueDateFromIntake: boolean;
   locationFromIntake: boolean;
@@ -56,6 +61,20 @@ export const formatLeadSnapshotFee = (
   return notes?.trim() ? `${amount} — ${notes.trim()}` : amount;
 };
 
+export const formatLeadCorporateBenefit = (
+  platform: CorporateBenefitPlatform | null,
+  notes: string | null
+): string | null => {
+  if (!platform) return null;
+  if (platform === "other") {
+    return notes?.trim() ? `Other (${notes.trim()})` : "Other platform";
+  }
+  return (
+    CORPORATE_BENEFIT_PLATFORM_OPTIONS.find((option) => option.value === platform)
+      ?.label ?? platform
+  );
+};
+
 export const resolveLeadSnapshotDisplay = (
   lead: LeadRecord,
   intake?: IntakeProfile | null
@@ -82,6 +101,12 @@ export const resolveLeadSnapshotDisplay = (
     location: locationParts.length ? locationParts.join(" · ") : null,
     feeQuotedCents: lead.feeQuotedCents,
     feeQuotedNotes: lead.feeQuotedNotes?.trim() || null,
+    corporateBenefitPlatform: lead.corporateBenefitPlatform,
+    corporateBenefitNotes: lead.corporateBenefitNotes?.trim() || null,
+    corporateBenefitLabel: formatLeadCorporateBenefit(
+      lead.corporateBenefitPlatform,
+      lead.corporateBenefitNotes
+    ),
     dueDateFromIntake,
     locationFromIntake,
   };
@@ -107,6 +132,9 @@ export const buildClientNotesSummaryFromLead = (lead: LeadRecord): string => {
     snapshot.location ? `Location: ${snapshot.location}` : null,
     formatLeadSnapshotFee(snapshot.feeQuotedCents, snapshot.feeQuotedNotes)
       ? `Fee quoted: ${formatLeadSnapshotFee(snapshot.feeQuotedCents, snapshot.feeQuotedNotes)}`
+      : null,
+    snapshot.corporateBenefitLabel
+      ? `Corporate benefits: ${snapshot.corporateBenefitLabel}`
       : null,
   ].filter(Boolean) as string[];
 

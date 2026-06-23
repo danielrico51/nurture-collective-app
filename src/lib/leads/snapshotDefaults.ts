@@ -10,6 +10,8 @@ export const LEAD_SNAPSHOT_DEFAULTS: Pick<
   | "locationAddress"
   | "feeQuotedCents"
   | "feeQuotedNotes"
+  | "corporateBenefitPlatform"
+  | "corporateBenefitNotes"
 > = {
   partnerName: null,
   dueDate: null,
@@ -18,6 +20,8 @@ export const LEAD_SNAPSHOT_DEFAULTS: Pick<
   locationAddress: null,
   feeQuotedCents: null,
   feeQuotedNotes: null,
+  corporateBenefitPlatform: null,
+  corporateBenefitNotes: null,
 };
 
 export const withLeadSnapshotDefaults = (lead: LeadRecord): LeadRecord => ({

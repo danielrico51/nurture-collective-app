@@ -1,12 +1,20 @@
 import { normalizePhone } from "@/lib/intake/submitService";
 import type { ExpectedBabyGender, UpdateLeadInput } from "@/types/lead";
-import { EXPECTED_BABY_GENDER_OPTIONS } from "@/types/lead";
+import {
+  CORPORATE_BENEFIT_PLATFORM_OPTIONS,
+  EXPECTED_BABY_GENDER_OPTIONS,
+  type CorporateBenefitPlatform,
+} from "@/types/lead";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
 const VALID_GENDERS = new Set<ExpectedBabyGender>(
   EXPECTED_BABY_GENDER_OPTIONS.map((option) => option.value)
+);
+
+const VALID_CORPORATE_BENEFIT_PLATFORMS = new Set<CorporateBenefitPlatform>(
+  CORPORATE_BENEFIT_PLATFORM_OPTIONS.map((option) => option.value)
 );
 
 export class LeadSnapshotValidationError extends Error {
@@ -29,6 +37,8 @@ export type UpdateLeadSnapshotInput = Pick<
   | "locationAddress"
   | "feeQuotedCents"
   | "feeQuotedNotes"
+  | "corporateBenefitPlatform"
+  | "corporateBenefitNotes"
 >;
 
 const readOptionalString = (
@@ -143,6 +153,49 @@ export const validateUpdateLeadSnapshotInput = (
     result.feeQuotedNotes = readNullableString(body, "feeQuotedNotes");
   }
 
+  if ("corporateBenefitPlatform" in body) {
+    const rawPlatform = readNullableString(body, "corporateBenefitPlatform");
+    if (
+      rawPlatform &&
+      !VALID_CORPORATE_BENEFIT_PLATFORMS.has(rawPlatform as CorporateBenefitPlatform)
+    ) {
+      throw new LeadSnapshotValidationError("Invalid corporate benefits platform");
+    }
+    result.corporateBenefitPlatform = rawPlatform as CorporateBenefitPlatform | null;
+    if (!rawPlatform) {
+      result.corporateBenefitNotes = null;
+    }
+  }
+
+  if ("corporateBenefitNotes" in body) {
+    result.corporateBenefitNotes = readNullableString(body, "corporateBenefitNotes");
+  }
+
+  const nextPlatform =
+    result.corporateBenefitPlatform ??
+    (body.corporateBenefitPlatform
+      ? (String(body.corporateBenefitPlatform).trim() as CorporateBenefitPlatform)
+      : null);
+
+  if (nextPlatform === "other") {
+    const notes =
+      result.corporateBenefitNotes ??
+      (body.corporateBenefitNotes ? String(body.corporateBenefitNotes).trim() : "");
+    if (!notes) {
+      throw new LeadSnapshotValidationError(
+        "Platform name is required when Other is selected"
+      );
+    }
+  }
+
+  if (
+    result.corporateBenefitPlatform !== undefined &&
+    result.corporateBenefitPlatform !== null &&
+    result.corporateBenefitPlatform !== "other"
+  ) {
+    result.corporateBenefitNotes = null;
+  }
+
   const hasContactField =
     result.name !== undefined ||
     result.email !== undefined ||
@@ -185,4 +238,6 @@ export const hasLeadSnapshotFields = (body: Record<string, unknown>): boolean =>
     "feeQuotedCents",
     "feeQuotedAmount",
     "feeQuotedNotes",
+    "corporateBenefitPlatform",
+    "corporateBenefitNotes",
   ].some((key) => key in body);
