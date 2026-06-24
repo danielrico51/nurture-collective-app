@@ -4,7 +4,6 @@ import {
   readMarketingAttribution,
 } from "@/lib/analytics/attribution";
 import { sendGtagEvent, sendGtagPageView } from "@/lib/analytics/gtag";
-import { sendPlausibleEvent } from "@/lib/analytics/plausible";
 
 export type FormSubmissionAnalytics = {
   formName: string;
@@ -20,7 +19,6 @@ export type CallBookingAnalytics = {
 const conversionParams = (
   extra: Record<string, string | number | boolean> = {}
 ): Record<string, string | number | boolean> => ({
-  ...attributionToEventParams(readMarketingAttribution()),
   ...extra,
 });
 
@@ -31,31 +29,26 @@ export const trackPageView = (path: string): void => {
   sendGtagPageView(path, attribution);
 };
 
+/** GA4 recommended lead event — import as a Google Ads conversion. */
 export const trackFormSubmission = (params: FormSubmissionAnalytics): void => {
-  const eventParams = conversionParams({
-    form_name: params.formName,
-    ...(params.service ? { service: params.service } : {}),
-    ...(params.audience ? { audience: params.audience } : {}),
-    ...(params.eventSlug ? { event_slug: params.eventSlug } : {}),
-  });
-
-  sendGtagEvent("generate_lead", eventParams);
-  sendPlausibleEvent("Form Submission", {
-    form: params.formName,
-    lead_source: String(eventParams.lead_source ?? "direct"),
-    ...(params.service ? { service: params.service } : {}),
-    ...(params.eventSlug ? { event: params.eventSlug } : {}),
-  });
+  sendGtagEvent(
+    "generate_lead",
+    conversionParams({
+      form_name: params.formName,
+      ...(params.service ? { service: params.service } : {}),
+      ...(params.audience ? { audience: params.audience } : {}),
+      ...(params.eventSlug ? { event_slug: params.eventSlug } : {}),
+    })
+  );
 };
 
+/** GA4 recommended schedule event — import as a Google Ads conversion. */
 export const trackCallBooking = (params: CallBookingAnalytics): void => {
-  const eventParams = conversionParams({
-    booking_source: params.source,
-  });
-
-  sendGtagEvent("call_booking", eventParams);
-  sendPlausibleEvent("Call Booking", {
-    source: params.source,
-    lead_source: String(eventParams.lead_source ?? "direct"),
-  });
+  sendGtagEvent(
+    "schedule",
+    conversionParams({
+      method: params.source,
+      booking_source: params.source,
+    })
+  );
 };
