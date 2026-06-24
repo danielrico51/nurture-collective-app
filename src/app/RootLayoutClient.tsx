@@ -1,5 +1,6 @@
 "use client";
 
+import AnalyticsProvider from "@/components/Analytics/AnalyticsProvider";
 import Footer from "@/components/Footer";
 import Header from "@/components/Header";
 import SiteArtworkBackground from "@/components/Common/SiteArtworkBackground";
@@ -82,6 +83,7 @@ export default function RootLayoutClient({
 
   return (
     <>
+      <AnalyticsProvider />
       <Toaster position="top-center" />
       <Header isAuthenticated={isAuthenticated} />
       <main

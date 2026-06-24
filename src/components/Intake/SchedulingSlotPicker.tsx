@@ -4,6 +4,10 @@ import {
   bookSchedulingSlot,
   fetchSchedulingAvailability,
 } from "@/lib/api/schedulingClient";
+import {
+  trackCallBooking,
+  type CallBookingAnalytics,
+} from "@/lib/analytics/track";
 import type { ConsultBooking, SchedulingSlot } from "@/lib/scheduling/types";
 import { useCallback, useEffect, useState } from "react";
 
@@ -15,12 +19,14 @@ interface SchedulingSlotPickerProps {
     phone?: string;
   };
   onBooked: (booking: ConsultBooking) => void;
+  analyticsBookingSource?: CallBookingAnalytics["source"];
 }
 
 const SchedulingSlotPicker = ({
   conversationSessionId,
   attendee,
   onBooked,
+  analyticsBookingSource,
 }: SchedulingSlotPickerProps) => {
   const [slots, setSlots] = useState<SchedulingSlot[]>([]);
   const [timezone, setTimezone] = useState("America/New_York");
@@ -70,6 +76,9 @@ const SchedulingSlotPicker = ({
         attendee,
         idempotencyKey: `${conversationSessionId ?? attendee.email}:${slot.start}`,
       });
+      if (analyticsBookingSource) {
+        trackCallBooking({ source: analyticsBookingSource });
+      }
       onBooked(booking);
     } catch (bookError) {
       setError(

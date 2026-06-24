@@ -5,6 +5,7 @@ import {
 } from "@/config/classRegistrations";
 import { readStoredRegistrationSource } from "@/lib/classRegistrations/attribution";
 import { registerForEvent } from "@/lib/api/classRegistrationsClient";
+import { trackFormSubmission } from "@/lib/analytics/track";
 import { formatEventPrice } from "@/lib/events/format";
 import type {
   ClassAvailability,
@@ -62,10 +63,18 @@ const ClassRegistrationForm = ({
       });
 
       if (payment?.checkoutUrl) {
+        trackFormSubmission({
+          formName: "class_registration",
+          eventSlug: event.slug,
+        });
         window.location.href = payment.checkoutUrl;
         return;
       }
 
+      trackFormSubmission({
+        formName: "class_registration",
+        eventSlug: event.slug,
+      });
       setWaitlisted(registration.status === "waitlisted");
       setPaymentInfo(payment ?? null);
       setCompleted(true);

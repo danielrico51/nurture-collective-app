@@ -6,6 +6,7 @@ import SectionTitle from "@/components/Common/SectionTitle";
 import { integrations } from "@/config/integrations";
 import { legalPaths } from "@/content/legal";
 import { mapContactFormToIntakeSubmit } from "@/lib/intake/mapContactForm";
+import { trackFormSubmission } from "@/lib/analytics/track";
 import { PREFERRED_CONTACT_OPTIONS, SERVICE_SLUGS } from "@/types/inquiry";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
@@ -65,6 +66,10 @@ function ContactForm() {
       }
 
       toast.success("Message sent — we'll be in touch soon.");
+      trackFormSubmission({
+        formName: "contact",
+        service: payload.service_requested || undefined,
+      });
       setSubmitted(true);
       setSmsConsent(false);
       form.reset();

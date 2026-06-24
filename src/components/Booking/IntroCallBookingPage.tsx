@@ -148,6 +148,7 @@ const IntroCallBookingPage = () => {
             <SchedulingSlotPicker
               conversationSessionId={prefill.conversationSessionId || undefined}
               attendee={attendee}
+              analyticsBookingSource="intro_call_page"
               onBooked={handleBookingConfirmed}
             />
           ) : null}
