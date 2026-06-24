@@ -15,6 +15,12 @@ export const formatConsultBookingSummary = (booking: ConsultBooking): string => 
     `Attendee: ${booking.attendeeName} <${booking.attendeeEmail}>`,
   ];
 
+  if (booking.attendeePhone) {
+    parts.push(`Phone: ${booking.attendeePhone}`);
+  }
+  if (booking.notes?.trim()) {
+    parts.push(`Notes: ${booking.notes.trim()}`);
+  }
   if (booking.meetLink) {
     parts.push(`Google Meet: ${booking.meetLink}`);
   }

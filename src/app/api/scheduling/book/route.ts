@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
       slotStart,
       slotEnd,
       conversationSessionId: body.conversationSessionId,
+      notes: body.notes?.trim(),
       attendee: {
         name: attendeeName,
         email: attendeeEmail,

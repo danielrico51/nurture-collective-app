@@ -20,6 +20,7 @@ export interface SchedulingAvailabilityResponse {
 export interface SchedulingBookRequest {
   slotStart: string;
   conversationSessionId?: string;
+  notes?: string;
   attendee: {
     name: string;
     email: string;
@@ -39,6 +40,8 @@ export interface ConsultBooking {
   timezone: string;
   attendeeName: string;
   attendeeEmail: string;
+  attendeePhone?: string;
+  notes?: string;
   status: ConsultBookingStatus;
   createdAt: string;
   source: ConsultBookingSource;

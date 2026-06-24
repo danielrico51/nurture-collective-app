@@ -82,6 +82,7 @@ export const fetchSchedulingAvailability = async (options?: {
 export const bookSchedulingSlot = async (input: {
   slotStart: string;
   conversationSessionId?: string;
+  notes?: string;
   attendee: {
     name: string;
     email: string;
@@ -103,6 +104,7 @@ export const bookSchedulingSlot = async (input: {
     body: JSON.stringify({
       slotStart: input.slotStart,
       conversationSessionId: input.conversationSessionId,
+      notes: input.notes,
       attendee: input.attendee,
     }),
   });

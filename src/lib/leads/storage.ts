@@ -151,6 +151,7 @@ export const syncLeadFromConsultBooking = async (input: {
     status: "consult_scheduled",
     name: input.booking.attendeeName || base.name,
     email: input.booking.attendeeEmail || base.email,
+    phone: input.booking.attendeePhone || base.phone,
   });
 
   if (isNewConsultSchedule) {

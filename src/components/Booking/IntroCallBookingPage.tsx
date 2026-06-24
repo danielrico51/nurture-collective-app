@@ -17,12 +17,16 @@ import toast from "react-hot-toast";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
+const inputClassName =
+  "mt-2 w-full rounded-xl border border-nurture-sage/30 px-4 py-3 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage";
+
 const readBookingPrefill = () => {
   if (typeof window === "undefined") {
     return {
       name: "",
       email: "",
       phone: "",
+      notes: "",
       conversationSessionId: "",
     };
   }
@@ -32,6 +36,7 @@ const readBookingPrefill = () => {
     name: params.get("name")?.trim() ?? "",
     email: params.get("email")?.trim() ?? "",
     phone: params.get("phone")?.trim() ?? "",
+    notes: params.get("notes")?.trim() ?? "",
     conversationSessionId: params.get("session")?.trim() ?? "",
   };
 };
@@ -40,6 +45,8 @@ const IntroCallBookingPage = () => {
   const prefill = useMemo(() => readBookingPrefill(), []);
   const [name, setName] = useState(prefill.name);
   const [email, setEmail] = useState(prefill.email);
+  const [phone, setPhone] = useState(prefill.phone);
+  const [notes, setNotes] = useState(prefill.notes);
   const [liveSchedulingEnabled, setLiveSchedulingEnabled] = useState(false);
   const [confirmedBooking, setConfirmedBooking] = useState<ConsultBooking | null>(
     null
@@ -55,8 +62,9 @@ const IntroCallBookingPage = () => {
   const attendee = {
     name: name.trim(),
     email: email.trim(),
-    phone: prefill.phone || undefined,
+    phone: phone.trim() || undefined,
   };
+  const bookingNotes = notes.trim() || undefined;
   const hasValidContact =
     attendee.name.length > 0 && EMAIL_RE.test(attendee.email);
 
@@ -75,8 +83,8 @@ const IntroCallBookingPage = () => {
           Book your introductory call
         </h1>
         <p className="mt-3 text-sm leading-relaxed text-nurture-charcoal/70">
-          Pick an open time below. We&apos;ll send a calendar invite to your
-          email so you can connect with our care team.
+          Share your contact details and pick an open time. We&apos;ll send a
+          calendar invite to your email so you can connect with our care team.
         </p>
       </div>
 
@@ -127,7 +135,7 @@ const IntroCallBookingPage = () => {
                 value={name}
                 onChange={(event) => setName(event.target.value)}
                 autoComplete="name"
-                className="mt-2 w-full rounded-xl border border-nurture-sage/30 px-4 py-3 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+                className={inputClassName}
                 placeholder="Full name"
               />
             </label>
@@ -138,8 +146,32 @@ const IntroCallBookingPage = () => {
                 value={email}
                 onChange={(event) => setEmail(event.target.value)}
                 autoComplete="email"
-                className="mt-2 w-full rounded-xl border border-nurture-sage/30 px-4 py-3 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+                className={inputClassName}
                 placeholder="you@example.com"
+              />
+            </label>
+            <label className="mt-4 block text-sm font-medium text-nurture-charcoal">
+              Phone{" "}
+              <span className="font-normal text-nurture-charcoal/50">
+                (recommended)
+              </span>
+              <input
+                type="tel"
+                value={phone}
+                onChange={(event) => setPhone(event.target.value)}
+                autoComplete="tel"
+                className={inputClassName}
+                placeholder="+12065550100"
+              />
+            </label>
+            <label className="mt-4 block text-sm font-medium text-nurture-charcoal">
+              Anything we should know before the call?
+              <textarea
+                value={notes}
+                onChange={(event) => setNotes(event.target.value)}
+                rows={4}
+                className={inputClassName}
+                placeholder="Due date, support you're looking for, best time to reach you, etc."
               />
             </label>
           </div>
@@ -148,6 +180,7 @@ const IntroCallBookingPage = () => {
             <SchedulingSlotPicker
               conversationSessionId={prefill.conversationSessionId || undefined}
               attendee={attendee}
+              notes={bookingNotes}
               analyticsBookingSource="intro_call_page"
               onBooked={handleBookingConfirmed}
             />

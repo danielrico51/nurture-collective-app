@@ -32,6 +32,7 @@ export const createIntroCallBooking = async (
       ? `Conversation: ${request.conversationSessionId}`
       : null,
     request.attendee.phone ? `Phone: ${request.attendee.phone}` : null,
+    request.notes?.trim() ? `Notes: ${request.notes.trim()}` : null,
   ]
     .filter(Boolean)
     .join("\n");
@@ -87,6 +88,8 @@ export const createIntroCallBooking = async (
     timezone,
     attendeeName: request.attendee.name,
     attendeeEmail: request.attendee.email,
+    attendeePhone: request.attendee.phone?.trim() || undefined,
+    notes: request.notes?.trim() || undefined,
     status: "confirmed",
     createdAt: now,
     source: "concierge",

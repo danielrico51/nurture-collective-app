@@ -18,6 +18,7 @@ interface SchedulingSlotPickerProps {
     email: string;
     phone?: string;
   };
+  notes?: string;
   onBooked: (booking: ConsultBooking) => void;
   analyticsBookingSource?: CallBookingAnalytics["source"];
 }
@@ -25,6 +26,7 @@ interface SchedulingSlotPickerProps {
 const SchedulingSlotPicker = ({
   conversationSessionId,
   attendee,
+  notes,
   onBooked,
   analyticsBookingSource,
 }: SchedulingSlotPickerProps) => {
@@ -73,6 +75,7 @@ const SchedulingSlotPicker = ({
       const booking = await bookSchedulingSlot({
         slotStart: slot.start,
         conversationSessionId,
+        notes,
         attendee,
         idempotencyKey: `${conversationSessionId ?? attendee.email}:${slot.start}`,
       });
