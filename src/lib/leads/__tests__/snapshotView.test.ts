@@ -1,5 +1,8 @@
 import { describe, expect, it } from "vitest";
-import { buildClientNotesSummaryFromLead } from "@/lib/leads/snapshotView";
+import {
+  buildClientNotesSummaryFromLead,
+  formatLeadSnapshotFee,
+} from "@/lib/leads/snapshotView";
 import { LEAD_SNAPSHOT_DEFAULTS } from "@/lib/leads/snapshotDefaults";
 import type { LeadRecord } from "@/types/lead";
 
@@ -26,6 +29,20 @@ const baseLead = (overrides: Partial<LeadRecord> = {}): LeadRecord => ({
   updatedAt: "2026-01-01T00:00:00.000Z",
   ...LEAD_SNAPSHOT_DEFAULTS,
   ...overrides,
+});
+
+describe("formatLeadSnapshotFee", () => {
+  it("formats a fixed fee", () => {
+    expect(formatLeadSnapshotFee(150000, "Full package")).toBe(
+      "$1,500.00 — Full package"
+    );
+  });
+
+  it("formats a fee range", () => {
+    expect(formatLeadSnapshotFee(120000, null, 180000)).toBe(
+      "$1,200.00 – $1,800.00"
+    );
+  });
 });
 
 describe("buildClientNotesSummaryFromLead", () => {

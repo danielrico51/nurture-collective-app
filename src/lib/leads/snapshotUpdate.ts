@@ -36,6 +36,7 @@ export type UpdateLeadSnapshotInput = Pick<
   | "hospitalName"
   | "locationAddress"
   | "feeQuotedCents"
+  | "feeQuotedMaxCents"
   | "feeQuotedNotes"
   | "corporateBenefitPlatform"
   | "corporateBenefitNotes"
@@ -58,28 +59,89 @@ const readNullableString = (
   return value || null;
 };
 
-const parseFeeQuotedCents = (body: Record<string, unknown>): number | null | undefined => {
-  if (!("feeQuotedCents" in body) && !("feeQuotedAmount" in body)) {
+const parseDollarAmountToCents = (
+  raw: unknown,
+  label: string
+): number | null => {
+  if (raw == null || raw === "") return null;
+  const dollars = String(raw).trim();
+  if (!dollars) return null;
+  const parsed = Number(dollars.replace(/[$,]/g, ""));
+  if (!Number.isFinite(parsed) || parsed < 0) {
+    throw new LeadSnapshotValidationError(`${label} must be a valid dollar amount`);
+  }
+  return Math.round(parsed * 100);
+};
+
+const parseFeeQuotedCentsField = (
+  body: Record<string, unknown>,
+  centsKey: "feeQuotedCents" | "feeQuotedMaxCents",
+  amountKey: "feeQuotedAmount" | "feeQuotedMaxAmount",
+  label: string
+): number | null | undefined => {
+  if (!(centsKey in body) && !(amountKey in body)) {
     return undefined;
   }
 
-  if ("feeQuotedCents" in body) {
-    const raw = body.feeQuotedCents;
+  if (centsKey in body) {
+    const raw = body[centsKey];
     if (raw == null || raw === "") return null;
     const cents = Math.round(Number(raw));
     if (!Number.isFinite(cents) || cents < 0) {
-      throw new LeadSnapshotValidationError("Fee quoted must be a non-negative amount");
+      throw new LeadSnapshotValidationError(`${label} must be a non-negative amount`);
     }
     return cents;
   }
 
-  const dollars = String(body.feeQuotedAmount ?? "").trim();
-  if (!dollars) return null;
-  const parsed = Number(dollars.replace(/[$,]/g, ""));
-  if (!Number.isFinite(parsed) || parsed < 0) {
-    throw new LeadSnapshotValidationError("Fee quoted must be a valid dollar amount");
+  return parseDollarAmountToCents(body[amountKey], label);
+};
+
+const parseFeeQuotedFields = (
+  body: Record<string, unknown>
+): Pick<UpdateLeadSnapshotInput, "feeQuotedCents" | "feeQuotedMaxCents"> => {
+  const feeQuotedCents = parseFeeQuotedCentsField(
+    body,
+    "feeQuotedCents",
+    "feeQuotedAmount",
+    "Fee quoted (from)"
+  );
+  const feeQuotedMaxCents = parseFeeQuotedCentsField(
+    body,
+    "feeQuotedMaxCents",
+    "feeQuotedMaxAmount",
+    "Fee quoted (to)"
+  );
+
+  const result: Pick<UpdateLeadSnapshotInput, "feeQuotedCents" | "feeQuotedMaxCents"> =
+    {};
+
+  if (feeQuotedCents !== undefined) {
+    result.feeQuotedCents = feeQuotedCents;
   }
-  return Math.round(parsed * 100);
+  if (feeQuotedMaxCents !== undefined) {
+    result.feeQuotedMaxCents = feeQuotedMaxCents;
+  }
+
+  const min = result.feeQuotedCents;
+  const max = result.feeQuotedMaxCents;
+
+  if (max != null && min == null) {
+    throw new LeadSnapshotValidationError(
+      "Fee quoted (from) is required when a maximum is set"
+    );
+  }
+
+  if (min != null && max != null && max < min) {
+    throw new LeadSnapshotValidationError(
+      "Fee quoted (to) must be greater than or equal to fee quoted (from)"
+    );
+  }
+
+  if (min != null && max != null && max === min) {
+    result.feeQuotedMaxCents = null;
+  }
+
+  return result;
 };
 
 export const validateUpdateLeadSnapshotInput = (
@@ -144,10 +206,7 @@ export const validateUpdateLeadSnapshotInput = (
     result.locationAddress = readNullableString(body, "locationAddress");
   }
 
-  const feeQuotedCents = parseFeeQuotedCents(body);
-  if (feeQuotedCents !== undefined) {
-    result.feeQuotedCents = feeQuotedCents;
-  }
+  Object.assign(result, parseFeeQuotedFields(body));
 
   if ("feeQuotedNotes" in body) {
     result.feeQuotedNotes = readNullableString(body, "feeQuotedNotes");
@@ -236,7 +295,9 @@ export const hasLeadSnapshotFields = (body: Record<string, unknown>): boolean =>
     "hospitalName",
     "locationAddress",
     "feeQuotedCents",
+    "feeQuotedMaxCents",
     "feeQuotedAmount",
+    "feeQuotedMaxAmount",
     "feeQuotedNotes",
     "corporateBenefitPlatform",
     "corporateBenefitNotes",

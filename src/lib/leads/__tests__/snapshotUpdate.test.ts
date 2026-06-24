@@ -74,4 +74,27 @@ describe("validateUpdateLeadSnapshotInput", () => {
       })
     ).toThrow("Platform name is required when Other is selected");
   });
+
+  it("accepts a fee range in dollars", () => {
+    const result = validateUpdateLeadSnapshotInput({
+      feeQuotedAmount: "1,200",
+      feeQuotedMaxAmount: "1,800",
+      feeQuotedNotes: "Birth doula range",
+    });
+
+    expect(result).toEqual({
+      feeQuotedCents: 120000,
+      feeQuotedMaxCents: 180000,
+      feeQuotedNotes: "Birth doula range",
+    });
+  });
+
+  it("rejects a max fee lower than the min fee", () => {
+    expect(() =>
+      validateUpdateLeadSnapshotInput({
+        feeQuotedAmount: "2,000",
+        feeQuotedMaxAmount: "1,500",
+      })
+    ).toThrow("Fee quoted (to) must be greater than or equal to fee quoted (from)");
+  });
 });

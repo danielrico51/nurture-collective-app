@@ -17,6 +17,7 @@ export interface LeadSnapshotDisplay {
   hospitalName: string | null;
   location: string | null;
   feeQuotedCents: number | null;
+  feeQuotedMaxCents: number | null;
   feeQuotedNotes: string | null;
   corporateBenefitPlatform: CorporateBenefitPlatform | null;
   corporateBenefitNotes: string | null;
@@ -47,18 +48,34 @@ export const formatLeadSnapshotDueDate = (value: string | null): string | null =
   });
 };
 
-export const formatLeadSnapshotFee = (
-  cents: number | null,
-  notes: string | null
-): string | null => {
-  if (cents == null || cents <= 0) {
-    return notes?.trim() || null;
-  }
-  const amount = new Intl.NumberFormat("en-US", {
+const formatCurrency = (cents: number): string =>
+  new Intl.NumberFormat("en-US", {
     style: "currency",
     currency: "USD",
   }).format(cents / 100);
-  return notes?.trim() ? `${amount} — ${notes.trim()}` : amount;
+
+export const formatLeadSnapshotFee = (
+  cents: number | null,
+  notes: string | null,
+  maxCents: number | null = null
+): string | null => {
+  const min = cents != null && cents > 0 ? cents : null;
+  const max = maxCents != null && maxCents > 0 ? maxCents : null;
+
+  let amountLabel: string | null = null;
+  if (min != null && max != null && max > min) {
+    amountLabel = `${formatCurrency(min)} – ${formatCurrency(max)}`;
+  } else if (min != null) {
+    amountLabel = formatCurrency(min);
+  } else if (max != null) {
+    amountLabel = formatCurrency(max);
+  }
+
+  const trimmedNotes = notes?.trim();
+  if (!amountLabel) {
+    return trimmedNotes || null;
+  }
+  return trimmedNotes ? `${amountLabel} — ${trimmedNotes}` : amountLabel;
 };
 
 export const formatLeadCorporateBenefit = (
@@ -100,6 +117,7 @@ export const resolveLeadSnapshotDisplay = (
     hospitalName: lead.hospitalName?.trim() || null,
     location: locationParts.length ? locationParts.join(" · ") : null,
     feeQuotedCents: lead.feeQuotedCents,
+    feeQuotedMaxCents: lead.feeQuotedMaxCents,
     feeQuotedNotes: lead.feeQuotedNotes?.trim() || null,
     corporateBenefitPlatform: lead.corporateBenefitPlatform,
     corporateBenefitNotes: lead.corporateBenefitNotes?.trim() || null,
@@ -120,6 +138,12 @@ export const buildClientNotesSummaryFromLead = (lead: LeadRecord): string => {
     lines.push(lead.challengesSummary.trim());
   }
 
+  const feeLine = formatLeadSnapshotFee(
+    snapshot.feeQuotedCents,
+    snapshot.feeQuotedNotes,
+    snapshot.feeQuotedMaxCents
+  );
+
   const snapshotLines = [
     snapshot.partnerName ? `Partner: ${snapshot.partnerName}` : null,
     snapshot.dueDate
@@ -130,9 +154,7 @@ export const buildClientNotesSummaryFromLead = (lead: LeadRecord): string => {
       : null,
     snapshot.hospitalName ? `Hospital: ${snapshot.hospitalName}` : null,
     snapshot.location ? `Location: ${snapshot.location}` : null,
-    formatLeadSnapshotFee(snapshot.feeQuotedCents, snapshot.feeQuotedNotes)
-      ? `Fee quoted: ${formatLeadSnapshotFee(snapshot.feeQuotedCents, snapshot.feeQuotedNotes)}`
-      : null,
+    feeLine ? `Fee quoted: ${feeLine}` : null,
     snapshot.corporateBenefitLabel
       ? `Corporate benefits: ${snapshot.corporateBenefitLabel}`
       : null,

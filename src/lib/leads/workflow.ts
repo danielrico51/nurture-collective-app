@@ -129,6 +129,7 @@ export const buildLeadFromSources = (input: {
     hospitalName: input.existing?.hospitalName ?? null,
     locationAddress: input.existing?.locationAddress ?? null,
     feeQuotedCents: input.existing?.feeQuotedCents ?? null,
+    feeQuotedMaxCents: input.existing?.feeQuotedMaxCents ?? null,
     feeQuotedNotes: input.existing?.feeQuotedNotes ?? null,
     corporateBenefitPlatform: input.existing?.corporateBenefitPlatform ?? null,
     corporateBenefitNotes: input.existing?.corporateBenefitNotes ?? null,

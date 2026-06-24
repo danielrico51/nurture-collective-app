@@ -450,6 +450,10 @@ export const updateLead = async (
       input.feeQuotedCents !== undefined
         ? input.feeQuotedCents
         : existing.feeQuotedCents,
+    feeQuotedMaxCents:
+      input.feeQuotedMaxCents !== undefined
+        ? input.feeQuotedMaxCents
+        : existing.feeQuotedMaxCents,
     feeQuotedNotes:
       input.feeQuotedNotes !== undefined
         ? input.feeQuotedNotes
@@ -520,6 +524,7 @@ export const updateLeadSnapshot = async (
     | "hospitalName"
     | "locationAddress"
     | "feeQuotedCents"
+    | "feeQuotedMaxCents"
     | "feeQuotedNotes"
     | "corporateBenefitPlatform"
     | "corporateBenefitNotes"

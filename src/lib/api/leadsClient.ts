@@ -97,6 +97,8 @@ export const updateAdminLead = async (
     locationAddress?: string | null;
     feeQuotedCents?: number | null;
     feeQuotedAmount?: string;
+    feeQuotedMaxCents?: number | null;
+    feeQuotedMaxAmount?: string;
     feeQuotedNotes?: string | null;
     corporateBenefitPlatform?: CorporateBenefitPlatform | null;
     corporateBenefitNotes?: string | null;

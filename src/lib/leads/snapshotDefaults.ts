@@ -9,6 +9,7 @@ export const LEAD_SNAPSHOT_DEFAULTS: Pick<
   | "hospitalName"
   | "locationAddress"
   | "feeQuotedCents"
+  | "feeQuotedMaxCents"
   | "feeQuotedNotes"
   | "corporateBenefitPlatform"
   | "corporateBenefitNotes"
@@ -19,6 +20,7 @@ export const LEAD_SNAPSHOT_DEFAULTS: Pick<
   hospitalName: null,
   locationAddress: null,
   feeQuotedCents: null,
+  feeQuotedMaxCents: null,
   feeQuotedNotes: null,
   corporateBenefitPlatform: null,
   corporateBenefitNotes: null,

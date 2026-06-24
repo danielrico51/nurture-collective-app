@@ -54,6 +54,9 @@ const LeadSnapshotPanel = ({
   const [feeQuotedAmount, setFeeQuotedAmount] = useState(
     centsToDollars(lead.feeQuotedCents)
   );
+  const [feeQuotedMaxAmount, setFeeQuotedMaxAmount] = useState(
+    centsToDollars(lead.feeQuotedMaxCents)
+  );
   const [feeQuotedNotes, setFeeQuotedNotes] = useState(
     lead.feeQuotedNotes ?? ""
   );
@@ -75,6 +78,7 @@ const LeadSnapshotPanel = ({
     setLocationAddress(lead.locationAddress ?? "");
     setLocationZip(lead.locationZip ?? "");
     setFeeQuotedAmount(centsToDollars(lead.feeQuotedCents));
+    setFeeQuotedMaxAmount(centsToDollars(lead.feeQuotedMaxCents));
     setFeeQuotedNotes(lead.feeQuotedNotes ?? "");
     setCorporateBenefitPlatform(lead.corporateBenefitPlatform ?? "");
     setCorporateBenefitNotes(lead.corporateBenefitNotes ?? "");
@@ -102,6 +106,7 @@ const LeadSnapshotPanel = ({
         locationAddress: locationAddress.trim() || null,
         locationZip: locationZip.trim() || null,
         feeQuotedAmount: feeQuotedAmount.trim(),
+        feeQuotedMaxAmount: feeQuotedMaxAmount.trim(),
         feeQuotedNotes: feeQuotedNotes.trim() || null,
         corporateBenefitPlatform: corporateBenefitPlatform || null,
         corporateBenefitNotes:
@@ -125,7 +130,8 @@ const LeadSnapshotPanel = ({
   const genderLabel = formatLeadSnapshotGender(snapshot.expectedBabyGender);
   const feeLabel = formatLeadSnapshotFee(
     snapshot.feeQuotedCents,
-    snapshot.feeQuotedNotes
+    snapshot.feeQuotedNotes,
+    snapshot.feeQuotedMaxCents
   );
   const corporateBenefitLabel = snapshot.corporateBenefitLabel;
 
@@ -265,7 +271,7 @@ const LeadSnapshotPanel = ({
           </label>
           <label className="block">
             <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
-              Fee quoted ($)
+              Fee quoted from ($)
             </span>
             <input
               inputMode="decimal"
@@ -276,6 +282,18 @@ const LeadSnapshotPanel = ({
             />
           </label>
           <label className="block">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Fee quoted to ($)
+            </span>
+            <input
+              inputMode="decimal"
+              placeholder="Optional — leave blank for fixed quote"
+              value={feeQuotedMaxAmount}
+              onChange={(event) => setFeeQuotedMaxAmount(event.target.value)}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            />
+          </label>
+          <label className="block sm:col-span-2">
             <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
               Fee notes
             </span>

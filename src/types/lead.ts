@@ -101,6 +101,7 @@ export interface LeadRecord {
   /** Street / city — ZIP may also be in locationZip */
   locationAddress: string | null;
   feeQuotedCents: number | null;
+  feeQuotedMaxCents: number | null;
   feeQuotedNotes: string | null;
   /** Employer-sponsored benefits platform, if applicable */
   corporateBenefitPlatform: CorporateBenefitPlatform | null;
@@ -176,6 +177,7 @@ export interface UpdateLeadInput {
   hospitalName?: string | null;
   locationAddress?: string | null;
   feeQuotedCents?: number | null;
+  feeQuotedMaxCents?: number | null;
   feeQuotedNotes?: string | null;
   corporateBenefitPlatform?: CorporateBenefitPlatform | null;
   corporateBenefitNotes?: string | null;
