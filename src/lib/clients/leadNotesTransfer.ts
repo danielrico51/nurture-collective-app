@@ -1,3 +1,5 @@
+import "server-only";
+
 import {
   appendLocalClientNote,
   listLocalNotesForClient,
@@ -7,49 +9,27 @@ import {
   listS3NotesForClient,
 } from "@/lib/clients/platformS3";
 import { getClientsStorageMode } from "@/lib/clients/config";
+import {
+  buildLeadNotesSummary,
+  clientNotesIncludeLeadImport,
+  formatImportedLeadNoteBody,
+  LEAD_NOTE_IMPORT_PREFIX,
+  leadNoteToClientNoteType,
+} from "@/lib/clients/leadNotesShared";
 import { listLocalNotesForLead } from "@/lib/leads/localStorage";
 import { listS3NotesForLead } from "@/lib/leads/platformS3";
 import { getLeadsStorageMode } from "@/lib/leads/storage";
-import type { ClientNote, ClientNoteType } from "@/types/client";
-import type { CoordinatorNote, CoordinatorNoteType } from "@/types/lead";
+import type { ClientNote } from "@/types/client";
+import type { CoordinatorNote } from "@/types/lead";
 
-export const LEAD_NOTE_IMPORT_PREFIX = "[Lead CRM";
-
-const COORDINATOR_NOTE_LABELS: Record<CoordinatorNoteType, string> = {
-  general: "General",
-  call_log: "Call log",
-  prep: "Prep",
-  follow_up: "Follow-up",
-};
-
-const mapLeadNoteType = (type: CoordinatorNoteType): ClientNoteType => {
-  switch (type) {
-    case "call_log":
-      return "call_log";
-    case "follow_up":
-      return "follow_up";
-    default:
-      return "general";
-  }
-};
-
-const formatNoteDate = (value: string): string => {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return value;
-  return date.toLocaleString(undefined, {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-  });
-};
-
-const truncate = (value: string, maxLength: number): string => {
-  const trimmed = value.trim();
-  if (trimmed.length <= maxLength) return trimmed;
-  return `${trimmed.slice(0, maxLength - 1)}…`;
-};
+export {
+  buildLeadNotesSummary,
+  clientNotesIncludeLeadImport,
+  coordinatorNoteTypeLabel,
+  formatImportedLeadNoteBody,
+  isImportedLeadClientNote,
+  LEAD_NOTE_IMPORT_PREFIX,
+} from "@/lib/clients/leadNotesShared";
 
 export const listLeadCoordinatorNotes = async (
   leadId: string
@@ -68,47 +48,6 @@ const listClientNotes = async (clientId: string): Promise<ClientNote[]> =>
   getClientsStorageMode() === "local"
     ? listLocalNotesForClient(clientId)
     : listS3NotesForClient(clientId);
-
-export const clientNotesIncludeLeadImport = (notes: ClientNote[]): boolean =>
-  notes.some((note) => note.body.startsWith(LEAD_NOTE_IMPORT_PREFIX));
-
-export const isImportedLeadClientNote = (note: ClientNote): boolean =>
-  note.body.startsWith(LEAD_NOTE_IMPORT_PREFIX);
-
-export const formatImportedLeadNoteBody = (note: CoordinatorNote): string => {
-  const label = COORDINATOR_NOTE_LABELS[note.type] ?? note.type;
-  return `${LEAD_NOTE_IMPORT_PREFIX} · ${label} · ${formatNoteDate(note.createdAt)}]\n${note.body.trim()}`;
-};
-
-export const buildLeadNotesSummary = (
-  notes: CoordinatorNote[]
-): string | null => {
-  if (!notes.length) return null;
-
-  const counts = notes.reduce<Record<string, number>>((acc, note) => {
-    const label = COORDINATOR_NOTE_LABELS[note.type] ?? note.type;
-    acc[label] = (acc[label] ?? 0) + 1;
-    return acc;
-  }, {});
-
-  const countLine = Object.entries(counts)
-    .map(([label, count]) => `${count} ${label.toLowerCase()}`)
-    .join(", ");
-
-  const recent = [...notes]
-    .sort(
-      (a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-    )
-    .slice(0, 3)
-    .map((note) => {
-      const label = COORDINATOR_NOTE_LABELS[note.type] ?? note.type;
-      return `• ${label} (${formatNoteDate(note.createdAt)}): ${truncate(note.body, 140)}`;
-    })
-    .join("\n");
-
-  return `${notes.length} coordinator note${notes.length === 1 ? "" : "s"} from Lead CRM — ${countLine}.\n\nMost recent:\n${recent}`;
-};
 
 /** Copy lead coordinator notes into client notes (idempotent). */
 export const importLeadCoordinatorNotesToClient = async (
@@ -151,7 +90,7 @@ export const importLeadCoordinatorNotesToClient = async (
       authorId: author.id,
       authorEmail: author.email ?? note.authorEmail,
       body: formatImportedLeadNoteBody(note),
-      type: mapLeadNoteType(note.type),
+      type: leadNoteToClientNoteType(note.type),
       createdAt: note.createdAt,
     };
 
@@ -164,7 +103,3 @@ export const importLeadCoordinatorNotesToClient = async (
 
   return leadNotes.length;
 };
-
-export const coordinatorNoteTypeLabel = (
-  type: CoordinatorNoteType
-): string => COORDINATOR_NOTE_LABELS[type] ?? type;

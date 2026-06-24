@@ -12,7 +12,7 @@ import {
   linkAdminClient,
   updateAdminClient,
 } from "@/lib/api/clientsClient";
-import { isImportedLeadClientNote } from "@/lib/clients/leadNotesTransfer";
+import { isImportedLeadClientNote } from "@/lib/clients/leadNotesShared";
 import { fetchClientEngagements } from "@/lib/api/scheduleClient";
 import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import type {
@@ -23,7 +23,6 @@ import type {
 import { CLIENT_STATUSES } from "@/types/client";
 import type { TeamMember } from "@/types/teamMember";
 import type { ClientTourDetailTab } from "@/tour/clientsTourDemo";
-import type { ClientEngagementsResponse } from "@/types/serviceEngagement";
 import { useCallback, useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -124,12 +123,12 @@ const ClientDetailPanel = ({
         runWithAutoRetry(() => fetchAdminClientDetail(clientId)),
         runWithAutoRetry(() => fetchClientEngagements(clientId)).catch((error) => {
           console.error("[clients] engagement count load failed:", error);
-          return { engagements: [] } satisfies ClientEngagementsResponse;
+          return null;
         }),
       ]);
       if (generation !== loadGenerationRef.current) return;
       setDetail(data);
-      setScheduleCount(engagementData.engagements.length);
+      setScheduleCount(engagementData?.engagements.length ?? 0);
       setError(null);
     } catch (err) {
       if (generation !== loadGenerationRef.current) return;

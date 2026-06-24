@@ -1,6 +1,6 @@
 "use client";
 
-import { coordinatorNoteTypeLabel } from "@/lib/clients/leadNotesTransfer";
+import { coordinatorNoteTypeLabel } from "@/lib/clients/leadNotesShared";
 import type { CoordinatorNote } from "@/types/lead";
 
 interface ClientLeadNotesHistoryProps {

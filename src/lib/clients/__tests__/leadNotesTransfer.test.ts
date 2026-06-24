@@ -4,7 +4,7 @@ import {
   clientNotesIncludeLeadImport,
   formatImportedLeadNoteBody,
   LEAD_NOTE_IMPORT_PREFIX,
-} from "@/lib/clients/leadNotesTransfer";
+} from "@/lib/clients/leadNotesShared";
 import type { ClientNote } from "@/types/client";
 import type { CoordinatorNote } from "@/types/lead";
 
