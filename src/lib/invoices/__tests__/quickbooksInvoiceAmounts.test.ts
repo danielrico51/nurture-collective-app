@@ -41,7 +41,7 @@ const baseInvoice = (
 });
 
 describe("resolveQuickBooksInvoiceAmounts", () => {
-  it("uses partial invoice subtotal and recomputes fee on that subtotal", () => {
+  it("syncs subtotal only and excludes CRM processing fees", () => {
     const amounts = resolveQuickBooksInvoiceAmounts(
       baseInvoice({
         subtotalCents: 50000,
@@ -53,30 +53,15 @@ describe("resolveQuickBooksInvoiceAmounts", () => {
 
     expect(amounts).toEqual({
       subtotalCents: 50000,
-      processingFeeCents: 1500,
-      processingFeePercent: 3,
-      amountCents: 51500,
+      processingFeeCents: 0,
+      processingFeePercent: null,
+      amountCents: 50000,
     });
-  });
-
-  it("does not add a processing fee for non-fee payment methods", () => {
-    const amounts = resolveQuickBooksInvoiceAmounts(
-      baseInvoice({
-        paymentMethod: "zelle",
-        subtotalCents: 50000,
-        processingFeeCents: 0,
-        processingFeePercent: null,
-        amountCents: 50000,
-      })
-    );
-
-    expect(amounts.amountCents).toBe(50000);
-    expect(amounts.processingFeeCents).toBe(0);
   });
 });
 
 describe("buildServiceInvoiceQuickBooksLineItems", () => {
-  it("builds line items for a partial payment with fee on the partial amount only", () => {
+  it("builds a single service line without a processing fee line item", () => {
     const lineItems = buildServiceInvoiceQuickBooksLineItems({
       invoice: baseInvoice({
         subtotalCents: 50000,
@@ -93,12 +78,6 @@ describe("buildServiceInvoiceQuickBooksLineItems", () => {
         description: "Remaining balance",
         quantity: 1,
         unitPrice: 500,
-      },
-      {
-        amount: 15,
-        description: "Processing fee (3%)",
-        quantity: 1,
-        unitPrice: 15,
       },
     ]);
   });

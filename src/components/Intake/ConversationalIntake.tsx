@@ -25,6 +25,7 @@ import {
   startConversation,
 } from "@/lib/api/conversationClient";
 import { fetchSchedulingStatus } from "@/lib/api/schedulingClient";
+import { trackFormSubmission } from "@/lib/analytics/track";
 import type { ConsultBooking } from "@/lib/scheduling/types";
 import { formatConversationStreamError } from "@/lib/conversation/errors";
 import { canOfferScheduling } from "@/lib/conversation/profileMapper";
@@ -285,6 +286,7 @@ const ConversationalIntake = ({
       syncProfileAfterReply(hydrated.id);
 
       if (intakeSubmitted) {
+        trackFormSubmission({ formName: "intake_chat" });
         toast.success(
           guestMode
             ? "Your care profile is saved — book an introductory call below, or create a free account to keep your plan."
@@ -707,6 +709,7 @@ const ConversationalIntake = ({
               <SchedulingSlotPicker
                 conversationSessionId={session.id}
                 attendee={bookingAttendee}
+                analyticsBookingSource="intake_chat"
                 onBooked={handleBookingConfirmed}
               />
             ) : null}

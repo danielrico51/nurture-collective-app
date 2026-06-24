@@ -13,6 +13,7 @@ import {
   SUPPORT_INTERESTS,
 } from "@/content/intake";
 import { saveIntakeDraft, submitIntake } from "@/lib/api/intakeClient";
+import { trackFormSubmission } from "@/lib/analytics/track";
 import type {
   BudgetPreference,
   ChallengeOption,
@@ -163,6 +164,7 @@ const IntakeFlow = ({
     setSubmitting(true);
     try {
       await submitIntake(draft);
+      trackFormSubmission({ formName: "member_intake" });
       if (typeof window !== "undefined") {
         localStorage.removeItem(`${INTAKE_DRAFT_STORAGE_KEY}-${userId}`);
       }

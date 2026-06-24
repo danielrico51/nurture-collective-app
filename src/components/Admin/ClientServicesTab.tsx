@@ -22,6 +22,7 @@ import {
   DEFAULT_PROCESSING_FEE_PERCENT,
   paymentMethodSupportsProcessingFee,
   resolveInvoiceAmounts,
+  usesQuickBooksNativeSurcharging,
 } from "@/lib/invoices/processingFee";
 import type {
   ClientServiceWithInvoices,
@@ -541,6 +542,26 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
     preview: ReturnType<typeof previewInvoiceAmounts>,
     onChange: (updates: Partial<InvoiceFormDraft>) => void
   ) => {
+    if (usesQuickBooksNativeSurcharging(draft.method)) {
+      return (
+        <div className="sm:col-span-2 rounded-xl border border-sky-200/80 bg-sky-50/60 p-3 text-sm text-sky-950">
+          <p className="font-medium">QuickBooks surcharging</p>
+          <p className="mt-1 text-xs leading-relaxed text-sky-900/85">
+            Do not add a manual processing fee here. QuickBooks adds the
+            surcharge at checkout when the client pays online (card or bank
+            transfer), if surcharging is enabled in your QuickBooks company
+            settings.
+          </p>
+          <a
+            href="/admin/integrations/quickbooks"
+            className="mt-2 inline-block text-xs font-semibold text-sky-800 underline-offset-2 hover:underline"
+          >
+            Check surcharge status in QuickBooks settings →
+          </a>
+        </div>
+      );
+    }
+
     if (!paymentMethodSupportsProcessingFee(draft.method)) return null;
 
     return (

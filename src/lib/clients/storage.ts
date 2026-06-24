@@ -47,6 +47,12 @@ import { getClientsStorageMode } from "@/lib/clients/config";
 import { listPurchaseOrdersForClient } from "@/lib/billing/listOrders";
 import { getLeadById } from "@/lib/leads/storage";
 import {
+  buildLeadNotesSummary,
+  importLeadCoordinatorNotesToClient,
+  listLeadCoordinatorNotes,
+} from "@/lib/clients/leadNotesTransfer";
+import { buildClientNotesSummaryFromLead } from "@/lib/leads/snapshotView";
+import {
   listProposalIdsForClient,
   readProposalMetadata,
 } from "@/lib/proposals/storage";
@@ -181,15 +187,41 @@ export const getClientDetail = async (
   const client = await getClientById(clientId);
   if (!client) return null;
 
-  const notes =
+  let notes =
     getClientsStorageMode() === "local"
-      ? await listLocalNotesForClient(clientId)
-      : await listS3NotesForClient(clientId);
+      ? await listLocalNotesForClient(clientId).catch((error) => {
+          console.error("[clients] notes load failed:", error);
+          return [] as ClientDetailResponse["notes"];
+        })
+      : await listS3NotesForClient(clientId).catch((error) => {
+          console.error("[clients] notes load failed:", error);
+          return [] as ClientDetailResponse["notes"];
+        });
 
   let lead: LeadRecord | null = null;
+  let leadNotes: ClientDetailResponse["leadNotes"] = [];
+  let leadNotesSummary: string | null = null;
   if (client.leadId) {
     try {
       lead = await getLeadById(client.leadId);
+      leadNotes = await listLeadCoordinatorNotes(client.leadId);
+      leadNotesSummary = buildLeadNotesSummary(leadNotes);
+
+      const imported = await importLeadCoordinatorNotesToClient(
+        clientId,
+        client.leadId,
+        { id: "system", email: "Lead CRM import" }
+      ).catch((error) => {
+        console.error("[clients] lead notes import failed:", error);
+        return 0;
+      });
+
+      if (imported > 0) {
+        notes =
+          getClientsStorageMode() === "local"
+            ? await listLocalNotesForClient(clientId).catch(() => [])
+            : await listS3NotesForClient(clientId).catch(() => []);
+      }
     } catch (error) {
       console.error("[clients] linked lead load failed:", error);
     }
@@ -211,7 +243,17 @@ export const getClientDetail = async (
     }),
   ]);
 
-  return { client, notes, lead, proposals, orders, services, communications };
+  return {
+    client,
+    notes,
+    lead,
+    leadNotes,
+    leadNotesSummary,
+    proposals,
+    orders,
+    services,
+    communications,
+  };
 };
 
 export const createManualClient = async (
@@ -453,7 +495,7 @@ const buildClientFromLead = (
     coordinatorEmail: coordinator?.email ?? lead.coordinatorEmail ?? "",
     tags: [],
     locationZip: lead.locationZip,
-    notesSummary: lead.challengesSummary ?? "",
+    notesSummary: buildClientNotesSummaryFromLead(lead),
     billing: { ...EMPTY_CLIENT_BILLING_SUMMARY },
     archivedAt: null,
     createdAt: now,
@@ -553,6 +595,15 @@ export const convertLeadToClient = async (
   }
 
   const client = await ensureClientForLead(leadId, resolvedCoordinator);
+
+  try {
+    await importLeadCoordinatorNotesToClient(client.clientId, leadId, {
+      id: coordinator.id,
+      email: coordinator.email ?? "",
+    });
+  } catch (error) {
+    console.error("[clients] lead notes import on conversion failed:", error);
+  }
 
   try {
     await addClientNote(client.clientId, coordinator, {

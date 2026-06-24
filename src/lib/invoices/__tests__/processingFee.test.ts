@@ -12,7 +12,7 @@ describe("processingFee", () => {
   it("identifies card-style payment methods", () => {
     expect(paymentMethodSupportsProcessingFee("venmo")).toBe(true);
     expect(paymentMethodSupportsProcessingFee("stripe")).toBe(true);
-    expect(paymentMethodSupportsProcessingFee("quickbooks")).toBe(true);
+    expect(paymentMethodSupportsProcessingFee("quickbooks")).toBe(false);
     expect(paymentMethodSupportsProcessingFee("zelle")).toBe(false);
   });
 

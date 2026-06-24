@@ -4,6 +4,7 @@ import { requireManagementAuth } from "@/lib/api/routeHelpers";
 import {
   getValidQuickBooksTokens,
   readQuickBooksTokens,
+  fetchQuickBooksPaymentsSetup,
 } from "@/lib/integrations/quickbooks";
 
 export const dynamic = "force-dynamic";
@@ -36,12 +37,25 @@ export async function GET(request: NextRequest) {
 
   try {
     const tokens = await getValidQuickBooksTokens();
+    let paymentsSetup = null;
+    try {
+      paymentsSetup = await fetchQuickBooksPaymentsSetup();
+    } catch (paymentsError) {
+      paymentsSetup = {
+        error:
+          paymentsError instanceof Error
+            ? paymentsError.message
+            : "Could not read QuickBooks payment preferences",
+      };
+    }
+
     return NextResponse.json({
       ok: true,
       connected: true,
       realmId: tokens.realmId,
       expiresAt: tokens.expiresAt,
       updatedAt: tokens.updatedAt,
+      paymentsSetup,
     });
   } catch (error) {
     const message =

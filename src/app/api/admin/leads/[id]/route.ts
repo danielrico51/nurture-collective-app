@@ -10,12 +10,18 @@ import {
   getLeadDetail,
   restoreLead,
   updateLeadContactInfo,
+  updateLeadSnapshot,
   updateLeadStatus,
 } from "@/lib/leads/storage";
 import {
   LeadContactValidationError,
   validateUpdateLeadContactInput,
 } from "@/lib/leads/contactUpdate";
+import {
+  hasLeadSnapshotFields,
+  LeadSnapshotValidationError,
+  validateUpdateLeadSnapshotInput,
+} from "@/lib/leads/snapshotUpdate";
 import type { LeadStatus } from "@/types/lead";
 import { LEAD_STATUSES } from "@/types/lead";
 
@@ -85,6 +91,12 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       return NextResponse.json({ lead });
     }
 
+    if (hasLeadSnapshotFields(body)) {
+      const snapshot = validateUpdateLeadSnapshotInput(body);
+      const lead = await updateLeadSnapshot(params.id, snapshot);
+      return NextResponse.json({ lead });
+    }
+
     const hasContactUpdate =
       body.name !== undefined ||
       body.email !== undefined ||
@@ -103,7 +115,10 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
     return NextResponse.json({ error: "No update specified" }, { status: 400 });
   } catch (error) {
     const message = error instanceof Error ? error.message : "Update failed";
-    if (error instanceof LeadContactValidationError) {
+    if (
+      error instanceof LeadContactValidationError ||
+      error instanceof LeadSnapshotValidationError
+    ) {
       return NextResponse.json({ error: message }, { status: 400 });
     }
     if (error instanceof CoordinatorAssignmentError) {

@@ -3,6 +3,7 @@ import { buildCoordinatorPrepFromSession } from "@/lib/leads/coordinatorPrep";
 import type { LeadRecord } from "@/types/lead";
 import type { ConversationSession } from "@/types/conversation";
 import { createEmptyExtractedProfile } from "@/types/conversation";
+import { LEAD_SNAPSHOT_DEFAULTS } from "@/lib/leads/snapshotDefaults";
 
 const baseLead = (overrides: Partial<LeadRecord> = {}): LeadRecord => ({
   leadId: "guest_test",
@@ -21,6 +22,7 @@ const baseLead = (overrides: Partial<LeadRecord> = {}): LeadRecord => ({
   supportInterests: ["birth-doula", "lactation"],
   challengesSummary: "First baby, feeling anxious about labor",
   locationZip: null,
+  ...LEAD_SNAPSHOT_DEFAULTS,
   archivedAt: null,
   conversationSessionId: "session-1",
   createdAt: new Date().toISOString(),

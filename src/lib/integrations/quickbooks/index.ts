@@ -21,6 +21,16 @@ export {
   voidQuickBooksInvoice,
 } from "@/lib/integrations/quickbooks/invoices";
 export { createQuickBooksSalesReceipt } from "@/lib/integrations/quickbooks/salesReceipts";
+export {
+  fetchQuickBooksPaymentsSetup,
+  parseQuickBooksPaymentsSetup,
+  quickBooksSurchargeHelpUrl,
+  QUICKBOOKS_SURCHARGE_SETUP_PATH,
+} from "@/lib/integrations/quickbooks/preferences";
+export type {
+  QuickBooksPaymentsSetupStatus,
+  QuickBooksSurchargingHint,
+} from "@/lib/integrations/quickbooks/preferences";
 export { verifyQuickBooksWebhookSignature } from "@/lib/integrations/quickbooks/webhooks";
 export type {
   QuickBooksCreateCustomerInput,

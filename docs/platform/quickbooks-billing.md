@@ -268,3 +268,15 @@ Order JSON includes `quickbooks.customerId`, `quickbooks.invoiceId`, and sync st
 | Refund | Stripe refund | Credit Memo (via n8n) |
 
 This keeps the website fast for self-serve purchases while QBO remains the source of truth for accounting and tax.
+
+---
+
+## QuickBooks surcharging (CRM invoices)
+
+When a client service invoice uses payment method **QuickBooks**, the CRM syncs **only the service subtotal** to QBO — no manual “Processing fee” line item. Card network rules do not allow both a convenience-fee line and Intuit surcharging on the same payment.
+
+**Enable in QuickBooks:** Settings → Account and settings → Sales → Invoice payments → **Percentage based surcharging** (beta; not on all accounts).
+
+**Verify:** Admin → Integrations → QuickBooks shows online payment flags from the Preferences API. Surcharge on/off is best confirmed by opening a test invoice pay link — Intuit does not fully expose surcharge settings via API.
+
+**Do not** add a 3% processing fee in the CRM for QuickBooks invoices; QuickBooks adds the surcharge at checkout when the client chooses card or bank transfer.

@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import { getCoordinatorDisplayName } from "@/lib/leads/coordinatorDisplay";
 import type { LeadRecord } from "@/types/lead";
 import type { TeamMember } from "@/types/teamMember";
+import { LEAD_SNAPSHOT_DEFAULTS } from "@/lib/leads/snapshotDefaults";
 
 const baseLead = (overrides: Partial<LeadRecord> = {}): LeadRecord => ({
   leadId: "lead-1",
@@ -20,6 +21,7 @@ const baseLead = (overrides: Partial<LeadRecord> = {}): LeadRecord => ({
   supportInterests: [],
   challengesSummary: "",
   locationZip: null,
+  ...LEAD_SNAPSHOT_DEFAULTS,
   archivedAt: null,
   conversationSessionId: null,
   createdAt: "2026-01-01T00:00:00.000Z",

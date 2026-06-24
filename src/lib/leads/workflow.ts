@@ -119,6 +119,19 @@ export const buildLeadFromSources = (input: {
     supportInterests,
     challengesSummary,
     locationZip: locationZip?.trim() || null,
+    partnerName: input.existing?.partnerName ?? null,
+    dueDate:
+      input.existing?.dueDate ??
+      intake?.dueDate ??
+      extracted?.dueDate ??
+      null,
+    expectedBabyGender: input.existing?.expectedBabyGender ?? null,
+    hospitalName: input.existing?.hospitalName ?? null,
+    locationAddress: input.existing?.locationAddress ?? null,
+    feeQuotedCents: input.existing?.feeQuotedCents ?? null,
+    feeQuotedNotes: input.existing?.feeQuotedNotes ?? null,
+    corporateBenefitPlatform: input.existing?.corporateBenefitPlatform ?? null,
+    corporateBenefitNotes: input.existing?.corporateBenefitNotes ?? null,
     archivedAt: input.existing?.archivedAt ?? null,
     conversationSessionId:
       input.conversationSessionId ?? input.existing?.conversationSessionId ?? null,

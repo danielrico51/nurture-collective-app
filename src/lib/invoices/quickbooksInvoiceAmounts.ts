@@ -1,8 +1,4 @@
-import {
-  normalizeStoredInvoiceAmounts,
-  paymentMethodSupportsProcessingFee,
-  resolveInvoiceAmounts,
-} from "@/lib/invoices/processingFee";
+import { normalizeStoredInvoiceAmounts } from "@/lib/invoices/processingFee";
 import type { ServiceInvoice } from "@/types/clientService";
 
 export interface QuickBooksInvoiceAmounts {
@@ -12,25 +8,23 @@ export interface QuickBooksInvoiceAmounts {
   amountCents: number;
 }
 
-/** Amounts sent to QuickBooks — always based on this invoice's subtotal, not the full service. */
+/**
+ * Amounts synced to QuickBooks — service subtotal only.
+ * Processing fees are applied by QuickBooks Payments surcharging at checkout,
+ * not as a CRM line item (card network rules prohibit both).
+ */
 export const resolveQuickBooksInvoiceAmounts = (
   invoice: ServiceInvoice
 ): QuickBooksInvoiceAmounts => {
   const normalized = normalizeStoredInvoiceAmounts(invoice);
+  const subtotalCents = normalized.subtotalCents;
 
-  if (
-    paymentMethodSupportsProcessingFee(invoice.paymentMethod) &&
-    normalized.processingFeePercent != null &&
-    normalized.processingFeeCents > 0
-  ) {
-    return resolveInvoiceAmounts({
-      subtotalCents: normalized.subtotalCents,
-      applyProcessingFee: true,
-      processingFeePercent: normalized.processingFeePercent,
-    });
-  }
-
-  return normalized;
+  return {
+    subtotalCents,
+    processingFeeCents: 0,
+    processingFeePercent: null,
+    amountCents: subtotalCents,
+  };
 };
 
 export const buildServiceInvoiceQuickBooksLineItems = (input: {
@@ -46,7 +40,7 @@ export const buildServiceInvoiceQuickBooksLineItems = (input: {
   const amounts = resolveQuickBooksInvoiceAmounts(input.invoice);
   const centsToDollars = (cents: number): number => cents / 100;
 
-  const lineItems = [
+  return [
     {
       amount: centsToDollars(amounts.subtotalCents),
       description: input.invoice.description || input.serviceTitle,
@@ -54,19 +48,4 @@ export const buildServiceInvoiceQuickBooksLineItems = (input: {
       unitPrice: centsToDollars(amounts.subtotalCents),
     },
   ];
-
-  if (amounts.processingFeeCents > 0) {
-    const feeLabel =
-      amounts.processingFeePercent != null
-        ? `Processing fee (${amounts.processingFeePercent}%)`
-        : "Processing fee";
-    lineItems.push({
-      amount: centsToDollars(amounts.processingFeeCents),
-      description: feeLabel,
-      quantity: 1,
-      unitPrice: centsToDollars(amounts.processingFeeCents),
-    });
-  }
-
-  return lineItems;
 };

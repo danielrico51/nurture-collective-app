@@ -9,6 +9,7 @@ import type { EnrichedIntakeLead } from "@/types/intakeSubmission";
 import { appendLocalLeadProfile } from "@/lib/leads/localStorage";
 import { appendS3LeadProfile } from "@/lib/leads/platformS3";
 import { notifyLeadPipelineEvent } from "@/lib/integrations/slack/pipeline";
+import { LEAD_SNAPSHOT_DEFAULTS } from "@/lib/leads/snapshotDefaults";
 import type { LeadRecord } from "@/types/lead";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -120,6 +121,7 @@ export const buildCrmLeadFromSubmission = (
     supportInterests: lead.service_requested ? [lead.service_requested] : [],
     challengesSummary: lead.message,
     locationZip: null,
+    ...LEAD_SNAPSHOT_DEFAULTS,
     archivedAt: null,
     conversationSessionId: null,
     createdAt: lead.created_at,

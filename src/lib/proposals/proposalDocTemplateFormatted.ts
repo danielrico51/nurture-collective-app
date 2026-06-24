@@ -130,7 +130,7 @@ export const FORMATTED_POSTPARTUM_TEMPLATE_SEGMENTS: FormattedTemplateSegment[] 
       kind: "bullet",
       list: "fees-static",
       bold: true,
-      text: "Zelle: thenestingplacenj@gmail.com",
+      text: "Zelle: @thenestingplace",
     },
     {
       kind: "bullet",

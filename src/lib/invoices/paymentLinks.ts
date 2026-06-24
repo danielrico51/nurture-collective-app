@@ -113,9 +113,13 @@ export const resolveServiceInvoicePayment = async (input: {
 
     const paymentLink =
       quickbooks.paymentLink ?? input.invoice.paymentLink ?? null;
+    const subtotalCents =
+      input.invoice.subtotalCents != null && input.invoice.subtotalCents > 0
+        ? input.invoice.subtotalCents
+        : input.invoice.amountCents;
     const paymentInstructions = paymentLink
-      ? `Pay ${formatMoney(input.invoice.amountCents)} securely online.`
-      : `Your invoice total is ${formatMoney(input.invoice.amountCents)}. Our team will follow up with a secure online payment link shortly.`;
+      ? `Pay ${formatMoney(subtotalCents)} securely online. QuickBooks may add a processing surcharge at checkout depending on whether the client pays by card or bank transfer (when surcharging is enabled in your QuickBooks account).`
+      : `Your invoice total is ${formatMoney(subtotalCents)}. Our team will follow up with a secure online payment link shortly.`;
 
     return {
       paymentLink,
