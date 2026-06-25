@@ -921,6 +921,76 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
                       )}
                     </div>
 
+                    <div className="mb-5 rounded-xl border border-nurture-sage/15 bg-white p-4">
+                      <p className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+                        Coordinator notes
+                      </p>
+
+                      <div className="mt-3 space-y-2">
+                        <div className="flex flex-wrap gap-2">
+                          {(Object.keys(NOTE_TYPE_LABELS) as CoordinatorNoteType[]).map(
+                            (type) => (
+                              <button
+                                key={type}
+                                type="button"
+                                onClick={() => setNoteType(type)}
+                                className={`rounded-full px-3 py-1 text-xs font-medium ${
+                                  noteType === type
+                                    ? "bg-nurture-sage text-white"
+                                    : "border border-nurture-sage/25 text-nurture-charcoal/70"
+                                }`}
+                              >
+                                {NOTE_TYPE_LABELS[type]}
+                              </button>
+                            )
+                          )}
+                        </div>
+                        <textarea
+                          rows={3}
+                          value={noteDraft}
+                          onChange={(event) => setNoteDraft(event.target.value)}
+                          placeholder="Prep for the call, log outcomes, or plan follow-up…"
+                          className="w-full rounded-xl border border-nurture-sage/30 bg-white px-3 py-2.5 text-base font-medium leading-relaxed text-nurture-charcoal placeholder:font-normal placeholder:text-nurture-charcoal/50 focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+                        />
+                        <button
+                          type="button"
+                          disabled={savingId === lead.leadId || !noteDraft.trim()}
+                          onClick={() => handleAddNote(lead.leadId)}
+                          className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-semibold text-white hover:bg-nurture-sage-dark disabled:opacity-50"
+                        >
+                          Save note
+                        </button>
+                      </div>
+
+                      {notes.length === 0 ? (
+                        <p className="mt-4 text-sm font-medium text-nurture-charcoal/70">
+                          No notes yet.
+                        </p>
+                      ) : (
+                        <ul className="mt-4 space-y-3">
+                          {notes.map((note) => (
+                            <li
+                              key={note.id}
+                              className="rounded-xl border border-nurture-sage/15 bg-nurture-cream/30 p-4"
+                            >
+                              <div className="flex flex-wrap items-center gap-2 text-sm text-nurture-charcoal/70">
+                                <span className="font-semibold text-nurture-charcoal">
+                                  {NOTE_TYPE_LABELS[note.type]}
+                                </span>
+                                <span className="font-medium text-nurture-charcoal/85">
+                                  {note.authorEmail || note.authorId}
+                                </span>
+                                <span>{formatDate(note.createdAt)}</span>
+                              </div>
+                              <p className="mt-2.5 whitespace-pre-wrap text-base font-medium leading-relaxed text-nurture-charcoal">
+                                {note.body}
+                              </p>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </div>
+
                     {detailLoadingId === lead.leadId ? (
                       <p className="mb-5 text-sm text-nurture-charcoal/55">
                         Loading details…
@@ -1100,72 +1170,6 @@ const LeadQueue = ({ coordinatorEmail, coordinatorId }: LeadQueueProps) => {
                         </dl>
                       </>
                     )}
-
-                    <div className="mt-6 rounded-xl border border-nurture-sage/15 bg-white p-4">
-                      <p className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
-                        Coordinator notes
-                      </p>
-
-                      {notes.length === 0 ? (
-                        <p className="mt-3 text-sm text-nurture-charcoal/55">No notes yet.</p>
-                      ) : (
-                        <ul className="mt-3 space-y-3">
-                          {notes.map((note) => (
-                            <li
-                              key={note.id}
-                              className="rounded-xl border border-nurture-sage/10 bg-nurture-cream/40 p-3 text-sm"
-                            >
-                              <div className="flex flex-wrap items-center gap-2 text-xs text-nurture-charcoal/55">
-                                <span className="font-semibold text-nurture-charcoal/70">
-                                  {NOTE_TYPE_LABELS[note.type]}
-                                </span>
-                                <span>{note.authorEmail || note.authorId}</span>
-                                <span>{formatDate(note.createdAt)}</span>
-                              </div>
-                              <p className="mt-2 whitespace-pre-wrap text-nurture-charcoal/80">
-                                {note.body}
-                              </p>
-                            </li>
-                          ))}
-                        </ul>
-                      )}
-
-                      <div className="mt-4 space-y-2">
-                        <div className="flex flex-wrap gap-2">
-                          {(Object.keys(NOTE_TYPE_LABELS) as CoordinatorNoteType[]).map(
-                            (type) => (
-                              <button
-                                key={type}
-                                type="button"
-                                onClick={() => setNoteType(type)}
-                                className={`rounded-full px-3 py-1 text-xs font-medium ${
-                                  noteType === type
-                                    ? "bg-nurture-sage text-white"
-                                    : "border border-nurture-sage/25 text-nurture-charcoal/70"
-                                }`}
-                              >
-                                {NOTE_TYPE_LABELS[type]}
-                              </button>
-                            )
-                          )}
-                        </div>
-                        <textarea
-                          rows={3}
-                          value={noteDraft}
-                          onChange={(event) => setNoteDraft(event.target.value)}
-                          placeholder="Prep for the call, log outcomes, or plan follow-up…"
-                          className="w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
-                        />
-                        <button
-                          type="button"
-                          disabled={savingId === lead.leadId || !noteDraft.trim()}
-                          onClick={() => handleAddNote(lead.leadId)}
-                          className="rounded-full bg-nurture-sage px-4 py-2 text-sm font-semibold text-white hover:bg-nurture-sage-dark disabled:opacity-50"
-                        >
-                          Save note
-                        </button>
-                      </div>
-                    </div>
                   </div>
                 ) : null}
               </div>
@@ -1239,7 +1243,9 @@ const DetailItem = ({ label, value }: { label: string; value: string }) => (
     <dt className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/45">
       {label}
     </dt>
-    <dd className="mt-1 text-sm text-nurture-charcoal/80">{value}</dd>
+    <dd className="mt-1 text-sm font-medium leading-relaxed text-nurture-charcoal">
+      {value}
+    </dd>
   </div>
 );
 

@@ -1,5 +1,10 @@
 import type { SchedulingSlot } from "@/lib/scheduling/types";
 import {
+  addCalendarDaysInZone,
+  filterSlotsWithinConfiguredWorkHours,
+  type SchedulingWorkHoursConfig,
+} from "@/lib/scheduling/workHours";
+import {
   formatSlotLabel,
   getZonedParts,
   parseWorkMinutes,
@@ -12,12 +17,7 @@ export interface BusyInterval {
   end: Date;
 }
 
-export interface SlotGenerationConfig {
-  timezone: string;
-  workDays: number[];
-  workHoursStart: string;
-  workHoursEnd: string;
-  durationMinutes: number;
+export interface SlotGenerationConfig extends SchedulingWorkHoursConfig {
   bufferMinutes: number;
   maxSlotsReturned: number;
 }
@@ -48,47 +48,73 @@ export const generateCandidateSlots = (input: {
   const workEndMinutes = parseWorkMinutes(workHoursEnd);
   const stepMinutes = durationMinutes + bufferMinutes;
   const slots: SchedulingSlot[] = [];
-  const daySpan = Math.max(
-    1,
-    Math.ceil((input.to.getTime() - input.from.getTime()) / (24 * 60 * 60 * 1000)) + 1
-  );
 
-  for (let dayOffset = 0; dayOffset < daySpan && slots.length < maxSlotsReturned; dayOffset += 1) {
-    const probe = new Date(input.from.getTime() + dayOffset * 24 * 60 * 60 * 1000);
-    const parts = getZonedParts(probe, timezone);
-    const jsDay = weekdayToJsDay(parts.weekday);
-    if (!workDays.includes(jsDay)) continue;
+  const fromParts = getZonedParts(input.from, timezone);
+  const toParts = getZonedParts(input.to, timezone);
+  const startDay = { year: fromParts.year, month: fromParts.month, day: fromParts.day };
+  const endDay = { year: toParts.year, month: toParts.month, day: toParts.day };
 
-    for (
-      let minute = workStartMinutes;
-      minute + durationMinutes <= workEndMinutes;
-      minute += stepMinutes
-    ) {
-      const hour = Math.floor(minute / 60);
-      const mins = minute % 60;
-      const start = zonedDateTimeToUtc(
-        parts.year,
-        parts.month,
-        parts.day,
-        hour,
-        mins,
+  let dayCursor = startDay;
+  let guard = 0;
+
+  while (slots.length < maxSlotsReturned && guard < 400) {
+    guard += 1;
+    const parts = dayCursor;
+    const jsDay = weekdayToJsDay(
+      getZonedParts(
+        zonedDateTimeToUtc(parts.year, parts.month, parts.day, 12, 0, timezone),
         timezone
-      );
-      const end = new Date(start.getTime() + durationMinutes * 60_000);
+      ).weekday
+    );
 
-      if (start < input.from || start > input.to) continue;
-      if (input.busy.some((interval) => overlaps(start, end, interval))) {
-        continue;
+    if (workDays.includes(jsDay)) {
+      for (
+        let minute = workStartMinutes;
+        minute + durationMinutes <= workEndMinutes;
+        minute += stepMinutes
+      ) {
+        const hour = Math.floor(minute / 60);
+        const mins = minute % 60;
+        const start = zonedDateTimeToUtc(
+          parts.year,
+          parts.month,
+          parts.day,
+          hour,
+          mins,
+          timezone
+        );
+        const end = new Date(start.getTime() + durationMinutes * 60_000);
+
+        if (start < input.from || start > input.to) continue;
+        if (input.busy.some((interval) => overlaps(start, end, interval))) {
+          continue;
+        }
+
+        slots.push({
+          start: start.toISOString(),
+          end: end.toISOString(),
+          label: formatSlotLabel(start, timezone),
+        });
+        if (slots.length >= maxSlotsReturned) break;
       }
-
-      slots.push({
-        start: start.toISOString(),
-        end: end.toISOString(),
-        label: formatSlotLabel(start, timezone),
-      });
-      if (slots.length >= maxSlotsReturned) break;
     }
+
+    if (
+      dayCursor.year === endDay.year &&
+      dayCursor.month === endDay.month &&
+      dayCursor.day === endDay.day
+    ) {
+      break;
+    }
+
+    dayCursor = addCalendarDaysInZone(
+      dayCursor.year,
+      dayCursor.month,
+      dayCursor.day,
+      1,
+      timezone
+    );
   }
 
-  return slots;
+  return filterSlotsWithinConfiguredWorkHours(slots, input.config);
 };

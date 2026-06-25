@@ -734,7 +734,7 @@ export const markServiceInvoicePaid = async (
   clientId: string,
   serviceId: string,
   invoiceId: string,
-  payment: { provider: string; reference?: string }
+  payment: { provider: string; reference?: string; paidAt?: string }
 ): Promise<ServiceInvoice> => {
   const existing = await readServiceInvoice(clientId, serviceId, invoiceId);
   if (!existing) {
@@ -745,11 +745,12 @@ export const markServiceInvoicePaid = async (
   }
 
   const now = new Date().toISOString();
+  const paidAt = payment.paidAt ?? now;
   const updated: ServiceInvoice = {
     ...existing,
     status: "paid",
-    paidAt: now,
-    sentAt: existing.sentAt ?? now,
+    paidAt,
+    sentAt: existing.sentAt ?? paidAt,
     stripe: {
       ...existing.stripe,
       paymentIntentId: payment.reference ?? existing.stripe?.paymentIntentId,

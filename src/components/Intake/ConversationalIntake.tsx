@@ -2,6 +2,7 @@
 
 import GuestSaveProgressPrompt from "@/components/Intake/GuestSaveProgressPrompt";
 import SchedulingSlotPicker from "@/components/Intake/SchedulingSlotPicker";
+import BookingEmbedFrame from "@/components/Common/BookingEmbedFrame";
 import ChatMessageBubble from "@/components/Intake/chat/ChatMessageBubble";
 import ProfileProgressBar from "@/components/Intake/chat/ProfileProgressBar";
 import QuickReplyChips from "@/components/Intake/chat/QuickReplyChips";
@@ -537,10 +538,15 @@ const ConversationalIntake = ({
   };
   const canOfferBooking =
     !confirmedBooking && canOfferScheduling(profile, messages);
-  const canUseLiveScheduling =
-    liveSchedulingEnabled && canOfferBooking && !confirmedBooking;
-  const showBookCallCard =
+  const canUseGoogleBookingEmbed =
     hasBooking() && canOfferBooking && !confirmedBooking;
+  const canUseLiveScheduling =
+    liveSchedulingEnabled &&
+    canOfferBooking &&
+    !confirmedBooking &&
+    !hasBooking();
+  const showBookCallCard =
+    !hasBooking() && canOfferBooking && !confirmedBooking;
 
   const handleBookingConfirmed = (booking: ConsultBooking) => {
     setConfirmedBooking(booking);
@@ -705,7 +711,17 @@ const ConversationalIntake = ({
               </div>
             ) : null}
 
-            {canUseLiveScheduling && !confirmedBooking ? (
+            {canUseGoogleBookingEmbed ? (
+              <div className="space-y-3">
+                <p className="text-sm text-nurture-charcoal/70">
+                  Pick an open time below — availability matches our Google
+                  Bookings calendar.
+                </p>
+                <BookingEmbedFrame heightClassName="h-[480px]" />
+              </div>
+            ) : null}
+
+            {canUseLiveScheduling ? (
               <SchedulingSlotPicker
                 conversationSessionId={session.id}
                 attendee={bookingAttendee}
@@ -720,9 +736,8 @@ const ConversationalIntake = ({
                 Book your introductory call
               </p>
               <p className="mt-1 text-xs text-nurture-charcoal/60">
-                {canUseLiveScheduling
-                  ? "Prefer the full calendar? Open our booking page to see every open time."
-                  : "Pick a time that works for you — our care coordinator will confirm by email."}
+                Pick a time that works for you — our care coordinator will
+                confirm by email.
               </p>
               <a
                 href={buildBookingUrlWithPrefill({

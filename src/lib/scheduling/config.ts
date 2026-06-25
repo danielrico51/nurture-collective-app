@@ -110,6 +110,34 @@ export const serverSchedulingConfig = {
   ),
 } as const;
 
+/** Calendars checked for conflicts — mirrors Google appointment schedule availability checks. */
+export const resolveFreebusyCalendarIds = (): string[] => {
+  const explicit = process.env.GOOGLE_BOOKING_FREEBUSY_CALENDAR_IDS?.trim();
+  if (explicit) {
+    return explicit
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean);
+  }
+
+  const ids = new Set<string>();
+  if (serverSchedulingConfig.calendarId) {
+    ids.add(serverSchedulingConfig.calendarId);
+  }
+  if (serverSchedulingConfig.delegatedUser?.includes("@")) {
+    ids.add(serverSchedulingConfig.delegatedUser);
+  }
+  return Array.from(ids);
+};
+
+export const schedulingWorkHoursConfig = () => ({
+  timezone: serverSchedulingConfig.timezone,
+  workDays: serverSchedulingConfig.workDays,
+  workHoursStart: serverSchedulingConfig.workHoursStart,
+  workHoursEnd: serverSchedulingConfig.workHoursEnd,
+  durationMinutes: serverSchedulingConfig.durationMinutes,
+});
+
 export const isGoogleSchedulingConfigured = (): boolean => {
   const {
     calendarId,

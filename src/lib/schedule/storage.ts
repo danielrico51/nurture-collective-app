@@ -20,6 +20,8 @@ import {
   listProviderPayoutReport,
   updateProviderPayoutBatch,
 } from "@/lib/schedule/payoutStorage";
+import { syncDepositExpectationToServiceInvoice } from "@/lib/schedule/expectationBilling";
+import { savePaymentExpectation } from "@/lib/schedule/expectationStorage";
 import {
   createScheduleShift,
   createScheduleShiftsFromLabel,
@@ -142,19 +144,6 @@ const listExpectationsForEngagement = async (
   return expectations.sort((a, b) => a.kind.localeCompare(b.kind));
 };
 
-const saveExpectation = async (
-  clientId: string,
-  expectation: ClientPaymentExpectation
-): Promise<ClientPaymentExpectation> => {
-  const key = buildExpectationKey(
-    clientId,
-    expectation.engagementId,
-    expectation.expectationId
-  );
-  await writeJson(key, expectation);
-  return { ...expectation, storageKey: key };
-};
-
 const createExpectationRecord = async (
   clientId: string,
   engagementId: string,
@@ -177,7 +166,7 @@ const createExpectationRecord = async (
     createdAt: now,
     updatedAt: now,
   };
-  return saveExpectation(clientId, expectation);
+  return savePaymentExpectation(clientId, expectation);
 };
 
 const buildEngagementDetails = async (
@@ -326,10 +315,16 @@ export const createServiceEngagement = async (
   await writeJson(packageKey, { ...pkg, storageKey: packageKey });
 
   if (input.deposit) {
-    await createExpectationRecord(clientId, engagementId, packageId, {
+    const deposit = await createExpectationRecord(clientId, engagementId, packageId, {
       ...input.deposit,
       kind: "deposit",
     });
+    await syncDepositExpectationToServiceInvoice(
+      clientId,
+      serviceId!,
+      engagement,
+      deposit
+    );
   }
   if (input.balance) {
     await createExpectationRecord(clientId, engagementId, packageId, {
@@ -487,7 +482,16 @@ export const updatePaymentExpectation = async (
     notes: updates.notes !== undefined ? updates.notes : existing.notes,
     updatedAt: new Date().toISOString(),
   };
-  await saveExpectation(clientId, next);
+  await savePaymentExpectation(clientId, next);
+
+  if (next.kind === "deposit" && next.amountCents > 0) {
+    await syncDepositExpectationToServiceInvoice(
+      clientId,
+      engagement.serviceId,
+      engagement,
+      next
+    );
+  }
 
   return (await getEngagementDetail(clientId, engagementId))!;
 };

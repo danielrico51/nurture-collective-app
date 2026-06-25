@@ -79,6 +79,7 @@ export async function POST(request: NextRequest) {
     void runConsultBookingIntegrations({
       userId: auth.user!.sub,
       userEmail: auth.user!.email,
+      cognitoSub: auth.user!.sub,
       booking,
     });
 

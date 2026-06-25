@@ -1,4 +1,9 @@
-import { serverSchedulingConfig } from "@/lib/scheduling/config";
+import {
+  resolveFreebusyCalendarIds,
+  schedulingWorkHoursConfig,
+  serverSchedulingConfig,
+} from "@/lib/scheduling/config";
+import { isSlotWithinConfiguredWorkHours } from "@/lib/scheduling/workHours";
 import { getCalendarApi } from "@/lib/scheduling/google/client";
 import { generateCandidateSlots, type BusyInterval } from "@/lib/scheduling/google/slotGeneration";
 import type { SchedulingAvailabilityResponse } from "@/lib/scheduling/types";
@@ -20,7 +25,6 @@ export const listAvailableSlots = async (options?: {
   horizonDays?: number;
 }): Promise<SchedulingAvailabilityResponse> => {
   const {
-    calendarId,
     timezone,
     availabilityHorizonDays,
     minLeadTimeHours,
@@ -32,26 +36,25 @@ export const listAvailableSlots = async (options?: {
   const to = new Date(from.getTime() + horizon * 24 * 60 * 60 * 1000);
 
   const api = await getCalendarApi();
+  const calendarIds = resolveFreebusyCalendarIds();
   const { data } = await api.freebusy.query({
     requestBody: {
       timeMin: from.toISOString(),
       timeMax: to.toISOString(),
       timeZone: timezone,
-      items: [{ id: calendarId }],
+      items: calendarIds.map((id) => ({ id })),
     },
   });
 
-  const busy = parseBusyIntervals(data.calendars ?? undefined, calendarId);
+  const busy = calendarIds.flatMap((calendarId) =>
+    parseBusyIntervals(data.calendars ?? undefined, calendarId)
+  );
   const slots = generateCandidateSlots({
     busy,
     from,
     to,
     config: {
-      timezone,
-      workDays: serverSchedulingConfig.workDays,
-      workHoursStart: serverSchedulingConfig.workHoursStart,
-      workHoursEnd: serverSchedulingConfig.workHoursEnd,
-      durationMinutes: serverSchedulingConfig.durationMinutes,
+      ...schedulingWorkHoursConfig(),
       bufferMinutes: serverSchedulingConfig.bufferMinutes,
       maxSlotsReturned: serverSchedulingConfig.maxSlotsReturned,
     },
@@ -64,18 +67,26 @@ export const isSlotStillAvailable = async (
   slotStart: string,
   slotEnd: string
 ): Promise<boolean> => {
-  const { calendarId, timezone } = serverSchedulingConfig;
+  const { timezone } = serverSchedulingConfig;
+  const workHours = schedulingWorkHoursConfig();
+  if (!isSlotWithinConfiguredWorkHours(slotStart, slotEnd, workHours)) {
+    return false;
+  }
+
+  const calendarIds = resolveFreebusyCalendarIds();
   const api = await getCalendarApi();
   const { data } = await api.freebusy.query({
     requestBody: {
       timeMin: slotStart,
       timeMax: slotEnd,
       timeZone: timezone,
-      items: [{ id: calendarId }],
+      items: calendarIds.map((id) => ({ id })),
     },
   });
 
-  const busy = parseBusyIntervals(data.calendars ?? undefined, calendarId);
+  const busy = calendarIds.flatMap((calendarId) =>
+    parseBusyIntervals(data.calendars ?? undefined, calendarId)
+  );
   const start = new Date(slotStart);
   const end = new Date(slotEnd);
   return !busy.some(

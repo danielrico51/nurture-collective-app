@@ -100,7 +100,8 @@ const SchedulingSlotPicker = ({
         Pick an open introductory call time
       </p>
       <p className="mt-1 text-xs text-nurture-charcoal/60">
-        These slots are live from our Google Calendar ({timezone}).
+        Times shown respect our configured booking hours (
+        {timezone.replace("_", " ")}).
       </p>
 
       {loading ? (

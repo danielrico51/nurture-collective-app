@@ -13,5 +13,8 @@ export async function GET() {
     configured: isGoogleSchedulingConfigured(),
     timezone: serverSchedulingConfig.timezone,
     durationMinutes: serverSchedulingConfig.durationMinutes,
+    workHoursStart: serverSchedulingConfig.workHoursStart,
+    workHoursEnd: serverSchedulingConfig.workHoursEnd,
+    workDays: serverSchedulingConfig.workDays,
   });
 }

@@ -38,7 +38,7 @@ export const getZonedParts = (date: Date, timeZone: string) => {
     month: Number(parts.month),
     day: Number(parts.day),
     weekday: parts.weekday,
-    hour: Number(parts.hour),
+    hour: Number(parts.hour) === 24 ? 0 : Number(parts.hour),
     minute: Number(parts.minute),
   };
 };

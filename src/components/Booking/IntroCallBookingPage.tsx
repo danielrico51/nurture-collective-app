@@ -1,6 +1,7 @@
 "use client";
 
 import SchedulingSlotPicker from "@/components/Intake/SchedulingSlotPicker";
+import BookingEmbedFrame from "@/components/Common/BookingEmbedFrame";
 import {
   buildBookingPageHref,
   buildBookingUrlWithPrefill,
@@ -176,7 +177,17 @@ const IntroCallBookingPage = () => {
             </label>
           </div>
 
-          {hasValidContact && liveSchedulingEnabled ? (
+          {hasValidContact && hasBooking() ? (
+            <div className="space-y-3">
+              <p className="text-sm text-nurture-charcoal/70">
+                Pick a time below. Available hours match our Google Bookings
+                calendar.
+              </p>
+              <BookingEmbedFrame />
+            </div>
+          ) : null}
+
+          {hasValidContact && liveSchedulingEnabled && !hasBooking() ? (
             <SchedulingSlotPicker
               conversationSessionId={prefill.conversationSessionId || undefined}
               attendee={attendee}
@@ -186,7 +197,7 @@ const IntroCallBookingPage = () => {
             />
           ) : null}
 
-          {hasValidContact && !liveSchedulingEnabled && hasBooking() ? (
+          {hasValidContact && !liveSchedulingEnabled && !hasBooking() ? (
             <div className="rounded-2xl border border-nurture-sage/20 bg-white/90 p-5 text-center">
               <p className="text-sm text-nurture-charcoal/75">
                 Live slots are unavailable right now. Open our booking calendar

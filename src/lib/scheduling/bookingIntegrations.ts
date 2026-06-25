@@ -2,6 +2,7 @@ import { serverBookingConfig } from "@/config/bookings";
 import { serverIntegrations } from "@/config/integrations";
 import { notifyConsultBooked } from "@/lib/integrations/slack";
 import { syncLeadFromConsultBooking } from "@/lib/leads/storage";
+import { resolveConsultBookingLeadCrmDecision } from "@/lib/scheduling/leadCrmEligibility";
 import { forwardToN8n } from "@/lib/webhooks/n8n";
 import type { ConsultBooking } from "@/lib/scheduling/types";
 import type { LeadRecord } from "@/types/lead";
@@ -9,8 +10,26 @@ import type { LeadRecord } from "@/types/lead";
 export const runConsultBookingIntegrations = async (input: {
   userId: string;
   userEmail?: string | null;
+  cognitoSub?: string | null;
   booking: ConsultBooking;
 }): Promise<LeadRecord | null> => {
+  const decision = await resolveConsultBookingLeadCrmDecision({
+    userId: input.userId,
+    userEmail: input.userEmail,
+    cognitoSub: input.cognitoSub,
+    attendeeEmail: input.booking.attendeeEmail,
+  });
+
+  if (!decision.sync) {
+    console.info("[scheduling] Skipping Lead CRM sync for consult booking", {
+      reason: decision.reason,
+      clientId: decision.clientId,
+      leadId: decision.leadId,
+      email: input.booking.attendeeEmail,
+    });
+    return null;
+  }
+
   let lead: LeadRecord | null = null;
   let isNewConsultSchedule = true;
 
