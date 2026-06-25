@@ -25,9 +25,26 @@ const authHeaders = async (): Promise<HeadersInit> => {
 };
 
 const handleResponse = async <T>(response: Response): Promise<T> => {
-  const data = await response.json().catch(() => ({}));
+  const text = await response.text();
+  let data: Record<string, unknown> = {};
+  if (text) {
+    try {
+      data = JSON.parse(text) as Record<string, unknown>;
+    } catch {
+      data = {};
+    }
+  }
   if (!response.ok) {
-    throw new Error(typeof data.error === "string" ? data.error : "Request failed");
+    const trimmed = text.trim();
+    const isHtmlError =
+      trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html");
+    const message =
+      typeof data.error === "string"
+        ? data.error
+        : isHtmlError
+          ? `Server error (${response.status}). The request may have timed out — try refreshing.`
+          : trimmed.slice(0, 200) || `Request failed (${response.status})`;
+    throw new Error(message);
   }
   return data as T;
 };

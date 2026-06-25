@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   handleClientsStorageError,
+  handleLeadsStorageError,
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
-import { getClientsCrmStorageScope } from "@/lib/clients/config";
-import { computeAllProviderStats } from "@/lib/schedule/providerStats";
+import {
+  describeClientsCrmStorageScope,
+  getClientsCrmStorageScope,
+} from "@/lib/clients/config";
+import { computeDashboardAnalytics } from "@/lib/dashboard/analytics";
+import { resolveDeploymentEnvironment } from "@/lib/storage/deploymentEnvironment";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -20,13 +25,19 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const stats = await computeAllProviderStats(year);
+    const analytics = await computeDashboardAnalytics(year);
     return NextResponse.json({
-      stats,
-      year,
-      storage: getClientsCrmStorageScope(),
+      analytics,
+      storage: {
+        clients: describeClientsCrmStorageScope(getClientsCrmStorageScope()),
+        leads: `Lead CRM (${resolveDeploymentEnvironment()} · leads/)`,
+      },
     });
   } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    if (message.includes("lead") || message.includes("Lead")) {
+      return handleLeadsStorageError(error);
+    }
     return handleClientsStorageError(error);
   }
 }

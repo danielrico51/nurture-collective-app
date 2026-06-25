@@ -1,29 +1,9 @@
-import { getClientsStorageMode } from "@/lib/clients/config";
-import { listLocalKeys, readLocalJson } from "@/lib/clients/localStorage";
-import {
-  listClientsKeys,
-  readClientsJson,
-} from "@/lib/clients/platformS3";
-import { listClients } from "@/lib/clients/storage";
 import { listProviders } from "@/lib/providers/storage";
-import { listPayoutsForEngagement } from "@/lib/schedule/payoutStorage";
 import {
-  buildEngagementListPrefix,
-  buildPackageListPrefix,
-  parseEngagementIdFromKey,
-} from "@/lib/schedule/paths";
+  engagementRef,
+  loadAllScheduleArtifacts,
+} from "@/lib/schedule/artifactLoader";
 import type { ProviderStats } from "@/types/provider";
-import type { EngagementPackage, ServiceEngagement } from "@/types/serviceEngagement";
-
-const listKeys = async (prefix: string): Promise<string[]> =>
-  getClientsStorageMode() === "local"
-    ? listLocalKeys(prefix)
-    : listClientsKeys(prefix);
-
-const readJson = async <T>(key: string): Promise<T | null> =>
-  getClientsStorageMode() === "local"
-    ? readLocalJson<T>(key)
-    : readClientsJson<T>(key);
 
 const emptyStats = (providerId: string): ProviderStats => ({
   providerId,
@@ -35,25 +15,6 @@ const emptyStats = (providerId: string): ProviderStats => ({
   ytdClientFeeCents: 0,
   ytdDoulaPayoutCents: 0,
 });
-
-const listPackagesForEngagement = async (
-  clientId: string,
-  engagementId: string
-): Promise<EngagementPackage[]> => {
-  const prefix = buildPackageListPrefix(clientId, engagementId);
-  const keys = (await listKeys(prefix)).filter((key) => key.endsWith("/package.json"));
-  const packages: EngagementPackage[] = [];
-  for (const key of keys) {
-    const record = await readJson<EngagementPackage>(key);
-    if (record) packages.push(record);
-  }
-  return packages;
-};
-
-const isYtdEngagement = (
-  engagement: ServiceEngagement,
-  year: number
-): boolean => engagement.scheduleYear === year;
 
 type MutableStats = ProviderStats & {
   engagementKeys: Set<string>;
@@ -99,7 +60,11 @@ const trackEngagement = (
 export const computeAllProviderStats = async (
   year = new Date().getFullYear()
 ): Promise<Record<string, ProviderStats>> => {
-  const providers = await listProviders({ includeArchived: true });
+  const [providers, artifacts] = await Promise.all([
+    listProviders({ includeArchived: true }),
+    loadAllScheduleArtifacts(),
+  ]);
+
   const statsMap = new Map<string, MutableStats>(
     providers.map((provider) => [
       provider.providerId,
@@ -111,62 +76,48 @@ export const computeAllProviderStats = async (
     ])
   );
 
-  const clients = await listClients();
+  for (const engagement of artifacts.engagements) {
+    const ref = engagementRef(engagement.clientId, engagement.engagementId);
+    const isYtd = engagement.scheduleYear === year;
+    const packages =
+      artifacts.packagesByEngagement.get(ref) ?? [];
+    const payouts = artifacts.payoutsByEngagement.get(ref) ?? [];
 
-  for (const client of clients) {
-    const prefix = buildEngagementListPrefix(client.clientId);
-    const engagementKeys = (await listKeys(prefix)).filter((key) =>
-      key.endsWith("/engagement.json")
-    );
+    const providersOnEngagement = new Set<string>();
+    if (engagement.primaryProviderId) {
+      providersOnEngagement.add(engagement.primaryProviderId);
+    }
+    for (const pkg of packages) {
+      if (pkg.providerId) providersOnEngagement.add(pkg.providerId);
+    }
+    for (const payout of payouts) {
+      providersOnEngagement.add(payout.providerId);
+    }
 
-    for (const engagementKey of engagementKeys) {
-      const engagementId = parseEngagementIdFromKey(engagementKey);
-      if (!engagementId) continue;
+    for (const providerId of Array.from(providersOnEngagement)) {
+      const stats = ensureStats(statsMap, providerId);
+      trackEngagement(
+        stats,
+        ref,
+        isYtd,
+        engagement.primaryProviderId === providerId
+      );
+    }
 
-      const engagement = await readJson<ServiceEngagement>(engagementKey);
-      if (!engagement) continue;
-
-      const engagementRef = `${client.clientId}:${engagementId}`;
-      const isYtd = isYtdEngagement(engagement, year);
-      const packages = await listPackagesForEngagement(client.clientId, engagementId);
-      const payouts = await listPayoutsForEngagement(client.clientId, engagementId);
-
-      const providersOnEngagement = new Set<string>();
-      if (engagement.primaryProviderId) {
-        providersOnEngagement.add(engagement.primaryProviderId);
+    for (const pkg of packages) {
+      if (!pkg.providerId) continue;
+      const stats = ensureStats(statsMap, pkg.providerId);
+      stats.lifetimeClientFeeCents += pkg.clientFeeCents;
+      if (isYtd) {
+        stats.ytdClientFeeCents += pkg.clientFeeCents;
       }
-      for (const pkg of packages) {
-        if (pkg.providerId) providersOnEngagement.add(pkg.providerId);
-      }
-      for (const payout of payouts) {
-        providersOnEngagement.add(payout.providerId);
-      }
+    }
 
-      for (const providerId of Array.from(providersOnEngagement)) {
-        const stats = ensureStats(statsMap, providerId);
-        trackEngagement(
-          stats,
-          engagementRef,
-          isYtd,
-          engagement.primaryProviderId === providerId
-        );
-      }
-
-      for (const pkg of packages) {
-        if (!pkg.providerId) continue;
-        const stats = ensureStats(statsMap, pkg.providerId);
-        stats.lifetimeClientFeeCents += pkg.clientFeeCents;
-        if (isYtd) {
-          stats.ytdClientFeeCents += pkg.clientFeeCents;
-        }
-      }
-
-      for (const payout of payouts) {
-        const stats = ensureStats(statsMap, payout.providerId);
-        stats.lifetimeDoulaPayoutCents += payout.amountCents;
-        if (isYtd) {
-          stats.ytdDoulaPayoutCents += payout.amountCents;
-        }
+    for (const payout of payouts) {
+      const stats = ensureStats(statsMap, payout.providerId);
+      stats.lifetimeDoulaPayoutCents += payout.amountCents;
+      if (isYtd) {
+        stats.ytdDoulaPayoutCents += payout.amountCents;
       }
     }
   }

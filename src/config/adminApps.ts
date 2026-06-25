@@ -1,6 +1,7 @@
 export type AdminAppStatus = "available" | "coming_soon";
 
 export type AdminAppIcon =
+  | "dashboard"
   | "tasks"
   | "intakes"
   | "leads"
@@ -24,6 +25,15 @@ export interface AdminApp {
 
 /** Registry of admin-only tools. Add new apps here as they are built. */
 export const ADMIN_APPS: AdminApp[] = [
+  {
+    id: "dashboard",
+    title: "Dashboard",
+    description:
+      "Analytics across engagements, revenue, doula payouts, and the lead booking pipeline.",
+    href: "/admin/dashboard",
+    status: "available",
+    icon: "dashboard",
+  },
   {
     id: "leads",
     title: "Lead CRM",

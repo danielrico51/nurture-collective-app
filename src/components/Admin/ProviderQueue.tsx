@@ -57,19 +57,33 @@ const ProviderQueue = () => {
   >({});
   const [statsYear, setStatsYear] = useState(new Date().getFullYear());
 
+  const [statsLoading, setStatsLoading] = useState(false);
+  const [statsError, setStatsError] = useState<string | null>(null);
+
+  const loadProviderStats = useCallback(async () => {
+    setStatsError(null);
+    setStatsLoading(true);
+    try {
+      const statsData = await fetchProviderStats();
+      setProviderStats(statsData.stats);
+      setStatsYear(statsData.year);
+    } catch (err) {
+      setStatsError(
+        err instanceof Error ? err.message : "Could not load provider stats"
+      );
+    } finally {
+      setStatsLoading(false);
+    }
+  }, []);
+
   const loadProviders = useCallback(async (options?: { background?: boolean }) => {
     const background = options?.background ?? false;
     setError(null);
     if (!background) setLoading(true);
     try {
-      const [data, statsData] = await Promise.all([
-        fetchAdminProviders(true),
-        fetchProviderStats(),
-      ]);
+      const data = await fetchAdminProviders(true);
       setProviders(data.providers);
       setStorageScope(data.storage ?? null);
-      setProviderStats(statsData.stats);
-      setStatsYear(statsData.year);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load providers");
     } finally {
@@ -79,7 +93,8 @@ const ProviderQueue = () => {
 
   useEffect(() => {
     void loadProviders();
-  }, [loadProviders]);
+    void loadProviderStats();
+  }, [loadProviders, loadProviderStats]);
 
   const filtered = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -142,13 +157,31 @@ const ProviderQueue = () => {
           </button>
           <button
             type="button"
-            onClick={() => void loadProviders({ background: true })}
+            onClick={() => {
+              void loadProviders({ background: true });
+              void loadProviderStats();
+            }}
             className="rounded-full border border-nurture-sage/30 px-4 py-2 text-sm font-medium text-nurture-sage-dark transition hover:bg-nurture-sage/10"
           >
             Refresh
           </button>
         </div>
       </div>
+
+      {statsError ? (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+          Job stats could not be loaded: {statsError}
+          <button
+            type="button"
+            onClick={() => void loadProviderStats()}
+            className="ml-2 underline hover:no-underline"
+          >
+            Retry stats
+          </button>
+        </div>
+      ) : statsLoading && providers.length > 0 ? (
+        <p className="text-xs text-nurture-charcoal/50">Refreshing job stats…</p>
+      ) : null}
 
       {showManualForm ? (
         <ProviderManualForm
@@ -305,7 +338,10 @@ const ProviderQueue = () => {
                       providers={providers}
                       stats={stats}
                       statsYear={statsYear}
-                      onChanged={() => void loadProviders({ background: true })}
+                      onChanged={() => {
+                        void loadProviders({ background: true });
+                        void loadProviderStats();
+                      }}
                     />
                   </div>
                 ) : null}
