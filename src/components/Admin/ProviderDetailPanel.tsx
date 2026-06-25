@@ -1,5 +1,7 @@
 "use client";
 
+import ProviderEngagementsPanel from "@/components/Admin/ProviderEngagementsPanel";
+import ProviderStatsSummary from "@/components/Admin/ProviderStatsSummary";
 import {
   PROVIDER_ROLE_LABELS,
   PROVIDER_STATUS_LABELS,
@@ -10,6 +12,7 @@ import {
   PROVIDER_STATUSES,
   type ProviderRecord,
   type ProviderRole,
+  type ProviderStats,
   type ProviderStatus,
 } from "@/types/provider";
 import { useEffect, useState } from "react";
@@ -17,11 +20,17 @@ import toast from "react-hot-toast";
 
 interface ProviderDetailPanelProps {
   provider: ProviderRecord;
+  providers: ProviderRecord[];
+  stats: ProviderStats;
+  statsYear: number;
   onChanged: () => void;
 }
 
 const ProviderDetailPanel = ({
   provider,
+  providers,
+  stats,
+  statsYear,
   onChanged,
 }: ProviderDetailPanelProps) => {
   const [displayName, setDisplayName] = useState(provider.displayName);
@@ -116,6 +125,7 @@ const ProviderDetailPanel = ({
 
   return (
     <div id="tour-providers-detail" className="space-y-4">
+      <ProviderStatsSummary stats={stats} year={statsYear} />
       <div className="grid gap-4 sm:grid-cols-2">
         <label className="block text-sm">
           <span className="font-medium text-nurture-charcoal">Display name</span>
@@ -232,6 +242,11 @@ const ProviderDetailPanel = ({
           </button>
         )}
       </div>
+      <ProviderEngagementsPanel
+        provider={provider}
+        providers={providers}
+        onChanged={onChanged}
+      />
     </div>
   );
 };

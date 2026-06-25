@@ -65,7 +65,24 @@ export interface UpdateProviderInput {
   restore?: boolean;
 }
 
+export interface ProviderStats {
+  providerId: string;
+  engagementCount: number;
+  primaryEngagementCount: number;
+  lifetimeClientFeeCents: number;
+  lifetimeDoulaPayoutCents: number;
+  ytdEngagementCount: number;
+  ytdClientFeeCents: number;
+  ytdDoulaPayoutCents: number;
+}
+
 export interface AdminProvidersResponse {
   providers: ProviderRecord[];
+  storage: ClientsCrmStorageScope;
+}
+
+export interface AdminProviderStatsResponse {
+  stats: Record<string, ProviderStats>;
+  year: number;
   storage: ClientsCrmStorageScope;
 }

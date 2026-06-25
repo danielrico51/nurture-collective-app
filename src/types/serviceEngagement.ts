@@ -52,7 +52,13 @@ export interface ServiceEngagement {
   status: EngagementStatus;
   /** Default payment method when invoicing the linked service. */
   preferredPaymentMethod: PaymentMethodId | null;
-  importSource?: { file: string; rowStart: number };
+  /** Set on spreadsheet imports so historic rows are distinguishable from live bookings. */
+  importSource?: {
+    file: string;
+    sheet: string;
+    rowStart: number;
+    importBatch?: string;
+  };
   createdAt: string;
   updatedAt: string;
   storageKey?: string;
@@ -309,4 +315,41 @@ export interface ClientEngagementsResponse {
 export interface ProviderPayoutReportResponse {
   payouts: ProviderPayoutReportRow[];
   storage: ClientsCrmStorageScope;
+}
+
+export type ProviderEngagementAssignmentRole =
+  | "primary"
+  | "package"
+  | "payout"
+  | "shift";
+
+export interface ProviderEngagementRow {
+  clientId: string;
+  clientName: string;
+  engagementId: string;
+  serviceType: EngagementServiceType;
+  scheduleYear: number;
+  bookDate: string;
+  estimatedDate: string | null;
+  status: EngagementStatus;
+  assignmentRoles: ProviderEngagementAssignmentRole[];
+  packageLabels: string[];
+  totalClientFeeCents: number;
+  totalDoulaFeeCents: number;
+  importSource: ServiceEngagement["importSource"] | null;
+}
+
+export interface AdminProviderEngagementsResponse {
+  engagements: ProviderEngagementRow[];
+  storage: ClientsCrmStorageScope;
+}
+
+export interface ReallocateProviderEngagementInput {
+  clientId: string;
+  engagementId: string;
+  targetProviderId: string;
+}
+
+export interface ReallocateProviderEngagementResponse {
+  updatedCount: number;
 }

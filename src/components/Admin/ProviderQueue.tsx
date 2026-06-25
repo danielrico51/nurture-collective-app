@@ -10,13 +10,16 @@ import TourHelpButton from "@/tour/TourHelpButton";
 import { useProvidersTourActions } from "@/tour/useProvidersTourActions";
 import {
   fetchAdminProviders,
+  fetchProviderStats,
   PROVIDER_ROLE_LABELS,
   PROVIDER_STATUS_LABELS,
 } from "@/lib/api/providersClient";
+import ProviderStatsSummary from "@/components/Admin/ProviderStatsSummary";
 import type {
   AdminProvidersResponse,
   ProviderRecord,
   ProviderRole,
+  ProviderStats,
   ProviderStatus,
 } from "@/types/provider";
 import { PROVIDER_ROLES, PROVIDER_STATUSES } from "@/types/provider";
@@ -49,15 +52,24 @@ const ProviderQueue = () => {
   const [storageScope, setStorageScope] = useState<
     AdminProvidersResponse["storage"] | null
   >(null);
+  const [providerStats, setProviderStats] = useState<
+    Record<string, ProviderStats>
+  >({});
+  const [statsYear, setStatsYear] = useState(new Date().getFullYear());
 
   const loadProviders = useCallback(async (options?: { background?: boolean }) => {
     const background = options?.background ?? false;
     setError(null);
     if (!background) setLoading(true);
     try {
-      const data = await fetchAdminProviders(true);
+      const [data, statsData] = await Promise.all([
+        fetchAdminProviders(true),
+        fetchProviderStats(),
+      ]);
       setProviders(data.providers);
       setStorageScope(data.storage ?? null);
+      setProviderStats(statsData.stats);
+      setStatsYear(statsData.year);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Could not load providers");
     } finally {
@@ -232,6 +244,17 @@ const ProviderQueue = () => {
           <ul className="space-y-3">
           {filtered.map((provider, index) => {
             const expanded = expandedId === provider.providerId;
+            const stats =
+              providerStats[provider.providerId] ?? {
+                providerId: provider.providerId,
+                engagementCount: 0,
+                primaryEngagementCount: 0,
+                lifetimeClientFeeCents: 0,
+                lifetimeDoulaPayoutCents: 0,
+                ytdEngagementCount: 0,
+                ytdClientFeeCents: 0,
+                ytdDoulaPayoutCents: 0,
+              };
             return (
               <li
                 key={provider.providerId}
@@ -267,6 +290,7 @@ const ProviderQueue = () => {
                         "No roles"}
                       {provider.email ? ` · ${provider.email}` : ""}
                     </p>
+                    <ProviderStatsSummary stats={stats} year={statsYear} compact />
                   </div>
                   <span
                     className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE[provider.status]}`}
@@ -278,6 +302,9 @@ const ProviderQueue = () => {
                   <div className="border-t border-nurture-sage/15 bg-nurture-cream/30 px-5 py-5">
                     <ProviderDetailPanel
                       provider={provider}
+                      providers={providers}
+                      stats={stats}
+                      statsYear={statsYear}
                       onChanged={() => void loadProviders({ background: true })}
                     />
                   </div>

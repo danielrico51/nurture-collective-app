@@ -6,6 +6,12 @@ import type {
   ProviderStatus,
   UpdateProviderInput,
 } from "@/types/provider";
+import type {
+  AdminProviderEngagementsResponse,
+  ReallocateProviderEngagementInput,
+  ReallocateProviderEngagementResponse,
+} from "@/types/serviceEngagement";
+import type { AdminProviderStatsResponse } from "@/types/provider";
 
 const authHeaders = async (): Promise<HeadersInit> => {
   const { fetchAuthSession } = await import("aws-amplify/auth");
@@ -85,4 +91,41 @@ export const PROVIDER_STATUS_LABELS: Record<ProviderStatus, string> = {
   active: "Active",
   inactive: "Inactive",
   archived: "Archived",
+};
+
+export const fetchProviderStats = async (
+  year?: number
+): Promise<AdminProviderStatsResponse> => {
+  const params =
+    year !== undefined ? `?year=${encodeURIComponent(String(year))}` : "";
+  const response = await fetch(`/api/admin/providers/stats${params}`, {
+    headers: await authHeaders(),
+    cache: "no-store",
+  });
+  return handleResponse(response);
+};
+
+export const fetchProviderEngagements = async (
+  providerId: string
+): Promise<AdminProviderEngagementsResponse> => {
+  const response = await fetch(
+    `/api/admin/providers/${encodeURIComponent(providerId)}/engagements`,
+    { headers: await authHeaders(), cache: "no-store" }
+  );
+  return handleResponse(response);
+};
+
+export const reallocateProviderEngagement = async (
+  providerId: string,
+  payload: ReallocateProviderEngagementInput
+): Promise<ReallocateProviderEngagementResponse> => {
+  const response = await fetch(
+    `/api/admin/providers/${encodeURIComponent(providerId)}/reallocate`,
+    {
+      method: "POST",
+      headers: await authHeaders(),
+      body: JSON.stringify(payload),
+    }
+  );
+  return handleResponse(response);
 };
