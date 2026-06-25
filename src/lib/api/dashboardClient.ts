@@ -1,5 +1,8 @@
 import { fetchWithRetry } from "@/lib/api/fetchWithRetry";
-import type { DashboardAnalyticsResponse } from "@/types/dashboard";
+import type {
+  DashboardEngagementAnalytics,
+  DashboardLeadAnalytics,
+} from "@/types/dashboard";
 
 const authHeaders = async (): Promise<HeadersInit> => {
   const { fetchAuthSession } = await import("aws-amplify/auth");
@@ -23,22 +26,48 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
     }
   }
   if (!response.ok) {
+    const trimmed = text.trim();
+    const isHtmlError =
+      trimmed.startsWith("<!DOCTYPE") || trimmed.startsWith("<html");
     const message =
       typeof data.error === "string"
         ? data.error
-        : text.slice(0, 200) || `Request failed (${response.status})`;
+        : isHtmlError
+          ? `Server error (${response.status}). The request may have timed out — try refreshing.`
+          : trimmed.slice(0, 200) || `Request failed (${response.status})`;
     throw new Error(message);
   }
   return data as T;
 };
 
-export const fetchDashboardAnalytics = async (
-  year?: number
-): Promise<DashboardAnalyticsResponse> => {
-  const params = year ? `?year=${year}` : "";
-  const response = await fetchWithRetry(`/api/admin/dashboard/analytics${params}`, {
+export const fetchDashboardLeads = async (): Promise<{
+  analytics: DashboardLeadAnalytics;
+  storage: { leads: string };
+}> => {
+  const response = await fetchWithRetry("/api/admin/dashboard/leads", {
     headers: await authHeaders(),
     cache: "no-store",
   });
-  return handleResponse<DashboardAnalyticsResponse>(response);
+  return handleResponse(response);
+};
+
+export const fetchDashboardEngagements = async (
+  year?: number,
+  refresh = false
+): Promise<{
+  analytics: DashboardEngagementAnalytics;
+  storage: { clients: string };
+}> => {
+  const params = new URLSearchParams();
+  if (year !== undefined) params.set("year", String(year));
+  if (refresh) params.set("refresh", "true");
+  const query = params.toString();
+  const response = await fetchWithRetry(
+    `/api/admin/dashboard/engagements${query ? `?${query}` : ""}`,
+    {
+      headers: await authHeaders(),
+      cache: "no-store",
+    }
+  );
+  return handleResponse(response);
 };

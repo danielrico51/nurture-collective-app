@@ -1,8 +1,15 @@
 "use client";
 
-import { fetchDashboardAnalytics } from "@/lib/api/dashboardClient";
+import {
+  fetchDashboardEngagements,
+  fetchDashboardLeads,
+} from "@/lib/api/dashboardClient";
 import { formatEngagementMoney } from "@/lib/api/scheduleClient";
-import type { DashboardAnalytics, DashboardMonthlyCount } from "@/types/dashboard";
+import type {
+  DashboardEngagementAnalytics,
+  DashboardLeadAnalytics,
+  DashboardMonthlyCount,
+} from "@/types/dashboard";
 import type { LeadStatus } from "@/types/lead";
 import Link from "next/link";
 import { useCallback, useEffect, useState } from "react";
@@ -94,59 +101,97 @@ const KpiCard = ({
   </div>
 );
 
+const SectionSkeleton = ({ label }: { label: string }) => (
+  <div className="rounded-2xl border border-nurture-sage/15 bg-white/60 p-5">
+    <p className="text-sm text-nurture-charcoal/55">{label}</p>
+  </div>
+);
+
 const DashboardAnalyticsView = () => {
   const currentYear = new Date().getFullYear();
   const [year, setYear] = useState(currentYear);
-  const [analytics, setAnalytics] = useState<DashboardAnalytics | null>(null);
+  const [leadAnalytics, setLeadAnalytics] = useState<DashboardLeadAnalytics | null>(null);
+  const [engagementAnalytics, setEngagementAnalytics] =
+    useState<DashboardEngagementAnalytics | null>(null);
   const [storageLabel, setStorageLabel] = useState("");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [leadsLoading, setLeadsLoading] = useState(true);
+  const [engagementsLoading, setEngagementsLoading] = useState(true);
+  const [leadsError, setLeadsError] = useState<string | null>(null);
+  const [engagementsError, setEngagementsError] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    setLoading(true);
-    setError(null);
+  const loadLeads = useCallback(async () => {
+    setLeadsError(null);
+    setLeadsLoading(true);
     try {
-      const response = await fetchDashboardAnalytics(year);
-      setAnalytics(response.analytics);
-      setStorageLabel(`${response.storage.clients} · ${response.storage.leads}`);
+      const response = await fetchDashboardLeads();
+      setLeadAnalytics(response.analytics);
+      setStorageLabel((current) =>
+        current.includes(response.storage.leads)
+          ? current
+          : [current, response.storage.leads].filter(Boolean).join(" · ")
+      );
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to load analytics");
+      setLeadsError(err instanceof Error ? err.message : "Failed to load lead analytics");
     } finally {
-      setLoading(false);
+      setLeadsLoading(false);
     }
-  }, [year]);
+  }, []);
+
+  const loadEngagements = useCallback(
+    async (refresh = false) => {
+      setEngagementsError(null);
+      setEngagementsLoading(true);
+      try {
+        const response = await fetchDashboardEngagements(year, refresh);
+        setEngagementAnalytics(response.analytics);
+        setStorageLabel((current) =>
+          current.includes(response.storage.clients)
+            ? current
+            : [response.storage.clients, current].filter(Boolean).join(" · ")
+        );
+      } catch (err) {
+        setEngagementsError(
+          err instanceof Error ? err.message : "Failed to load engagement analytics"
+        );
+      } finally {
+        setEngagementsLoading(false);
+      }
+    },
+    [year]
+  );
 
   useEffect(() => {
-    load();
-  }, [load]);
+    void loadLeads();
+  }, [loadLeads]);
 
-  if (loading && !analytics) {
+  useEffect(() => {
+    void loadEngagements();
+  }, [loadEngagements]);
+
+  const refreshAll = () => {
+    void loadLeads();
+    void loadEngagements(true);
+  };
+
+  const loading = leadsLoading && engagementsLoading && !leadAnalytics && !engagementAnalytics;
+  const leads = leadAnalytics?.leads;
+  const summary = engagementAnalytics?.summary;
+  const byYear = engagementAnalytics?.byYear ?? [];
+  const byServiceType = engagementAnalytics?.byServiceType;
+  const byStatus = engagementAnalytics?.byStatus;
+  const topProviders = engagementAnalytics?.topProviders ?? [];
+  const ytdYearBucket = byYear.find((b) => b.year === year);
+  const totalServiceCount = byServiceType
+    ? byServiceType.birth.count +
+      byServiceType.postpartum.count +
+      byServiceType.other.count
+    : 0;
+
+  if (loading) {
     return (
       <p className="text-sm text-nurture-charcoal/60">Loading dashboard analytics…</p>
     );
   }
-
-  if (error && !analytics) {
-    return (
-      <div className="rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-        {error}
-        <button
-          type="button"
-          onClick={load}
-          className="ml-3 underline hover:no-underline"
-        >
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  if (!analytics) return null;
-
-  const { summary, byYear, byServiceType, byStatus, leads, topProviders } = analytics;
-  const ytdYearBucket = byYear.find((b) => b.year === year);
-  const totalServiceCount =
-    byServiceType.birth.count + byServiceType.postpartum.count + byServiceType.other.count;
 
   return (
     <div className="space-y-8">
@@ -180,66 +225,111 @@ const DashboardAnalyticsView = () => {
           </select>
           <button
             type="button"
-            onClick={load}
-            disabled={loading}
+            onClick={refreshAll}
+            disabled={leadsLoading || engagementsLoading}
             className="rounded-lg border border-nurture-sage/25 px-3 py-1.5 text-sm text-nurture-sage-dark hover:bg-nurture-sage/10 disabled:opacity-50"
           >
-            {loading ? "Refreshing…" : "Refresh"}
+            {leadsLoading || engagementsLoading ? "Refreshing…" : "Refresh"}
           </button>
         </div>
       </div>
 
+      {engagementsError ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Engagement stats: {engagementsError}
+          <button
+            type="button"
+            onClick={() => void loadEngagements(true)}
+            className="ml-2 underline hover:no-underline"
+          >
+            Retry
+          </button>
+        </div>
+      ) : null}
+
+      {leadsError ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Lead stats: {leadsError}
+          <button
+            type="button"
+            onClick={() => void loadLeads()}
+            className="ml-2 underline hover:no-underline"
+          >
+            Retry
+          </button>
+        </div>
+      ) : null}
+
       {/* KPI row */}
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label={`${year} client revenue`}
-          value={formatEngagementMoney(summary.ytdClientFeeCents)}
-          detail={`${summary.ytdEngagementCount} engagements · margin ${formatEngagementMoney(summary.ytdMarginCents)}`}
-          highlight
-        />
-        <KpiCard
-          label={`${year} doula payouts`}
-          value={formatEngagementMoney(summary.ytdDoulaPayoutCents)}
-          detail="Package-attributed payouts"
-        />
-        <KpiCard
-          label="Upcoming jobs"
-          value={summary.upcomingEngagements}
-          detail={`${summary.completedEngagements} completed · ${summary.cancelledEngagements} cancelled`}
-        />
-        <KpiCard
-          label="Active clients"
-          value={summary.activeClients}
-          detail={`${summary.totalClients} total in CRM`}
-        />
-      </div>
+      {summary ? (
+        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+          <KpiCard
+            label={`${year} client revenue`}
+            value={formatEngagementMoney(summary.ytdClientFeeCents)}
+            detail={`${summary.ytdEngagementCount} engagements · margin ${formatEngagementMoney(summary.ytdMarginCents)}`}
+            highlight
+          />
+          <KpiCard
+            label={`${year} doula payouts`}
+            value={formatEngagementMoney(summary.ytdDoulaPayoutCents)}
+            detail="Package-attributed payouts"
+          />
+          <KpiCard
+            label="Upcoming jobs"
+            value={summary.upcomingEngagements}
+            detail={`${summary.completedEngagements} completed · ${summary.cancelledEngagements} cancelled`}
+          />
+          <KpiCard
+            label="Active clients"
+            value={summary.activeClients}
+            detail={`${summary.totalClients} total in CRM`}
+          />
+        </div>
+      ) : engagementsLoading ? (
+        <SectionSkeleton label="Loading engagement KPIs…" />
+      ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        <KpiCard
-          label="Total engagements"
-          value={summary.totalEngagements}
-          detail={`${summary.historicEngagements} historic import · ${summary.liveEngagements} live`}
-        />
-        <KpiCard
-          label="Intro calls booked"
-          value={leads.consultScheduled}
-          detail={`${leads.newThisMonth} new leads this month`}
-        />
-        <KpiCard
-          label="Pipeline conversion"
-          value={leads.conversionRate != null ? `${leads.conversionRate}%` : "—"}
-          detail={`${leads.converted} converted · ${leads.lost} lost`}
-        />
-        <KpiCard
-          label="Active leads"
-          value={leads.active}
-          detail={`${leads.total} total including archived`}
-        />
+        {summary ? (
+          <KpiCard
+            label="Total engagements"
+            value={summary.totalEngagements}
+            detail={`${summary.historicEngagements} historic import · ${summary.liveEngagements} live`}
+          />
+        ) : engagementsLoading ? (
+          <SectionSkeleton label="Loading engagements…" />
+        ) : null}
+        {leads ? (
+          <>
+            <KpiCard
+              label="Intro calls booked"
+              value={leads.consultScheduled}
+              detail={`${leads.newThisMonth} new leads this month`}
+            />
+            <KpiCard
+              label="Pipeline conversion"
+              value={leads.conversionRate != null ? `${leads.conversionRate}%` : "—"}
+              detail={`${leads.converted} converted · ${leads.lost} lost`}
+            />
+            <KpiCard
+              label="Active leads"
+              value={leads.active}
+              detail={`${leads.total} total including archived`}
+            />
+          </>
+        ) : leadsLoading ? (
+          <>
+            <SectionSkeleton label="Loading leads…" />
+            <SectionSkeleton label="Loading leads…" />
+            <SectionSkeleton label="Loading leads…" />
+          </>
+        ) : null}
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">
         {/* Lead funnel */}
-        <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
+        {leads ? (
+          <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
           <div className="flex items-center justify-between gap-2">
             <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
               Lead pipeline
@@ -279,8 +369,12 @@ const DashboardAnalyticsView = () => {
             })}
           </ul>
         </section>
+        ) : leadsLoading ? (
+          <SectionSkeleton label="Loading lead pipeline…" />
+        ) : null}
 
         {/* Service mix */}
+        {byServiceType && byStatus ? (
         <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
           <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
             Service mix (all time)
@@ -330,32 +424,44 @@ const DashboardAnalyticsView = () => {
             ))}
           </div>
         </section>
+        ) : engagementsLoading ? (
+          <SectionSkeleton label="Loading service mix…" />
+        ) : null}
       </div>
 
       {/* Trends */}
       <div className="grid gap-6 lg:grid-cols-2">
+        {leadAnalytics ? (
         <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
           <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
             New leads (12 months)
           </h3>
           <div className="mt-4">
-            <MiniBarChart data={analytics.monthlyLeads} />
+            <MiniBarChart data={leadAnalytics.monthlyLeads} />
           </div>
         </section>
+        ) : leadsLoading ? (
+          <SectionSkeleton label="Loading lead trends…" />
+        ) : null}
+        {engagementAnalytics ? (
         <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
           <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
             Engagement book dates (12 months)
           </h3>
           <div className="mt-4">
             <MiniBarChart
-              data={analytics.monthlyEngagementBookings}
+              data={engagementAnalytics.monthlyEngagementBookings}
               colorClass="bg-nurture-sage-dark"
             />
           </div>
         </section>
+        ) : engagementsLoading ? (
+          <SectionSkeleton label="Loading booking trends…" />
+        ) : null}
       </div>
 
       {/* Year table + top providers */}
+      {engagementAnalytics ? (
       <div className="grid gap-6 lg:grid-cols-2">
         <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
           <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
@@ -456,11 +562,20 @@ const DashboardAnalyticsView = () => {
           )}
         </section>
       </div>
+      ) : engagementsLoading ? (
+        <SectionSkeleton label="Loading revenue and provider tables…" />
+      ) : null}
 
+      {engagementAnalytics ? (
       <p className="text-xs text-nurture-charcoal/40">
-        Generated {new Date(analytics.generatedAt).toLocaleString()} · Historic rows tagged
-        via import source are counted separately from live CRM bookings.
+        Engagement data indexed {new Date(engagementAnalytics.indexLoadedAt).toLocaleString()}
+        {leadAnalytics
+          ? ` · leads updated ${new Date(leadAnalytics.generatedAt).toLocaleString()}`
+          : ""}
+        {" · "}Historic rows tagged via import source are counted separately from live CRM
+        bookings.
       </p>
+      ) : null}
     </div>
   );
 };

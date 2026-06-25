@@ -2,7 +2,7 @@ import { listProviders } from "@/lib/providers/storage";
 import {
   engagementRef,
   loadAllScheduleArtifacts,
-} from "@/lib/schedule/artifactLoader";
+} from "@/lib/clients/crmIndexLoader";
 import type { ProviderStats } from "@/types/provider";
 
 const emptyStats = (providerId: string): ProviderStats => ({

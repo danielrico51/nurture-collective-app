@@ -23,6 +23,50 @@ export interface DashboardTopProvider {
   ytdDoulaPayoutCents: number;
 }
 
+export interface DashboardLeadAnalytics {
+  generatedAt: string;
+  leads: {
+    total: number;
+    active: number;
+    byStatus: Partial<Record<LeadStatus, number>>;
+    consultScheduled: number;
+    converted: number;
+    lost: number;
+    newThisMonth: number;
+    conversionRate: number | null;
+  };
+  monthlyLeads: DashboardMonthlyCount[];
+}
+
+export interface DashboardEngagementAnalytics {
+  generatedAt: string;
+  year: number;
+  indexLoadedAt: string;
+  summary: {
+    totalEngagements: number;
+    historicEngagements: number;
+    liveEngagements: number;
+    totalClients: number;
+    activeClients: number;
+    ytdEngagementCount: number;
+    ytdClientFeeCents: number;
+    ytdDoulaPayoutCents: number;
+    ytdMarginCents: number;
+    upcomingEngagements: number;
+    completedEngagements: number;
+    cancelledEngagements: number;
+  };
+  byYear: DashboardYearBucket[];
+  byServiceType: Record<
+    EngagementServiceType,
+    { count: number; clientFeeCents: number }
+  >;
+  byStatus: Record<EngagementStatus, number>;
+  monthlyEngagementBookings: DashboardMonthlyCount[];
+  topProviders: DashboardTopProvider[];
+}
+
+/** @deprecated Combined payload — prefer split lead + engagement endpoints. */
 export interface DashboardAnalytics {
   generatedAt: string;
   year: number;

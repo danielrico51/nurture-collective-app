@@ -1,12 +1,9 @@
-import { listClients } from "@/lib/clients/storage";
-import { listCrmLeads } from "@/lib/leads/storage";
+import { loadCrmStorageIndex, engagementRef } from "@/lib/clients/crmIndexLoader";
+import { listAllLeads } from "@/lib/leads/storage";
 import { listProviders } from "@/lib/providers/storage";
-import {
-  engagementRef,
-  loadAllScheduleArtifacts,
-} from "@/lib/schedule/artifactLoader";
 import type {
-  DashboardAnalytics,
+  DashboardEngagementAnalytics,
+  DashboardLeadAnalytics,
   DashboardMonthlyCount,
   DashboardYearBucket,
 } from "@/types/dashboard";
@@ -84,22 +81,84 @@ const CONVERTED_STATUSES: LeadStatus[] = [
   "under_contract",
 ];
 
-export const computeDashboardAnalytics = async (
-  year = new Date().getFullYear()
-): Promise<DashboardAnalytics> => {
+const engagementAnalyticsCache = new Map<
+  number,
+  { expiresAt: number; data: DashboardEngagementAnalytics }
+>();
+
+const ENGAGEMENT_CACHE_TTL_MS = 5 * 60 * 1000;
+
+export const computeDashboardLeadAnalytics = async (): Promise<DashboardLeadAnalytics> => {
   const today = todayIso();
   const monthStart = `${today.slice(0, 7)}-01`;
   const lastMonths = buildLastMonths(12);
   const monthlyLeadMap = new Map(lastMonths.map((m) => [m, 0]));
+
+  const leads = await listAllLeads();
+  const activeLeads = leads.filter((l) => !l.archivedAt);
+  const byLeadStatus: Partial<Record<LeadStatus, number>> = {};
+  let consultScheduled = 0;
+  let converted = 0;
+  let lost = 0;
+  let newThisMonth = 0;
+
+  for (const lead of activeLeads) {
+    byLeadStatus[lead.status] = (byLeadStatus[lead.status] ?? 0) + 1;
+    if (lead.status === "consult_scheduled") consultScheduled += 1;
+    if (CONVERTED_STATUSES.includes(lead.status)) converted += 1;
+    if (lead.status === "lost") lost += 1;
+    if (lead.createdAt >= monthStart) newThisMonth += 1;
+
+    const leadMonth = monthKey(lead.createdAt);
+    if (leadMonth && monthlyLeadMap.has(leadMonth)) {
+      monthlyLeadMap.set(leadMonth, (monthlyLeadMap.get(leadMonth) ?? 0) + 1);
+    }
+  }
+
+  const funnelDenominator = activeLeads.filter(
+    (l) => l.status !== "lost" && l.status !== "stale"
+  ).length;
+  const conversionRate =
+    funnelDenominator > 0 ? Math.round((converted / funnelDenominator) * 1000) / 10 : null;
+
+  return {
+    generatedAt: new Date().toISOString(),
+    leads: {
+      total: leads.length,
+      active: activeLeads.length,
+      byStatus: byLeadStatus,
+      consultScheduled,
+      converted,
+      lost,
+      newThisMonth,
+      conversionRate,
+    },
+    monthlyLeads: lastMonths.map((month) => ({
+      month,
+      count: monthlyLeadMap.get(month) ?? 0,
+    })),
+  };
+};
+
+export const computeDashboardEngagementAnalytics = async (
+  year = new Date().getFullYear(),
+  options?: { force?: boolean }
+): Promise<DashboardEngagementAnalytics> => {
+  const cached = engagementAnalyticsCache.get(year);
+  if (!options?.force && cached && cached.expiresAt > Date.now()) {
+    return cached.data;
+  }
+
+  const today = todayIso();
+  const lastMonths = buildLastMonths(12);
   const monthlyBookingMap = new Map(lastMonths.map((m) => [m, 0]));
 
-  const [clients, leads, providers, artifacts] = await Promise.all([
-    listClients(),
-    listCrmLeads(),
+  const [crmIndex, providers] = await Promise.all([
+    loadCrmStorageIndex({ force: options?.force }),
     listProviders({ includeArchived: true }),
-    loadAllScheduleArtifacts(),
   ]);
 
+  const { clientSummaries, schedule: artifacts } = crmIndex;
   const providerNames = new Map(
     providers.map((p) => [p.providerId, p.displayName || p.providerId])
   );
@@ -198,35 +257,9 @@ export const computeDashboardAnalytics = async (
     }
   }
 
-  const activeClients = clients.filter(
+  const activeClients = clientSummaries.filter(
     (c) => c.status === "active" && !c.archivedAt
   ).length;
-
-  const activeLeads = leads.filter((l) => !l.archivedAt);
-  const byLeadStatus: Partial<Record<LeadStatus, number>> = {};
-  let consultScheduled = 0;
-  let converted = 0;
-  let lost = 0;
-  let newThisMonth = 0;
-
-  for (const lead of activeLeads) {
-    byLeadStatus[lead.status] = (byLeadStatus[lead.status] ?? 0) + 1;
-    if (lead.status === "consult_scheduled") consultScheduled += 1;
-    if (CONVERTED_STATUSES.includes(lead.status)) converted += 1;
-    if (lead.status === "lost") lost += 1;
-    if (lead.createdAt >= monthStart) newThisMonth += 1;
-
-    const leadMonth = monthKey(lead.createdAt);
-    if (leadMonth && monthlyLeadMap.has(leadMonth)) {
-      monthlyLeadMap.set(leadMonth, (monthlyLeadMap.get(leadMonth) ?? 0) + 1);
-    }
-  }
-
-  const funnelDenominator = activeLeads.filter(
-    (l) => l.status !== "lost" && l.status !== "stale"
-  ).length;
-  const conversionRate =
-    funnelDenominator > 0 ? Math.round((converted / funnelDenominator) * 1000) / 10 : null;
 
   const topProviders = Array.from(providerYtd.entries())
     .map(([providerId, stats]) => ({
@@ -239,26 +272,15 @@ export const computeDashboardAnalytics = async (
     .sort((a, b) => b.ytdClientFeeCents - a.ytdClientFeeCents)
     .slice(0, 10);
 
-  const monthlyLeads: DashboardMonthlyCount[] = lastMonths.map((month) => ({
-    month,
-    count: monthlyLeadMap.get(month) ?? 0,
-  }));
-
-  const monthlyEngagementBookings: DashboardMonthlyCount[] = lastMonths.map((month) => ({
-    month,
-    count: monthlyBookingMap.get(month) ?? 0,
-  }));
-
-  const byYear = Array.from(yearMap.values()).sort((a, b) => a.year - b.year);
-
-  return {
+  const data: DashboardEngagementAnalytics = {
     generatedAt: new Date().toISOString(),
     year,
+    indexLoadedAt: crmIndex.loadedAt,
     summary: {
       totalEngagements,
       historicEngagements,
       liveEngagements,
-      totalClients: clients.length,
+      totalClients: clientSummaries.length,
       activeClients,
       ytdEngagementCount,
       ytdClientFeeCents,
@@ -268,21 +290,20 @@ export const computeDashboardAnalytics = async (
       completedEngagements,
       cancelledEngagements,
     },
-    byYear,
+    byYear: Array.from(yearMap.values()).sort((a, b) => a.year - b.year),
     byServiceType,
     byStatus,
-    leads: {
-      total: leads.length,
-      active: activeLeads.length,
-      byStatus: byLeadStatus,
-      consultScheduled,
-      converted,
-      lost,
-      newThisMonth,
-      conversionRate,
-    },
-    monthlyLeads,
-    monthlyEngagementBookings,
+    monthlyEngagementBookings: lastMonths.map((month) => ({
+      month,
+      count: monthlyBookingMap.get(month) ?? 0,
+    })),
     topProviders,
   };
+
+  engagementAnalyticsCache.set(year, {
+    expiresAt: Date.now() + ENGAGEMENT_CACHE_TTL_MS,
+    data,
+  });
+
+  return data;
 };
