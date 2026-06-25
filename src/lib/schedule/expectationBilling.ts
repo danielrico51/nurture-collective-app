@@ -56,13 +56,15 @@ export const syncDepositExpectationToServiceInvoice = async (
       serviceId,
       expectation.invoiceId
     );
-    if (existingInvoice && paidAtIso && existingInvoice.status !== "paid") {
-      await markServiceInvoicePaid(clientId, serviceId, expectation.invoiceId, {
-        provider,
-        paidAt: paidAtIso,
-      });
+    if (existingInvoice) {
+      if (paidAtIso && existingInvoice.status !== "paid") {
+        await markServiceInvoicePaid(clientId, serviceId, expectation.invoiceId, {
+          provider,
+          paidAt: paidAtIso,
+        });
+      }
+      return expectation;
     }
-    return expectation;
   }
 
   const invoice = await createServiceInvoice(clientId, serviceId, {

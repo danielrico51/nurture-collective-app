@@ -8,6 +8,8 @@ import {
   createClientService,
   listClientServicesWithInvoices,
 } from "@/lib/client-services/storage";
+import { ensureAllEngagementDepositInvoicesSynced } from "@/lib/schedule/engagementBillingSync";
+import { listEngagementIdsForClient } from "@/lib/schedule/storage";
 import type { CreateClientServiceInput } from "@/types/clientService";
 
 export const dynamic = "force-dynamic";
@@ -19,6 +21,8 @@ export async function GET(request: NextRequest, { params }: RouteContext) {
   if (auth.error) return auth.error;
 
   try {
+    const engagementIds = await listEngagementIdsForClient(params.id);
+    await ensureAllEngagementDepositInvoicesSynced(params.id, engagementIds);
     const services = await listClientServicesWithInvoices(params.id);
     return NextResponse.json({ services });
   } catch (error) {

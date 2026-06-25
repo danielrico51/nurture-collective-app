@@ -21,6 +21,7 @@ import {
   updateProviderPayoutBatch,
 } from "@/lib/schedule/payoutStorage";
 import { syncDepositExpectationToServiceInvoice } from "@/lib/schedule/expectationBilling";
+import { ensureEngagementDepositInvoicesSynced } from "@/lib/schedule/engagementBillingSync";
 import { savePaymentExpectation } from "@/lib/schedule/expectationStorage";
 import {
   createScheduleShift,
@@ -174,6 +175,7 @@ const buildEngagementDetails = async (
   engagement: ServiceEngagement
 ): Promise<ServiceEngagementWithDetails> => {
   const packages = await listPackagesForEngagement(clientId, engagement.engagementId);
+  await ensureEngagementDepositInvoicesSynced(clientId, engagement);
   const expectations = await listExpectationsForEngagement(
     clientId,
     engagement.engagementId
