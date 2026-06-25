@@ -1,115 +1,29 @@
 "use client";
 
+import DashboardOverviewTab from "@/components/Admin/DashboardOverviewTab";
+import DashboardTrendsTab from "@/components/Admin/DashboardTrendsTab";
 import {
   fetchDashboardEngagements,
   fetchDashboardLeads,
 } from "@/lib/api/dashboardClient";
-import { formatEngagementMoney } from "@/lib/api/scheduleClient";
 import type {
   DashboardEngagementAnalytics,
   DashboardLeadAnalytics,
-  DashboardMonthlyCount,
 } from "@/types/dashboard";
-import type { LeadStatus } from "@/types/lead";
-import Link from "next/link";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-const LEAD_STATUS_LABELS: Partial<Record<LeadStatus, string>> = {
-  new: "New",
-  intake_in_progress: "Intake in progress",
-  intake_completed: "Intake completed",
-  consult_scheduled: "Consult scheduled",
-  consult_completed: "Consult completed",
-  send_to_doula: "Send to doula",
-  proposal_sent: "Proposal sent",
-  qualified: "Qualified",
-  lost: "Lost",
-  stale: "Stale",
-  converted: "Converted",
-  converted_to_member: "Member",
-  under_contract: "Under contract",
-};
+type DashboardTab = "overview" | "trends";
 
-const FUNNEL_STATUSES: LeadStatus[] = [
-  "new",
-  "intake_in_progress",
-  "intake_completed",
-  "consult_scheduled",
-  "consult_completed",
-  "proposal_sent",
-  "converted_to_member",
-  "under_contract",
+const DASHBOARD_TABS: { id: DashboardTab; label: string }[] = [
+  { id: "overview", label: "Overview" },
+  { id: "trends", label: "Trends & growth" },
 ];
-
-const formatMonthLabel = (month: string): string => {
-  const [y, m] = month.split("-");
-  const date = new Date(Number(y), Number(m) - 1, 1);
-  return date.toLocaleDateString("en-US", { month: "short", year: "2-digit" });
-};
-
-const MiniBarChart = ({
-  data,
-  colorClass = "bg-nurture-sage",
-}: {
-  data: DashboardMonthlyCount[];
-  colorClass?: string;
-}) => {
-  const max = Math.max(1, ...data.map((d) => d.count));
-  return (
-    <div className="flex h-28 items-end gap-1">
-      {data.map((row) => (
-        <div key={row.month} className="group flex flex-1 flex-col items-center gap-1">
-          <div className="relative flex w-full flex-1 items-end">
-            <div
-              className={`w-full rounded-t transition ${colorClass} opacity-80 group-hover:opacity-100`}
-              style={{ height: `${Math.max(4, (row.count / max) * 100)}%` }}
-              title={`${formatMonthLabel(row.month)}: ${row.count}`}
-            />
-          </div>
-          <span className="hidden text-[10px] text-nurture-charcoal/40 sm:block">
-            {formatMonthLabel(row.month).split(" ")[0]}
-          </span>
-        </div>
-      ))}
-    </div>
-  );
-};
-
-const KpiCard = ({
-  label,
-  value,
-  detail,
-  highlight,
-}: {
-  label: string;
-  value: string | number;
-  detail?: string;
-  highlight?: boolean;
-}) => (
-  <div
-    className={`rounded-xl border px-4 py-3 ${
-      highlight
-        ? "border-nurture-sage/30 bg-nurture-sage/5"
-        : "border-nurture-sage/15 bg-white/90"
-    }`}
-  >
-    <p className="text-xs uppercase tracking-wide text-nurture-charcoal/45">{label}</p>
-    <p className="mt-1 text-2xl font-semibold text-nurture-charcoal">{value}</p>
-    {detail ? (
-      <p className="mt-1 text-xs text-nurture-charcoal/50">{detail}</p>
-    ) : null}
-  </div>
-);
-
-const SectionSkeleton = ({ label }: { label: string }) => (
-  <div className="rounded-2xl border border-nurture-sage/15 bg-white/60 p-5">
-    <p className="text-sm text-nurture-charcoal/55">{label}</p>
-  </div>
-);
 
 const DashboardAnalyticsView = () => {
   const currentYear = new Date().getFullYear();
+  const [tab, setTab] = useState<DashboardTab>("overview");
   const [year, setYear] = useState(currentYear);
+  const [trendYear, setTrendYear] = useState(currentYear);
   const [leadAnalytics, setLeadAnalytics] = useState<DashboardLeadAnalytics | null>(null);
   const [engagementAnalytics, setEngagementAnalytics] =
     useState<DashboardEngagementAnalytics | null>(null);
@@ -173,19 +87,22 @@ const DashboardAnalyticsView = () => {
     void loadEngagements(true);
   };
 
-  const loading = leadsLoading && engagementsLoading && !leadAnalytics && !engagementAnalytics;
-  const leads = leadAnalytics?.leads;
-  const summary = engagementAnalytics?.summary;
-  const byYear = engagementAnalytics?.byYear ?? [];
-  const byServiceType = engagementAnalytics?.byServiceType;
-  const byStatus = engagementAnalytics?.byStatus;
-  const topProviders = engagementAnalytics?.topProviders ?? [];
-  const ytdYearBucket = byYear.find((b) => b.year === year);
-  const totalServiceCount = byServiceType
-    ? byServiceType.birth.count +
-      byServiceType.postpartum.count +
-      byServiceType.other.count
-    : 0;
+  const yearOptions = useMemo(() => {
+    const years = new Set<number>([currentYear, year, trendYear]);
+    for (const row of engagementAnalytics?.byYear ?? []) {
+      years.add(row.year);
+    }
+    for (const row of engagementAnalytics?.monthlyBookingsHistory ?? []) {
+      years.add(Number(row.month.slice(0, 4)));
+    }
+    for (const row of leadAnalytics?.monthlyLeadsHistory ?? []) {
+      years.add(Number(row.month.slice(0, 4)));
+    }
+    return Array.from(years).sort((a, b) => b - a);
+  }, [currentYear, year, trendYear, engagementAnalytics, leadAnalytics]);
+
+  const loading =
+    leadsLoading && engagementsLoading && !leadAnalytics && !engagementAnalytics;
 
   if (loading) {
     return (
@@ -194,7 +111,7 @@ const DashboardAnalyticsView = () => {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
@@ -207,22 +124,26 @@ const DashboardAnalyticsView = () => {
             <p className="mt-1 text-xs text-nurture-charcoal/45">{storageLabel}</p>
           ) : null}
         </div>
-        <div className="flex items-center gap-2">
-          <label className="text-sm text-nurture-charcoal/60" htmlFor="dashboard-year">
-            YTD year
-          </label>
-          <select
-            id="dashboard-year"
-            value={year}
-            onChange={(e) => setYear(Number(e.target.value))}
-            className="rounded-lg border border-nurture-sage/25 bg-white px-3 py-1.5 text-sm"
-          >
-            {Array.from({ length: 8 }, (_, i) => currentYear - i + 1).map((y) => (
-              <option key={y} value={y}>
-                {y}
-              </option>
-            ))}
-          </select>
+        <div className="flex flex-wrap items-center gap-2">
+          {tab === "overview" ? (
+            <>
+              <label className="text-sm text-nurture-charcoal/60" htmlFor="dashboard-year">
+                YTD year
+              </label>
+              <select
+                id="dashboard-year"
+                value={year}
+                onChange={(e) => setYear(Number(e.target.value))}
+                className="rounded-lg border border-nurture-sage/25 bg-white px-3 py-1.5 text-sm"
+              >
+                {yearOptions.map((y) => (
+                  <option key={y} value={y}>
+                    {y}
+                  </option>
+                ))}
+              </select>
+            </>
+          ) : null}
           <button
             type="button"
             onClick={refreshAll}
@@ -232,6 +153,23 @@ const DashboardAnalyticsView = () => {
             {leadsLoading || engagementsLoading ? "Refreshing…" : "Refresh"}
           </button>
         </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2 border-b border-nurture-sage/15 pb-2">
+        {DASHBOARD_TABS.map((item) => (
+          <button
+            key={item.id}
+            type="button"
+            onClick={() => setTab(item.id)}
+            className={`rounded-full px-3 py-1.5 text-xs font-semibold transition ${
+              tab === item.id
+                ? "bg-nurture-sage text-white"
+                : "bg-nurture-cream text-nurture-charcoal/70 hover:bg-nurture-sage/10"
+            }`}
+          >
+            {item.label}
+          </button>
+        ))}
       </div>
 
       {engagementsError ? (
@@ -260,321 +198,36 @@ const DashboardAnalyticsView = () => {
         </div>
       ) : null}
 
-      {/* KPI row */}
-      {summary ? (
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-          <KpiCard
-            label={`${year} client revenue`}
-            value={formatEngagementMoney(summary.ytdClientFeeCents)}
-            detail={`${summary.ytdEngagementCount} engagements · margin ${formatEngagementMoney(summary.ytdMarginCents)}`}
-            highlight
-          />
-          <KpiCard
-            label={`${year} doula payouts`}
-            value={formatEngagementMoney(summary.ytdDoulaPayoutCents)}
-            detail="Package-attributed payouts"
-          />
-          <KpiCard
-            label="Upcoming jobs"
-            value={summary.upcomingEngagements}
-            detail={`${summary.completedEngagements} completed · ${summary.cancelledEngagements} cancelled`}
-          />
-          <KpiCard
-            label="Active clients"
-            value={summary.activeClients}
-            detail={`${summary.totalClients} total in CRM`}
-          />
-        </div>
-      ) : engagementsLoading ? (
-        <SectionSkeleton label="Loading engagement KPIs…" />
-      ) : null}
-
-      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-        {summary ? (
-          <KpiCard
-            label="Total engagements"
-            value={summary.totalEngagements}
-            detail={`${summary.historicEngagements} historic import · ${summary.liveEngagements} live`}
-          />
-        ) : engagementsLoading ? (
-          <SectionSkeleton label="Loading engagements…" />
-        ) : null}
-        {leads ? (
-          <>
-            <KpiCard
-              label="Intro calls booked"
-              value={leads.consultScheduled}
-              detail={`${leads.newThisMonth} new leads this month`}
-            />
-            <KpiCard
-              label="Pipeline conversion"
-              value={leads.conversionRate != null ? `${leads.conversionRate}%` : "—"}
-              detail={`${leads.converted} converted · ${leads.lost} lost`}
-            />
-            <KpiCard
-              label="Active leads"
-              value={leads.active}
-              detail={`${leads.total} total including archived`}
-            />
-          </>
-        ) : leadsLoading ? (
-          <>
-            <SectionSkeleton label="Loading leads…" />
-            <SectionSkeleton label="Loading leads…" />
-            <SectionSkeleton label="Loading leads…" />
-          </>
-        ) : null}
-      </div>
-
-      <div className="grid gap-6 lg:grid-cols-2">
-        {/* Lead funnel */}
-        {leads ? (
-          <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
-              Lead pipeline
-            </h3>
-            <Link
-              href="/admin/leads"
-              className="text-xs font-medium text-nurture-sage-dark hover:underline"
-            >
-              Open Lead CRM →
-            </Link>
-          </div>
-          <ul className="mt-4 space-y-2">
-            {FUNNEL_STATUSES.map((status) => {
-              const count = leads.byStatus[status] ?? 0;
-              const maxFunnel = Math.max(
-                1,
-                ...FUNNEL_STATUSES.map((s) => leads.byStatus[s] ?? 0)
-              );
-              return (
-                <li key={status}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-nurture-charcoal/75">
-                      {LEAD_STATUS_LABELS[status] ?? status}
-                    </span>
-                    <span className="font-medium tabular-nums text-nurture-charcoal">
-                      {count}
-                    </span>
-                  </div>
-                  <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-nurture-cream">
-                    <div
-                      className="h-full rounded-full bg-nurture-sage/70"
-                      style={{ width: `${(count / maxFunnel) * 100}%` }}
-                    />
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-        ) : leadsLoading ? (
-          <SectionSkeleton label="Loading lead pipeline…" />
-        ) : null}
-
-        {/* Service mix */}
-        {byServiceType && byStatus ? (
-        <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
-          <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
-            Service mix (all time)
-          </h3>
-          <div className="mt-4 space-y-4">
-            {(
-              [
-                ["birth", "Birth doula", "bg-nurture-sage"],
-                ["postpartum", "Postpartum", "bg-nurture-sage-dark"],
-                ["other", "Other", "bg-nurture-charcoal/40"],
-              ] as const
-            ).map(([key, label, barClass]) => {
-              const row = byServiceType[key];
-              const pct =
-                totalServiceCount > 0
-                  ? Math.round((row.count / totalServiceCount) * 100)
-                  : 0;
-              return (
-                <div key={key}>
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-nurture-charcoal/75">{label}</span>
-                    <span className="font-medium tabular-nums text-nurture-charcoal">
-                      {row.count}{" "}
-                      <span className="text-nurture-charcoal/45">
-                        ({pct}% · {formatEngagementMoney(row.clientFeeCents)})
-                      </span>
-                    </span>
-                  </div>
-                  <div className="mt-1 h-2 overflow-hidden rounded-full bg-nurture-cream">
-                    <div
-                      className={`h-full rounded-full ${barClass}`}
-                      style={{ width: `${pct}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="mt-6 grid grid-cols-2 gap-3 border-t border-nurture-sage/10 pt-4 text-sm">
-            {(["booked", "active", "completed", "cancelled"] as const).map((status) => (
-              <div key={status}>
-                <span className="capitalize text-nurture-charcoal/55">{status}</span>
-                <span className="ml-2 font-semibold tabular-nums text-nurture-charcoal">
-                  {byStatus[status]}
-                </span>
-              </div>
-            ))}
-          </div>
-        </section>
-        ) : engagementsLoading ? (
-          <SectionSkeleton label="Loading service mix…" />
-        ) : null}
-      </div>
-
-      {/* Trends */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        {leadAnalytics ? (
-        <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
-          <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
-            New leads (12 months)
-          </h3>
-          <div className="mt-4">
-            <MiniBarChart data={leadAnalytics.monthlyLeads} />
-          </div>
-        </section>
-        ) : leadsLoading ? (
-          <SectionSkeleton label="Loading lead trends…" />
-        ) : null}
-        {engagementAnalytics ? (
-        <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
-          <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
-            Engagement book dates (12 months)
-          </h3>
-          <div className="mt-4">
-            <MiniBarChart
-              data={engagementAnalytics.monthlyEngagementBookings}
-              colorClass="bg-nurture-sage-dark"
-            />
-          </div>
-        </section>
-        ) : engagementsLoading ? (
-          <SectionSkeleton label="Loading booking trends…" />
-        ) : null}
-      </div>
-
-      {/* Year table + top providers */}
-      {engagementAnalytics ? (
-      <div className="grid gap-6 lg:grid-cols-2">
-        <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
-          <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
-            Revenue by schedule year
-          </h3>
-          <div className="mt-4 overflow-x-auto">
-            <table className="w-full min-w-[320px] text-left text-sm">
-              <thead>
-                <tr className="border-b border-nurture-sage/15 text-xs uppercase tracking-wide text-nurture-charcoal/45">
-                  <th className="pb-2 pr-3 font-medium">Year</th>
-                  <th className="pb-2 pr-3 font-medium">Jobs</th>
-                  <th className="pb-2 pr-3 font-medium">Birth / PP</th>
-                  <th className="pb-2 pr-3 font-medium">Client</th>
-                  <th className="pb-2 font-medium">Doula</th>
-                </tr>
-              </thead>
-              <tbody>
-                {byYear.map((row) => (
-                  <tr
-                    key={row.year}
-                    className={`border-b border-nurture-sage/8 ${
-                      row.year === year ? "bg-nurture-sage/5" : ""
-                    }`}
-                  >
-                    <td className="py-2 pr-3 font-medium text-nurture-charcoal">
-                      {row.year}
-                    </td>
-                    <td className="py-2 pr-3 tabular-nums">{row.engagementCount}</td>
-                    <td className="py-2 pr-3 tabular-nums text-nurture-charcoal/65">
-                      {row.birthCount} / {row.postpartumCount}
-                    </td>
-                    <td className="py-2 pr-3 tabular-nums">
-                      {formatEngagementMoney(row.clientFeeCents)}
-                    </td>
-                    <td className="py-2 tabular-nums text-nurture-charcoal/65">
-                      {formatEngagementMoney(row.doulaPayoutCents)}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          {ytdYearBucket ? (
-            <p className="mt-3 text-xs text-nurture-charcoal/50">
-              Selected year margin:{" "}
-              {formatEngagementMoney(
-                ytdYearBucket.clientFeeCents - ytdYearBucket.doulaPayoutCents
-              )}
-            </p>
-          ) : null}
-        </section>
-
-        <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
-          <div className="flex items-center justify-between gap-2">
-            <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
-              Top providers ({year} YTD)
-            </h3>
-            <Link
-              href="/admin/providers"
-              className="text-xs font-medium text-nurture-sage-dark hover:underline"
-            >
-              Providers →
-            </Link>
-          </div>
-          {topProviders.length === 0 ? (
-            <p className="mt-4 text-sm text-nurture-charcoal/55">
-              No provider-attributed engagements for {year} yet.
-            </p>
-          ) : (
-            <div className="mt-4 overflow-x-auto">
-              <table className="w-full min-w-[280px] text-left text-sm">
-                <thead>
-                  <tr className="border-b border-nurture-sage/15 text-xs uppercase tracking-wide text-nurture-charcoal/45">
-                    <th className="pb-2 pr-3 font-medium">Provider</th>
-                    <th className="pb-2 pr-3 font-medium">Jobs</th>
-                    <th className="pb-2 pr-3 font-medium">Client</th>
-                    <th className="pb-2 font-medium">Doula</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {topProviders.map((row) => (
-                    <tr key={row.providerId} className="border-b border-nurture-sage/8">
-                      <td className="py-2 pr-3 font-medium text-nurture-charcoal">
-                        {row.displayName}
-                      </td>
-                      <td className="py-2 pr-3 tabular-nums">{row.engagementCount}</td>
-                      <td className="py-2 pr-3 tabular-nums">
-                        {formatEngagementMoney(row.ytdClientFeeCents)}
-                      </td>
-                      <td className="py-2 tabular-nums text-nurture-charcoal/65">
-                        {formatEngagementMoney(row.ytdDoulaPayoutCents)}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          )}
-        </section>
-      </div>
-      ) : engagementsLoading ? (
-        <SectionSkeleton label="Loading revenue and provider tables…" />
-      ) : null}
+      {tab === "overview" ? (
+        <DashboardOverviewTab
+          year={year}
+          leadAnalytics={leadAnalytics}
+          engagementAnalytics={engagementAnalytics}
+          leadsLoading={leadsLoading}
+          engagementsLoading={engagementsLoading}
+        />
+      ) : (
+        <DashboardTrendsTab
+          trendYear={trendYear}
+          onTrendYearChange={setTrendYear}
+          yearOptions={yearOptions}
+          leadAnalytics={leadAnalytics}
+          engagementAnalytics={engagementAnalytics}
+          leadsLoading={leadsLoading}
+          engagementsLoading={engagementsLoading}
+        />
+      )}
 
       {engagementAnalytics ? (
-      <p className="text-xs text-nurture-charcoal/40">
-        Engagement data indexed {new Date(engagementAnalytics.indexLoadedAt).toLocaleString()}
-        {leadAnalytics
-          ? ` · leads updated ${new Date(leadAnalytics.generatedAt).toLocaleString()}`
-          : ""}
-        {" · "}Historic rows tagged via import source are counted separately from live CRM
-        bookings.
-      </p>
+        <p className="text-xs text-nurture-charcoal/40">
+          Engagement data indexed{" "}
+          {new Date(engagementAnalytics.indexLoadedAt).toLocaleString()}
+          {leadAnalytics
+            ? ` · leads updated ${new Date(leadAnalytics.generatedAt).toLocaleString()}`
+            : ""}
+          {" · "}Historic rows tagged via import source are counted separately from live CRM
+          bookings.
+        </p>
       ) : null}
     </div>
   );

@@ -15,6 +15,26 @@ export interface DashboardMonthlyCount {
   count: number;
 }
 
+export interface DashboardMonthlyRevenue {
+  month: string;
+  engagementCount: number;
+  clientFeeCents: number;
+  doulaPayoutCents: number;
+  marginCents: number;
+}
+
+export interface DashboardYoyRow {
+  year: number;
+  engagementCount: number;
+  engagementCountYoyPct: number | null;
+  clientFeeCents: number;
+  clientFeeCentsYoyPct: number | null;
+  doulaPayoutCents: number;
+  marginCents: number;
+  marginYoyPct: number | null;
+  avgRevenuePerJobCents: number;
+}
+
 export interface DashboardTopProvider {
   providerId: string;
   displayName: string;
@@ -36,6 +56,8 @@ export interface DashboardLeadAnalytics {
     conversionRate: number | null;
   };
   monthlyLeads: DashboardMonthlyCount[];
+  /** All created-at months with counts (sorted ascending). */
+  monthlyLeadsHistory: DashboardMonthlyCount[];
 }
 
 export interface DashboardEngagementAnalytics {
@@ -63,6 +85,9 @@ export interface DashboardEngagementAnalytics {
   >;
   byStatus: Record<EngagementStatus, number>;
   monthlyEngagementBookings: DashboardMonthlyCount[];
+  monthlyBookingsHistory: DashboardMonthlyCount[];
+  monthlyRevenueHistory: DashboardMonthlyRevenue[];
+  yoyByYear: DashboardYoyRow[];
   topProviders: DashboardTopProvider[];
 }
 

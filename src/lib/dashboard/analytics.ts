@@ -5,9 +5,11 @@ import type {
   DashboardEngagementAnalytics,
   DashboardLeadAnalytics,
   DashboardMonthlyCount,
+  DashboardMonthlyRevenue,
   DashboardYearBucket,
 } from "@/types/dashboard";
 import type { LeadStatus } from "@/types/lead";
+import { buildYoyRows } from "@/lib/dashboard/trends";
 import type {
   EngagementServiceType,
   EngagementStatus,
@@ -93,6 +95,7 @@ export const computeDashboardLeadAnalytics = async (): Promise<DashboardLeadAnal
   const monthStart = `${today.slice(0, 7)}-01`;
   const lastMonths = buildLastMonths(12);
   const monthlyLeadMap = new Map(lastMonths.map((m) => [m, 0]));
+  const monthlyLeadsHistoryMap = new Map<string, number>();
 
   const leads = await listAllLeads();
   const activeLeads = leads.filter((l) => !l.archivedAt);
@@ -110,8 +113,14 @@ export const computeDashboardLeadAnalytics = async (): Promise<DashboardLeadAnal
     if (lead.createdAt >= monthStart) newThisMonth += 1;
 
     const leadMonth = monthKey(lead.createdAt);
-    if (leadMonth && monthlyLeadMap.has(leadMonth)) {
-      monthlyLeadMap.set(leadMonth, (monthlyLeadMap.get(leadMonth) ?? 0) + 1);
+    if (leadMonth) {
+      if (monthlyLeadMap.has(leadMonth)) {
+        monthlyLeadMap.set(leadMonth, (monthlyLeadMap.get(leadMonth) ?? 0) + 1);
+      }
+      monthlyLeadsHistoryMap.set(
+        leadMonth,
+        (monthlyLeadsHistoryMap.get(leadMonth) ?? 0) + 1
+      );
     }
   }
 
@@ -137,6 +146,9 @@ export const computeDashboardLeadAnalytics = async (): Promise<DashboardLeadAnal
       month,
       count: monthlyLeadMap.get(month) ?? 0,
     })),
+    monthlyLeadsHistory: Array.from(monthlyLeadsHistoryMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, count]) => ({ month, count })),
   };
 };
 
@@ -152,6 +164,8 @@ export const computeDashboardEngagementAnalytics = async (
   const today = todayIso();
   const lastMonths = buildLastMonths(12);
   const monthlyBookingMap = new Map(lastMonths.map((m) => [m, 0]));
+  const monthlyBookingsHistoryMap = new Map<string, number>();
+  const monthlyRevenueHistoryMap = new Map<string, DashboardMonthlyRevenue>();
 
   const [crmIndex, providers] = await Promise.all([
     loadCrmStorageIndex({ force: options?.force }),
@@ -198,12 +212,33 @@ export const computeDashboardEngagementAnalytics = async (
     if (isCompleted(engagement, today)) completedEngagements += 1;
 
     const bookMonth = monthKey(engagement.bookDate);
-    if (bookMonth && monthlyBookingMap.has(bookMonth)) {
-      monthlyBookingMap.set(bookMonth, (monthlyBookingMap.get(bookMonth) ?? 0) + 1);
+    if (bookMonth) {
+      if (monthlyBookingMap.has(bookMonth)) {
+        monthlyBookingMap.set(bookMonth, (monthlyBookingMap.get(bookMonth) ?? 0) + 1);
+      }
+      monthlyBookingsHistoryMap.set(
+        bookMonth,
+        (monthlyBookingsHistoryMap.get(bookMonth) ?? 0) + 1
+      );
     }
 
     const clientFeeCents = packages.reduce((sum, pkg) => sum + pkg.clientFeeCents, 0);
     const doulaPayoutCents = payouts.reduce((sum, p) => sum + p.amountCents, 0);
+
+    if (bookMonth) {
+      const existing = monthlyRevenueHistoryMap.get(bookMonth) ?? {
+        month: bookMonth,
+        engagementCount: 0,
+        clientFeeCents: 0,
+        doulaPayoutCents: 0,
+        marginCents: 0,
+      };
+      existing.engagementCount += 1;
+      existing.clientFeeCents += clientFeeCents;
+      existing.doulaPayoutCents += doulaPayoutCents;
+      existing.marginCents = existing.clientFeeCents - existing.doulaPayoutCents;
+      monthlyRevenueHistoryMap.set(bookMonth, existing);
+    }
 
     const scheduleYear = engagement.scheduleYear;
     let yearBucket = yearMap.get(scheduleYear);
@@ -272,6 +307,8 @@ export const computeDashboardEngagementAnalytics = async (
     .sort((a, b) => b.ytdClientFeeCents - a.ytdClientFeeCents)
     .slice(0, 10);
 
+  const byYear = Array.from(yearMap.values()).sort((a, b) => a.year - b.year);
+
   const data: DashboardEngagementAnalytics = {
     generatedAt: new Date().toISOString(),
     year,
@@ -290,13 +327,20 @@ export const computeDashboardEngagementAnalytics = async (
       completedEngagements,
       cancelledEngagements,
     },
-    byYear: Array.from(yearMap.values()).sort((a, b) => a.year - b.year),
+    byYear,
     byServiceType,
     byStatus,
     monthlyEngagementBookings: lastMonths.map((month) => ({
       month,
       count: monthlyBookingMap.get(month) ?? 0,
     })),
+    monthlyBookingsHistory: Array.from(monthlyBookingsHistoryMap.entries())
+      .sort(([a], [b]) => a.localeCompare(b))
+      .map(([month, count]) => ({ month, count })),
+    monthlyRevenueHistory: Array.from(monthlyRevenueHistoryMap.values()).sort(
+      (a, b) => a.month.localeCompare(b.month)
+    ),
+    yoyByYear: buildYoyRows(byYear),
     topProviders,
   };
 
