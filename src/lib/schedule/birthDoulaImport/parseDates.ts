@@ -34,6 +34,11 @@ export const parseScheduleDate = (
     return null;
   }
 
+  const isoDate = raw.match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (isoDate) {
+    return `${isoDate[1]}-${isoDate[2]}-${isoDate[3]}`;
+  }
+
   const withYear = raw.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})/);
   if (withYear) {
     const parsedYear = Number(withYear[3]);

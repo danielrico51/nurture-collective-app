@@ -1,6 +1,7 @@
 import { fetchWithRetry } from "@/lib/api/fetchWithRetry";
 import type {
   DashboardEngagementAnalytics,
+  DashboardEngagementRowsResult,
   DashboardLeadAnalytics,
 } from "@/types/dashboard";
 
@@ -64,6 +65,26 @@ export const fetchDashboardEngagements = async (
   const query = params.toString();
   const response = await fetchWithRetry(
     `/api/admin/dashboard/engagements${query ? `?${query}` : ""}`,
+    {
+      headers: await authHeaders(),
+      cache: "no-store",
+    }
+  );
+  return handleResponse(response);
+};
+
+export const fetchDashboardEngagementRows = async (
+  refresh = false
+): Promise<
+  DashboardEngagementRowsResult & {
+    storage: { clients: string };
+  }
+> => {
+  const params = new URLSearchParams();
+  if (refresh) params.set("refresh", "true");
+  const query = params.toString();
+  const response = await fetchWithRetry(
+    `/api/admin/dashboard/engagement-rows${query ? `?${query}` : ""}`,
     {
       headers: await authHeaders(),
       cache: "no-store",

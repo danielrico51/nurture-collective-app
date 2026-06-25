@@ -80,6 +80,7 @@ export interface LoadedScheduleArtifacts {
 export interface CrmStorageIndex {
   loadedAt: string;
   clientSummaries: ClientSummary[];
+  clientNamesById: Map<string, string>;
   schedule: LoadedScheduleArtifacts;
 }
 
@@ -136,6 +137,12 @@ export const loadCrmStorageIndex = async (options?: {
       archivedAt: record.archivedAt,
     }));
 
+  const clientNamesById = new Map<string, string>();
+  for (const record of profileRecords) {
+    if (!record) continue;
+    clientNamesById.set(record.clientId, record.name.trim() || record.clientId);
+  }
+
   const engagements = (
     await mapPool(engagementKeys, READ_CONCURRENCY, (key) =>
       readJson<ServiceEngagement>(key)
@@ -174,6 +181,7 @@ export const loadCrmStorageIndex = async (options?: {
   const data: CrmStorageIndex = {
     loadedAt: new Date().toISOString(),
     clientSummaries,
+    clientNamesById,
     schedule: { engagements, packagesByEngagement, payoutsByEngagement },
   };
 

@@ -72,6 +72,11 @@ describe("parseDates", () => {
     expect(parseScheduleDate("2/9/2021(V)", 2020)).toBe("2021-02-09");
   });
 
+  it("parses ISO date strings", () => {
+    expect(parseScheduleDate("2026-12-31")).toBe("2026-12-31");
+    expect(parseScheduleDate("2024-08-01")).toBe("2024-08-01");
+  });
+
   it("ignores invalid excel serials", () => {
     expect(parseExcelSerialDate(775140)).toBeNull();
   });

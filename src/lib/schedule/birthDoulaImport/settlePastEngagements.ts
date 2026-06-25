@@ -19,6 +19,12 @@ import { buildClientListPrefix } from "@/lib/clients/paths";
 import { getClientById } from "@/lib/clients/storage";
 import { buildEmptyInvoiceContactFields } from "@/lib/invoices/dispatchInvoice";
 import { BIRTH_SCHEDULE_IMPORT_FILE } from "@/lib/schedule/birthDoulaImport/constants";
+import { POSTPARTUM_SCHEDULE_IMPORT_FILE } from "@/lib/schedule/postpartumDoulaImport/constants";
+
+const HISTORIC_SCHEDULE_IMPORT_FILES = new Set([
+  BIRTH_SCHEDULE_IMPORT_FILE,
+  POSTPARTUM_SCHEDULE_IMPORT_FILE,
+]);
 import {
   engagementHasFutureServiceDate,
   todayIsoDate,
@@ -241,7 +247,12 @@ export const settlePastHistoricEngagements = async (options?: {
 
   for (const key of engagementKeys) {
     const engagement = await readJson<ServiceEngagement>(key);
-    if (engagement?.importSource?.file !== BIRTH_SCHEDULE_IMPORT_FILE) continue;
+    if (
+      !engagement?.importSource?.file ||
+      !HISTORIC_SCHEDULE_IMPORT_FILES.has(engagement.importSource.file)
+    ) {
+      continue;
+    }
 
     result.scanned += 1;
 

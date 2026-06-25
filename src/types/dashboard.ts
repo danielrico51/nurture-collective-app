@@ -60,6 +60,28 @@ export interface DashboardLeadAnalytics {
   monthlyLeadsHistory: DashboardMonthlyCount[];
 }
 
+export interface DashboardEngagementRow {
+  engagementId: string;
+  clientId: string;
+  clientName: string;
+  serviceDate: string;
+  bookDate: string;
+  scheduleYear: number;
+  serviceType: EngagementServiceType;
+  serviceTypeLabel: string;
+  status: EngagementStatus;
+  clientFeeCents: number;
+  doulaFeeCents: number;
+  providerName: string | null;
+  source: "historic" | "live";
+}
+
+export interface DashboardEngagementRowsResult {
+  generatedAt: string;
+  indexLoadedAt: string;
+  rows: DashboardEngagementRow[];
+}
+
 export interface DashboardEngagementAnalytics {
   generatedAt: string;
   year: number;

@@ -1,22 +1,26 @@
 "use client";
 
+import DashboardEngagementsTab from "@/components/Admin/DashboardEngagementsTab";
 import DashboardOverviewTab from "@/components/Admin/DashboardOverviewTab";
 import DashboardTrendsTab from "@/components/Admin/DashboardTrendsTab";
 import {
+  fetchDashboardEngagementRows,
   fetchDashboardEngagements,
   fetchDashboardLeads,
 } from "@/lib/api/dashboardClient";
 import type {
   DashboardEngagementAnalytics,
+  DashboardEngagementRow,
   DashboardLeadAnalytics,
 } from "@/types/dashboard";
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-type DashboardTab = "overview" | "trends";
+type DashboardTab = "overview" | "trends" | "engagements";
 
 const DASHBOARD_TABS: { id: DashboardTab; label: string }[] = [
   { id: "overview", label: "Overview" },
   { id: "trends", label: "Trends & growth" },
+  { id: "engagements", label: "All engagements" },
 ];
 
 const DashboardAnalyticsView = () => {
@@ -27,11 +31,17 @@ const DashboardAnalyticsView = () => {
   const [leadAnalytics, setLeadAnalytics] = useState<DashboardLeadAnalytics | null>(null);
   const [engagementAnalytics, setEngagementAnalytics] =
     useState<DashboardEngagementAnalytics | null>(null);
+  const [engagementRows, setEngagementRows] = useState<DashboardEngagementRow[]>([]);
+  const [engagementRowsLoadedAt, setEngagementRowsLoadedAt] = useState<string | null>(
+    null
+  );
   const [storageLabel, setStorageLabel] = useState("");
   const [leadsLoading, setLeadsLoading] = useState(true);
   const [engagementsLoading, setEngagementsLoading] = useState(true);
+  const [engagementRowsLoading, setEngagementRowsLoading] = useState(false);
   const [leadsError, setLeadsError] = useState<string | null>(null);
   const [engagementsError, setEngagementsError] = useState<string | null>(null);
+  const [engagementRowsError, setEngagementRowsError] = useState<string | null>(null);
 
   const loadLeads = useCallback(async () => {
     setLeadsError(null);
@@ -74,6 +84,27 @@ const DashboardAnalyticsView = () => {
     [year]
   );
 
+  const loadEngagementRows = useCallback(async (refresh = false) => {
+    setEngagementRowsError(null);
+    setEngagementRowsLoading(true);
+    try {
+      const response = await fetchDashboardEngagementRows(refresh);
+      setEngagementRows(response.rows);
+      setEngagementRowsLoadedAt(response.indexLoadedAt);
+      setStorageLabel((current) =>
+        current.includes(response.storage.clients)
+          ? current
+          : [response.storage.clients, current].filter(Boolean).join(" · ")
+      );
+    } catch (err) {
+      setEngagementRowsError(
+        err instanceof Error ? err.message : "Failed to load engagement rows"
+      );
+    } finally {
+      setEngagementRowsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     void loadLeads();
   }, [loadLeads]);
@@ -82,9 +113,18 @@ const DashboardAnalyticsView = () => {
     void loadEngagements();
   }, [loadEngagements]);
 
+  useEffect(() => {
+    if (tab !== "engagements") return;
+    if (engagementRows.length > 0 && !engagementRowsError) return;
+    void loadEngagementRows();
+  }, [tab, engagementRows.length, engagementRowsError, loadEngagementRows]);
+
   const refreshAll = () => {
     void loadLeads();
     void loadEngagements(true);
+    if (tab === "engagements" || engagementRows.length > 0) {
+      void loadEngagementRows(true);
+    }
   };
 
   const yearOptions = useMemo(() => {
@@ -147,10 +187,12 @@ const DashboardAnalyticsView = () => {
           <button
             type="button"
             onClick={refreshAll}
-            disabled={leadsLoading || engagementsLoading}
+            disabled={leadsLoading || engagementsLoading || engagementRowsLoading}
             className="rounded-lg border border-nurture-sage/25 px-3 py-1.5 text-sm text-nurture-sage-dark hover:bg-nurture-sage/10 disabled:opacity-50"
           >
-            {leadsLoading || engagementsLoading ? "Refreshing…" : "Refresh"}
+            {leadsLoading || engagementsLoading || engagementRowsLoading
+              ? "Refreshing…"
+              : "Refresh"}
           </button>
         </div>
       </div>
@@ -198,6 +240,19 @@ const DashboardAnalyticsView = () => {
         </div>
       ) : null}
 
+      {engagementRowsError ? (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          Engagement spreadsheet: {engagementRowsError}
+          <button
+            type="button"
+            onClick={() => void loadEngagementRows(true)}
+            className="ml-2 underline hover:no-underline"
+          >
+            Retry
+          </button>
+        </div>
+      ) : null}
+
       {tab === "overview" ? (
         <DashboardOverviewTab
           year={year}
@@ -206,7 +261,7 @@ const DashboardAnalyticsView = () => {
           leadsLoading={leadsLoading}
           engagementsLoading={engagementsLoading}
         />
-      ) : (
+      ) : tab === "trends" ? (
         <DashboardTrendsTab
           trendYear={trendYear}
           onTrendYearChange={setTrendYear}
@@ -215,6 +270,12 @@ const DashboardAnalyticsView = () => {
           engagementAnalytics={engagementAnalytics}
           leadsLoading={leadsLoading}
           engagementsLoading={engagementsLoading}
+        />
+      ) : (
+        <DashboardEngagementsTab
+          rows={engagementRows}
+          loading={engagementRowsLoading}
+          indexLoadedAt={engagementRowsLoadedAt}
         />
       )}
 
