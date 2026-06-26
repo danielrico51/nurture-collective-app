@@ -142,6 +142,37 @@ npm run migrate:clients
 
 Never run migration against the dev bucket unless intentionally migrating dev test data.
 
+### Pre-merge: unify dev providers with prod roster
+
+Before copying historic schedule data from dev into prod, align **dev** provider identity with the production active roster so merge does not create duplicate doulas. Production providers are **read-only** during this step.
+
+```bash
+# Read prod roster + audit matches (no writes)
+PROD_NURTURE_CLIENTS_BUCKET=nurture-clients-prod-{accountId} \
+APP_ENV=dev CLIENTS_CRM_USE_S3=true NURTURE_CLIENTS_BUCKET=nurture-clients-dev-{accountId} \
+  npm run unify:providers -- --dry-run
+
+# Write JSON report for review
+PROD_NURTURE_CLIENTS_BUCKET=nurture-clients-prod-{accountId} \
+APP_ENV=dev CLIENTS_CRM_USE_S3=true NURTURE_CLIENTS_BUCKET=nurture-clients-dev-{accountId} \
+  npm run unify:providers -- --report
+
+# Apply on dev only (prod unchanged)
+PROD_NURTURE_CLIENTS_BUCKET=nurture-clients-prod-{accountId} \
+APP_ENV=dev CLIENTS_CRM_USE_S3=true NURTURE_CLIENTS_BUCKET=nurture-clients-dev-{accountId} \
+  npm run unify:providers
+```
+
+What it does on **dev** only:
+
+- Matches prod ↔ dev providers by name/phone (with optional overrides in `scripts/data/provider-unify-overrides.json`)
+- Adopts prod `providerId` and canonical `displayName` for matched doulas
+- Reassigns dev engagements, packages, payouts, shifts, and client services to prod IDs
+- Copies prod-only roster entries into dev
+- Leaves historic-only dev providers (no prod match) unchanged
+
+Resolve ambiguous matches in `scripts/data/provider-unify-overrides.json` before applying.
+
 ### Optional: seed provider registry (prod bucket only)
 
 Import doula names from exported schedule HTML into `crm/providers/`:

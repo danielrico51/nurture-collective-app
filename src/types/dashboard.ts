@@ -1,3 +1,4 @@
+import type { ProviderStats } from "@/types/provider";
 import type { EngagementServiceType, EngagementStatus } from "@/types/serviceEngagement";
 import type { LeadStatus } from "@/types/lead";
 
@@ -110,12 +111,15 @@ export interface DashboardEngagementAnalyticsCore {
 }
 
 export interface DashboardSnapshot {
-  version: 2;
+  version: 3;
   generatedAt: string;
   indexLoadedAt: string;
   engagementAnalytics: DashboardEngagementAnalyticsCore;
   engagementRows: DashboardEngagementRow[];
   leadAnalytics: DashboardLeadAnalytics;
+  /** Precomputed provider job stats for the snapshot year (fast providers page load). */
+  providerStats: Record<string, ProviderStats>;
+  providerStatsYear: number;
 }
 
 /** @deprecated Prefer DashboardEngagementAnalyticsCore — year is selected client-side. */

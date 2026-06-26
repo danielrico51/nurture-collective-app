@@ -48,7 +48,9 @@
     "seed:providers:roster": "NODE_OPTIONS='-r ./scripts/lib/server-only-stub.cjs' tsx scripts/seed-active-providers-roster.ts",
     "import:birth-schedule": "NODE_OPTIONS='-r ./scripts/lib/server-only-stub.cjs' tsx scripts/import-birth-doula-schedule.ts",
     "import:postpartum-schedule": "NODE_OPTIONS='-r ./scripts/lib/server-only-stub.cjs' tsx scripts/import-postpartum-doula-schedule.ts",
-    "rebuild:dashboard-snapshot": "NODE_OPTIONS='-r ./scripts/lib/server-only-stub.cjs' tsx scripts/rebuild-dashboard-snapshot.ts"
+    "rebuild:dashboard-snapshot": "NODE_OPTIONS='-r ./scripts/lib/server-only-stub.cjs' tsx scripts/rebuild-dashboard-snapshot.ts",
+    "cleanup:providers": "NODE_OPTIONS='-r ./scripts/lib/server-only-stub.cjs' tsx scripts/cleanup-providers.ts",
+    "unify:providers": "NODE_OPTIONS='-r ./scripts/lib/server-only-stub.cjs' tsx scripts/unify-providers-with-prod.ts"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.0.0",

@@ -3,6 +3,8 @@ import type { ProviderRecord } from "@/types/provider";
 const normalizeMatchKey = (value: string): string =>
   value.trim().toLowerCase().replace(/\s+/g, " ");
 
+export { normalizeMatchKey };
+
 export const matchProviderByLabel = (
   label: string,
   providers: ProviderRecord[]

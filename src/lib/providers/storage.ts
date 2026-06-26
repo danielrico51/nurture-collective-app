@@ -230,6 +230,45 @@ export const updateProvider = async (
   return saved;
 };
 
+/** Write or replace a provider record and refresh name indexes. */
+export const upsertProviderRecord = async (
+  provider: ProviderRecord
+): Promise<ProviderRecord> => {
+  const existing = await readProvider(provider.providerId);
+  const previousNames = existing
+    ? [existing.displayName, ...existing.aliases]
+    : [];
+  const key = buildProviderKey(provider.providerId);
+  const payload = { ...provider, storageKey: key, updatedAt: new Date().toISOString() };
+  await writeJson(key, payload);
+  await writeProviderNameIndexes(payload, previousNames);
+  return payload;
+};
+
+/** Permanently remove a provider record and its name indexes. */
+export const deleteProvider = async (providerId: string): Promise<void> => {
+  const existing = await readProvider(providerId);
+  if (!existing) {
+    throw new ProviderValidationError("Provider not found");
+  }
+
+  const names = new Set<string>();
+  for (const name of [existing.displayName, ...existing.aliases]) {
+    const trimmed = name.trim();
+    if (trimmed) names.add(trimmed);
+  }
+
+  for (const name of Array.from(names)) {
+    const indexedId = await readProviderIdByNameIndex(name);
+    if (indexedId === providerId) {
+      await deleteJson(buildProviderByNameIndexKey(name));
+    }
+  }
+
+  const key = buildProviderKey(providerId);
+  await deleteJson(key);
+};
+
 export const findOrCreateProviderByLabel = async (
   label: string,
   options?: { roles?: ProviderRecord["roles"] }

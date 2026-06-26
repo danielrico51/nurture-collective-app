@@ -2,8 +2,9 @@ import { listProviders } from "@/lib/providers/storage";
 import {
   engagementRef,
   loadAllScheduleArtifacts,
+  type LoadedScheduleArtifacts,
 } from "@/lib/clients/crmIndexLoader";
-import type { ProviderStats } from "@/types/provider";
+import type { ProviderRecord, ProviderStats } from "@/types/provider";
 
 const emptyStats = (providerId: string): ProviderStats => ({
   providerId,
@@ -57,14 +58,11 @@ const trackEngagement = (
   }
 };
 
-export const computeAllProviderStats = async (
+export const computeAllProviderStatsFromSchedule = (
+  artifacts: LoadedScheduleArtifacts,
+  providers: ProviderRecord[],
   year = new Date().getFullYear()
-): Promise<Record<string, ProviderStats>> => {
-  const [providers, artifacts] = await Promise.all([
-    listProviders({ includeArchived: true }),
-    loadAllScheduleArtifacts(),
-  ]);
-
+): Record<string, ProviderStats> => {
   const statsMap = new Map<string, MutableStats>(
     providers.map((provider) => [
       provider.providerId,
@@ -79,8 +77,7 @@ export const computeAllProviderStats = async (
   for (const engagement of artifacts.engagements) {
     const ref = engagementRef(engagement.clientId, engagement.engagementId);
     const isYtd = engagement.scheduleYear === year;
-    const packages =
-      artifacts.packagesByEngagement.get(ref) ?? [];
+    const packages = artifacts.packagesByEngagement.get(ref) ?? [];
     const payouts = artifacts.payoutsByEngagement.get(ref) ?? [];
 
     const providersOnEngagement = new Set<string>();
@@ -137,6 +134,17 @@ export const computeAllProviderStats = async (
   }
 
   return result;
+};
+
+export const computeAllProviderStats = async (
+  year = new Date().getFullYear()
+): Promise<Record<string, ProviderStats>> => {
+  const [providers, artifacts] = await Promise.all([
+    listProviders({ includeArchived: true }),
+    loadAllScheduleArtifacts(),
+  ]);
+
+  return computeAllProviderStatsFromSchedule(artifacts, providers, year);
 };
 
 export const getProviderStats = async (

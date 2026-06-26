@@ -1,19 +1,29 @@
 import { getClientsStorageMode } from "@/lib/clients/config";
-import { listLocalKeys, readLocalJson } from "@/lib/clients/localStorage";
+import {
+  engagementRef,
+  getPackagesForEngagement,
+  getPayoutsForEngagement,
+  loadAllScheduleArtifacts,
+  type LoadedScheduleArtifacts,
+} from "@/lib/clients/crmIndexLoader";
+import { listLocalKeys, readLocalJson, writeLocalJson } from "@/lib/clients/localStorage";
 import {
   listClientsKeys,
   readClientsJson,
+  writeClientsJson,
 } from "@/lib/clients/platformS3";
+import { listClientServicesWithInvoices, updateClientService } from "@/lib/client-services/storage";
 import { listClients } from "@/lib/clients/storage";
 import { readProvider } from "@/lib/providers/storage";
-import { listPayoutsForEngagement } from "@/lib/schedule/payoutStorage";
+import { listPayoutsForEngagement, updateProviderPayoutBatch } from "@/lib/schedule/payoutStorage";
 import {
   buildEngagementKey,
   buildEngagementListPrefix,
+  buildPackageKey,
   buildPackageListPrefix,
   parseEngagementIdFromKey,
 } from "@/lib/schedule/paths";
-import { listShiftsForEngagement } from "@/lib/schedule/shiftStorage";
+import { listShiftsForEngagement, updateScheduleShift } from "@/lib/schedule/shiftStorage";
 import {
   patchProviderPayoutBatch,
   patchScheduleShift,
@@ -37,6 +47,14 @@ const readJson = async <T>(key: string): Promise<T | null> =>
   getClientsStorageMode() === "local"
     ? readLocalJson<T>(key)
     : readClientsJson<T>(key);
+
+const writeJson = async (key: string, payload: unknown): Promise<void> => {
+  if (getClientsStorageMode() === "local") {
+    await writeLocalJson(key, payload);
+  } else {
+    await writeClientsJson(key, payload);
+  }
+};
 
 const listPackagesForEngagement = async (
   clientId: string,
@@ -233,4 +251,175 @@ export const reallocateProviderEngagement = async (input: {
   }
 
   return { updatedCount };
+};
+
+/** Fast provider remapping for bulk migrations — skips full engagement detail rebuilds. */
+export const reallocateProviderEngagementLite = async (
+  input: {
+    fromProviderId: string;
+    toProviderId: string;
+    toProviderName: string;
+    clientId: string;
+    engagementId: string;
+  },
+  artifacts?: LoadedScheduleArtifacts
+): Promise<number> => {
+  const fromProviderId = input.fromProviderId.trim();
+  const toProviderId = input.toProviderId.trim();
+  const clientId = input.clientId.trim();
+  const engagementId = input.engagementId.trim();
+  if (!fromProviderId || !toProviderId || !clientId || !engagementId) return 0;
+  if (fromProviderId === toProviderId) return 0;
+
+  const engagement = await readEngagement(clientId, engagementId);
+  if (!engagement) return 0;
+
+  let updatedCount = 0;
+  const now = new Date().toISOString();
+
+  if (engagement.primaryProviderId === fromProviderId) {
+    const key = buildEngagementKey(clientId, engagementId);
+    await writeJson(key, {
+      ...engagement,
+      primaryProviderId: toProviderId,
+      updatedAt: now,
+      storageKey: key,
+    });
+    await updateClientService(clientId, engagement.serviceId, {
+      providerId: toProviderId,
+      providerName: input.toProviderName,
+    });
+    updatedCount += 1;
+  }
+
+  const packages = artifacts
+    ? getPackagesForEngagement(artifacts, clientId, engagementId)
+    : await listPackagesForEngagement(clientId, engagementId);
+  for (const pkg of packages) {
+    if (pkg.providerId !== fromProviderId) continue;
+    const key = buildPackageKey(clientId, engagementId, pkg.packageId);
+    await writeJson(key, {
+      ...pkg,
+      providerId: toProviderId,
+      updatedAt: now,
+      storageKey: key,
+    });
+    updatedCount += 1;
+  }
+
+  const payouts = artifacts
+    ? getPayoutsForEngagement(artifacts, clientId, engagementId)
+    : await listPayoutsForEngagement(clientId, engagementId);
+  for (const payout of payouts) {
+    if (payout.providerId !== fromProviderId) continue;
+    await updateProviderPayoutBatch(clientId, engagementId, payout.payoutBatchId, {
+      providerId: toProviderId,
+    });
+    updatedCount += 1;
+  }
+
+  const shifts = await listShiftsForEngagement(clientId, engagementId);
+  for (const shift of shifts) {
+    if (shift.providerId !== fromProviderId) continue;
+    await updateScheduleShift(clientId, engagementId, shift.shiftId, {
+      providerId: toProviderId,
+    });
+    updatedCount += 1;
+  }
+
+  return updatedCount;
+};
+
+const listProviderEngagementRefsFromArtifacts = (
+  artifacts: LoadedScheduleArtifacts,
+  providerId: string
+): Array<{ clientId: string; engagementId: string }> => {
+  const refs: Array<{ clientId: string; engagementId: string }> = [];
+
+  for (const engagement of artifacts.engagements) {
+    const ref = engagementRef(engagement.clientId, engagement.engagementId);
+    const packages = artifacts.packagesByEngagement.get(ref) ?? [];
+    const payouts = artifacts.payoutsByEngagement.get(ref) ?? [];
+    const isAssigned =
+      engagement.primaryProviderId === providerId ||
+      packages.some((pkg) => pkg.providerId === providerId) ||
+      payouts.some((payout) => payout.providerId === providerId);
+
+    if (!isAssigned) continue;
+    refs.push({
+      clientId: engagement.clientId,
+      engagementId: engagement.engagementId,
+    });
+  }
+
+  return refs;
+};
+
+export const reallocateAllProviderReferences = async (
+  input: {
+    fromProviderId: string;
+    toProviderId: string;
+    toProviderName: string;
+  },
+  options?: { artifacts?: LoadedScheduleArtifacts }
+): Promise<{ engagementUpdates: number; serviceUpdates: number }> => {
+  const fromProviderId = input.fromProviderId.trim();
+  const toProviderId = input.toProviderId.trim();
+  if (!fromProviderId || !toProviderId || fromProviderId === toProviderId) {
+    return { engagementUpdates: 0, serviceUpdates: 0 };
+  }
+
+  const artifacts = options?.artifacts ?? (await loadAllScheduleArtifacts());
+  const rows = listProviderEngagementRefsFromArtifacts(artifacts, fromProviderId);
+  let engagementUpdates = 0;
+
+  for (const row of rows) {
+    engagementUpdates += await reallocateProviderEngagementLite(
+      {
+        fromProviderId,
+        toProviderId,
+        toProviderName: input.toProviderName,
+        clientId: row.clientId,
+        engagementId: row.engagementId,
+      },
+      artifacts
+    );
+  }
+
+  const serviceUpdates = await reallocateClientServiceProviders({
+    fromProviderId,
+    toProviderId,
+    toProviderName: input.toProviderName,
+  });
+
+  return { engagementUpdates, serviceUpdates };
+};
+
+export const reallocateClientServiceProviders = async (input: {
+  fromProviderId: string;
+  toProviderId: string;
+  toProviderName: string;
+}): Promise<number> => {
+  const fromProviderId = input.fromProviderId.trim();
+  const toProviderId = input.toProviderId.trim();
+  if (!fromProviderId || !toProviderId || fromProviderId === toProviderId) {
+    return 0;
+  }
+
+  const clients = await listClients();
+  let updatedCount = 0;
+
+  for (const client of clients) {
+    const services = await listClientServicesWithInvoices(client.clientId);
+    for (const service of services) {
+      if (service.providerId !== fromProviderId) continue;
+      await updateClientService(client.clientId, service.serviceId, {
+        providerId: toProviderId,
+        providerName: input.toProviderName,
+      });
+      updatedCount += 1;
+    }
+  }
+
+  return updatedCount;
 };

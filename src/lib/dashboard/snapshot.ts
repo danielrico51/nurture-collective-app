@@ -15,9 +15,10 @@ import {
   readDashboardSnapshotStaleMarker,
 } from "@/lib/dashboard/snapshotRefresh";
 import { listProviders } from "@/lib/providers/storage";
+import { computeAllProviderStatsFromSchedule } from "@/lib/schedule/providerStats";
 import type { DashboardSnapshot } from "@/types/dashboard";
 
-export const DASHBOARD_SNAPSHOT_VERSION = 2 as const;
+export const DASHBOARD_SNAPSHOT_VERSION = 3 as const;
 export const DASHBOARD_SNAPSHOT_FILENAME = "dashboard-v1.json";
 
 export const buildDashboardSnapshotKey = (): string =>
@@ -51,6 +52,12 @@ export const buildDashboardSnapshot = async (options?: {
 
   const engagementAnalytics = computeEngagementAnalyticsCore(crmIndex, providers);
   const engagementRows = buildEngagementRowsFromIndex(crmIndex, providers);
+  const providerStatsYear = new Date().getFullYear();
+  const providerStats = computeAllProviderStatsFromSchedule(
+    crmIndex.schedule,
+    providers,
+    providerStatsYear
+  );
 
   return {
     version: DASHBOARD_SNAPSHOT_VERSION,
@@ -59,6 +66,8 @@ export const buildDashboardSnapshot = async (options?: {
     engagementAnalytics,
     engagementRows,
     leadAnalytics,
+    providerStats,
+    providerStatsYear,
   };
 };
 
