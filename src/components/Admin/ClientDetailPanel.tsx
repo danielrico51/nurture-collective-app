@@ -13,7 +13,7 @@ import {
   updateAdminClient,
 } from "@/lib/api/clientsClient";
 import { isImportedLeadClientNote } from "@/lib/clients/leadNotesShared";
-import { formatPhoneForCopy } from "@/lib/conversation/smsIdentity";
+import { formatPhoneForCopy } from "@/lib/phone/display";
 import { fetchClientEngagements } from "@/lib/api/scheduleClient";
 import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import type {
