@@ -28,22 +28,26 @@ export const VerticalBarChart = ({
   colorClass = "bg-nurture-sage",
   formatValue = (value) => String(value),
 }: BarChartProps) => {
+  if (data.length === 0) {
+    return <p className="text-sm text-nurture-charcoal/55">No data yet.</p>;
+  }
+
   const max = Math.max(1, ...data.map((d) => d.value));
   return (
-    <div className={`flex ${heightClass} items-end gap-1.5`}>
+    <div className={`flex ${heightClass} items-stretch gap-1.5`}>
       {data.map((row) => (
         <div
           key={row.label}
-          className="group flex min-w-0 flex-1 flex-col items-center gap-1"
+          className="group flex min-h-0 min-w-0 flex-1 flex-col items-center gap-1"
         >
-          <div className="relative flex w-full flex-1 items-end">
+          <div className="relative flex min-h-0 w-full flex-1 items-end">
             <div
               className={`w-full rounded-t transition ${colorClass} opacity-85 group-hover:opacity-100`}
               style={{ height: `${Math.max(6, (row.value / max) * 100)}%` }}
               title={row.title ?? `${row.label}: ${formatValue(row.value)}`}
             />
           </div>
-          <span className="max-w-full truncate text-[10px] text-nurture-charcoal/45">
+          <span className="max-w-full shrink-0 truncate text-[10px] text-nurture-charcoal/45">
             {row.label}
           </span>
         </div>
