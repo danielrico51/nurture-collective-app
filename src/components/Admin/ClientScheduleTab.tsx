@@ -5,6 +5,7 @@ import EngagementEditForm from "@/components/Admin/EngagementEditForm";
 import EngagementOperationsPanel from "@/components/Admin/EngagementOperationsPanel";
 import {
   createClientEngagement,
+  deleteClientEngagement,
   ENGAGEMENT_SERVICE_TYPE_LABELS,
   ENGAGEMENT_STATUS_LABELS,
   fetchClientEngagements,
@@ -243,6 +244,33 @@ const ClientScheduleTab = ({
       await load();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const startEditingEngagement = (engagementId: string) => {
+    setExpandedId(engagementId);
+    setEditingId(engagementId);
+  };
+
+  const deleteEngagement = async (engagement: ServiceEngagementWithDetails) => {
+    const label = `${ENGAGEMENT_SERVICE_TYPE_LABELS[engagement.serviceType]} ${engagement.scheduleYear}`;
+    const confirmed = window.confirm(
+      `Delete ${label}? This removes the engagement, packages, shifts, and payout records. The linked service (if any) will be unlinked but kept on the Services tab. This cannot be undone.`
+    );
+    if (!confirmed) return;
+
+    setSaving(true);
+    try {
+      await deleteClientEngagement(clientId, engagement.engagementId);
+      toast.success("Engagement deleted");
+      if (expandedId === engagement.engagementId) setExpandedId(null);
+      if (editingId === engagement.engagementId) setEditingId(null);
+      await load();
+      onChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not delete engagement");
     } finally {
       setSaving(false);
     }
@@ -498,51 +526,71 @@ const ClientScheduleTab = ({
                 id={index === 0 ? "tour-schedule-first-engagement" : undefined}
                 className="overflow-hidden rounded-2xl border border-nurture-sage/20 bg-white shadow-sm"
               >
-                <button
-                  type="button"
-                  onClick={() => {
-                    setExpandedId(expanded ? null : engagement.engagementId);
-                    if (expanded) setEditingId(null);
-                  }}
-                  className="flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4 text-left"
-                >
-                  <div>
-                    <div className="flex flex-wrap items-center gap-2">
-                      <span className="font-semibold text-nurture-charcoal">
-                        {ENGAGEMENT_SERVICE_TYPE_LABELS[engagement.serviceType]}{" "}
-                        {engagement.scheduleYear}
-                      </span>
-                      <span className="text-sm text-nurture-charcoal/60">
-                        booked {formatDate(engagement.bookDate)}
-                      </span>
-                    </div>
-                    <p className="mt-1 text-sm text-nurture-charcoal/60">
-                      {engagement.primaryProviderName || "Unassigned"} · est.{" "}
-                      {formatDate(engagement.estimatedDate)}
-                      {engagement.estimatedNotes
-                        ? ` (${engagement.estimatedNotes})`
-                        : ""}
-                    </p>
-                    <p className="mt-1 text-sm font-medium text-nurture-charcoal">
-                      {formatEngagementMoney(engagement.totalClientFeeCents)}
-                      {primaryPackage?.schedulePattern
-                        ? ` · ${primaryPackage.schedulePattern}`
-                        : ""}
-                      {engagement.preferredPaymentMethod ? (
-                        <span className="font-normal text-nurture-charcoal/60">
-                          {" "}
-                          · pay via{" "}
-                          {paymentMethodLabel(engagement.preferredPaymentMethod)}
-                        </span>
-                      ) : null}
-                    </p>
-                  </div>
-                  <span
-                    className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE[engagement.status]}`}
+                <div className="flex w-full flex-wrap items-center justify-between gap-3 px-5 py-4">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExpandedId(expanded ? null : engagement.engagementId);
+                      if (expanded) setEditingId(null);
+                    }}
+                    className="min-w-0 flex-1 text-left"
                   >
-                    {ENGAGEMENT_STATUS_LABELS[engagement.status]}
-                  </span>
-                </button>
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="font-semibold text-nurture-charcoal">
+                          {ENGAGEMENT_SERVICE_TYPE_LABELS[engagement.serviceType]}{" "}
+                          {engagement.scheduleYear}
+                        </span>
+                        <span className="text-sm text-nurture-charcoal/60">
+                          booked {formatDate(engagement.bookDate)}
+                        </span>
+                      </div>
+                      <p className="mt-1 text-sm text-nurture-charcoal/60">
+                        {engagement.primaryProviderName || "Unassigned"} · est.{" "}
+                        {formatDate(engagement.estimatedDate)}
+                        {engagement.estimatedNotes
+                          ? ` (${engagement.estimatedNotes})`
+                          : ""}
+                      </p>
+                      <p className="mt-1 text-sm font-medium text-nurture-charcoal">
+                        {formatEngagementMoney(engagement.totalClientFeeCents)}
+                        {primaryPackage?.schedulePattern
+                          ? ` · ${primaryPackage.schedulePattern}`
+                          : ""}
+                        {engagement.preferredPaymentMethod ? (
+                          <span className="font-normal text-nurture-charcoal/60">
+                            {" "}
+                            · pay via{" "}
+                            {paymentMethodLabel(engagement.preferredPaymentMethod)}
+                          </span>
+                        ) : null}
+                      </p>
+                    </div>
+                  </button>
+                  <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => startEditingEngagement(engagement.engagementId)}
+                      className="rounded-full border border-nurture-sage/30 px-3 py-1 text-xs font-semibold text-nurture-sage-dark transition hover:bg-nurture-sage/10 disabled:opacity-50"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      type="button"
+                      disabled={saving}
+                      onClick={() => void deleteEngagement(engagement)}
+                      className="rounded-full border border-red-200 px-3 py-1 text-xs font-semibold text-red-700 transition hover:bg-red-50 disabled:opacity-50"
+                    >
+                      Delete
+                    </button>
+                    <span
+                      className={`rounded-full px-3 py-1 text-xs font-semibold ${STATUS_BADGE[engagement.status]}`}
+                    >
+                      {ENGAGEMENT_STATUS_LABELS[engagement.status]}
+                    </span>
+                  </div>
+                </div>
 
                 {expanded ? (
                   <div
@@ -569,12 +617,20 @@ const ClientScheduleTab = ({
                         <button
                           type="button"
                           disabled={saving}
-                          onClick={() => setEditingId(engagement.engagementId)}
+                          onClick={() => startEditingEngagement(engagement.engagementId)}
                           className="rounded-full border border-nurture-sage/30 px-3 py-1 text-xs font-medium text-nurture-sage-dark disabled:opacity-50"
                         >
-                          Edit details
+                          Edit
                         </button>
                       ) : null}
+                      <button
+                        type="button"
+                        disabled={saving}
+                        onClick={() => void deleteEngagement(engagement)}
+                        className="rounded-full border border-red-200 px-3 py-1 text-xs font-medium text-red-700 disabled:opacity-50"
+                      >
+                        Delete
+                      </button>
                     </div>
 
                     {editingId === engagement.engagementId ? (

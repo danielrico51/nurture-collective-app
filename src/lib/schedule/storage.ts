@@ -7,11 +7,12 @@ import {
   updateClientService,
 } from "@/lib/client-services/storage";
 import { getClientById } from "@/lib/clients/storage";
-import { listLocalKeys, readLocalJson, writeLocalJson } from "@/lib/clients/localStorage";
+import { listLocalKeys, readLocalJson, writeLocalJson, deleteLocalJson } from "@/lib/clients/localStorage";
 import {
   listClientsKeys,
   readClientsJson,
   writeClientsJson,
+  deleteClientsJson,
 } from "@/lib/clients/platformS3";
 import { readProvider } from "@/lib/providers/storage";
 import {
@@ -32,6 +33,7 @@ import {
 import {
   buildEngagementKey,
   buildEngagementListPrefix,
+  buildEngagementRootPrefix,
   buildExpectationKey,
   buildExpectationListPrefix,
   buildPackageKey,
@@ -76,6 +78,14 @@ const writeJson = async (key: string, payload: unknown): Promise<void> => {
     await writeLocalJson(key, payload);
   } else {
     await writeClientsJson(key, payload);
+  }
+};
+
+const deleteJson = async (key: string): Promise<void> => {
+  if (getClientsStorageMode() === "local") {
+    await deleteLocalJson(key);
+  } else {
+    await deleteClientsJson(key);
   }
 };
 
@@ -594,4 +604,45 @@ export const patchProviderPayoutBatch = async (
   await requireEngagement(clientId, engagementId);
   await updateProviderPayoutBatch(clientId, engagementId, payoutBatchId, raw);
   return (await getEngagementDetail(clientId, engagementId))!;
+};
+
+export const deleteServiceEngagement = async (
+  clientId: string,
+  engagementId: string
+): Promise<void> => {
+  const engagement = await readEngagementRecord(clientId, engagementId);
+  if (!engagement) throw new ScheduleValidationError("Engagement not found");
+
+  const expectations = await listExpectationsForEngagement(clientId, engagementId);
+  if (expectations.some((row) => row.paidAt)) {
+    throw new ScheduleValidationError(
+      "Cannot delete an engagement with recorded client payments."
+    );
+  }
+
+  const payouts = await listPayoutsForEngagement(clientId, engagementId);
+  if (payouts.some((row) => row.paidAt)) {
+    throw new ScheduleValidationError(
+      "Cannot delete an engagement with recorded doula payouts."
+    );
+  }
+
+  if (engagement.serviceId) {
+    const services = await listClientServicesWithInvoices(clientId);
+    const service = services.find((item) => item.serviceId === engagement.serviceId);
+    if (service && service.paidCents > 0) {
+      throw new ScheduleValidationError(
+        "Cannot delete an engagement linked to a service with payments recorded."
+      );
+    }
+    if (service?.engagementId === engagementId) {
+      await updateClientService(clientId, service.serviceId, { engagementId: null });
+    }
+  }
+
+  const prefix = buildEngagementRootPrefix(clientId, engagementId);
+  const keys = (await listKeys(prefix)).filter((key) => key.endsWith(".json"));
+  for (const key of keys) {
+    await deleteJson(key);
+  }
 };

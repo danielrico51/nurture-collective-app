@@ -4,6 +4,7 @@ import {
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
 import {
+  deleteServiceEngagement,
   getEngagementDetail,
   ScheduleValidationError,
   updateServiceEngagement,
@@ -46,6 +47,22 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       body
     );
     return NextResponse.json({ engagement });
+  } catch (error) {
+    if (error instanceof ScheduleValidationError) {
+      const status = error.message.includes("not found") ? 404 : 400;
+      return NextResponse.json({ error: error.message }, { status });
+    }
+    return handleClientsStorageError(error);
+  }
+}
+
+export async function DELETE(request: NextRequest, { params }: RouteContext) {
+  const auth = await requireManagementAuth(request);
+  if (auth.error) return auth.error;
+
+  try {
+    await deleteServiceEngagement(params.id, params.engagementId);
+    return NextResponse.json({ ok: true });
   } catch (error) {
     if (error instanceof ScheduleValidationError) {
       const status = error.message.includes("not found") ? 404 : 400;

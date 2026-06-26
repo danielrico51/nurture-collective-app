@@ -16,7 +16,13 @@ export const buildEngagementKey = (
   clientId: string,
   engagementId: string
 ): string =>
-  `${buildEngagementListPrefix(clientId)}engagement_id=${sanitizeClientSegment(engagementId)}/${ENGAGEMENT_FILENAME}`;
+  `${buildEngagementRootPrefix(clientId, engagementId)}${ENGAGEMENT_FILENAME}`;
+
+export const buildEngagementRootPrefix = (
+  clientId: string,
+  engagementId: string
+): string =>
+  `${buildEngagementListPrefix(clientId)}engagement_id=${sanitizeClientSegment(engagementId)}/`;
 
 export const buildPackageListPrefix = (
   clientId: string,

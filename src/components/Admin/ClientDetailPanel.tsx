@@ -13,6 +13,7 @@ import {
   updateAdminClient,
 } from "@/lib/api/clientsClient";
 import { isImportedLeadClientNote } from "@/lib/clients/leadNotesShared";
+import { formatPhoneForCopy } from "@/lib/conversation/smsIdentity";
 import { fetchClientEngagements } from "@/lib/api/scheduleClient";
 import { runWithAutoRetry } from "@/lib/api/fetchWithRetry";
 import type {
@@ -61,17 +62,50 @@ const statusLabel = (status: ClientStatus): string =>
 const DetailItem = ({
   label,
   value,
+  copyText,
 }: {
   label: string;
   value: React.ReactNode;
-}) => (
-  <div>
-    <p className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
-      {label}
-    </p>
-    <p className="mt-0.5 text-sm text-nurture-charcoal break-words">{value}</p>
-  </div>
-);
+  copyText?: string | null;
+}) => {
+  const handleCopy = async () => {
+    const text = copyText?.trim();
+    if (!text) return;
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error(`Could not copy ${label.toLowerCase()}`);
+    }
+  };
+
+  const showCopy =
+    typeof copyText === "string" &&
+    copyText.trim().length > 0 &&
+    value !== "—";
+
+  return (
+    <div>
+      <p className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
+        {label}
+      </p>
+      <div className="mt-0.5 flex items-start gap-2">
+        <p className="min-w-0 flex-1 text-sm text-nurture-charcoal break-words">
+          {value}
+        </p>
+        {showCopy ? (
+          <button
+            type="button"
+            onClick={() => void handleCopy()}
+            className="shrink-0 rounded-md border border-nurture-sage/25 px-2 py-0.5 text-[11px] font-semibold text-nurture-sage-dark transition hover:bg-nurture-sage/10"
+          >
+            Copy
+          </button>
+        ) : null}
+      </div>
+    </div>
+  );
+};
 
 const ClientDetailPanel = ({
   clientId,
@@ -502,8 +536,16 @@ const ClientDetailPanel = ({
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <DetailItem label="Name" value={client.name || "—"} />
-              <DetailItem label="Email" value={client.email || "—"} />
-              <DetailItem label="Phone" value={client.phone || "—"} />
+              <DetailItem
+                label="Email"
+                value={client.email || "—"}
+                copyText={client.email}
+              />
+              <DetailItem
+                label="Phone"
+                value={client.phone || "—"}
+                copyText={client.phone ? formatPhoneForCopy(client.phone) : null}
+              />
               <DetailItem label="ZIP" value={client.locationZip || "—"} />
               <DetailItem
                 label="Tags"

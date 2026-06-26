@@ -91,6 +91,20 @@ export const updateClientEngagement = async (
   return handleResponse(response);
 };
 
+export const deleteClientEngagement = async (
+  clientId: string,
+  engagementId: string
+): Promise<{ ok: true }> => {
+  const response = await fetch(
+    `/api/admin/clients/${encodeURIComponent(clientId)}/engagements/${encodeURIComponent(engagementId)}`,
+    {
+      method: "DELETE",
+      headers: await authHeaders(),
+    }
+  );
+  return handleResponse(response);
+};
+
 export const updateEngagementPackage = async (
   clientId: string,
   engagementId: string,
