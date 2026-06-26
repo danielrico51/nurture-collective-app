@@ -29,19 +29,23 @@ export const normalizePaidAtIso = (paidAt: string): string =>
   paidAt.includes("T") ? paidAt : `${paidAt}T12:00:00.000Z`;
 
 /**
- * Creates a service invoice for a deposit expectation and marks it paid when
- * the expectation has a paidAt date. Links expectation.invoiceId for traceability.
+ * Creates or updates a service invoice for a deposit/balance expectation and
+ * marks it paid when the expectation has a paidAt date.
  */
-export const syncDepositExpectationToServiceInvoice = async (
+export const syncExpectationToServiceInvoice = async (
   clientId: string,
   serviceId: string,
   engagement: ServiceEngagement,
   expectation: ClientPaymentExpectation
 ): Promise<ClientPaymentExpectation> => {
-  if (expectation.kind !== "deposit" || expectation.amountCents <= 0) {
+  if (
+    (expectation.kind !== "deposit" && expectation.kind !== "balance") ||
+    expectation.amountCents <= 0
+  ) {
     return expectation;
   }
 
+  const description = expectation.kind === "deposit" ? "Deposit" : "Balance";
   const paymentMethod = resolveExpectationPaymentMethod(
     engagement.preferredPaymentMethod
   );
@@ -70,9 +74,9 @@ export const syncDepositExpectationToServiceInvoice = async (
   const invoice = await createServiceInvoice(clientId, serviceId, {
     amountCents: expectation.amountCents,
     paymentMethod,
-    description: "Deposit",
+    description,
     dueDate: expectation.dueDate,
-    notes: expectation.notes || "Engagement deposit",
+    notes: expectation.notes || `Engagement ${expectation.kind}`,
   });
 
   if (paidAtIso) {
@@ -89,3 +93,12 @@ export const syncDepositExpectationToServiceInvoice = async (
     updatedAt: now,
   });
 };
+
+/** @deprecated Use syncExpectationToServiceInvoice */
+export const syncDepositExpectationToServiceInvoice = async (
+  clientId: string,
+  serviceId: string,
+  engagement: ServiceEngagement,
+  expectation: ClientPaymentExpectation
+): Promise<ClientPaymentExpectation> =>
+  syncExpectationToServiceInvoice(clientId, serviceId, engagement, expectation);

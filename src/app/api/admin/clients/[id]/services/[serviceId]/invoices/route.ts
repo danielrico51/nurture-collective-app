@@ -44,7 +44,7 @@ export async function POST(request: NextRequest, { params }: RouteContext) {
       params.id,
       params.serviceId,
       body,
-      body.send
+      body.send || body.markPaid || body.generateDocument
         ? {
             actor: { sub: auth.user.sub, email: auth.user.email },
             origin: request.nextUrl.origin,

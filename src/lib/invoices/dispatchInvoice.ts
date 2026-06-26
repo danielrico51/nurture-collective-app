@@ -39,19 +39,31 @@ const resolveInitialSentStatus = (invoice: ServiceInvoice): ServiceInvoice["stat
     ? "pending_payment"
     : "sent";
 
-export const dispatchServiceInvoice = async (input: {
+type InvoiceDocumentContext = {
+  invoice: ServiceInvoice;
+  service: ClientService;
+  client: ClientRecord;
+  serviceContext: ReturnType<typeof buildInvoiceServiceContext>;
+  paymentLink: string | null;
+  paymentInstructions: string;
+  quickbooks: ServiceInvoice["quickbooks"];
+  stripe: ServiceInvoice["stripe"];
+  pdfDownloadUrl: string;
+  pdfAccessExpiresAt: string;
+  documentStorageKey: string;
+  now: string;
+};
+
+const buildInvoiceDocumentContext = async (input: {
   clientId: string;
   serviceId: string;
   invoice: ServiceInvoice;
-  actor: InvoiceDispatchActor;
   origin: string;
-  resend?: boolean;
-}): Promise<ServiceInvoice> => {
+  asPaid?: boolean;
+  resolvePaymentLinks?: boolean;
+}): Promise<InvoiceDocumentContext> => {
   const client = await getClientById(input.clientId);
   if (!client) throw new InvoiceDispatchError("Client not found");
-  if (!client.email?.trim()) {
-    throw new InvoiceDispatchError("Client has no email address");
-  }
 
   const service = await readClientService(input.clientId, input.serviceId);
   if (!service) throw new InvoiceDispatchError("Service not found");
@@ -66,38 +78,34 @@ export const dispatchServiceInvoice = async (input: {
     input.invoice
   );
 
-  const isPaid = input.invoice.status === "paid";
-  const isResend = Boolean(input.resend);
+  const asPaid = Boolean(input.asPaid);
+  const resolvePaymentLinks = input.resolvePaymentLinks ?? !asPaid;
 
-  const payment = isPaid
+  const payment = asPaid
     ? {
         paymentLink: null,
         paymentInstructions: buildPaidInvoiceInstructions(input.invoice),
         quickbooks: input.invoice.quickbooks,
         stripe: input.invoice.stripe,
       }
-    : await resolveServiceInvoicePayment({
-        invoice: input.invoice,
-        service,
-        client,
-        origin: input.origin,
-      }).catch((error) => {
-        if (error instanceof ServiceInvoicePaymentError) {
-          throw new InvoiceDispatchError(error.message);
-        }
-        throw error;
-      });
-
-  const documentInput = {
-    invoice: input.invoice,
-    service,
-    client,
-    paymentLink: payment.paymentLink,
-    paymentInstructions: payment.paymentInstructions,
-    serviceContext,
-    pdfDownloadUrl: null as string | null,
-    isResend,
-  };
+    : resolvePaymentLinks
+      ? await resolveServiceInvoicePayment({
+          invoice: input.invoice,
+          service,
+          client,
+          origin: input.origin,
+        }).catch((error) => {
+          if (error instanceof ServiceInvoicePaymentError) {
+            throw new InvoiceDispatchError(error.message);
+          }
+          throw error;
+        })
+      : {
+          paymentLink: input.invoice.paymentLink,
+          paymentInstructions: input.invoice.paymentInstructions,
+          quickbooks: input.invoice.quickbooks,
+          stripe: input.invoice.stripe,
+        };
 
   const now = new Date().toISOString();
   const publicOrigin = resolveClientInvoicePublicOrigin(input.origin);
@@ -110,11 +118,18 @@ export const dispatchServiceInvoice = async (input: {
       origin: publicOrigin,
       expiresAt: resolveInvoiceAccessExpiry(now),
     });
-  documentInput.pdfDownloadUrl = pdfDownloadUrl;
 
-  const htmlDocument = buildInvoiceHtmlDocument(documentInput);
-  const emailHtml = buildInvoiceEmailHtml(documentInput);
-  const text = buildInvoicePlainText(documentInput);
+  const htmlDocument = buildInvoiceHtmlDocument({
+    invoice: input.invoice,
+    service,
+    client,
+    paymentLink: payment.paymentLink,
+    paymentInstructions: payment.paymentInstructions,
+    serviceContext,
+    pdfDownloadUrl,
+    isResend: false,
+  });
+
   const documentStorageKey = await persistInvoiceHtmlDocument({
     clientId: input.clientId,
     serviceId: input.serviceId,
@@ -122,11 +137,95 @@ export const dispatchServiceInvoice = async (input: {
     html: htmlDocument,
   });
 
+  return {
+    invoice: input.invoice,
+    service,
+    client,
+    serviceContext,
+    paymentLink: payment.paymentLink,
+    paymentInstructions: payment.paymentInstructions,
+    quickbooks: payment.quickbooks,
+    stripe: payment.stripe,
+    pdfDownloadUrl,
+    pdfAccessExpiresAt,
+    documentStorageKey,
+    now,
+  };
+};
+
+/** Build and store invoice HTML/PDF metadata without emailing the client. */
+export const generateServiceInvoiceDocument = async (input: {
+  clientId: string;
+  serviceId: string;
+  invoice: ServiceInvoice;
+  origin: string;
+  asPaid?: boolean;
+  resolvePaymentLinks?: boolean;
+}): Promise<ServiceInvoice> => {
+  const context = await buildInvoiceDocumentContext(input);
+  const asPaid = Boolean(input.asPaid);
+
+  return {
+    ...context.invoice,
+    customerName: context.client.name,
+    customerEmail: context.client.email?.trim().toLowerCase() ?? "",
+    paymentInstructions: asPaid
+      ? context.invoice.paymentInstructions
+      : context.paymentInstructions,
+    paymentLink: asPaid ? context.invoice.paymentLink : context.paymentLink,
+    documentStorageKey: context.documentStorageKey,
+    pdfDownloadUrl: context.pdfDownloadUrl,
+    pdfAccessExpiresAt: context.pdfAccessExpiresAt,
+    lastEmailError: null,
+    updatedAt: context.now,
+  };
+};
+
+export const dispatchServiceInvoice = async (input: {
+  clientId: string;
+  serviceId: string;
+  invoice: ServiceInvoice;
+  actor: InvoiceDispatchActor;
+  origin: string;
+  resend?: boolean;
+}): Promise<ServiceInvoice> => {
+  const client = await getClientById(input.clientId);
+  if (!client) throw new InvoiceDispatchError("Client not found");
+  if (!client.email?.trim()) {
+    throw new InvoiceDispatchError("Client has no email address");
+  }
+
+  const isPaid = input.invoice.status === "paid";
+  const isResend = Boolean(input.resend);
+
+  const context = await buildInvoiceDocumentContext({
+    clientId: input.clientId,
+    serviceId: input.serviceId,
+    invoice: input.invoice,
+    origin: input.origin,
+    asPaid: isPaid,
+    resolvePaymentLinks: !isPaid,
+  });
+
+  const documentInput = {
+    invoice: input.invoice,
+    service: context.service,
+    client: context.client,
+    paymentLink: context.paymentLink,
+    paymentInstructions: context.paymentInstructions,
+    serviceContext: context.serviceContext,
+    pdfDownloadUrl: context.pdfDownloadUrl,
+    isResend,
+  };
+
+  const emailHtml = buildInvoiceEmailHtml(documentInput);
+  const text = buildInvoicePlainText(documentInput);
+
   let lastEmailError: string | null = null;
 
   try {
     await sendClientEmail({
-      client,
+      client: context.client,
       subject: buildInvoiceEmailSubject(input.invoice.invoiceNumber),
       body: text,
       html: emailHtml,
@@ -148,21 +247,21 @@ export const dispatchServiceInvoice = async (input: {
 
   return {
     ...input.invoice,
-    customerName: client.name,
-    customerEmail: client.email.trim().toLowerCase(),
+    customerName: context.client.name,
+    customerEmail: context.client.email.trim().toLowerCase(),
     paymentInstructions: isPaid
       ? input.invoice.paymentInstructions
-      : payment.paymentInstructions,
-    paymentLink: isPaid ? input.invoice.paymentLink : payment.paymentLink,
-    quickbooks: isPaid ? input.invoice.quickbooks : payment.quickbooks,
-    stripe: isPaid ? input.invoice.stripe : payment.stripe,
-    documentStorageKey,
-    pdfDownloadUrl,
-    pdfAccessExpiresAt,
+      : context.paymentInstructions,
+    paymentLink: isPaid ? input.invoice.paymentLink : context.paymentLink,
+    quickbooks: isPaid ? input.invoice.quickbooks : context.quickbooks,
+    stripe: isPaid ? input.invoice.stripe : context.stripe,
+    documentStorageKey: context.documentStorageKey,
+    pdfDownloadUrl: context.pdfDownloadUrl,
+    pdfAccessExpiresAt: context.pdfAccessExpiresAt,
     lastEmailError,
     status,
-    sentAt: input.invoice.sentAt ?? now,
-    updatedAt: now,
+    sentAt: input.invoice.sentAt ?? context.now,
+    updatedAt: context.now,
   };
 };
 

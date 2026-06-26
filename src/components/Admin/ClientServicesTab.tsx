@@ -315,7 +315,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
 
   const handleCreateInvoice = async (
     service: ClientServiceWithInvoices,
-    options?: { fullBalance?: boolean; send?: boolean }
+    options?: { fullBalance?: boolean; send?: boolean; markPaid?: boolean }
   ) => {
     const subtotalCents = options?.fullBalance
       ? service.balanceDueCents
@@ -349,9 +349,16 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
         description: invoiceDescription.trim() || undefined,
         notes: invoiceNotes.trim() || undefined,
         dueDate: invoiceDueDate || null,
-        send: options?.send ?? true,
+        send: options?.markPaid ? false : (options?.send ?? true),
+        markPaid: options?.markPaid ?? false,
       });
-      toast.success(options?.send === false ? "Invoice saved as draft" : "Invoice sent");
+      toast.success(
+        options?.markPaid
+          ? "Payment recorded (no email sent)"
+          : options?.send === false
+            ? "Invoice saved as draft"
+            : "Invoice sent"
+      );
       setInvoiceAmount("");
       setInvoiceDescription("");
       setInvoiceNotes("");
@@ -430,7 +437,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
       });
       toast.success(
         action === "markPaid"
-          ? "Marked paid"
+          ? "Marked paid (no email sent)"
           : action === "markRefunded"
             ? "Marked refunded"
             : action === "resend"
@@ -1268,7 +1275,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     }
                                     className="text-emerald-700 font-medium hover:underline disabled:opacity-60"
                                   >
-                                    Mark paid
+                                    Mark paid (no email)
                                   </button>
                                 ) : null}
                               </div>
@@ -1428,6 +1435,28 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                           <button
                             type="button"
                             disabled={saving}
+                            onClick={() =>
+                              void handleCreateInvoice(service, {
+                                send: false,
+                              })
+                            }
+                            className="rounded-full border border-nurture-sage/30 px-4 py-2 text-xs font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10 disabled:opacity-60"
+                          >
+                            Save draft
+                          </button>
+                          <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() =>
+                              void handleCreateInvoice(service, { markPaid: true })
+                            }
+                            className="rounded-full border border-emerald-600/40 px-4 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-60"
+                          >
+                            Record payment
+                          </button>
+                          <button
+                            type="button"
+                            disabled={saving}
                             onClick={() => void handleCreateInvoice(service)}
                             className="rounded-full bg-nurture-sage px-4 py-2 text-xs font-semibold text-white hover:bg-nurture-sage-dark disabled:opacity-60"
                           >
@@ -1437,11 +1466,26 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                             type="button"
                             disabled={saving}
                             onClick={() =>
+                              void handleCreateInvoice(service, {
+                                fullBalance: true,
+                                markPaid: true,
+                              })
+                            }
+                            className="rounded-full border border-emerald-600/40 px-4 py-2 text-xs font-semibold text-emerald-800 hover:bg-emerald-50 disabled:opacity-60"
+                          >
+                            Record full balance paid (
+                            {formatMoney(service.balanceDueCents)})
+                          </button>
+                          <button
+                            type="button"
+                            disabled={saving}
+                            onClick={() =>
                               void handleCreateInvoice(service, { fullBalance: true })
                             }
                             className="rounded-full border border-nurture-sage/30 px-4 py-2 text-xs font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10 disabled:opacity-60"
                           >
-                            Bill full balance ({formatMoney(service.balanceDueCents)})
+                            Bill full balance & send (
+                            {formatMoney(service.balanceDueCents)})
                           </button>
                         </div>
                       </div>

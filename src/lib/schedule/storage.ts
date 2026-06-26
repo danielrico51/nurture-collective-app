@@ -21,8 +21,9 @@ import {
   listProviderPayoutReport,
   updateProviderPayoutBatch,
 } from "@/lib/schedule/payoutStorage";
-import { syncDepositExpectationToServiceInvoice } from "@/lib/schedule/expectationBilling";
-import { ensureEngagementDepositInvoicesSynced } from "@/lib/schedule/engagementBillingSync";
+import { syncExpectationToServiceInvoice } from "@/lib/schedule/expectationBilling";
+import { ensureEngagementPaymentInvoicesSynced } from "@/lib/schedule/engagementBillingSync";
+import { buildLinkedServiceTitle } from "@/lib/schedule/serviceTitles";
 import { savePaymentExpectation } from "@/lib/schedule/expectationStorage";
 import {
   createScheduleShift,
@@ -87,12 +88,6 @@ const deleteJson = async (key: string): Promise<void> => {
   } else {
     await deleteClientsJson(key);
   }
-};
-
-const serviceTypeLabel = (serviceType: ServiceEngagement["serviceType"]): string => {
-  if (serviceType === "postpartum") return "Postpartum doula";
-  if (serviceType === "birth") return "Birth doula";
-  return "Service";
 };
 
 const sumPackageFees = (packages: EngagementPackage[]): number =>
@@ -185,7 +180,7 @@ const buildEngagementDetails = async (
   engagement: ServiceEngagement
 ): Promise<ServiceEngagementWithDetails> => {
   const packages = await listPackagesForEngagement(clientId, engagement.engagementId);
-  await ensureEngagementDepositInvoicesSynced(clientId, engagement);
+  await ensureEngagementPaymentInvoicesSynced(clientId, engagement);
   const expectations = await listExpectationsForEngagement(
     clientId,
     engagement.engagementId
@@ -273,7 +268,7 @@ export const createServiceEngagement = async (
   } else {
     const title =
       input.serviceTitle?.trim() ||
-      `${serviceTypeLabel(input.serviceType ?? "postpartum")} ${input.scheduleYear}`;
+      buildLinkedServiceTitle(input.serviceType ?? "postpartum", input.scheduleYear ?? Number(input.bookDate.slice(0, 4)));
     const created = await createClientService(clientId, {
       title,
       providerName: primaryProvider?.displayName ?? "",
@@ -331,7 +326,7 @@ export const createServiceEngagement = async (
       ...input.deposit,
       kind: "deposit",
     });
-    await syncDepositExpectationToServiceInvoice(
+    await syncExpectationToServiceInvoice(
       clientId,
       serviceId!,
       engagement,
@@ -402,7 +397,9 @@ export const updateServiceEngagement = async (
 
   if (
     updates.primaryProviderId !== undefined ||
-    updates.bookDate !== undefined
+    updates.bookDate !== undefined ||
+    updates.serviceType !== undefined ||
+    updates.scheduleYear !== undefined
   ) {
     const provider = next.primaryProviderId
       ? await readProvider(next.primaryProviderId)
@@ -411,6 +408,7 @@ export const updateServiceEngagement = async (
       providerId: next.primaryProviderId,
       providerName: provider?.displayName,
       serviceDate: next.bookDate,
+      title: buildLinkedServiceTitle(next.serviceType, next.scheduleYear),
     });
   }
 
@@ -496,8 +494,11 @@ export const updatePaymentExpectation = async (
   };
   await savePaymentExpectation(clientId, next);
 
-  if (next.kind === "deposit" && next.amountCents > 0) {
-    await syncDepositExpectationToServiceInvoice(
+  if (
+    (next.kind === "deposit" || next.kind === "balance") &&
+    next.amountCents > 0
+  ) {
+    await syncExpectationToServiceInvoice(
       clientId,
       engagement.serviceId,
       engagement,

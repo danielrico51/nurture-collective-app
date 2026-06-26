@@ -1,7 +1,9 @@
 import { getClientsStorageMode } from "@/lib/clients/config";
+import { updateClientService } from "@/lib/client-services/storage";
 import { listLocalKeys, readLocalJson } from "@/lib/clients/localStorage";
 import { listClientsKeys, readClientsJson } from "@/lib/clients/platformS3";
-import { syncDepositExpectationToServiceInvoice } from "@/lib/schedule/expectationBilling";
+import { syncExpectationToServiceInvoice } from "@/lib/schedule/expectationBilling";
+import { buildLinkedServiceTitle } from "@/lib/schedule/serviceTitles";
 import {
   buildEngagementKey,
   buildExpectationListPrefix,
@@ -50,50 +52,85 @@ const listExpectationsForEngagement = async (
   return expectations.sort((a, b) => a.kind.localeCompare(b.kind));
 };
 
-/** Backfill deposit invoices for one engagement (idempotent). */
-export const ensureEngagementDepositInvoicesSynced = async (
+/** Backfill deposit/balance invoices for one engagement (idempotent). */
+export const ensureEngagementPaymentInvoicesSynced = async (
   clientId: string,
   engagement: ServiceEngagement
 ): Promise<void> => {
+  if (engagement.serviceId) {
+    try {
+      await updateClientService(clientId, engagement.serviceId, {
+        title: buildLinkedServiceTitle(
+          engagement.serviceType,
+          engagement.scheduleYear
+        ),
+      });
+    } catch (error) {
+      console.error("[schedule] linked service title sync failed", {
+        clientId,
+        engagementId: engagement.engagementId,
+        serviceId: engagement.serviceId,
+        error,
+      });
+    }
+  }
+
   const expectations = await listExpectationsForEngagement(
     clientId,
     engagement.engagementId
   );
 
   for (const expectation of expectations) {
-    if (expectation.kind !== "deposit" || expectation.amountCents <= 0) continue;
+    if (
+      (expectation.kind !== "deposit" && expectation.kind !== "balance") ||
+      expectation.amountCents <= 0
+    ) {
+      continue;
+    }
     try {
-      await syncDepositExpectationToServiceInvoice(
+      await syncExpectationToServiceInvoice(
         clientId,
         engagement.serviceId,
         engagement,
         expectation
       );
     } catch (error) {
-      console.error("[schedule] deposit invoice sync failed", {
+      console.error("[schedule] payment invoice sync failed", {
         clientId,
         engagementId: engagement.engagementId,
         expectationId: expectation.expectationId,
+        kind: expectation.kind,
         error,
       });
     }
   }
 };
 
-export const ensureEngagementDepositInvoicesSyncedForId = async (
+/** @deprecated Use ensureEngagementPaymentInvoicesSynced */
+export const ensureEngagementDepositInvoicesSynced = ensureEngagementPaymentInvoicesSynced;
+
+export const ensureEngagementPaymentInvoicesSyncedForId = async (
   clientId: string,
   engagementId: string
 ): Promise<void> => {
   const engagement = await readEngagementRecord(clientId, engagementId);
   if (!engagement?.serviceId) return;
-  await ensureEngagementDepositInvoicesSynced(clientId, engagement);
+  await ensureEngagementPaymentInvoicesSynced(clientId, engagement);
 };
 
-export const ensureAllEngagementDepositInvoicesSynced = async (
+/** @deprecated Use ensureEngagementPaymentInvoicesSyncedForId */
+export const ensureEngagementDepositInvoicesSyncedForId =
+  ensureEngagementPaymentInvoicesSyncedForId;
+
+export const ensureAllEngagementPaymentInvoicesSynced = async (
   clientId: string,
   engagementIds: string[]
 ): Promise<void> => {
   for (const engagementId of engagementIds) {
-    await ensureEngagementDepositInvoicesSyncedForId(clientId, engagementId);
+    await ensureEngagementPaymentInvoicesSyncedForId(clientId, engagementId);
   }
 };
+
+/** @deprecated Use ensureAllEngagementPaymentInvoicesSynced */
+export const ensureAllEngagementDepositInvoicesSynced =
+  ensureAllEngagementPaymentInvoicesSynced;

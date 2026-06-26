@@ -87,6 +87,9 @@ const EngagementEditForm = ({
   const [balanceDueLabel, setBalanceDueLabel] = useState(
     balanceExpectation?.dueLabel ?? ""
   );
+  const [balancePaidAt, setBalancePaidAt] = useState(
+    toDateInputValue(balanceExpectation?.paidAt)
+  );
   const [preferredPaymentMethod, setPreferredPaymentMethod] = useState<
     PaymentMethodId | ""
   >(engagement.preferredPaymentMethod ?? "");
@@ -162,6 +165,7 @@ const EngagementEditForm = ({
             amountCents: balanceAmountCents,
             dueDate: balanceDueDate || null,
             dueLabel: balanceDueLabel,
+            paidAt: balancePaidAt || null,
           }
         );
       }
@@ -362,6 +366,15 @@ const EngagementEditForm = ({
                     type="date"
                     value={balanceDueDate}
                     onChange={(event) => setBalanceDueDate(event.target.value)}
+                    className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+                  />
+                </label>
+                <label className="block text-sm">
+                  <span className="font-medium">Balance paid date</span>
+                  <input
+                    type="date"
+                    value={balancePaidAt}
+                    onChange={(event) => setBalancePaidAt(event.target.value)}
                     className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
                   />
                 </label>

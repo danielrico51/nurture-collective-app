@@ -33,6 +33,7 @@ import { getClientById } from "@/lib/clients/storage";
 import {
   buildEmptyInvoiceContactFields,
   dispatchServiceInvoice,
+  generateServiceInvoiceDocument,
   InvoiceDispatchError,
 } from "@/lib/invoices/dispatchInvoice";
 import {
@@ -492,6 +493,15 @@ export const createServiceInvoice = async (
   const invoiceId = crypto.randomUUID();
   const invoiceNumber = await allocateInvoiceNumber();
   const send = Boolean(raw.send);
+  const markPaid = Boolean(raw.markPaid);
+  const generateDocument = Boolean(raw.generateDocument);
+
+  if (send && markPaid) {
+    throw new ClientServiceValidationError(
+      "Choose either send or record payment, not both"
+    );
+  }
+
   const client = await getClientById(clientId);
 
   let invoice: ServiceInvoice = {
@@ -536,6 +546,43 @@ export const createServiceInvoice = async (
       origin: dispatchOptions.origin,
     });
     invoice = await saveInvoice(clientId, serviceId, invoice);
+    return invoice;
+  }
+
+  if (markPaid || generateDocument) {
+    if (!dispatchOptions?.origin) {
+      throw new ClientServiceValidationError(
+        "Invoice document generation requires request origin"
+      );
+    }
+    invoice = await generateServiceInvoiceDocument({
+      clientId,
+      serviceId,
+      invoice,
+      origin: dispatchOptions.origin,
+      asPaid: markPaid,
+      resolvePaymentLinks: false,
+    });
+    invoice = await saveInvoice(clientId, serviceId, invoice);
+  }
+
+  if (markPaid) {
+    const { completeServiceInvoicePayment } = await import(
+      "@/lib/invoices/completePayment"
+    );
+    await completeServiceInvoicePayment({
+      clientId,
+      serviceId,
+      invoiceId: invoice.invoiceId,
+      paymentProvider:
+        paymentMethod === "stripe"
+          ? "stripe"
+          : paymentMethod === "quickbooks"
+            ? "quickbooks"
+            : "manual",
+    });
+    const updated = await readServiceInvoice(clientId, serviceId, invoice.invoiceId);
+    return updated ?? invoice;
   }
 
   return invoice;
@@ -669,6 +716,22 @@ export const updateServiceInvoice = async (
   }
 
   if (raw.markPaid) {
+    if (!dispatchOptions?.origin) {
+      throw new ClientServiceValidationError(
+        "Mark paid requires request origin"
+      );
+    }
+    if (!existing.documentStorageKey) {
+      invoice = await generateServiceInvoiceDocument({
+        clientId,
+        serviceId,
+        invoice: existing,
+        origin: dispatchOptions.origin,
+        asPaid: true,
+        resolvePaymentLinks: false,
+      });
+      await saveInvoice(clientId, serviceId, invoice);
+    }
     const { completeServiceInvoicePayment } = await import(
       "@/lib/invoices/completePayment"
     );

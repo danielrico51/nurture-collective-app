@@ -185,6 +185,10 @@ export interface CreateServiceInvoiceInput {
   notes?: string;
   /** When true, mark as sent immediately after creation. */
   send?: boolean;
+  /** Create invoice and mark paid without emailing the client. */
+  markPaid?: boolean;
+  /** Persist a printable invoice document without sending email. */
+  generateDocument?: boolean;
 }
 
 export interface UpdateServiceInvoiceInput {
