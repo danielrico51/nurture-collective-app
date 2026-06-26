@@ -8,7 +8,7 @@ import {
   DASHBOARD_SNAPSHOT_AGE_WARN_MS,
   formatSnapshotAge,
   snapshotAgeMs,
-} from "@/lib/dashboard/snapshotRefresh";
+} from "@/lib/dashboard/snapshotAge";
 import type {
   DashboardEngagementAnalyticsCore,
   DashboardEngagementRow,

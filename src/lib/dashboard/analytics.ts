@@ -1,4 +1,9 @@
 import { loadCrmStorageIndex } from "@/lib/clients/crmIndexLoader";
+import {
+  topProvidersForYear,
+  withSelectedYear,
+  yearBucketFor,
+} from "@/lib/dashboard/analyticsView";
 import { computeEngagementAnalyticsCore } from "@/lib/dashboard/engagementAnalyticsCore";
 import { listAllLeads } from "@/lib/leads/storage";
 import { listProviders } from "@/lib/providers/storage";
@@ -6,10 +11,10 @@ import type {
   DashboardEngagementAnalytics,
   DashboardEngagementAnalyticsCore,
   DashboardLeadAnalytics,
-  DashboardTopProvider,
-  DashboardYearBucket,
 } from "@/types/dashboard";
 import type { LeadStatus } from "@/types/lead";
+
+export { topProvidersForYear, withSelectedYear, yearBucketFor };
 
 const todayIso = (): string => new Date().toISOString().slice(0, 10);
 
@@ -45,39 +50,6 @@ let engagementCoreCache: {
   expiresAt: number;
   data: DashboardEngagementAnalyticsCore;
 } | null = null;
-
-export const yearBucketFor = (
-  analytics: Pick<DashboardEngagementAnalyticsCore, "byYear">,
-  year: number
-): DashboardYearBucket | undefined => analytics.byYear.find((row) => row.year === year);
-
-export const topProvidersForYear = (
-  analytics: Pick<DashboardEngagementAnalyticsCore, "topProvidersByYear">,
-  year: number
-): DashboardTopProvider[] => analytics.topProvidersByYear[String(year)] ?? [];
-
-export const withSelectedYear = (
-  core: DashboardEngagementAnalyticsCore,
-  year: number
-): DashboardEngagementAnalytics => {
-  const bucket = yearBucketFor(core, year);
-  const ytdEngagementCount = bucket?.engagementCount ?? 0;
-  const ytdClientFeeCents = bucket?.clientFeeCents ?? 0;
-  const ytdDoulaPayoutCents = bucket?.doulaPayoutCents ?? 0;
-
-  return {
-    ...core,
-    year,
-    summary: {
-      ...core.summary,
-      ytdEngagementCount,
-      ytdClientFeeCents,
-      ytdDoulaPayoutCents,
-      ytdMarginCents: ytdClientFeeCents - ytdDoulaPayoutCents,
-    },
-    topProviders: topProvidersForYear(core, year),
-  };
-};
 
 export const computeDashboardLeadAnalytics = async (options?: {
   force?: boolean;

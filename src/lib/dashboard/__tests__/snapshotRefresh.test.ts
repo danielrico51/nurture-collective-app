@@ -3,7 +3,7 @@ import {
   formatSnapshotAge,
   isDashboardSnapshotStale,
   snapshotAgeMs,
-} from "@/lib/dashboard/snapshotRefresh";
+} from "@/lib/dashboard/snapshotAge";
 
 describe("snapshotRefresh", () => {
   it("detects when stale marker is newer than snapshot", () => {

@@ -3,7 +3,7 @@ import {
   topProvidersForYear,
   withSelectedYear,
   yearBucketFor,
-} from "@/lib/dashboard/analytics";
+} from "@/lib/dashboard/analyticsView";
 import type { DashboardEngagementAnalyticsCore } from "@/types/dashboard";
 
 const sampleCore: DashboardEngagementAnalyticsCore = {

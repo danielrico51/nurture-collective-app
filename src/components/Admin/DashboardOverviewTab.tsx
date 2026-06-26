@@ -4,7 +4,7 @@ import { formatEngagementMoney } from "@/lib/api/scheduleClient";
 import {
   topProvidersForYear,
   yearBucketFor,
-} from "@/lib/dashboard/analytics";
+} from "@/lib/dashboard/analyticsView";
 import type {
   DashboardEngagementAnalyticsCore,
   DashboardLeadAnalytics,
