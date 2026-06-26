@@ -1,8 +1,10 @@
 import { fetchWithRetry } from "@/lib/api/fetchWithRetry";
 import type {
   DashboardEngagementAnalytics,
+  DashboardEngagementAnalyticsCore,
   DashboardEngagementRowsResult,
   DashboardLeadAnalytics,
+  DashboardSnapshot,
 } from "@/types/dashboard";
 
 const authHeaders = async (): Promise<HeadersInit> => {
@@ -41,14 +43,43 @@ const handleResponse = async <T>(response: Response): Promise<T> => {
   return data as T;
 };
 
-export const fetchDashboardLeads = async (): Promise<{
+export const fetchDashboardLeads = async (
+  refresh = false
+): Promise<{
   analytics: DashboardLeadAnalytics;
   storage: { leads: string };
 }> => {
-  const response = await fetchWithRetry("/api/admin/dashboard/leads", {
-    headers: await authHeaders(),
-    cache: "no-store",
-  });
+  const params = new URLSearchParams();
+  if (refresh) params.set("refresh", "true");
+  const query = params.toString();
+  const response = await fetchWithRetry(
+    `/api/admin/dashboard/leads${query ? `?${query}` : ""}`,
+    {
+      headers: await authHeaders(),
+      cache: "no-store",
+    }
+  );
+  return handleResponse(response);
+};
+
+export const fetchDashboardSnapshot = async (
+  refresh = false,
+  live = false
+): Promise<{
+  snapshot: DashboardSnapshot;
+  storage: { clients: string };
+}> => {
+  const params = new URLSearchParams();
+  if (refresh) params.set("refresh", "true");
+  if (live) params.set("live", "true");
+  const query = params.toString();
+  const response = await fetchWithRetry(
+    `/api/admin/dashboard/snapshot${query ? `?${query}` : ""}`,
+    {
+      headers: await authHeaders(),
+      cache: "no-store",
+    }
+  );
   return handleResponse(response);
 };
 

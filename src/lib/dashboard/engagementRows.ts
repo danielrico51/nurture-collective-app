@@ -1,10 +1,12 @@
-import { engagementRef, loadCrmStorageIndex } from "@/lib/clients/crmIndexLoader";
+import { engagementRef, type CrmStorageIndex } from "@/lib/clients/crmIndexLoader";
+import { loadCrmStorageIndex } from "@/lib/clients/crmIndexLoader";
 import { listProviders } from "@/lib/providers/storage";
 import type {
   DashboardEngagementRow,
   DashboardEngagementRowsResult,
 } from "@/types/dashboard";
 import type { EngagementServiceType } from "@/types/serviceEngagement";
+import type { ProviderRecord } from "@/types/provider";
 
 const SERVICE_TYPE_LABELS: Record<EngagementServiceType, string> = {
   birth: "Birth",
@@ -16,14 +18,10 @@ export const engagementServiceTypeLabel = (
   serviceType: EngagementServiceType
 ): string => SERVICE_TYPE_LABELS[serviceType] ?? serviceType;
 
-export const computeDashboardEngagementRows = async (options?: {
-  force?: boolean;
-}): Promise<DashboardEngagementRowsResult> => {
-  const [crmIndex, providers] = await Promise.all([
-    loadCrmStorageIndex({ force: options?.force }),
-    listProviders({ includeArchived: true }),
-  ]);
-
+export const buildEngagementRowsFromIndex = (
+  crmIndex: CrmStorageIndex,
+  providers: ProviderRecord[]
+): DashboardEngagementRow[] => {
   const providerNames = new Map(
     providers.map((provider) => [
       provider.providerId,
@@ -70,6 +68,19 @@ export const computeDashboardEngagementRows = async (options?: {
     if (dateCompare !== 0) return dateCompare;
     return a.clientName.localeCompare(b.clientName);
   });
+
+  return rows;
+};
+
+export const computeDashboardEngagementRows = async (options?: {
+  force?: boolean;
+}): Promise<DashboardEngagementRowsResult> => {
+  const [crmIndex, providers] = await Promise.all([
+    loadCrmStorageIndex({ force: options?.force }),
+    listProviders({ includeArchived: true }),
+  ]);
+
+  const rows = buildEngagementRowsFromIndex(crmIndex, providers);
 
   return {
     generatedAt: new Date().toISOString(),

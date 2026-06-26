@@ -22,9 +22,7 @@ export async function GET(request: NextRequest) {
   try {
     const snapshot = await loadDashboardSnapshot({ force, live });
     return NextResponse.json({
-      generatedAt: snapshot.generatedAt,
-      indexLoadedAt: snapshot.indexLoadedAt,
-      rows: snapshot.engagementRows,
+      snapshot,
       storage: {
         clients: describeClientsCrmStorageScope(getClientsCrmStorageScope()),
       },

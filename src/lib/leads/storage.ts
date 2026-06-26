@@ -1,4 +1,5 @@
 import { buildCoordinatorPrepFromSession } from "@/lib/leads/coordinatorPrep";
+import { notifyDashboardDataChanged } from "@/lib/dashboard/snapshotRefresh";
 import { withLeadSnapshotDefaults } from "@/lib/leads/snapshotDefaults";
 import {
   getConversationSession,
@@ -229,6 +230,7 @@ export const createManualLead = async (
     console.error("[leads] Slack notification failed:", error);
   });
 
+  notifyDashboardDataChanged("leads");
   return saved;
 };
 
@@ -478,6 +480,7 @@ export const updateLead = async (
     console.error("[leads] Slack status notification failed:", error);
   });
 
+  notifyDashboardDataChanged("leads");
   return saved;
 };
 

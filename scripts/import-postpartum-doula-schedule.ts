@@ -23,6 +23,7 @@ import {
   summarizeWorkbookTotals,
   verifyStoredTotals,
 } from "../src/lib/schedule/postpartumDoulaImport/verifyTotals";
+import { rebuildDashboardSnapshot } from "../src/lib/dashboard/snapshot";
 
 const DEFAULT_FILE = path.join(
   process.env.HOME ?? "",
@@ -153,6 +154,10 @@ const main = async () => {
     if (report.some((row) => !row.ok)) {
       process.exit(1);
     }
+
+    console.log("\nRebuilding dashboard snapshot…");
+    const { key } = await rebuildDashboardSnapshot({ force: true });
+    console.log(`Dashboard snapshot updated: ${key}`);
   }
 };
 

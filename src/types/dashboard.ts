@@ -82,6 +82,43 @@ export interface DashboardEngagementRowsResult {
   rows: DashboardEngagementRow[];
 }
 
+/** Year-agnostic engagement analytics — YTD values come from `byYear`. */
+export interface DashboardEngagementAnalyticsCore {
+  generatedAt: string;
+  indexLoadedAt: string;
+  summary: {
+    totalEngagements: number;
+    historicEngagements: number;
+    liveEngagements: number;
+    totalClients: number;
+    activeClients: number;
+    upcomingEngagements: number;
+    completedEngagements: number;
+    cancelledEngagements: number;
+  };
+  byYear: DashboardYearBucket[];
+  byServiceType: Record<
+    EngagementServiceType,
+    { count: number; clientFeeCents: number }
+  >;
+  byStatus: Record<EngagementStatus, number>;
+  monthlyEngagementBookings: DashboardMonthlyCount[];
+  monthlyBookingsHistory: DashboardMonthlyCount[];
+  monthlyRevenueHistory: DashboardMonthlyRevenue[];
+  yoyByYear: DashboardYoyRow[];
+  topProvidersByYear: Record<string, DashboardTopProvider[]>;
+}
+
+export interface DashboardSnapshot {
+  version: 2;
+  generatedAt: string;
+  indexLoadedAt: string;
+  engagementAnalytics: DashboardEngagementAnalyticsCore;
+  engagementRows: DashboardEngagementRow[];
+  leadAnalytics: DashboardLeadAnalytics;
+}
+
+/** @deprecated Prefer DashboardEngagementAnalyticsCore — year is selected client-side. */
 export interface DashboardEngagementAnalytics {
   generatedAt: string;
   year: number;

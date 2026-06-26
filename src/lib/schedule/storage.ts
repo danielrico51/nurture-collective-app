@@ -14,6 +14,7 @@ import {
   writeClientsJson,
 } from "@/lib/clients/platformS3";
 import { readProvider } from "@/lib/providers/storage";
+import { notifyDashboardDataChanged } from "@/lib/dashboard/snapshotRefresh";
 import {
   createProviderPayoutBatch,
   listPayoutsForEngagement,
@@ -57,6 +58,8 @@ import type {
 } from "@/types/serviceEngagement";
 
 export { ScheduleValidationError } from "@/lib/schedule/validation";
+
+const touchDashboard = (): void => notifyDashboardDataChanged("schedule");
 
 const listKeys = async (prefix: string): Promise<string[]> =>
   getClientsStorageMode() === "local"
@@ -348,6 +351,7 @@ export const createServiceEngagement = async (
 
   const saved = await readEngagementRecord(clientId, engagementId);
   if (!saved) throw new ScheduleValidationError("Failed to save engagement");
+  touchDashboard();
   return buildEngagementDetails(clientId, saved);
 };
 
@@ -407,6 +411,7 @@ export const updateServiceEngagement = async (
     });
   }
 
+  touchDashboard();
   return (await getEngagementDetail(clientId, engagementId))!;
 };
 
@@ -454,6 +459,7 @@ export const updateEngagementPackage = async (
     totalFeeCents: sumPackageFees(packages),
   });
 
+  touchDashboard();
   return (await getEngagementDetail(clientId, engagementId))!;
 };
 
@@ -489,6 +495,7 @@ export const updatePaymentExpectation = async (
   };
   await saveExpectation(clientId, next);
 
+  touchDashboard();
   return (await getEngagementDetail(clientId, engagementId))!;
 };
 
@@ -576,6 +583,7 @@ export const addProviderPayoutBatch = async (
 ): Promise<ServiceEngagementWithDetails> => {
   const engagement = await requireEngagement(clientId, engagementId);
   await createProviderPayoutBatch(clientId, engagement, raw);
+  touchDashboard();
   return (await getEngagementDetail(clientId, engagementId))!;
 };
 
@@ -587,5 +595,6 @@ export const patchProviderPayoutBatch = async (
 ): Promise<ServiceEngagementWithDetails> => {
   await requireEngagement(clientId, engagementId);
   await updateProviderPayoutBatch(clientId, engagementId, payoutBatchId, raw);
+  touchDashboard();
   return (await getEngagementDetail(clientId, engagementId))!;
 };

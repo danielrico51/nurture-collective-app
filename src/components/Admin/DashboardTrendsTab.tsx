@@ -3,7 +3,7 @@
 import { formatEngagementMoney } from "@/lib/api/scheduleClient";
 import { formatYoyPct, yoyTone } from "@/lib/dashboard/trends";
 import type {
-  DashboardEngagementAnalytics,
+  DashboardEngagementAnalyticsCore,
   DashboardLeadAnalytics,
   DashboardYoyRow,
 } from "@/types/dashboard";
@@ -23,7 +23,7 @@ interface DashboardTrendsTabProps {
   onTrendYearChange: (year: number) => void;
   yearOptions: number[];
   leadAnalytics: DashboardLeadAnalytics | null;
-  engagementAnalytics: DashboardEngagementAnalytics | null;
+  engagementAnalytics: DashboardEngagementAnalyticsCore | null;
   leadsLoading: boolean;
   engagementsLoading: boolean;
 }

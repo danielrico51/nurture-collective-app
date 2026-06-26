@@ -1,8 +1,12 @@
 "use client";
 
 import { formatEngagementMoney } from "@/lib/api/scheduleClient";
+import {
+  topProvidersForYear,
+  yearBucketFor,
+} from "@/lib/dashboard/analytics";
 import type {
-  DashboardEngagementAnalytics,
+  DashboardEngagementAnalyticsCore,
   DashboardLeadAnalytics,
 } from "@/types/dashboard";
 import type { LeadStatus } from "@/types/lead";
@@ -70,7 +74,7 @@ const SectionSkeleton = ({ label }: { label: string }) => (
 interface DashboardOverviewTabProps {
   year: number;
   leadAnalytics: DashboardLeadAnalytics | null;
-  engagementAnalytics: DashboardEngagementAnalytics | null;
+  engagementAnalytics: DashboardEngagementAnalyticsCore | null;
   leadsLoading: boolean;
   engagementsLoading: boolean;
 }
@@ -87,8 +91,10 @@ const DashboardOverviewTab = ({
   const byYear = engagementAnalytics?.byYear ?? [];
   const byServiceType = engagementAnalytics?.byServiceType;
   const byStatus = engagementAnalytics?.byStatus;
-  const topProviders = engagementAnalytics?.topProviders ?? [];
-  const ytdYearBucket = byYear.find((b) => b.year === year);
+  const ytdYearBucket = yearBucketFor({ byYear }, year);
+  const topProviders = engagementAnalytics
+    ? topProvidersForYear(engagementAnalytics, year)
+    : [];
   const totalServiceCount = byServiceType
     ? byServiceType.birth.count +
       byServiceType.postpartum.count +
@@ -101,13 +107,15 @@ const DashboardOverviewTab = ({
         <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
           <KpiCard
             label={`${year} client revenue`}
-            value={formatEngagementMoney(summary.ytdClientFeeCents)}
-            detail={`${summary.ytdEngagementCount} engagements · margin ${formatEngagementMoney(summary.ytdMarginCents)}`}
+            value={formatEngagementMoney(ytdYearBucket?.clientFeeCents ?? 0)}
+            detail={`${ytdYearBucket?.engagementCount ?? 0} engagements · margin ${formatEngagementMoney(
+              (ytdYearBucket?.clientFeeCents ?? 0) - (ytdYearBucket?.doulaPayoutCents ?? 0)
+            )}`}
             highlight
           />
           <KpiCard
             label={`${year} doula payouts`}
-            value={formatEngagementMoney(summary.ytdDoulaPayoutCents)}
+            value={formatEngagementMoney(ytdYearBucket?.doulaPayoutCents ?? 0)}
             detail="Package-attributed payouts"
           />
           <KpiCard

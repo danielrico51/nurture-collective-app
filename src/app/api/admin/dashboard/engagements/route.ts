@@ -7,7 +7,8 @@ import {
   handleClientsStorageError,
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
-import { computeDashboardEngagementAnalytics } from "@/lib/dashboard/analytics";
+import { withSelectedYear } from "@/lib/dashboard/analytics";
+import { loadDashboardSnapshot } from "@/lib/dashboard/snapshot";
 
 export const dynamic = "force-dynamic";
 export const maxDuration = 60;
@@ -23,9 +24,11 @@ export async function GET(request: NextRequest) {
   }
 
   const force = request.nextUrl.searchParams.get("refresh") === "true";
+  const live = request.nextUrl.searchParams.get("live") === "true";
 
   try {
-    const analytics = await computeDashboardEngagementAnalytics(year, { force });
+    const snapshot = await loadDashboardSnapshot({ force, live });
+    const analytics = withSelectedYear(snapshot.engagementAnalytics, year);
     return NextResponse.json({
       analytics,
       storage: {
