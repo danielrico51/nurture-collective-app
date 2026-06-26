@@ -22,9 +22,11 @@ import type { PaymentMethodId } from "@/types/clientService";
 import type { ProviderRecord } from "@/types/provider";
 import type { ClientsCrmStorageScope } from "@/types/client";
 import type {
+  EngagementServiceType,
   EngagementStatus,
   ServiceEngagementWithDetails,
 } from "@/types/serviceEngagement";
+import { ENGAGEMENT_SERVICE_TYPES } from "@/types/serviceEngagement";
 import { useCallback, useEffect, useState } from "react";
 import toast from "react-hot-toast";
 
@@ -72,6 +74,7 @@ const ClientScheduleTab = ({
   );
 
   const [bookDate, setBookDate] = useState(new Date().toISOString().slice(0, 10));
+  const [serviceType, setServiceType] = useState<EngagementServiceType>("postpartum");
   const [estimatedDate, setEstimatedDate] = useState("");
   const [estimatedNotes, setEstimatedNotes] = useState("");
   const [primaryProviderId, setPrimaryProviderId] = useState("");
@@ -116,6 +119,7 @@ const ClientScheduleTab = ({
 
   const resetForm = useCallback(() => {
     setBookDate(new Date().toISOString().slice(0, 10));
+    setServiceType("postpartum");
     setEstimatedDate("");
     setEstimatedNotes("");
     setPrimaryProviderId("");
@@ -134,6 +138,7 @@ const ClientScheduleTab = ({
 
   const applyBookDraft = useCallback((draft: ScheduleTourBookDraft) => {
     setBookDate(draft.bookDate);
+    setServiceType(draft.serviceType);
     setEstimatedDate(draft.estimatedDate);
     setEstimatedNotes(draft.estimatedNotes);
     setPrimaryProviderId(draft.primaryProviderId);
@@ -170,6 +175,7 @@ const ClientScheduleTab = ({
     setSaving(true);
     try {
       await createClientEngagement(clientId, {
+        serviceType,
         bookDate,
         scheduleYear: Number(scheduleYear),
         primaryProviderId: primaryProviderId || null,
@@ -283,7 +289,7 @@ const ClientScheduleTab = ({
           id="tour-schedule-intro"
           className="text-sm text-nurture-charcoal/65"
         >
-          Book postpartum engagements with package details, deposit/balance schedule,
+          Book birth, postpartum, or other engagements with package details, deposit/balance schedule,
           visit shifts, provider payouts, and a linked service for invoicing.
           <ClientsCrmStorageNote
             storage={storageScope}
@@ -318,6 +324,22 @@ const ClientScheduleTab = ({
           ) : null}
 
           <div id="tour-schedule-form-dates" className="grid gap-4 sm:grid-cols-2">
+            <label className="block text-sm">
+              <span className="font-medium">Service type</span>
+              <select
+                value={serviceType}
+                onChange={(event) =>
+                  setServiceType(event.target.value as EngagementServiceType)
+                }
+                className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+              >
+                {ENGAGEMENT_SERVICE_TYPES.map((type) => (
+                  <option key={type} value={type}>
+                    {ENGAGEMENT_SERVICE_TYPE_LABELS[type]}
+                  </option>
+                ))}
+              </select>
+            </label>
             <label className="block text-sm">
               <span className="font-medium">Book date</span>
               <input

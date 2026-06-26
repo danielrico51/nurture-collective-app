@@ -1,7 +1,9 @@
+import type { EngagementServiceType } from "@/types/serviceEngagement";
 import type { PaymentMethodId } from "@/types/clientService";
 
 /** Demo booking data pre-filled when the tour opens the engagement form. */
 export type ScheduleTourBookDraft = {
+  serviceType: EngagementServiceType;
   bookDate: string;
   estimatedDate: string;
   estimatedNotes: string;
@@ -28,6 +30,7 @@ export const buildScheduleTourDemoDraft = (): ScheduleTourBookDraft => {
   balanceDue.setMonth(balanceDue.getMonth() + 4);
 
   return {
+    serviceType: "postpartum",
     bookDate,
     estimatedDate: estimated.toISOString().slice(0, 10),
     estimatedNotes: "Tour demo — replace before saving a real engagement.",
