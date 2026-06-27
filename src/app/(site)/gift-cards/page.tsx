@@ -1,6 +1,15 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
+import PageIntroWithImage from "@/components/Common/PageIntroWithImage";
 import EGiftCardForm from "@/components/GiftCards/EGiftCardForm";
 import { GiftCardSuccessHandler } from "@/components/GiftCards/GiftCardSuccessHandler";
+import { pageArtwork } from "@/config/pageArtwork";
+import {
+  MARKETING_OAK_SURFACE,
+  marketingCardCompact,
+  marketingEyebrow,
+  marketingLink,
+  marketingPageShell,
+} from "@/config/marketingDesign";
 import {
   giftCardFaqs,
   giftCardHowItWorks,
@@ -25,22 +34,32 @@ export const metadata: Metadata = buildPageMetadata({
 
 export default function GiftCardsPage() {
   return (
-    <>
+    <div className={marketingPageShell}>
       <GiftCardSuccessHandler />
       <Breadcrumb pageName="Gift cards" />
-      <section className="py-16">
+
+      <section className="py-12 sm:py-14 lg:py-16">
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <div className="mx-auto max-w-3xl text-center">
-            <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
-              Give support
-            </p>
+          <PageIntroWithImage
+            imageSrc={pageArtwork.giftCard.src}
+            imageAlt={pageArtwork.giftCard.alt}
+            blend="strong"
+          >
+            <p className={marketingEyebrow}>Give support</p>
             <h1 className="mt-4 font-serif text-4xl font-semibold text-nurture-charcoal sm:text-5xl">
               eGift cards for every stage of motherhood
             </h1>
             <p className="mt-6 text-lg text-nurture-charcoal/80">{giftCardsIntro}</p>
-          </div>
+          </PageIntroWithImage>
+        </div>
+      </section>
 
-          <div className="mt-16 grid gap-12 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
+      <section
+        className="py-12 sm:py-14 lg:py-16"
+        style={{ backgroundColor: MARKETING_OAK_SURFACE }}
+      >
+        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+          <div className="grid gap-12 lg:grid-cols-[minmax(0,0.95fr)_minmax(0,1.05fr)] lg:items-start">
             <div className="space-y-10">
               <div>
                 <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
@@ -49,7 +68,7 @@ export default function GiftCardsPage() {
                 <ol className="mt-6 space-y-5">
                   {giftCardHowItWorks.map((step) => (
                     <li key={step.step} className="flex gap-4">
-                      <span className="font-serif text-2xl font-semibold text-nurture-sage/50">
+                      <span className="font-serif text-2xl font-semibold text-nurture-lilac">
                         {step.step}
                       </span>
                       <div>
@@ -63,7 +82,7 @@ export default function GiftCardsPage() {
                 </ol>
               </div>
 
-              <div className="rounded-2xl border border-nurture-sage/15 bg-nurture-sage/5 p-6">
+              <div className={marketingCardCompact}>
                 <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
                   Perfect for
                 </h3>
@@ -93,14 +112,11 @@ export default function GiftCardsPage() {
 
               <p className="text-sm text-nurture-charcoal/65">
                 Need help choosing an amount?{" "}
-                <Link href="/contact" className="font-medium text-nurture-sage-dark hover:underline">
+                <Link href="/contact" className={marketingLink}>
                   Contact our team
                 </Link>{" "}
                 or email{" "}
-                <a
-                  href={`mailto:${integrations.contactEmail}`}
-                  className="font-medium text-nurture-sage-dark hover:underline"
-                >
+                <a href={`mailto:${integrations.contactEmail}`} className={marketingLink}>
                   {integrations.contactEmail}
                 </a>
                 .
@@ -111,6 +127,6 @@ export default function GiftCardsPage() {
           </div>
         </div>
       </section>
-    </>
+    </div>
   );
 }

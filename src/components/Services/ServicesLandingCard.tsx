@@ -22,7 +22,13 @@ interface ServicesLandingCardProps {
   researchPoints?: string[];
   sources?: SourceCitation[];
   relatedPosts?: RelatedBlogPost[];
+  layout?: "grid" | "accordion";
+  /** When true, card matches the width of peers in a three-up row instead of stretching full width. */
+  accordionOrphan?: boolean;
 }
+
+const ACCORDION_MOTION =
+  "transition-[flex] duration-500 ease-premium motion-reduce:transition-none";
 
 const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
   <svg
@@ -43,10 +49,13 @@ const ServicesLandingCard = ({
   researchPoints = [],
   sources = [],
   relatedPosts = [],
+  layout = "grid",
+  accordionOrphan = false,
 }: ServicesLandingCardProps) => {
   const [expanded, setExpanded] = useState(false);
   const [hashActive, setHashActive] = useState(false);
   const panelId = useId();
+  const isAccordion = layout === "accordion";
 
   useEffect(() => {
     const syncFromHash = () => {
@@ -65,17 +74,32 @@ const ServicesLandingCard = ({
       detail?.whatToExpect.length ||
       researchPoints.length ||
       relatedPosts.length ||
-      sources.length
+      sources.length,
   );
+
+  const iconSrc = serviceCardIconSrc[service.slug];
+
+  const accordionHoverClass = hashActive
+    ? "md:flex-[2.75]"
+    : "marketing-expand-card";
+
+  const accordionSizeClass = accordionOrphan
+    ? "w-full"
+    : `md:min-w-0 md:flex-1 ${accordionHoverClass}`;
 
   return (
     <article
       id={service.slug}
-      className={`group relative flex min-h-full scroll-mt-28 flex-col overflow-hidden rounded-2xl border bg-white shadow-[0_14px_35px_rgba(45,52,54,0.07)] transition hover:border-nurture-rose/30 hover:shadow-[0_18px_45px_rgba(45,52,54,0.1)] ${
+      tabIndex={isAccordion ? 0 : undefined}
+      className={`group/card relative flex min-h-full scroll-mt-24 flex-col overflow-hidden rounded-2xl border bg-nurture-cream shadow-floatingCard hover:border-nurture-lilac/40 sm:scroll-mt-28 md:scroll-mt-32 ${
         hashActive
-          ? "border-nurture-sage/45 ring-2 ring-nurture-sage/25"
-          : "border-nurture-sage/15"
-      } p-4 sm:p-5`}
+          ? "border-nurture-lilac/50 ring-2 ring-nurture-lilac/25"
+          : "border-nurture-oak/35"
+      } p-4 sm:p-5 ${
+        isAccordion
+          ? `w-full md:min-h-[22rem] ${ACCORDION_MOTION} ${accordionSizeClass}`
+          : ""
+      }`}
     >
       {serviceCardBackgroundSrc[service.slug] ? (
         <ServicesDecor
@@ -83,50 +107,46 @@ const ServicesLandingCard = ({
           placement="card-background"
         />
       ) : null}
-      {serviceCardIconSrc[service.slug] ? (
-        <ServicesDecor
-          src={serviceCardIconSrc[service.slug]!}
-          placement="card-icon"
-        />
-      ) : null}
+      {iconSrc ? <ServicesDecor src={iconSrc} placement="card-icon" /> : null}
       {serviceCardCornerSrc[service.slug] ? (
         <ServicesDecor
           src={serviceCardCornerSrc[service.slug]!}
           placement="card-corner"
         />
       ) : null}
-      <div className="relative z-[1] flex min-h-0 flex-1 flex-col">
+
+      <div className="relative z-[1] flex min-h-0 flex-1 flex-col text-center">
         <ServiceIllustration
           slug={service.slug}
           variant="card"
           className="mb-4 w-full shrink-0"
         />
 
-        <div className="flex min-w-0 flex-1 flex-col">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-nurture-sage-dark/80">
+        <div className="flex min-w-0 flex-1 flex-col items-center">
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-nurture-grape/80">
             {service.tag}
           </span>
-          <h2 className="mt-2 font-serif text-xl font-semibold leading-tight text-nurture-charcoal">
+          <h2 className="mt-2 font-serif text-xl font-semibold leading-tight text-nurture-charcoal sm:text-2xl">
             {service.title}
           </h2>
-          <p className="mt-2 flex-1 text-[13px] leading-relaxed text-nurture-charcoal/70">
+          <p className="mt-2 flex-1 text-sm leading-relaxed text-nurture-charcoal/70">
             {service.description}
           </p>
 
           {service.availabilityNote ? (
-            <p className="mt-2 text-[11px] leading-relaxed text-nurture-charcoal/55">
+            <p className="mt-2 text-xs leading-relaxed text-nurture-charcoal/55">
               {service.availabilityNote}
             </p>
           ) : null}
 
-          <div className="mt-3 flex flex-wrap items-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
             {hasExpandableContent ? (
               <button
                 type="button"
                 aria-expanded={expanded}
                 aria-controls={panelId}
                 onClick={() => setExpanded((open) => !open)}
-                className="inline-flex items-center gap-1 rounded-full border border-nurture-sage/25 px-3 py-1.5 text-[11px] font-semibold text-nurture-sage-dark transition hover:border-nurture-sage/45 hover:bg-nurture-sage/5"
+                className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-nurture-grape/30 px-4 py-2.5 text-sm font-semibold text-nurture-grape transition hover:border-nurture-grape/50 hover:bg-nurture-grape/5"
               >
                 {expanded ? "Show less" : "Learn more"}
                 <ChevronIcon expanded={expanded} />
@@ -134,7 +154,7 @@ const ServicesLandingCard = ({
             ) : null}
             <Link
               href={buildCareStartHref(service.slug)}
-              className="inline-flex items-center rounded-full bg-nurture-sage px-3 py-1.5 text-[11px] font-semibold text-white transition hover:bg-nurture-sage-dark"
+              className="btn-primary inline-flex min-h-[44px] items-center !px-4 !py-2.5 !text-sm"
             >
               Request support
             </Link>
@@ -146,7 +166,7 @@ const ServicesLandingCard = ({
         <div
           id={panelId}
           aria-hidden={!expanded}
-          className={`border-t border-nurture-sage/10 pt-4 ${
+          className={`relative z-[1] border-t border-nurture-oak/30 pt-4 text-left ${
             expanded
               ? "mt-4"
               : "sr-only mt-0 max-h-0 overflow-hidden border-0 pt-0"

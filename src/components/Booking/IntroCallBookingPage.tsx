@@ -74,7 +74,7 @@ const IntroCallBookingPage = () => {
   };
 
   return (
-    <div className="mx-auto flex min-h-[70vh] w-full max-w-xl flex-col bg-gradient-to-b from-nurture-cream via-white to-nurture-cream/50 px-4 py-10 sm:py-14">
+    <div className="floating-header-offset mx-auto flex min-h-[70vh] w-full max-w-xl flex-col bg-gradient-to-b from-nurture-cream via-white to-nurture-cream/50 px-4 pb-10 sm:pb-14">
       <div className="text-center">
         <p className="text-xs font-semibold uppercase tracking-[0.2em] text-nurture-sage-dark">
           The Nesting Place

@@ -2,8 +2,21 @@
 
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import ContactOptions from "@/components/Common/ContactOptions";
+import PageIntroWithImage from "@/components/Common/PageIntroWithImage";
+import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import SectionTitle from "@/components/Common/SectionTitle";
+import MarketingSection from "@/components/Common/MarketingSection";
+import { FOOTER_SECTION_CLASS } from "@/components/Common/SectionWaveEdges";
+import {
+  MARKETING_CREAM,
+  MARKETING_OAK_SURFACE,
+  marketingCard,
+  marketingInput,
+  marketingLink,
+  marketingPageShell,
+} from "@/config/marketingDesign";
 import { integrations } from "@/config/integrations";
+import { pageArtwork } from "@/config/pageArtwork";
 import { legalPaths } from "@/content/legal";
 import { mapContactFormToIntakeSubmit } from "@/lib/intake/mapContactForm";
 import { trackFormSubmission } from "@/lib/analytics/track";
@@ -13,8 +26,7 @@ import { useSearchParams } from "next/navigation";
 import { FormEvent, Suspense, useState } from "react";
 import toast from "react-hot-toast";
 
-const inputClassName =
-  "mt-2 w-full rounded-lg border border-nurture-sage/30 px-4 py-2.5 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage";
+const inputClassName = marketingInput;
 
 function ContactForm() {
   const searchParams = useSearchParams();
@@ -87,17 +99,17 @@ function ContactForm() {
     <form
       id="contact-form"
       onSubmit={handleSubmit}
-      className="mt-10 space-y-6 rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm"
+      className={`mt-10 space-y-6 ${marketingCard}`}
     >
       {serviceLabel ? (
         <p className="rounded-lg bg-nurture-cream/80 px-4 py-3 text-sm text-nurture-charcoal/80">
           Interested in:{" "}
-          <span className="font-medium text-nurture-sage-dark">{serviceLabel}</span>
+          <span className="font-medium text-nurture-grape">{serviceLabel}</span>
         </p>
       ) : null}
 
       {submitted ? (
-        <p className="rounded-lg bg-nurture-sage/10 px-4 py-3 text-sm text-nurture-sage-dark">
+        <p className="rounded-lg bg-nurture-lilac/20 px-4 py-3 text-sm text-nurture-grape">
           Thank you! We typically respond within one business day.
         </p>
       ) : null}
@@ -141,7 +153,7 @@ function ContactForm() {
         />
       </div>
 
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 rounded-lg p-1 -m-1">
         <input
           id="smsConsent"
           name="smsConsent"
@@ -149,11 +161,11 @@ function ContactForm() {
           checked={smsConsent}
           onChange={(event) => setSmsConsent(event.target.checked)}
           required
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-nurture-sage/40 text-nurture-sage focus:ring-nurture-sage"
+          className="mt-0.5 h-5 w-5 shrink-0 rounded border-nurture-oak/45 text-nurture-lilac focus:ring-nurture-lilac"
         />
         <label
           htmlFor="smsConsent"
-          className="text-sm leading-relaxed text-nurture-charcoal/75"
+          className="cursor-pointer text-sm leading-relaxed text-nurture-charcoal/75"
         >
           By checking this box, I consent to receive SMS text messages from The
           Nesting Place at the phone number provided. Messages may include
@@ -162,7 +174,7 @@ function ContactForm() {
           opt out or HELP for help. See our{" "}
           <Link
             href={legalPaths.privacyPolicy}
-            className="font-medium text-nurture-sage-dark underline hover:text-nurture-sage"
+            className={`${marketingLink} underline`}
           >
             Privacy Policy
           </Link>
@@ -229,7 +241,7 @@ function ContactForm() {
       <button
         type="submit"
         disabled={submitting}
-        className="w-full rounded-full bg-nurture-sage py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark disabled:opacity-60"
+        className="btn-primary w-full py-3 disabled:opacity-60"
       >
         {submitting ? "Sending…" : "Send message"}
       </button>
@@ -237,7 +249,7 @@ function ContactForm() {
         Or email us at{" "}
         <a
           href={`mailto:${integrations.contactEmail}`}
-          className="text-nurture-sage-dark hover:underline"
+          className="text-nurture-grape hover:underline"
         >
           {integrations.contactEmail}
         </a>
@@ -248,19 +260,48 @@ function ContactForm() {
 }
 
 const ContactPageContent = () => (
-  <>
+  <div className={marketingPageShell}>
     <Breadcrumb pageName="Contact" />
-    <section className="py-16">
+
+    <section className="py-12 sm:py-14 lg:py-16">
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-        <SectionTitle
-          title="Let's connect"
-          subtitle="Tell us how we can support you — we'll respond within one business day."
-        />
-        <ContactOptions className="mt-10" formAnchorId="contact-form" />
-        <div className="mx-auto mt-16 max-w-xl">
-          <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal">
+        <PageIntroWithImage
+          imageSrc={pageArtwork.contactHug.src}
+          imageAlt={pageArtwork.contactHug.alt}
+          blend="strong"
+        >
+          <SectionTitle
+            title="Let's connect"
+            subtitle="Tell us how we can support you — we'll respond within one business day."
+            centered={false}
+          />
+        </PageIntroWithImage>
+      </div>
+    </section>
+
+    <MarketingSection
+      waves="both"
+      waveTopFill={MARKETING_CREAM}
+      waveBottomFill={MARKETING_OAK_SURFACE}
+      className="bg-nurture-lilac !pt-[calc(5rem+2.5rem)] sm:!pt-[calc(7rem+3rem)] !pb-[calc(5rem+4rem)] sm:!pb-[calc(7rem+4.5rem)]"
+    >
+      <div className="mx-auto max-w-screen-xl px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8">
+        <ContactOptions formAnchorId="contact-form" />
+      </div>
+    </MarketingSection>
+
+    <section
+      className={`py-12 sm:py-14 lg:py-16 ${FOOTER_SECTION_CLASS}`}
+      style={{ backgroundColor: MARKETING_OAK_SURFACE }}
+    >
+      <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-xl">
+          <ScrollRevealHeading
+            variant="quick"
+            className="font-serif text-2xl font-semibold text-nurture-charcoal"
+          >
             Send a message
-          </h2>
+          </ScrollRevealHeading>
           <Suspense
             fallback={
               <p className="mt-6 text-sm text-nurture-charcoal/60">Loading form…</p>
@@ -271,7 +312,7 @@ const ContactPageContent = () => (
         </div>
       </div>
     </section>
-  </>
+  </div>
 );
 
 export default ContactPageContent;

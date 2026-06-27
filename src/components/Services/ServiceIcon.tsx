@@ -62,6 +62,13 @@ const iconPaths: Record<ServiceSlug, React.ReactNode> = {
       <path d="M12 5v-2" strokeLinecap="round" />
     </>
   ),
+  "placenta-encapsulation": (
+    <>
+      <circle cx="12" cy="12" r="6" />
+      <circle cx="12" cy="12" r="2" />
+      <path d="M12 6v1M12 17v1M6 12h1M17 12h1" strokeLinecap="round" />
+    </>
+  ),
 };
 
 const ServiceIcon = ({ slug, className = "h-6 w-6" }: ServiceIconProps) => (

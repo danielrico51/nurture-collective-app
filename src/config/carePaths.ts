@@ -60,6 +60,7 @@ const SERVICE_SLUG_TO_INTEREST: Record<string, SupportInterest> = {
   "postpartum-massage": "prenatal-massage",
   "birth-photography": "general-support",
   "childbirth-education": "childbirth-education",
+  "placenta-encapsulation": "postpartum-doula",
 };
 
 export const getSupportInterestFromServiceSlug = (

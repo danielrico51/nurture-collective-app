@@ -1,5 +1,5 @@
 import { getServiceDetail } from "@/content/serviceDetails";
-import { featuredServiceStats } from "@/content/serviceStats";
+import { featuredServiceStats, statPointToString } from "@/content/serviceStats";
 import { sourceCitations } from "@/content/sources";
 import type { ServiceSlug } from "@/content/site";
 import {
@@ -33,7 +33,7 @@ export const buildServiceCardData = (
 
   return {
     detail,
-    researchPoints: stats?.points ?? [],
+    researchPoints: stats?.points.map(statPointToString) ?? [],
     sources,
     relatedPosts: getRelatedBlogPostsForService(blogPosts, slug),
   };

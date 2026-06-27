@@ -1,8 +1,12 @@
 interface BotanicalAccentProps {
   position?: "top-left" | "top-right" | "bottom-left" | "bottom-right";
+  /** Overrides corner `position` with arbitrary absolute placement classes. */
+  placementClassName?: string;
   className?: string;
   variant?: "leaf" | "sprig" | "lavender-cluster" | "sage-cluster";
   size?: "sm" | "md" | "lg";
+  /** Use full-strength SVG fills (site background accents). */
+  vivid?: boolean;
 }
 
 const positionClasses: Record<
@@ -256,15 +260,19 @@ const LeafSvg = ({
 
 const BotanicalAccent = ({
   position = "bottom-right",
+  placementClassName,
   className = "",
   variant = "leaf",
   size = "md",
+  vivid = false,
 }: BotanicalAccentProps) => (
   <div
     aria-hidden
-    className={`pointer-events-none absolute ${positionClasses[position]} ${className}`}
+    className={`pointer-events-none absolute ${
+      placementClassName ?? positionClasses[position]
+    } ${className}`}
   >
-    <div className={`${sizeClasses[size]} opacity-80`}>
+    <div className={`${sizeClasses[size]} ${vivid ? "" : "opacity-80"}`}>
       <LeafSvg variant={variant} />
     </div>
   </div>

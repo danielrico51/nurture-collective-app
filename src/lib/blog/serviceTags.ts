@@ -12,6 +12,7 @@ const isServiceSlug = (value: string): value is ServiceSlug =>
     "postpartum-massage",
     "birth-photography",
     "childbirth-education",
+    "placenta-encapsulation",
   ].includes(value);
 
 const normalizeServiceSlugList = (slugs: string[] | undefined): ServiceSlug[] => {

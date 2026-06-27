@@ -14,7 +14,7 @@ export default function Error({
   }, [error]);
 
   return (
-    <main className="mx-auto flex min-h-[50vh] max-w-lg flex-col items-center justify-center px-4 py-16 text-center">
+    <main className="floating-header-offset mx-auto flex min-h-[50vh] max-w-lg flex-col items-center justify-center px-4 pb-16 text-center">
       <h1 className="font-serif text-2xl font-semibold text-nurture-charcoal">
         Something went wrong
       </h1>

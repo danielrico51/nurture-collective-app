@@ -36,7 +36,7 @@ interface ContactOptionsProps {
 }
 
 const cardClassName =
-  "flex flex-col rounded-2xl border border-nurture-sage/15 bg-white p-8 shadow-sm";
+  "marketing-expand-card group/card flex w-full min-h-full flex-col items-center overflow-hidden rounded-2xl border border-nurture-lilac/25 bg-nurture-cream p-6 text-center shadow-sm transition-[flex,box-shadow,border-color] duration-500 ease-premium motion-reduce:transition-none hover:border-nurture-lilac/45 hover:shadow-[0_18px_45px_rgba(74,69,89,0.1)] sm:p-8";
 
 const ContactOptions = ({
   formAnchorId = "contact-form",
@@ -64,14 +64,17 @@ const ContactOptions = ({
     "Hi! I'd like to learn more about support from The Nesting Place."
   );
 
+  const rowClassName =
+    "flex w-full flex-col gap-4 md:flex-row md:items-stretch";
+
   return (
     <div className={className}>
       <div
-        className="grid gap-6 md:grid-cols-2 xl:grid-cols-4"
+        className={rowClassName}
         aria-label={isIntake ? "Ways to start support" : "Contact options"}
       >
-        <article className={cardClassName}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+        <article className={cardClassName} tabIndex={0}>
+          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-grape">
             {isIntake ? "Guided intake" : "Email"}
           </p>
           <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
@@ -84,15 +87,15 @@ const ContactOptions = ({
           </p>
           <Link
             href={isIntake ? intakeHref : (formHref ?? `#${formAnchorId}`)}
-            className="mt-6 inline-block rounded-full bg-nurture-sage px-6 py-2.5 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
+            className="mt-6 btn-primary"
           >
             {isIntake ? "Request support" : "Use contact form"}
           </Link>
         </article>
 
         {WHATSAPP_CONTACT_CARD_ENABLED ? (
-          <article className={cardClassName}>
-            <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+          <article className={cardClassName} tabIndex={0}>
+            <p className="text-xs font-semibold uppercase tracking-wide text-nurture-grape">
               WhatsApp
             </p>
             <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
@@ -106,7 +109,7 @@ const ContactOptions = ({
                 href={whatsappUrl!}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-6 inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+                className="mt-6 btn-secondary"
               >
                 Open WhatsApp
               </a>
@@ -118,35 +121,37 @@ const ContactOptions = ({
           </article>
         ) : null}
 
-        <article className={cardClassName}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+        <article className={cardClassName} tabIndex={0}>
+          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-grape">
             Phone
           </p>
           <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
-            Call {localPhone} or text {smsPhone}
+            <span className="block sm:inline">Call {localPhone}</span>
+            <span className="hidden sm:inline"> or </span>
+            <span className="block sm:inline">text {smsPhone}</span>
           </h3>
           <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
             Call our local line or text our toll-free number to reach our support
             concierge — we&apos;re here when you need a real person.
           </p>
-          <div className="mt-6 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap justify-center gap-3">
             <a
               href={callHref}
-              className="inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+              className="btn-primary"
             >
               Call us
             </a>
             <a
               href={textHref}
-              className="inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+              className="btn-primary"
             >
               Text us
             </a>
           </div>
         </article>
 
-        <article className={cardClassName}>
-          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-sage-dark">
+        <article className={cardClassName} tabIndex={0}>
+          <p className="text-xs font-semibold uppercase tracking-wide text-nurture-grape">
             {bookingLabel}
           </p>
           <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
@@ -160,14 +165,14 @@ const ContactOptions = ({
               href={bookingUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-6 inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+              className="mt-6 btn-primary"
             >
               Schedule now
             </a>
           ) : (
             <Link
               href={isIntake ? buildCareStartHref() : "/contact"}
-              className="mt-6 inline-block rounded-full border border-nurture-sage px-6 py-2.5 text-sm font-semibold text-nurture-sage-dark hover:bg-nurture-sage/10"
+              className="mt-6 btn-primary"
             >
               {isIntake ? "Request support" : "Request a call"}
             </Link>
@@ -180,7 +185,7 @@ const ContactOptions = ({
           Prefer email?{" "}
           <Link
             href="/contact?audience=mom"
-            className="font-medium text-nurture-sage-dark hover:underline"
+            className="font-medium text-nurture-grape hover:underline"
           >
             Use our contact form
           </Link>
