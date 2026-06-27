@@ -9,13 +9,13 @@ describe("snapshotRefresh", () => {
   it("detects when stale marker is newer than snapshot", () => {
     expect(
       isDashboardSnapshotStale(
-        { generatedAt: "2026-06-01T12:00:00.000Z", version: 3 } as never,
+        { generatedAt: "2026-06-01T12:00:00.000Z", version: 4 } as never,
         { requestedAt: "2026-06-02T12:00:00.000Z" }
       )
     ).toBe(true);
     expect(
       isDashboardSnapshotStale(
-        { generatedAt: "2026-06-02T12:00:00.000Z", version: 3 } as never,
+        { generatedAt: "2026-06-02T12:00:00.000Z", version: 4 } as never,
         { requestedAt: "2026-06-01T12:00:00.000Z" }
       )
     ).toBe(false);

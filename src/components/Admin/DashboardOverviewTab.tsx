@@ -5,6 +5,7 @@ import {
   topProvidersForYear,
   yearBucketFor,
 } from "@/lib/dashboard/analyticsView";
+import { REVENUE_STREAMS, streamClientFeeCents } from "@/lib/dashboard/revenueStreams";
 import type {
   DashboardEngagementAnalyticsCore,
   DashboardLeadAnalytics,
@@ -89,17 +90,11 @@ const DashboardOverviewTab = ({
   const leads = leadAnalytics?.leads;
   const summary = engagementAnalytics?.summary;
   const byYear = engagementAnalytics?.byYear ?? [];
-  const byServiceType = engagementAnalytics?.byServiceType;
   const byStatus = engagementAnalytics?.byStatus;
   const ytdYearBucket = yearBucketFor({ byYear }, year);
   const topProviders = engagementAnalytics
     ? topProvidersForYear(engagementAnalytics, year)
     : [];
-  const totalServiceCount = byServiceType
-    ? byServiceType.birth.count +
-      byServiceType.postpartum.count +
-      byServiceType.other.count
-    : 0;
 
   return (
     <div className="space-y-8">
@@ -131,6 +126,28 @@ const DashboardOverviewTab = ({
         </div>
       ) : engagementsLoading ? (
         <SectionSkeleton label="Loading engagement KPIs…" />
+      ) : null}
+
+      {ytdYearBucket ? (
+        <div className="grid gap-3 sm:grid-cols-3">
+          {REVENUE_STREAMS.map((stream) => {
+            const revenue = streamClientFeeCents(ytdYearBucket, stream.key);
+            const count =
+              stream.key === "birth"
+                ? ytdYearBucket.birthCount
+                : stream.key === "postpartum"
+                  ? ytdYearBucket.postpartumCount
+                  : ytdYearBucket.otherCount;
+            return (
+              <KpiCard
+                key={stream.key}
+                label={`${year} ${stream.label} revenue`}
+                value={formatEngagementMoney(revenue)}
+                detail={`${count} engagement${count === 1 ? "" : "s"}`}
+              />
+            );
+          })}
+        </div>
       ) : null}
 
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
@@ -216,38 +233,39 @@ const DashboardOverviewTab = ({
           <SectionSkeleton label="Loading lead pipeline…" />
         ) : null}
 
-        {byServiceType && byStatus ? (
+        {byStatus && ytdYearBucket ? (
           <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
             <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
-              Service mix (all time)
+              Service mix ({year})
             </h3>
             <div className="mt-4 space-y-4">
-              {(
-                [
-                  ["birth", "Birth doula", "bg-nurture-sage"],
-                  ["postpartum", "Postpartum", "bg-nurture-sage-dark"],
-                  ["other", "Other", "bg-nurture-charcoal/40"],
-                ] as const
-              ).map(([key, label, barClass]) => {
-                const row = byServiceType[key];
+              {REVENUE_STREAMS.map((stream) => {
+                const count =
+                  stream.key === "birth"
+                    ? ytdYearBucket?.birthCount ?? 0
+                    : stream.key === "postpartum"
+                      ? ytdYearBucket?.postpartumCount ?? 0
+                      : ytdYearBucket?.otherCount ?? 0;
+                const revenue = ytdYearBucket
+                  ? streamClientFeeCents(ytdYearBucket, stream.key)
+                  : 0;
+                const yearTotal = ytdYearBucket?.engagementCount ?? 0;
                 const pct =
-                  totalServiceCount > 0
-                    ? Math.round((row.count / totalServiceCount) * 100)
-                    : 0;
+                  yearTotal > 0 ? Math.round((count / yearTotal) * 100) : 0;
                 return (
-                  <div key={key}>
+                  <div key={stream.key}>
                     <div className="flex items-center justify-between text-sm">
-                      <span className="text-nurture-charcoal/75">{label}</span>
+                      <span className="text-nurture-charcoal/75">{stream.label}</span>
                       <span className="font-medium tabular-nums text-nurture-charcoal">
-                        {row.count}{" "}
+                        {count}{" "}
                         <span className="text-nurture-charcoal/45">
-                          ({pct}% · {formatEngagementMoney(row.clientFeeCents)})
+                          ({pct}% · {formatEngagementMoney(revenue)})
                         </span>
                       </span>
                     </div>
                     <div className="mt-1 h-2 overflow-hidden rounded-full bg-nurture-cream">
                       <div
-                        className={`h-full rounded-full ${barClass}`}
+                        className={`h-full rounded-full ${stream.colorClass}`}
                         style={{ width: `${pct}%` }}
                       />
                     </div>
@@ -283,7 +301,8 @@ const DashboardOverviewTab = ({
                   <tr className="border-b border-nurture-sage/15 text-xs uppercase tracking-wide text-nurture-charcoal/45">
                     <th className="pb-2 pr-3 font-medium">Year</th>
                     <th className="pb-2 pr-3 font-medium">Jobs</th>
-                    <th className="pb-2 pr-3 font-medium">Birth / PP</th>
+                    <th className="pb-2 pr-3 font-medium">Birth $</th>
+                    <th className="pb-2 pr-3 font-medium">PP $</th>
                     <th className="pb-2 pr-3 font-medium">Client</th>
                     <th className="pb-2 font-medium">Doula</th>
                   </tr>
@@ -301,7 +320,10 @@ const DashboardOverviewTab = ({
                       </td>
                       <td className="py-2 pr-3 tabular-nums">{row.engagementCount}</td>
                       <td className="py-2 pr-3 tabular-nums text-nurture-charcoal/65">
-                        {row.birthCount} / {row.postpartumCount}
+                        {formatEngagementMoney(row.birthClientFeeCents)}
+                      </td>
+                      <td className="py-2 pr-3 tabular-nums text-nurture-charcoal/65">
+                        {formatEngagementMoney(row.postpartumClientFeeCents)}
                       </td>
                       <td className="py-2 pr-3 tabular-nums">
                         {formatEngagementMoney(row.clientFeeCents)}

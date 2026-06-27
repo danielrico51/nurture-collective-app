@@ -1,4 +1,4 @@
-import type { DashboardMonthlyCount, DashboardYoyRow, DashboardYearBucket } from "@/types/dashboard";
+import type { DashboardMonthlyCount, DashboardMonthlyRevenue, DashboardYoyRow, DashboardYearBucket } from "@/types/dashboard";
 
 export const pctChange = (current: number, previous: number): number | null => {
   if (previous === 0) {
@@ -49,6 +49,37 @@ export const filterMonthsForYear = (
   return Array.from({ length: 12 }, (_, index) => {
     const month = `${year}-${String(index + 1).padStart(2, "0")}`;
     return { month, count: byMonth.get(month) ?? 0 };
+  });
+};
+
+export const filterRevenueMonthsForYear = (
+  rows: DashboardMonthlyRevenue[],
+  year: number
+): DashboardMonthlyRevenue[] => {
+  const prefix = `${year}-`;
+  const byMonth = new Map(
+    rows.filter((row) => row.month.startsWith(prefix)).map((row) => [row.month, row])
+  );
+  return Array.from({ length: 12 }, (_, index) => {
+    const month = `${year}-${String(index + 1).padStart(2, "0")}`;
+    return (
+      byMonth.get(month) ?? {
+        month,
+        engagementCount: 0,
+        clientFeeCents: 0,
+        doulaPayoutCents: 0,
+        marginCents: 0,
+        birthCount: 0,
+        postpartumCount: 0,
+        otherCount: 0,
+        birthClientFeeCents: 0,
+        postpartumClientFeeCents: 0,
+        otherClientFeeCents: 0,
+        birthDoulaPayoutCents: 0,
+        postpartumDoulaPayoutCents: 0,
+        otherDoulaPayoutCents: 0,
+      }
+    );
   });
 };
 

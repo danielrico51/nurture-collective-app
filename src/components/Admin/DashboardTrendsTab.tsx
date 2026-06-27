@@ -1,7 +1,12 @@
 "use client";
 
 import { formatEngagementMoney } from "@/lib/api/scheduleClient";
-import { formatYoyPct, yoyTone } from "@/lib/dashboard/trends";
+import {
+  filterMonthsForYear,
+  filterRevenueMonthsForYear,
+  formatYoyPct,
+  yoyTone,
+} from "@/lib/dashboard/trends";
 import type {
   DashboardEngagementAnalyticsCore,
   DashboardLeadAnalytics,
@@ -11,12 +16,13 @@ import Link from "next/link";
 import {
   GroupedYearBarChart,
   monthlyCountChart,
+  monthlyStreamCountChart,
   RevenueTrendChart,
+  StackedVerticalBarChart,
   VerticalBarChart,
   yearCountChart,
   yearRevenueChart,
 } from "@/components/Admin/DashboardCharts";
-import { filterMonthsForYear } from "@/lib/dashboard/trends";
 
 interface DashboardTrendsTabProps {
   trendYear: number;
@@ -94,7 +100,7 @@ const DashboardTrendsTab = ({
   );
 
   const monthlyForYear = engagementAnalytics
-    ? filterMonthsForYear(engagementAnalytics.monthlyBookingsHistory, trendYear)
+    ? filterRevenueMonthsForYear(engagementAnalytics.monthlyRevenueHistory, trendYear)
     : [];
   const monthlyLeadForYear = leadAnalytics
     ? filterMonthsForYear(leadAnalytics.monthlyLeadsHistory, trendYear)
@@ -148,16 +154,15 @@ const DashboardTrendsTab = ({
             Bookings by schedule year
           </h3>
           <p className="mt-1 text-xs text-nurture-charcoal/50">
-            Engagements grouped by schedule year (service year on the engagement).
+            Engagements grouped by schedule year, stacked by birth vs postpartum.
           </p>
           <div className="mt-4">
             {engagementsLoading ? (
               <p className="text-sm text-nurture-charcoal/55">Loading…</p>
             ) : (
-              <VerticalBarChart
+              <StackedVerticalBarChart
                 data={yearCountChart(byYear)}
                 heightClass="h-56"
-                colorClass="bg-nurture-sage"
               />
             )}
           </div>
@@ -220,7 +225,7 @@ const DashboardTrendsTab = ({
           Monthly client revenue trend
         </h3>
         <p className="mt-1 text-xs text-nurture-charcoal/50">
-          Book-date months — last 24 months of package revenue attributed to engagements.
+          Book-date months — birth, postpartum, and other package revenue (last 24 months).
         </p>
         <div className="mt-4">
           {engagementsLoading ? (
@@ -265,10 +270,9 @@ const DashboardTrendsTab = ({
             {engagementsLoading ? (
               <p className="text-sm text-nurture-charcoal/55">Loading…</p>
             ) : (
-              <VerticalBarChart
-                data={monthlyCountChart(monthlyForYear)}
+              <StackedVerticalBarChart
+                data={monthlyStreamCountChart(monthlyForYear)}
                 heightClass="h-44"
-                colorClass="bg-nurture-sage-dark"
               />
             )}
           </div>
@@ -302,16 +306,15 @@ const DashboardTrendsTab = ({
 
       <section className="rounded-2xl border border-nurture-sage/15 bg-white/90 p-5">
         <h3 className="font-serif text-lg font-semibold text-nurture-charcoal">
-          Annual client revenue
+          Annual client revenue by stream
         </h3>
         <div className="mt-4">
           {engagementsLoading ? (
             <p className="text-sm text-nurture-charcoal/55">Loading…</p>
           ) : (
-            <VerticalBarChart
-              data={yearRevenueChart(byYear, formatEngagementMoney)}
+            <StackedVerticalBarChart
+              data={yearRevenueChart(byYear)}
               heightClass="h-52"
-              colorClass="bg-nurture-sage"
               formatValue={formatEngagementMoney}
             />
           )}

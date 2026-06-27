@@ -9,6 +9,13 @@ export interface DashboardYearBucket {
   doulaPayoutCents: number;
   birthCount: number;
   postpartumCount: number;
+  otherCount: number;
+  birthClientFeeCents: number;
+  postpartumClientFeeCents: number;
+  otherClientFeeCents: number;
+  birthDoulaPayoutCents: number;
+  postpartumDoulaPayoutCents: number;
+  otherDoulaPayoutCents: number;
 }
 
 export interface DashboardMonthlyCount {
@@ -22,6 +29,15 @@ export interface DashboardMonthlyRevenue {
   clientFeeCents: number;
   doulaPayoutCents: number;
   marginCents: number;
+  birthCount: number;
+  postpartumCount: number;
+  otherCount: number;
+  birthClientFeeCents: number;
+  postpartumClientFeeCents: number;
+  otherClientFeeCents: number;
+  birthDoulaPayoutCents: number;
+  postpartumDoulaPayoutCents: number;
+  otherDoulaPayoutCents: number;
 }
 
 export interface DashboardYoyRow {
@@ -111,7 +127,7 @@ export interface DashboardEngagementAnalyticsCore {
 }
 
 export interface DashboardSnapshot {
-  version: 3;
+  version: 4;
   generatedAt: string;
   indexLoadedAt: string;
   engagementAnalytics: DashboardEngagementAnalyticsCore;

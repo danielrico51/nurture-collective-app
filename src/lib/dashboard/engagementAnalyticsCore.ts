@@ -1,4 +1,8 @@
 import { engagementRef, type CrmStorageIndex } from "@/lib/clients/crmIndexLoader";
+import {
+  addEngagementToStreamTotals,
+  emptyStreamTotals,
+} from "@/lib/dashboard/revenueStreams";
 import { buildYoyRows } from "@/lib/dashboard/trends";
 import type {
   DashboardEngagementAnalyticsCore,
@@ -38,8 +42,7 @@ const emptyYearBucket = (year: number): DashboardYearBucket => ({
   engagementCount: 0,
   clientFeeCents: 0,
   doulaPayoutCents: 0,
-  birthCount: 0,
-  postpartumCount: 0,
+  ...emptyStreamTotals(),
 });
 
 const emptyServiceType = (): Record<
@@ -164,11 +167,18 @@ export const computeEngagementAnalyticsCore = (
         clientFeeCents: 0,
         doulaPayoutCents: 0,
         marginCents: 0,
+        ...emptyStreamTotals(),
       };
       existing.engagementCount += 1;
       existing.clientFeeCents += clientFeeCents;
       existing.doulaPayoutCents += doulaPayoutCents;
       existing.marginCents = existing.clientFeeCents - existing.doulaPayoutCents;
+      addEngagementToStreamTotals(
+        engagement.serviceType,
+        clientFeeCents,
+        doulaPayoutCents,
+        existing
+      );
       monthlyRevenueHistoryMap.set(bookMonth, existing);
     }
 
@@ -181,8 +191,12 @@ export const computeEngagementAnalyticsCore = (
     yearBucket.engagementCount += 1;
     yearBucket.clientFeeCents += clientFeeCents;
     yearBucket.doulaPayoutCents += doulaPayoutCents;
-    if (engagement.serviceType === "birth") yearBucket.birthCount += 1;
-    if (engagement.serviceType === "postpartum") yearBucket.postpartumCount += 1;
+    addEngagementToStreamTotals(
+      engagement.serviceType,
+      clientFeeCents,
+      doulaPayoutCents,
+      yearBucket
+    );
 
     byServiceType[engagement.serviceType].count += 1;
     byServiceType[engagement.serviceType].clientFeeCents += clientFeeCents;

@@ -18,7 +18,7 @@ import { listProviders } from "@/lib/providers/storage";
 import { computeAllProviderStatsFromSchedule } from "@/lib/schedule/providerStats";
 import type { DashboardSnapshot } from "@/types/dashboard";
 
-export const DASHBOARD_SNAPSHOT_VERSION = 3 as const;
+export const DASHBOARD_SNAPSHOT_VERSION = 4 as const;
 export const DASHBOARD_SNAPSHOT_FILENAME = "dashboard-v1.json";
 
 export const buildDashboardSnapshotKey = (): string =>
