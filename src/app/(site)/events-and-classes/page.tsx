@@ -3,7 +3,9 @@ import EventsHero from "@/components/Events/EventsHero";
 import EventsJumpNav from "@/components/Events/EventsJumpNav";
 import EventsListingCard from "@/components/Events/EventsListingCard";
 import SectionTitle from "@/components/Common/SectionTitle";
-import SectionWaveEdges from "@/components/Common/SectionWaveEdges";
+import SectionWaveEdges, {
+  FOOTER_CLEARANCE_PADDING_CLASS,
+} from "@/components/Common/SectionWaveEdges";
 import JsonLd from "@/components/Seo/JsonLd";
 import { MARKETING_CREAM, MARKETING_OAK_SURFACE, marketingCard, marketingPageShell } from "@/config/marketingDesign";
 import { classRefundPolicy } from "@/content/events";
@@ -115,13 +117,10 @@ export default async function EventsAndClassesPage() {
       </section>
 
       <section
-        className="relative overflow-hidden py-12 sm:py-14"
+        className={`relative overflow-hidden py-12 sm:py-14 ${FOOTER_CLEARANCE_PADDING_CLASS}`}
         style={{ backgroundColor: MARKETING_CREAM }}
       >
-        <SectionWaveEdges
-          topFill={MARKETING_OAK_SURFACE}
-          bottomFill={MARKETING_CREAM}
-        />
+        <SectionWaveEdges topOnly topFill={MARKETING_OAK_SURFACE} />
         <div className="relative z-[2] mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <div className={`mx-auto max-w-3xl ${marketingCard}`}>
             <h2 className="font-serif text-2xl font-semibold text-nurture-charcoal sm:text-3xl">
@@ -133,10 +132,12 @@ export default async function EventsAndClassesPage() {
               ))}
             </div>
           </div>
+
+          <div className="relative z-[2] mt-10 mb-2 sm:mt-12 sm:mb-4">
+            <EventsCtaBanner />
+          </div>
         </div>
       </section>
-
-      <EventsCtaBanner />
     </div>
   );
 }

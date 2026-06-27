@@ -35,6 +35,10 @@ const BOTTOM_WAVE_PATH =
 export const FOOTER_WAVE_HEIGHT_CLASS = "h-[5rem] sm:h-[7rem]";
 export const FOOTER_WAVE_OVERLAP_CLASS = "-mt-[5rem] sm:-mt-[7rem]";
 
+/** Bottom padding for the last section before the site footer wave. */
+export const FOOTER_CLEARANCE_PADDING_CLASS =
+  "pb-[calc(5rem+4.5rem)] sm:pb-[calc(7rem+5.5rem)]";
+
 /**
  * Organic top/bottom wave dividers for section boundaries.
  * Place inside a `relative overflow-hidden` container.

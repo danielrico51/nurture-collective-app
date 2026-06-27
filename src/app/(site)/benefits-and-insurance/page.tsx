@@ -101,9 +101,10 @@ export default function BenefitsAndInsurancePage() {
 
       <MarketingSection
         waves="both"
+        footerClearance
         waveTopFill={MARKETING_OAK_SURFACE}
         waveBottomFill={MARKETING_CREAM}
-        className="bg-nurture-lilac py-16 sm:py-20"
+        className="bg-nurture-lilac pt-16 sm:pt-20"
       >
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
           <SectionTitle
