@@ -153,7 +153,7 @@ function ContactForm() {
         />
       </div>
 
-      <div className="flex items-start gap-3">
+      <div className="flex items-start gap-3 rounded-lg p-1 -m-1">
         <input
           id="smsConsent"
           name="smsConsent"
@@ -161,11 +161,11 @@ function ContactForm() {
           checked={smsConsent}
           onChange={(event) => setSmsConsent(event.target.checked)}
           required
-          className="mt-0.5 h-4 w-4 shrink-0 rounded border-nurture-oak/45 text-nurture-lilac focus:ring-nurture-lilac"
+          className="mt-0.5 h-5 w-5 shrink-0 rounded border-nurture-oak/45 text-nurture-lilac focus:ring-nurture-lilac"
         />
         <label
           htmlFor="smsConsent"
-          className="text-sm leading-relaxed text-nurture-charcoal/75"
+          className="cursor-pointer text-sm leading-relaxed text-nurture-charcoal/75"
         >
           By checking this box, I consent to receive SMS text messages from The
           Nesting Place at the phone number provided. Messages may include

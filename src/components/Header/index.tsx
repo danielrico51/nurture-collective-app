@@ -59,7 +59,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   const navLinkClass = (href: string) =>
-    `whitespace-nowrap rounded-md px-2 py-1 text-[0.958rem] font-medium transition-colors ${
+    `whitespace-nowrap rounded-md px-2.5 py-2 text-[0.958rem] font-medium transition-colors ${
       isActive(href)
         ? "bg-nurture-lilac/25 text-nurture-grape"
         : "text-nurture-charcoal hover:bg-nurture-lilac/15 hover:text-nurture-grape"
@@ -130,7 +130,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
 
           <button
             type="button"
-            className="rounded-md p-[0.275rem] text-nurture-charcoal transition-colors hover:bg-nurture-lilac/15 lg:hidden"
+            className="inline-flex min-h-[44px] min-w-[44px] flex-col items-center justify-center rounded-md p-2.5 text-nurture-charcoal transition-colors hover:bg-nurture-lilac/15 xl:hidden"
             aria-expanded={menuOpen}
             aria-label="Toggle menu"
             onClick={() => setMenuOpen(!menuOpen)}
@@ -142,7 +142,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
         </div>
 
         {menuOpen ? (
-          <div className="border-t border-nurture-oak/25 bg-nurture-cream px-4 py-4 lg:hidden">
+          <div className="max-h-[calc(100dvh-5.5rem)] overflow-y-auto border-t border-nurture-oak/25 bg-nurture-cream px-4 py-4 xl:hidden">
             <nav className="flex flex-col gap-0.5">
               {primaryNavLinks.map((link) => (
                 <Link

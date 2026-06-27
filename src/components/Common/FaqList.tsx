@@ -48,7 +48,7 @@ const FaqList = ({
               <div key={faq.q} className="py-3">
                 <button
                   type="button"
-                  className="flex w-full items-center justify-between text-left font-medium text-nurture-charcoal"
+                  className="flex min-h-[44px] w-full items-center justify-between gap-3 py-3.5 text-left font-medium text-nurture-charcoal"
                   aria-expanded={isOpen}
                   aria-controls={answerId}
                   onClick={() => setOpenIndex(isOpen ? null : index)}

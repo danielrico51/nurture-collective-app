@@ -16,13 +16,13 @@ const Hero = () => {
           fill
           priority
           quality={100}
-          sizes="100vw"
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"
           className="object-cover object-[48%_82%] sm:object-[50%_76%] md:object-[50%_70%] lg:object-[52%_66%]"
         />
       </div>
 
       <div className="relative z-10 px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-8 lg:pl-10 lg:pr-8">
-        <div className="hero-intro-card mr-auto ml-8 w-full max-w-[min(100%,27.72rem)] sm:ml-12 sm:max-w-[min(92%,33rem)] md:ml-16 md:max-w-[min(56%,36.96rem)] lg:ml-20 lg:max-w-[min(56%,39.6rem)]">
+        <div className="hero-intro-card mr-auto ml-4 max-w-[min(100%,27.72rem)] sm:ml-8 sm:max-w-[min(92%,33rem)] md:ml-12 md:max-w-[min(56%,36.96rem)] lg:ml-16 lg:max-w-[min(56%,39.6rem)]">
           <p className="text-sm font-semibold uppercase tracking-widest text-nurture-grape">
             {brands.nestingPlace.tagline}
           </p>

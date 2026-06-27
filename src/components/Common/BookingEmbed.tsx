@@ -46,7 +46,7 @@ const BookingEmbed = ({
             <iframe
               src={embedUrl}
               title="Schedule a call with The Nesting Place"
-              className="h-[600px] w-full border-0"
+              className="h-[min(75vh,640px)] min-h-[28rem] w-full border-0 sm:h-[600px]"
               loading="lazy"
             />
           </div>

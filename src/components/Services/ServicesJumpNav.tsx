@@ -30,7 +30,7 @@ const ServicesJumpNav = ({ services }: ServicesJumpNavProps) => {
               <li key={service.slug}>
                 <a
                   href={buildServiceSectionHref(service.slug)}
-                  className="inline-flex rounded-lg border border-nurture-oak/45 bg-nurture-cream px-4 py-2 text-sm font-medium text-nurture-charcoal transition hover:border-nurture-lilac hover:bg-nurture-lilac/15 hover:text-nurture-grape"
+                  className="inline-flex min-h-[44px] items-center rounded-lg border border-nurture-oak/45 bg-nurture-cream px-4 py-2 text-sm font-medium text-nurture-charcoal transition hover:border-nurture-lilac hover:bg-nurture-lilac/15 hover:text-nurture-grape"
                 >
                   {service.title}
                 </a>

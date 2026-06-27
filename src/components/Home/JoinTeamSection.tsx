@@ -34,7 +34,7 @@ const JoinTeamSection = () => (
           >
             Interested in joining our team?
           </ScrollRevealHeading>
-          <p className="mx-auto mt-4 max-w-lg text-sm text-nurture-charcoal/70 lg:mx-0">
+          <p className="mx-auto mt-4 max-w-lg text-base text-nurture-charcoal/70 lg:mx-0">
             We&apos;re building a thoughtful provider network. If you share our
             commitment to family-centered support, we&apos;d love to hear from you.
           </p>

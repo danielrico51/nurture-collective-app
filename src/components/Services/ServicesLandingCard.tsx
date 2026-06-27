@@ -81,7 +81,7 @@ const ServicesLandingCard = ({
 
   const accordionHoverClass = hashActive
     ? "md:flex-[2.75]"
-    : "md:hover:flex-[2.75] md:focus-within:flex-[2.75]";
+    : "marketing-expand-card";
 
   const accordionSizeClass = accordionOrphan
     ? "w-full"
@@ -123,30 +123,30 @@ const ServicesLandingCard = ({
         />
 
         <div className="flex min-w-0 flex-1 flex-col items-center">
-          <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-nurture-grape/80">
+          <span className="text-xs font-bold uppercase tracking-[0.2em] text-nurture-grape/80">
             {service.tag}
           </span>
-          <h2 className="mt-2 font-serif text-xl font-semibold leading-tight text-nurture-charcoal">
+          <h2 className="mt-2 font-serif text-xl font-semibold leading-tight text-nurture-charcoal sm:text-2xl">
             {service.title}
           </h2>
-          <p className="mt-2 flex-1 text-[13px] leading-relaxed text-nurture-charcoal/70">
+          <p className="mt-2 flex-1 text-sm leading-relaxed text-nurture-charcoal/70">
             {service.description}
           </p>
 
           {service.availabilityNote ? (
-            <p className="mt-2 text-[11px] leading-relaxed text-nurture-charcoal/55">
+            <p className="mt-2 text-xs leading-relaxed text-nurture-charcoal/55">
               {service.availabilityNote}
             </p>
           ) : null}
 
-          <div className="mt-3 flex flex-wrap items-center justify-center gap-2">
+          <div className="mt-4 flex flex-wrap items-center justify-center gap-2">
             {hasExpandableContent ? (
               <button
                 type="button"
                 aria-expanded={expanded}
                 aria-controls={panelId}
                 onClick={() => setExpanded((open) => !open)}
-                className="inline-flex items-center gap-1 rounded-lg border border-nurture-grape/30 px-3 py-1.5 text-[11px] font-semibold text-nurture-grape transition hover:border-nurture-grape/50 hover:bg-nurture-grape/5"
+                className="inline-flex min-h-[44px] items-center gap-1 rounded-lg border border-nurture-grape/30 px-4 py-2.5 text-sm font-semibold text-nurture-grape transition hover:border-nurture-grape/50 hover:bg-nurture-grape/5"
               >
                 {expanded ? "Show less" : "Learn more"}
                 <ChevronIcon expanded={expanded} />
@@ -154,7 +154,7 @@ const ServicesLandingCard = ({
             ) : null}
             <Link
               href={buildCareStartHref(service.slug)}
-              className="btn-primary inline-flex items-center !px-3 !py-1.5 !text-[11px]"
+              className="btn-primary inline-flex min-h-[44px] items-center !px-4 !py-2.5 !text-sm"
             >
               Request support
             </Link>

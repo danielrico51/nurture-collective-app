@@ -36,7 +36,7 @@ interface ContactOptionsProps {
 }
 
 const cardClassName =
-  "group/card flex w-full min-h-full flex-col items-center overflow-hidden rounded-2xl border border-nurture-lilac/25 bg-nurture-cream p-8 text-center shadow-sm transition-[flex,box-shadow,border-color] duration-500 ease-premium motion-reduce:transition-none hover:border-nurture-lilac/45 hover:shadow-[0_18px_45px_rgba(74,69,89,0.1)] md:min-w-0 md:flex-1 md:hover:flex-[2.75] md:focus-within:flex-[2.75]";
+  "marketing-expand-card group/card flex w-full min-h-full flex-col items-center overflow-hidden rounded-2xl border border-nurture-lilac/25 bg-nurture-cream p-6 text-center shadow-sm transition-[flex,box-shadow,border-color] duration-500 ease-premium motion-reduce:transition-none hover:border-nurture-lilac/45 hover:shadow-[0_18px_45px_rgba(74,69,89,0.1)] sm:p-8";
 
 const ContactOptions = ({
   formAnchorId = "contact-form",
@@ -126,7 +126,9 @@ const ContactOptions = ({
             Phone
           </p>
           <h3 className="mt-3 font-serif text-xl font-semibold text-nurture-charcoal">
-            Call {localPhone} or text {smsPhone}
+            <span className="block sm:inline">Call {localPhone}</span>
+            <span className="hidden sm:inline"> or </span>
+            <span className="block sm:inline">text {smsPhone}</span>
           </h3>
           <p className="mt-3 flex-1 text-sm text-nurture-charcoal/70">
             Call our local line or text our toll-free number to reach our support

@@ -44,7 +44,7 @@ const ReviewSnippet = ({ review, isOpen, onToggle }: ReviewSnippetProps) => {
     <div className="py-3">
       <button
         type="button"
-        className="flex w-full items-start justify-between gap-3 text-left"
+        className="flex min-h-[44px] w-full items-start justify-between gap-3 py-2 text-left"
         aria-expanded={isOpen}
         aria-controls={panelId}
         onClick={onToggle}

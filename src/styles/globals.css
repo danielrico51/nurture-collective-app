@@ -97,15 +97,27 @@
   }
 
   .btn-nav-primary {
-    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg bg-nurture-gold px-[0.9625rem] py-[0.4125rem] text-[0.9625rem] font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-gold-dark;
+    @apply btn-hover-lift inline-flex min-h-[44px] items-center justify-center rounded-lg bg-nurture-gold px-[0.9625rem] py-2 text-[0.9625rem] font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-gold-dark;
   }
 
   .btn-nav-secondary {
-    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg border border-nurture-lilac bg-nurture-lilac/15 px-[0.9625rem] py-[0.4125rem] text-[0.9625rem] font-semibold text-nurture-grape hover:bg-nurture-lilac/30;
+    @apply btn-hover-lift inline-flex min-h-[44px] items-center justify-center rounded-lg border border-nurture-lilac bg-nurture-lilac/15 px-[0.9625rem] py-2 text-[0.9625rem] font-semibold text-nurture-grape hover:bg-nurture-lilac/30;
   }
 
   .btn-nav-accent {
-    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg bg-nurture-lilac px-[0.9625rem] py-[0.4125rem] text-[0.9625rem] font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-lilac-dark;
+    @apply btn-hover-lift inline-flex min-h-[44px] items-center justify-center rounded-lg bg-nurture-lilac px-[0.9625rem] py-2 text-[0.9625rem] font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-lilac-dark;
+  }
+
+  /** Desktop-only flex expansion for side-by-side marketing cards */
+  .marketing-expand-card {
+    @apply md:min-w-0 md:flex-1;
+  }
+
+  @media (hover: hover) and (pointer: fine) {
+    .marketing-expand-card:hover,
+    .marketing-expand-card:focus-within {
+      flex: 2.75;
+    }
   }
 }
 
@@ -346,7 +358,7 @@
 
 .home-banner-frame {
   display: flex;
-  height: min(78vh, 580px);
+  height: min(62vh, 480px);
   align-items: center;
   justify-content: center;
   background-color: #f4f5f5;
@@ -354,13 +366,13 @@
 
 @media (min-width: 640px) {
   .home-banner-frame {
-    height: min(82vh, 660px);
+    height: min(72vh, 580px);
   }
 }
 
 @media (min-width: 1024px) {
   .home-banner-frame {
-    height: min(86vh, 780px);
+    height: min(82vh, 720px);
   }
 }
 
