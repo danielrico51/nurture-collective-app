@@ -285,3 +285,44 @@ export const sendClientCommunication = async (
   );
   return handleResponse(response);
 };
+
+export const openServiceInvoiceDocument = async (
+  clientId: string,
+  serviceId: string,
+  invoiceId: string
+): Promise<void> => {
+  const { fetchAuthSession } = await import("aws-amplify/auth");
+  const session = await fetchAuthSession();
+  const token = session.tokens?.idToken?.toString();
+  if (!token) throw new Error("Not authenticated");
+
+  const response = await fetch(
+    `/api/admin/clients/${encodeURIComponent(clientId)}/services/${encodeURIComponent(serviceId)}/invoices/${encodeURIComponent(invoiceId)}/document`,
+    {
+      headers: { Authorization: `Bearer ${token}` },
+      cache: "no-store",
+    }
+  );
+
+  if (!response.ok) {
+    const text = await response.text();
+    let message = "Could not load invoice";
+    try {
+      const data = JSON.parse(text) as { error?: string };
+      if (data.error) message = data.error;
+    } catch {
+      /* non-JSON body */
+    }
+    throw new Error(message);
+  }
+
+  const html = await response.text();
+  const blob = new Blob([html], { type: "text/html;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const tab = window.open(url, "_blank", "noopener,noreferrer");
+  if (!tab) {
+    URL.revokeObjectURL(url);
+    throw new Error("Pop-up blocked. Allow pop-ups to view the invoice.");
+  }
+  window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
+};

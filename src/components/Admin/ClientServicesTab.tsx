@@ -4,6 +4,7 @@ import {
   createClientService,
   createServiceInvoice,
   fetchClientServices,
+  openServiceInvoiceDocument,
   updateClientService,
   updateServiceInvoice,
 } from "@/lib/api/clientsClient";
@@ -1146,14 +1147,25 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                   </a>
                                 ) : null}
                                 {invoice.status !== "draft" ? (
-                                  <a
-                                    href={`/api/admin/clients/${clientId}/services/${service.serviceId}/invoices/${invoice.invoiceId}/document`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
+                                  <button
+                                    type="button"
                                     className="text-nurture-sage-dark font-medium hover:underline"
+                                    onClick={() =>
+                                      void openServiceInvoiceDocument(
+                                        clientId,
+                                        service.serviceId,
+                                        invoice.invoiceId
+                                      ).catch((err) =>
+                                        toast.error(
+                                          err instanceof Error
+                                            ? err.message
+                                            : "Could not open invoice"
+                                        )
+                                      )
+                                    }
                                   >
                                     View / print
-                                  </a>
+                                  </button>
                                 ) : null}
                                 {invoice.lastEmailError ? (
                                   <span
