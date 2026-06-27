@@ -12,7 +12,7 @@ describe("processingFee", () => {
   it("identifies card-style payment methods", () => {
     expect(paymentMethodSupportsProcessingFee("venmo")).toBe(true);
     expect(paymentMethodSupportsProcessingFee("stripe")).toBe(true);
-    expect(paymentMethodSupportsProcessingFee("quickbooks")).toBe(false);
+    expect(paymentMethodSupportsProcessingFee("quickbooks")).toBe(true);
     expect(paymentMethodSupportsProcessingFee("zelle")).toBe(false);
   });
 
@@ -58,6 +58,15 @@ describe("processingFee", () => {
       amountCents: 10000,
       applyProcessingFee: true,
       paymentMethod: "venmo",
+    });
+    expect(amounts.amountCents).toBe(10300);
+  });
+
+  it("resolves create input with fee for quickbooks", () => {
+    const amounts = resolveInvoiceAmountFieldsFromInput({
+      amountCents: 10000,
+      applyProcessingFee: true,
+      paymentMethod: "quickbooks",
     });
     expect(amounts.amountCents).toBe(10300);
   });

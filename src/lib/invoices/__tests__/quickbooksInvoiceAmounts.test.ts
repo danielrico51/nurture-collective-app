@@ -41,33 +41,33 @@ const baseInvoice = (
 });
 
 describe("resolveQuickBooksInvoiceAmounts", () => {
-  it("syncs subtotal only and excludes CRM processing fees", () => {
+  it("includes CRM processing fees in synced totals", () => {
     const amounts = resolveQuickBooksInvoiceAmounts(
       baseInvoice({
         subtotalCents: 50000,
-        processingFeeCents: 4500,
+        processingFeeCents: 1500,
         processingFeePercent: 3,
-        amountCents: 54500,
+        amountCents: 51500,
       })
     );
 
     expect(amounts).toEqual({
       subtotalCents: 50000,
-      processingFeeCents: 0,
-      processingFeePercent: null,
-      amountCents: 50000,
+      processingFeeCents: 1500,
+      processingFeePercent: 3,
+      amountCents: 51500,
     });
   });
 });
 
 describe("buildServiceInvoiceQuickBooksLineItems", () => {
-  it("builds a single service line without a processing fee line item", () => {
+  it("builds service and processing fee line items", () => {
     const lineItems = buildServiceInvoiceQuickBooksLineItems({
       invoice: baseInvoice({
         subtotalCents: 50000,
-        processingFeeCents: 4500,
+        processingFeeCents: 1500,
         processingFeePercent: 3,
-        amountCents: 54500,
+        amountCents: 51500,
       }),
       serviceTitle: "Postpartum doula care",
     });
@@ -79,6 +79,26 @@ describe("buildServiceInvoiceQuickBooksLineItems", () => {
         quantity: 1,
         unitPrice: 500,
       },
+      {
+        amount: 15,
+        description: "Credit card processing fee (3%)",
+        quantity: 1,
+        unitPrice: 15,
+      },
     ]);
+  });
+
+  it("omits processing fee line when fee is zero", () => {
+    const lineItems = buildServiceInvoiceQuickBooksLineItems({
+      invoice: baseInvoice({
+        subtotalCents: 50000,
+        processingFeeCents: 0,
+        processingFeePercent: null,
+        amountCents: 50000,
+      }),
+      serviceTitle: "Postpartum doula care",
+    });
+
+    expect(lineItems).toHaveLength(1);
   });
 });

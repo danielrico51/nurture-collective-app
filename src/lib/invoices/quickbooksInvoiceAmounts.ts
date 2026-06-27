@@ -8,24 +8,10 @@ export interface QuickBooksInvoiceAmounts {
   amountCents: number;
 }
 
-/**
- * Amounts synced to QuickBooks — service subtotal only.
- * Processing fees are applied by QuickBooks Payments surcharging at checkout,
- * not as a CRM line item (card network rules prohibit both).
- */
+/** Amounts synced to QuickBooks — service subtotal plus optional CRM processing fee line. */
 export const resolveQuickBooksInvoiceAmounts = (
   invoice: ServiceInvoice
-): QuickBooksInvoiceAmounts => {
-  const normalized = normalizeStoredInvoiceAmounts(invoice);
-  const subtotalCents = normalized.subtotalCents;
-
-  return {
-    subtotalCents,
-    processingFeeCents: 0,
-    processingFeePercent: null,
-    amountCents: subtotalCents,
-  };
-};
+): QuickBooksInvoiceAmounts => normalizeStoredInvoiceAmounts(invoice);
 
 export const buildServiceInvoiceQuickBooksLineItems = (input: {
   invoice: ServiceInvoice;
@@ -40,7 +26,7 @@ export const buildServiceInvoiceQuickBooksLineItems = (input: {
   const amounts = resolveQuickBooksInvoiceAmounts(input.invoice);
   const centsToDollars = (cents: number): number => cents / 100;
 
-  return [
+  const lineItems = [
     {
       amount: centsToDollars(amounts.subtotalCents),
       description: input.invoice.description || input.serviceTitle,
@@ -48,4 +34,18 @@ export const buildServiceInvoiceQuickBooksLineItems = (input: {
       unitPrice: centsToDollars(amounts.subtotalCents),
     },
   ];
+
+  if (amounts.processingFeeCents > 0) {
+    lineItems.push({
+      amount: centsToDollars(amounts.processingFeeCents),
+      description:
+        amounts.processingFeePercent != null
+          ? `Credit card processing fee (${amounts.processingFeePercent}%)`
+          : "Credit card processing fee",
+      quantity: 1,
+      unitPrice: centsToDollars(amounts.processingFeeCents),
+    });
+  }
+
+  return lineItems;
 };
