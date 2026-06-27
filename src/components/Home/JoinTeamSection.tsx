@@ -2,7 +2,7 @@
 
 import HeroBlendImage from "@/components/Common/HeroBlendImage";
 import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
-import SectionWaveEdges from "@/components/Common/SectionWaveEdges";
+import SectionWaveEdges, { FOOTER_SECTION_CLASS } from "@/components/Common/SectionWaveEdges";
 import { pageArtwork } from "@/config/pageArtwork";
 import Link from "next/link";
 
@@ -10,7 +10,7 @@ import { MARKETING_CREAM, MARKETING_OAK_SURFACE, marketingEyebrow } from "@/conf
 
 const JoinTeamSection = () => (
   <section
-    className="relative overflow-hidden pb-16 pt-20 sm:pb-20 sm:pt-24"
+    className={`${FOOTER_SECTION_CLASS} pt-20 sm:pt-24`}
     style={{ backgroundColor: MARKETING_OAK_SURFACE }}
   >
     <SectionWaveEdges topOnly topFill={MARKETING_CREAM} />

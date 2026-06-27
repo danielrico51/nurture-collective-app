@@ -104,14 +104,14 @@ export default function BenefitsAndInsurancePage() {
         footerClearance
         waveTopFill={MARKETING_OAK_SURFACE}
         waveBottomFill={MARKETING_CREAM}
-        className="bg-nurture-lilac pt-16 sm:pt-20"
+        className="bg-nurture-lilac !pt-[calc(5rem+2.5rem)] sm:!pt-[calc(7rem+3rem)]"
       >
-        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-screen-xl px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8">
           <SectionTitle
             title="Talk with our team"
             subtitle="We'll answer questions about coverage and documentation."
           />
-          <div className="mt-8">
+          <div className="mt-10">
             <ContactOptions
               variant="contact"
               formHref="/contact?topic=benefits&audience=mom"

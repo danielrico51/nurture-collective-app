@@ -2,7 +2,6 @@ import CallToAction from "@/components/Home/CallToAction";
 import JoinTeamSection from "@/components/Home/JoinTeamSection";
 import ServiceStatsSection from "@/components/Home/ServiceStatsSection";
 import FaqList from "@/components/Common/FaqList";
-import SectionWaveEdges from "@/components/Common/SectionWaveEdges";
 import Hero from "@/components/Home/Hero";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
 import GoogleReviews from "@/components/Reviews/GoogleReviews";
@@ -55,18 +54,20 @@ export default function HomePage() {
         className="bg-nurture-sage"
       />
       <GoogleReviews className="bg-nurture-cream" />
-      <section className="relative left-1/2 h-[min(70vh,520px)] w-screen max-w-[100vw] -translate-x-1/2 overflow-hidden sm:h-[min(75vh,600px)] lg:h-[min(80vh,720px)]">
-        <Image
-          src="/branding/changingbaby.jpg"
-          alt="Caregiver gently supporting a newborn during a changing moment"
-          fill
-          sizes="100vw"
-          quality={90}
-          className="object-cover object-center opacity-95"
-        />
-        <SectionWaveEdges bottomOnly bottomFill={MARKETING_CREAM} />
+      <section className="relative left-1/2 w-screen max-w-[100vw] -translate-x-1/2 bg-[#f4f5f5]">
+        <div className="home-banner-frame relative overflow-hidden">
+          <Image
+            src="/branding/bannerbaby2.jpg"
+            alt="Newborn baby sleeping peacefully on a soft white blanket"
+            width={8896}
+            height={3653}
+            sizes="100vw"
+            quality={90}
+            className="home-banner-image"
+          />
+        </div>
       </section>
-      <FaqList items={momFaqs} organicWaves waveTopFill={MARKETING_CREAM} />
+      <FaqList items={momFaqs} />
       <CallToAction />
       <JoinTeamSection />
     </div>

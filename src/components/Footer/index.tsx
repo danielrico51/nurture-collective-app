@@ -5,7 +5,7 @@ import SectionWaveEdges, {
   FOOTER_WAVE_OVERLAP_CLASS,
 } from "@/components/Common/SectionWaveEdges";
 import { SocialIcon } from "@/components/Common/SocialIcon";
-import { MARKETING_FOOTER, MARKETING_OAK_SURFACE } from "@/config/marketingDesign";
+import { MARKETING_FOOTER } from "@/config/marketingDesign";
 import { PUBLIC_SIGNUP_ENABLED } from "@/config/publicAccess";
 import { legalPaths } from "@/content/legal";
 import { brands, socialLinks } from "@/content/site";
@@ -18,11 +18,7 @@ const footerHeadingClass = "text-nurture-lilac";
 
 const Footer = () => (
   <footer className={`site-footer w-full ${FOOTER_WAVE_OVERLAP_CLASS}`}>
-    <SectionWaveEdges
-      footerTop
-      footerFill={MARKETING_FOOTER}
-      footerTransitionFrom={MARKETING_OAK_SURFACE}
-    />
+    <SectionWaveEdges footerTop footerFill={MARKETING_FOOTER} />
     <div className="site-footer__body w-full">
       <div className="relative z-[2] mx-auto max-w-screen-xl px-4 pb-6 pt-10 sm:px-6 sm:pb-8 sm:pt-12 md:pt-14 lg:px-8">
         <Link

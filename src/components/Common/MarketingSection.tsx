@@ -1,5 +1,6 @@
 import SectionWaveEdges, {
-  FOOTER_CLEARANCE_PADDING_CLASS,
+  FOOTER_SECTION_CLASS,
+  SECTION_WAVE_TOP_OVERLAP_CLASS,
 } from "@/components/Common/SectionWaveEdges";
 import { MARKETING_CREAM } from "@/config/marketingDesign";
 
@@ -39,18 +40,20 @@ const MarketingSection = ({
     (waves === "bottom" || waves === "both") && !footerClearance;
 
   const paddingClass = footerClearance
-    ? [
-        showTop ? "pt-20 sm:pt-24" : "",
-        FOOTER_CLEARANCE_PADDING_CLASS,
-      ]
-        .filter(Boolean)
-        .join(" ")
+    ? [showTop ? "pt-20 sm:pt-24" : ""].filter(Boolean).join(" ")
     : wavePadding[waves];
+
+  const topOverlapClass =
+    showTop && !footerClearance ? SECTION_WAVE_TOP_OVERLAP_CLASS : "";
+
+  const sectionClass = footerClearance
+    ? `${FOOTER_SECTION_CLASS} ${paddingClass} ${className}`.trim()
+    : `relative overflow-hidden ${topOverlapClass} ${paddingClass} ${className}`.trim();
 
   return (
     <section
       id={id}
-      className={`relative overflow-hidden ${paddingClass} ${className}`}
+      className={sectionClass}
     >
       {showTop && (
         <SectionWaveEdges

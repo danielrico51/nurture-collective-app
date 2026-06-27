@@ -44,7 +44,7 @@ const Hero = () => {
           <div className="mt-6 sm:mt-7">
             <Link
               href={buildCareStartHref()}
-              className="btn-primary-lg"
+              className="btn-primary-hero"
             >
               Request support
             </Link>

@@ -1,4 +1,4 @@
-import { MARKETING_CREAM, MARKETING_FOOTER, MARKETING_OAK_SURFACE } from "@/config/marketingDesign";
+import { MARKETING_CREAM, MARKETING_FOOTER } from "@/config/marketingDesign";
 
 interface SectionWaveEdgesProps {
   topFill?: string;
@@ -12,13 +12,11 @@ interface SectionWaveEdgesProps {
   /** Color that bleeds through the gradient tail (section background below the wave). */
   fadeThroughColor?: string;
   /**
-   * Footer transition: purple wave rising into the section above.
-   * Upper SVG viewport stays transparent; only the wave body is filled.
+   * Footer transition: grape wave rising into the section above.
+   * Upper SVG viewport stays transparent so the preceding section shows through.
    */
   footerTop?: boolean;
   footerFill?: string;
-  /** Section background above the footer wave — fills the SVG so body cream does not bleed through. */
-  footerTransitionFrom?: string;
 }
 
 const TOP_WAVE_PATH =
@@ -33,11 +31,15 @@ const BOTTOM_WAVE_PATH =
 
 /** Shared wave band height — keep in sync with footer overlap margin. */
 export const FOOTER_WAVE_HEIGHT_CLASS = "h-[5rem] sm:h-[7rem]";
+/** Pull section up / reserve overlap band for the site footer wave. */
 export const FOOTER_WAVE_OVERLAP_CLASS = "-mt-[5rem] sm:-mt-[7rem]";
 
-/** Bottom padding for the last section before the site footer wave. */
-export const FOOTER_CLEARANCE_PADDING_CLASS =
-  "pb-[calc(5rem+4.5rem)] sm:pb-[calc(7rem+5.5rem)]";
+/** Pull section up so the top wave overlaps the section above. */
+export const SECTION_WAVE_TOP_OVERLAP_CLASS = FOOTER_WAVE_OVERLAP_CLASS;
+
+/** Last section before footer — room for content above the footer wave overlap. */
+export const FOOTER_SECTION_CLASS =
+  "relative overflow-hidden pb-[calc(5rem+4.5rem)] sm:pb-[calc(7rem+5rem)]";
 
 /**
  * Organic top/bottom wave dividers for section boundaries.
@@ -52,17 +54,15 @@ const SectionWaveEdges = ({
   fadeThroughColor = MARKETING_FOOTER,
   footerTop = false,
   footerFill = MARKETING_FOOTER,
-  footerTransitionFrom = MARKETING_OAK_SURFACE,
 }: SectionWaveEdgesProps) => {
   if (footerTop) {
     return (
       <svg
-        className={`pointer-events-none relative z-[1] w-full leading-[0] ${FOOTER_WAVE_HEIGHT_CLASS}`}
+        className={`pointer-events-none relative block w-full leading-[0] ${FOOTER_WAVE_HEIGHT_CLASS}`}
         viewBox="0 0 1200 120"
         preserveAspectRatio="none"
         aria-hidden="true"
       >
-        <rect width="1200" height="120" fill={footerTransitionFrom} />
         <path fill={footerFill} d={FOOTER_TOP_WAVE_PATH} />
       </svg>
     );

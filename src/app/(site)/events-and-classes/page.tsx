@@ -3,9 +3,7 @@ import EventsHero from "@/components/Events/EventsHero";
 import EventsJumpNav from "@/components/Events/EventsJumpNav";
 import EventsListingCard from "@/components/Events/EventsListingCard";
 import SectionTitle from "@/components/Common/SectionTitle";
-import SectionWaveEdges, {
-  FOOTER_CLEARANCE_PADDING_CLASS,
-} from "@/components/Common/SectionWaveEdges";
+import SectionWaveEdges, { FOOTER_SECTION_CLASS } from "@/components/Common/SectionWaveEdges";
 import JsonLd from "@/components/Seo/JsonLd";
 import { MARKETING_CREAM, MARKETING_OAK_SURFACE, marketingCard, marketingPageShell } from "@/config/marketingDesign";
 import { classRefundPolicy } from "@/content/events";
@@ -117,7 +115,7 @@ export default async function EventsAndClassesPage() {
       </section>
 
       <section
-        className={`relative overflow-hidden py-12 sm:py-14 ${FOOTER_CLEARANCE_PADDING_CLASS}`}
+        className={`py-12 sm:py-14 ${FOOTER_SECTION_CLASS}`}
         style={{ backgroundColor: MARKETING_CREAM }}
       >
         <SectionWaveEdges topOnly topFill={MARKETING_OAK_SURFACE} />

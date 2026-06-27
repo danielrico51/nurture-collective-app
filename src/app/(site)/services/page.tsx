@@ -123,6 +123,7 @@ export default async function ServicesPage() {
 
       <MarketingSection
         waves="both"
+        footerClearance
         waveTopFill={MARKETING_OAK_SURFACE}
         waveBottomFill={MARKETING_CREAM}
         className="bg-nurture-lilac pb-0"

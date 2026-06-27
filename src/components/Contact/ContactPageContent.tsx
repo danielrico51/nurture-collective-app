@@ -6,7 +6,7 @@ import PageIntroWithImage from "@/components/Common/PageIntroWithImage";
 import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import SectionTitle from "@/components/Common/SectionTitle";
 import MarketingSection from "@/components/Common/MarketingSection";
-import { FOOTER_WAVE_OVERLAP_CLASS } from "@/components/Common/SectionWaveEdges";
+import { FOOTER_SECTION_CLASS } from "@/components/Common/SectionWaveEdges";
 import {
   MARKETING_CREAM,
   MARKETING_OAK_SURFACE,
@@ -283,15 +283,15 @@ const ContactPageContent = () => (
       waves="both"
       waveTopFill={MARKETING_CREAM}
       waveBottomFill={MARKETING_OAK_SURFACE}
-      className="bg-nurture-lilac py-12 sm:py-14"
+      className="bg-nurture-lilac !pt-[calc(5rem+2.5rem)] sm:!pt-[calc(7rem+3rem)] !pb-[calc(5rem+4rem)] sm:!pb-[calc(7rem+4.5rem)]"
     >
-      <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-        <ContactOptions className="mt-2" formAnchorId="contact-form" />
+      <div className="mx-auto max-w-screen-xl px-4 pt-4 sm:px-6 sm:pt-6 lg:px-8">
+        <ContactOptions formAnchorId="contact-form" />
       </div>
     </MarketingSection>
 
     <section
-      className={`relative overflow-hidden py-12 sm:py-14 lg:py-16 ${FOOTER_WAVE_OVERLAP_CLASS} pb-6 sm:pb-8`}
+      className={`py-12 sm:py-14 lg:py-16 ${FOOTER_SECTION_CLASS}`}
       style={{ backgroundColor: MARKETING_OAK_SURFACE }}
     >
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">

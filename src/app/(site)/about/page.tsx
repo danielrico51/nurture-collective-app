@@ -1,5 +1,6 @@
 import AboutHero from "@/components/About/AboutHero";
 import CoverageMap from "@/components/Common/CoverageMap";
+import { FOOTER_SECTION_CLASS } from "@/components/Common/SectionWaveEdges";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { TeamSection } from "@/components/Common/TeamSection";
 import JsonLd from "@/components/Seo/JsonLd";
@@ -118,9 +119,10 @@ export default function AboutPage() {
         members={teamMembers}
         organicWaves
         surface="lilac"
+        waveTopFill={MARKETING_OAK_SURFACE}
       />
 
-      <section>
+      <section className={FOOTER_SECTION_CLASS}>
         <CoverageMap
           title="Where we serve families"
           subtitle={brands.nestingPlace.serviceArea}

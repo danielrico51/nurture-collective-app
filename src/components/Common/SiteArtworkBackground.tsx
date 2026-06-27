@@ -12,7 +12,7 @@ const SiteArtworkBackground = ({
   const blobOpacity = isLight ? "opacity-[0.14]" : "opacity-[0.1]";
 
   return (
-    <div className="relative isolate min-h-full overflow-x-clip bg-nurture-cream">
+    <div className="relative isolate overflow-x-clip bg-nurture-cream">
       <div
         aria-hidden
         className={`pointer-events-none absolute -left-24 top-32 h-72 w-72 rounded-full bg-nurture-rose-light blur-3xl ${blobOpacity}`}

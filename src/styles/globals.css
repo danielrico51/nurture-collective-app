@@ -60,6 +60,11 @@
       transform: none;
       filter: none;
     }
+
+    .btn-primary-hero:hover:not(:disabled) {
+      transform: none;
+      filter: none;
+    }
   }
 
   .btn-primary {
@@ -68,6 +73,15 @@
 
   .btn-primary-lg {
     @apply btn-hover-lift inline-flex items-center justify-center gap-2 rounded-lg bg-nurture-gold px-6 py-3 text-sm font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-gold-dark sm:px-8 sm:py-3.5;
+  }
+
+  /** Homepage hero CTA — 25% larger than btn-primary-lg */
+  .btn-primary-hero {
+    @apply btn-hover-lift inline-flex items-center justify-center gap-2 rounded-lg bg-nurture-gold px-[1.875rem] py-[0.9375rem] text-[1.09375rem] font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-gold-dark sm:px-10 sm:py-[1.09375rem];
+  }
+
+  .btn-primary-hero:hover:not(:disabled) {
+    @apply -translate-y-[0.3rem] scale-[1.042] brightness-[1.12] shadow-2xl;
   }
 
   .btn-primary-grape {
@@ -83,21 +97,20 @@
   }
 
   .btn-nav-primary {
-    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg bg-nurture-gold px-3.5 py-1.5 text-sm font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-gold-dark;
+    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg bg-nurture-gold px-[0.9625rem] py-[0.4125rem] text-[0.9625rem] font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-gold-dark;
   }
 
   .btn-nav-secondary {
-    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg border border-nurture-lilac bg-nurture-lilac/15 px-3.5 py-1.5 text-sm font-semibold text-nurture-grape hover:bg-nurture-lilac/30;
+    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg border border-nurture-lilac bg-nurture-lilac/15 px-[0.9625rem] py-[0.4125rem] text-[0.9625rem] font-semibold text-nurture-grape hover:bg-nurture-lilac/30;
   }
 
   .btn-nav-accent {
-    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg bg-nurture-lilac px-3.5 py-1.5 text-sm font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-lilac-dark;
+    @apply btn-hover-lift inline-flex items-center justify-center rounded-lg bg-nurture-lilac px-[0.9625rem] py-[0.4125rem] text-[0.9625rem] font-semibold text-nurture-charcoal shadow-sm hover:bg-nurture-lilac-dark;
   }
 }
 
 .site-footer {
-  @apply relative w-full text-nurture-cream;
-  background-color: var(--color-accent);
+  @apply relative w-full bg-transparent text-nurture-cream;
 }
 
 .site-footer__body {
@@ -329,6 +342,35 @@
   border-radius: 1.35rem 1.15rem 1.4rem 1.2rem / 1.2rem 1.35rem 1.1rem 1.3rem;
   background: #ffffff;
   box-shadow: inset 0 0 0 1px rgba(139, 123, 168, 0.06);
+}
+
+.home-banner-frame {
+  display: flex;
+  height: min(78vh, 580px);
+  align-items: center;
+  justify-content: center;
+  background-color: #f4f5f5;
+}
+
+@media (min-width: 640px) {
+  .home-banner-frame {
+    height: min(82vh, 660px);
+  }
+}
+
+@media (min-width: 1024px) {
+  .home-banner-frame {
+    height: min(86vh, 780px);
+  }
+}
+
+.home-banner-image {
+  height: 100%;
+  width: auto;
+  max-width: none;
+  object-fit: contain;
+  object-position: center center;
+  opacity: 0.95;
 }
 
 @keyframes fadeIn {

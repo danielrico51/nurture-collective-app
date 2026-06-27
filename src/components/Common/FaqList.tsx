@@ -3,7 +3,7 @@
 import { useState } from "react";
 import SectionTitle from "@/components/Common/SectionTitle";
 import SectionWaveEdges, {
-  FOOTER_WAVE_OVERLAP_CLASS,
+  FOOTER_SECTION_CLASS,
 } from "@/components/Common/SectionWaveEdges";
 import { MARKETING_CREAM } from "@/config/marketingDesign";
 
@@ -31,7 +31,7 @@ const FaqList = ({
   const [openIndex, setOpenIndex] = useState<number | null>(0);
 
   const sectionClassName = organicWaves
-    ? `relative overflow-hidden bg-nurture-cream ${FOOTER_WAVE_OVERLAP_CLASS} pb-6 pt-20 sm:pb-8 sm:pt-24 ${className}`
+    ? `bg-nurture-cream ${FOOTER_SECTION_CLASS} pt-20 sm:pt-24 ${className}`
     : `py-12 sm:py-14 ${className}`;
 
   return (

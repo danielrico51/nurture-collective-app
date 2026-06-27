@@ -61,7 +61,7 @@ const NestingPlaceLogo = ({
 
   if (compact) {
     content = (
-      <span className="inline-flex items-center gap-2 sm:gap-2.5">
+      <span className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap sm:gap-2.5">
         <BrandBabyMark
           size="compact"
           priority={priority}
@@ -74,7 +74,7 @@ const NestingPlaceLogo = ({
     );
   } else if (variant === "wordmark" || variant === "header") {
     content = (
-      <span className="inline-flex items-center gap-2 sm:gap-2.5">
+      <span className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap sm:gap-2.5">
         <BrandBabyMark size="header" priority={priority} />
         <BrandWordmarkText size="header" className={className} />
       </span>

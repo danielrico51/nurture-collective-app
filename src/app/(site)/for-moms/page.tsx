@@ -1,5 +1,6 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import BookingEmbed from "@/components/Common/BookingEmbed";
+import { FOOTER_SECTION_CLASS } from "@/components/Common/SectionWaveEdges";
 import ContactOptions from "@/components/Common/ContactOptions";
 import FaqList from "@/components/Common/FaqList";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
@@ -138,7 +139,7 @@ export default function ForMomsPage() {
         waveTopFill={MARKETING_LILAC}
       />
       <section
-        className="py-12 sm:py-14"
+        className={`py-12 sm:py-14 ${FOOTER_SECTION_CLASS}`}
         style={{ backgroundColor: MARKETING_OAK_SURFACE }}
       >
         <BookingEmbed className="!py-0" />

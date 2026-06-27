@@ -59,7 +59,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
     href === "/" ? pathname === "/" : pathname.startsWith(href);
 
   const navLinkClass = (href: string) =>
-    `rounded-md px-2 py-1 text-sm font-medium transition-colors ${
+    `whitespace-nowrap rounded-md px-2 py-1 text-[0.958rem] font-medium transition-colors ${
       isActive(href)
         ? "bg-nurture-lilac/25 text-nurture-grape"
         : "text-nurture-charcoal hover:bg-nurture-lilac/15 hover:text-nurture-grape"
@@ -69,13 +69,13 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
 
   return (
     <header
-      className="pointer-events-none fixed inset-x-0 top-4 z-50 px-4 sm:top-6 sm:px-6"
+      className="pointer-events-none fixed inset-x-0 top-4 z-50 px-2 sm:top-6 sm:px-3"
       data-scrolled={scrolled ? "true" : "false"}
     >
       <div
-        className={`pointer-events-auto mx-auto max-w-7xl overflow-hidden rounded-lg border border-nurture-oak/30 bg-nurture-cream transition-shadow duration-300 ${cardShadow}`}
+        className={`pointer-events-auto mx-auto w-full max-w-[96rem] overflow-hidden rounded-lg border border-nurture-oak/50 bg-nurture-cream transition-shadow duration-300 ${cardShadow}`}
       >
-        <div className="flex items-center justify-between gap-2 px-4 py-2 sm:px-6 sm:py-2.5">
+        <div className="flex flex-nowrap items-center justify-between gap-2 px-3 py-2 sm:gap-3 sm:px-5 sm:py-2.5">
           <span className="inline-flex shrink-0 sm:hidden">
             <NestingPlaceLogo variant="wordmark" compact priority />
           </span>
@@ -83,7 +83,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
             <NestingPlaceLogo variant="wordmark" priority />
           </span>
 
-          <nav className="hidden items-center gap-1 lg:gap-1.5 xl:flex">
+          <nav className="hidden min-w-0 flex-nowrap items-center gap-1 xl:flex xl:gap-1.5">
             {primaryNavLinks.map((link) => (
               <Link key={link.href} href={link.href} className={navLinkClass(link.href)}>
                 {link.label}
@@ -91,7 +91,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
             ))}
           </nav>
 
-          <div className="hidden items-center gap-2 sm:gap-2.5 lg:flex">
+          <div className="hidden shrink-0 flex-nowrap items-center gap-2 sm:gap-2.5 lg:flex">
             {isAuthenticated ? (
               <>
                 <Link href="/apps" className={navLinkClass("/apps")}>
@@ -130,14 +130,14 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
 
           <button
             type="button"
-            className="rounded-md p-1 text-nurture-charcoal transition-colors hover:bg-nurture-lilac/15 lg:hidden"
+            className="rounded-md p-[0.275rem] text-nurture-charcoal transition-colors hover:bg-nurture-lilac/15 lg:hidden"
             aria-expanded={menuOpen}
             aria-label="Toggle menu"
             onClick={() => setMenuOpen(!menuOpen)}
           >
-            <span className="block h-0.5 w-6 bg-nurture-charcoal" />
-            <span className="mt-1.5 block h-0.5 w-6 bg-nurture-charcoal" />
-            <span className="mt-1.5 block h-0.5 w-6 bg-nurture-charcoal" />
+            <span className="block h-0.5 w-[1.65rem] bg-nurture-charcoal" />
+            <span className="mt-[0.4125rem] block h-0.5 w-[1.65rem] bg-nurture-charcoal" />
+            <span className="mt-[0.4125rem] block h-0.5 w-[1.65rem] bg-nurture-charcoal" />
           </button>
         </div>
 
@@ -148,7 +148,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`rounded-md px-2 py-2.5 text-sm font-medium transition-colors ${
+                  className={`rounded-md px-2 py-2.5 text-[0.958rem] font-medium transition-colors ${
                     isActive(link.href)
                       ? "bg-nurture-lilac/25 text-nurture-grape"
                       : "text-nurture-charcoal hover:bg-nurture-lilac/15 hover:text-nurture-grape"
@@ -164,14 +164,14 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                 <>
                   <Link
                     href="/apps"
-                    className="rounded-md px-2 py-2 text-sm font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
+                    className="rounded-md px-2 py-2 text-[0.958rem] font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
                     onClick={() => setMenuOpen(false)}
                   >
                     My apps
                   </Link>
                   <Link
                     href="/account/profile"
-                    className="rounded-md px-2 py-2 text-sm font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
+                    className="rounded-md px-2 py-2 text-[0.958rem] font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
                     onClick={() => setMenuOpen(false)}
                   >
                     Profile
@@ -179,7 +179,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                   {canAccessAdmin ? (
                     <Link
                       href="/admin"
-                      className="rounded-md px-2 py-2 text-sm font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
+                      className="rounded-md px-2 py-2 text-[0.958rem] font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
                       onClick={() => setMenuOpen(false)}
                     >
                       Admin
@@ -187,7 +187,7 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                   ) : null}
                   <button
                     type="button"
-                    className="rounded-md px-2 py-2 text-left text-sm font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
+                    className="rounded-md px-2 py-2 text-left text-[0.958rem] font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
                     onClick={handleSignOut}
                   >
                     Sign out
@@ -211,14 +211,14 @@ const Header = ({ isAuthenticated }: HeaderProps) => {
                   </Link>
                   <Link
                     href={signinHref}
-                    className="rounded-md px-2 py-2 text-sm font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
+                    className="rounded-md px-2 py-2 text-[0.958rem] font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
                     onClick={() => setMenuOpen(false)}
                   >
                     Sign in
                   </Link>
                   <Link
                     href={signupHref}
-                    className="rounded-md px-2 py-2 text-sm font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
+                    className="rounded-md px-2 py-2 text-[0.958rem] font-medium text-nurture-charcoal hover:bg-nurture-lilac/15"
                     onClick={() => setMenuOpen(false)}
                   >
                     Sign up

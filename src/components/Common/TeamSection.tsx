@@ -66,6 +66,10 @@ interface TeamSectionProps {
   compact?: boolean;
   className?: string;
   organicWaves?: boolean;
+  /** Fill for top wave — match the section background directly above. */
+  waveTopFill?: string;
+  /** Fill for bottom wave — match the section background directly below. */
+  waveBottomFill?: string;
   /** Section tint — grape uses light copy; lilac uses dark copy on brand lilac. */
   surface?: "light" | "grape" | "lilac";
 }
@@ -102,6 +106,8 @@ export const TeamSection = ({
   compact = false,
   className = "",
   organicWaves = false,
+  waveTopFill = MARKETING_CREAM,
+  waveBottomFill = MARKETING_CREAM,
   surface = "light",
 }: TeamSectionProps) => {
   const surfaceStyle = SURFACE_STYLES[surface];
@@ -149,9 +155,9 @@ export const TeamSection = ({
     return (
       <MarketingSection
         waves="both"
-        waveTopFill={MARKETING_CREAM}
-        waveBottomFill={MARKETING_CREAM}
-        className={`py-16 sm:py-20 ${sectionSurfaceClass} ${className}`}
+        waveTopFill={waveTopFill}
+        waveBottomFill={waveBottomFill}
+        className={`${sectionSurfaceClass} ${className}`}
       >
         {inner}
       </MarketingSection>
