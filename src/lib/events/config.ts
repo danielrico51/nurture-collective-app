@@ -1,4 +1,3 @@
-import { hasExplicitServerCredentials } from "@/lib/aws/amplifyCredentials";
 import { resolveDeploymentEnvironment } from "@/lib/storage/deploymentEnvironment";
 
 const DEFAULT_BUCKET = "nurture-collective-tasks";
@@ -6,12 +5,6 @@ const PROD_EVENTS_KEY = "management/events/items.json";
 
 const isLocalStorageEnabled = () => {
   if (process.env.EVENTS_USE_LOCAL_STORAGE === "true") return true;
-  if (
-    process.env.NODE_ENV === "development" &&
-    !hasExplicitServerCredentials()
-  ) {
-    return true;
-  }
   if (process.env.TASKS_S3_BUCKET?.trim()) return false;
   return process.env.NODE_ENV === "development";
 };

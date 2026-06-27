@@ -96,27 +96,11 @@ const writeS3EventsDocument = async (document: EventsDocument): Promise<void> =>
   );
 };
 
-const isCredentialsError = (error: unknown): boolean => {
-  if (!(error instanceof Error)) return false;
-  return (
-    error.name === "CredentialsProviderError" ||
-    /could not load credentials|Unable to locate credentials/i.test(error.message)
-  );
-};
-
 const readEventsDocument = async (): Promise<EventsDocument> => {
   if (eventsStorageConfig.useLocalStorage) {
     return readLocalEventsDocument();
   }
-  try {
-    return await readS3EventsDocument();
-  } catch (error) {
-    if (isCredentialsError(error)) {
-      console.warn("[events] S3 credentials unavailable; using local storage.");
-      return readLocalEventsDocument();
-    }
-    throw error;
-  }
+  return readS3EventsDocument();
 };
 
 const writeEventsDocument = async (document: EventsDocument): Promise<void> => {
@@ -146,7 +130,7 @@ export const seedEventsSamplesIfEmpty = async (): Promise<boolean> => {
 
 export const listAllEvents = async (): Promise<EventItem[]> => {
   const doc = await readEventsDocument();
-  if (doc.items.length === 0) {
+  if (doc.items.length === 0 && getEventsStorageMode() === "local") {
     await seedEventsSamplesIfEmpty();
     const seeded = await readEventsDocument();
     return sortEvents(seeded.items);
