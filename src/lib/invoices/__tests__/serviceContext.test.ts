@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   buildInvoiceServiceContext,
   formatClientInvoiceStatusLabel,
+  replaceInvoiceInList,
   resolveInvoicePaymentTypeLabel,
 } from "@/lib/invoices/serviceContext";
 import type { ClientService, ServiceInvoice } from "@/types/clientService";
@@ -96,5 +97,39 @@ describe("invoice service context", () => {
     expect(context.paymentHistory).toHaveLength(2);
     expect(context.paymentHistory[1].isCurrent).toBe(true);
     expect(context.paymentStatusLabel).toBe("Unpaid");
+  });
+
+  it("uses the current invoice amounts when they differ from stored copies", () => {
+    const stored = [
+      invoice({
+        invoiceId: "a",
+        subtotalCents: 1120000,
+        amountCents: 1120000,
+        status: "paid",
+        paidAt: "2026-06-01T00:00:00.000Z",
+        invoiceNumber: "TNP-2026-0021",
+      }),
+      invoice({
+        invoiceId: "b",
+        subtotalCents: 1120000,
+        amountCents: 1120000,
+        status: "paid",
+        paidAt: "2026-06-15T00:00:00.000Z",
+        invoiceNumber: "TNP-2026-0022",
+      }),
+    ];
+    const corrected = {
+      ...stored[1],
+      subtotalCents: 800000,
+      amountCents: 800000,
+    };
+    const context = buildInvoiceServiceContext(
+      service,
+      replaceInvoiceInList(stored, corrected),
+      corrected
+    );
+
+    expect(context.paidCents).toBe(1920000);
+    expect(context.balanceDueCents).toBe(0);
   });
 });

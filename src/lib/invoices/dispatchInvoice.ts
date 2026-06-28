@@ -19,6 +19,7 @@ import { resolveServiceInvoicePayment, ServiceInvoicePaymentError } from "@/lib/
 import {
   buildInvoiceServiceContext,
   buildPaidInvoiceInstructions,
+  replaceInvoiceInList,
 } from "@/lib/invoices/serviceContext";
 import type { ClientRecord } from "@/types/client";
 import type {
@@ -72,9 +73,13 @@ const buildInvoiceDocumentContext = async (input: {
     input.clientId,
     input.serviceId
   );
+  const invoicesForContext = replaceInvoiceInList(
+    serviceInvoices,
+    input.invoice
+  );
   const serviceContext = buildInvoiceServiceContext(
     service,
-    serviceInvoices,
+    invoicesForContext,
     input.invoice
   );
 

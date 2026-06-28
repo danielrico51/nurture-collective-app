@@ -73,6 +73,20 @@ const sortInvoicesChronologically = (
     (a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)
   );
 
+/** Use the in-memory invoice when building context before/without a storage refresh. */
+export const replaceInvoiceInList = (
+  invoices: ServiceInvoice[],
+  current: ServiceInvoice
+): ServiceInvoice[] => {
+  const index = invoices.findIndex(
+    (invoice) => invoice.invoiceId === current.invoiceId
+  );
+  if (index === -1) return [...invoices, current];
+  const next = [...invoices];
+  next[index] = current;
+  return next;
+};
+
 export const buildInvoiceServiceContext = (
   service: ClientService,
   invoices: ServiceInvoice[],
