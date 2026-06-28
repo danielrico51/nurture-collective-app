@@ -172,7 +172,7 @@ const buildServiceSummaryBlock = (input: InvoiceDocumentInput): string => {
             ${service.serviceDate ? `<p style="margin:0 0 12px;font-size:13px;color:#6b6560;">Service date: ${escapeHtml(formatDate(service.serviceDate))}</p>` : ""}
             <p style="margin:0 0 4px;font-size:13px;color:#6b6560;">This invoice: <strong style="color:#2f2a26;">${escapeHtml(serviceContext.paymentTypeLabel)}</strong></p>
             <p style="margin:0 0 4px;font-size:13px;color:#6b6560;">Service total: <strong style="color:#2f2a26;">${escapeHtml(formatMoney(serviceContext.totalFeeCents))}</strong></p>
-            <p style="margin:0 0 4px;font-size:13px;color:#6b6560;">Paid to date: <strong style="color:#2f2a26;">${escapeHtml(formatMoney(serviceContext.paidCents))}</strong></p>
+            <p style="margin:0 0 4px;font-size:13px;color:#6b6560;">Paid to date: <strong style="color:#2f2a26;">${escapeHtml(formatMoney(serviceContext.paidTotalCents))}</strong></p>
             <p style="margin:0;font-size:13px;color:#6b6560;">Balance remaining: <strong style="color:#2f2a26;">${escapeHtml(formatMoney(serviceContext.balanceDueCents))}</strong></p>
           </td>
         </tr>
@@ -328,7 +328,7 @@ export const buildInvoicePlainText = (input: InvoiceDocumentInput): string => {
     service.providerName ? `Provider: ${service.providerName}` : "",
     `This invoice: ${serviceContext.paymentTypeLabel}`,
     `Service total: ${formatMoney(serviceContext.totalFeeCents)}`,
-    `Paid to date: ${formatMoney(serviceContext.paidCents)}`,
+    `Paid to date: ${formatMoney(serviceContext.paidTotalCents)}`,
     `Balance remaining: ${formatMoney(serviceContext.balanceDueCents)}`,
     "",
     `Line item: ${invoice.description}`,

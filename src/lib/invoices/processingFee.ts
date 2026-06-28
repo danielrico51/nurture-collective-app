@@ -121,11 +121,22 @@ export const resolveInvoiceAmountFieldsFromInput = (input: {
       : supportsFee && (existingAmounts?.processingFeeCents ?? 0) > 0;
 
   if (!supportsFee || !applyFee) {
+    let finalSubtotal = subtotalCents;
+    if (
+      input.applyProcessingFee === false &&
+      existingAmounts &&
+      existingAmounts.processingFeeCents > 0 &&
+      input.amountCents !== undefined &&
+      subtotalCents === existingAmounts.subtotalCents
+    ) {
+      finalSubtotal = existingAmounts.amountCents;
+    }
+
     return {
-      subtotalCents,
+      subtotalCents: finalSubtotal,
       processingFeeCents: 0,
       processingFeePercent: null,
-      amountCents: subtotalCents,
+      amountCents: finalSubtotal,
     };
   }
 

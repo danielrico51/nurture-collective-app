@@ -633,11 +633,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
   };
 
   const renderProcessingFeeFields = (
-    draft: {
-      method: PaymentMethodId;
-      applyProcessingFee: boolean;
-      processingFeePercent: string;
-    },
+    draft: InvoiceFormDraft,
     preview: ReturnType<typeof previewInvoiceAmounts>,
     onChange: (updates: Partial<InvoiceFormDraft>) => void
   ) => {
@@ -649,9 +645,17 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
           <input
             type="checkbox"
             checked={draft.applyProcessingFee}
-            onChange={(e) =>
-              onChange({ applyProcessingFee: e.target.checked })
-            }
+            onChange={(e) => {
+              const checked = e.target.checked;
+              if (!checked && draft.applyProcessingFee) {
+                onChange({
+                  applyProcessingFee: false,
+                  amount: (preview.amountCents / 100).toFixed(2),
+                });
+                return;
+              }
+              onChange({ applyProcessingFee: checked });
+            }}
             className="mt-0.5 rounded border-nurture-sage/40"
           />
           <span>
@@ -674,13 +678,22 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
             />
           </label>
         ) : null}
-        {preview.subtotalCents > 0 && draft.applyProcessingFee ? (
+        {preview.subtotalCents > 0 ? (
           <p className="text-xs text-nurture-charcoal/70">
-            Service {formatMoney(preview.subtotalCents)}
-            {preview.processingFeeCents > 0
-              ? ` + fee ${formatMoney(preview.processingFeeCents)}`
-              : ""}{" "}
-            = <strong>{formatMoney(preview.amountCents)}</strong> total due
+            {draft.applyProcessingFee ? (
+              <>
+                Service {formatMoney(preview.subtotalCents)}
+                {preview.processingFeeCents > 0
+                  ? ` + fee ${formatMoney(preview.processingFeeCents)}`
+                  : ""}{" "}
+                = <strong>{formatMoney(preview.amountCents)}</strong> total due
+              </>
+            ) : (
+              <>
+                Invoice total:{" "}
+                <strong>{formatMoney(preview.amountCents)}</strong>
+              </>
+            )}
           </p>
         ) : null}
       </div>
@@ -706,7 +719,10 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
         <div className="grid gap-3 sm:grid-cols-2">
           <label className="block">
             <span className="text-xs text-nurture-charcoal/60">
-              Amount (USD, before fee)
+              {editInvoiceDraft.applyProcessingFee &&
+              paymentMethodSupportsProcessingFee(editInvoiceDraft.method)
+                ? "Service amount (USD, before fee)"
+                : "Invoice amount (USD)"}
             </span>
             <input
               value={editInvoiceDraft.amount}

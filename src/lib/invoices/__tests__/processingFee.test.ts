@@ -71,13 +71,46 @@ describe("processingFee", () => {
     expect(amounts.amountCents).toBe(10300);
   });
 
-  it("ignores fee when method does not support it", () => {
+  it("clears fee fields when applyProcessingFee is explicitly false", () => {
     const amounts = resolveInvoiceAmountFieldsFromInput({
-      amountCents: 10000,
-      applyProcessingFee: true,
-      paymentMethod: "zelle",
+      amountCents: 1153600,
+      applyProcessingFee: false,
+      processingFeePercent: 3,
+      paymentMethod: "quickbooks",
+      existing: {
+        subtotalCents: 1120000,
+        processingFeeCents: 33600,
+        processingFeePercent: 3,
+        amountCents: 1153600,
+        paymentMethod: "quickbooks",
+      },
     });
-    expect(amounts.amountCents).toBe(10000);
-    expect(amounts.processingFeeCents).toBe(0);
+    expect(amounts).toEqual({
+      subtotalCents: 1153600,
+      processingFeeCents: 0,
+      processingFeePercent: null,
+      amountCents: 1153600,
+    });
+  });
+
+  it("promotes prior invoice total to subtotal when fee is removed without amount change", () => {
+    const amounts = resolveInvoiceAmountFieldsFromInput({
+      amountCents: 1120000,
+      applyProcessingFee: false,
+      paymentMethod: "quickbooks",
+      existing: {
+        subtotalCents: 1120000,
+        processingFeeCents: 33600,
+        processingFeePercent: 3,
+        amountCents: 1153600,
+        paymentMethod: "quickbooks",
+      },
+    });
+    expect(amounts).toEqual({
+      subtotalCents: 1153600,
+      processingFeeCents: 0,
+      processingFeePercent: null,
+      amountCents: 1153600,
+    });
   });
 });

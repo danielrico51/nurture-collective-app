@@ -13,6 +13,12 @@ export const sumPaidInvoiceCents = (invoices: ServiceInvoice[]): number =>
     .filter((invoice) => invoice.status === "paid")
     .reduce((sum, invoice) => sum + invoiceServiceAmountCents(invoice), 0);
 
+/** Total cash received on paid invoices (includes processing fees). */
+export const sumPaidInvoiceTotalCents = (invoices: ServiceInvoice[]): number =>
+  invoices
+    .filter((invoice) => invoice.status === "paid")
+    .reduce((sum, invoice) => sum + invoice.amountCents, 0);
+
 export const sumRefundedInvoiceCents = (invoices: ServiceInvoice[]): number =>
   invoices
     .filter((invoice) => invoice.status === "refunded")

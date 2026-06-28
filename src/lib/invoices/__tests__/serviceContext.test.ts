@@ -93,6 +93,7 @@ describe("invoice service context", () => {
       invoices[1]
     );
     expect(context.paidCents).toBe(50000);
+    expect(context.paidTotalCents).toBe(50000);
     expect(context.balanceDueCents).toBe(100000);
     expect(context.paymentHistory).toHaveLength(2);
     expect(context.paymentHistory[1].isCurrent).toBe(true);
@@ -131,5 +132,33 @@ describe("invoice service context", () => {
 
     expect(context.paidCents).toBe(1920000);
     expect(context.balanceDueCents).toBe(0);
+  });
+
+  it("includes processing fees in paidTotalCents for client documents", () => {
+    const doulaService: ClientService = {
+      ...service,
+      totalFeeCents: 2240000,
+    };
+    const invoices = [
+      invoice({
+        invoiceId: "a",
+        subtotalCents: 1120000,
+        processingFeeCents: 33600,
+        processingFeePercent: 3,
+        amountCents: 1153600,
+        status: "paid",
+        paidAt: "2026-06-28T00:00:00.000Z",
+        invoiceNumber: "TNP-2026-0022",
+      }),
+    ];
+    const context = buildInvoiceServiceContext(
+      doulaService,
+      invoices,
+      invoices[0]
+    );
+
+    expect(context.paidCents).toBe(1120000);
+    expect(context.paidTotalCents).toBe(1153600);
+    expect(context.balanceDueCents).toBe(1120000);
   });
 });

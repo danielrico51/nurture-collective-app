@@ -1,6 +1,7 @@
 import {
   computeServiceBalanceDueCents,
   sumPaidInvoiceCents,
+  sumPaidInvoiceTotalCents,
 } from "@/lib/client-services/balances";
 import type { ClientService, ServiceInvoice } from "@/types/clientService";
 
@@ -16,7 +17,10 @@ export interface InvoicePaymentHistoryEntry {
 
 export interface InvoiceServiceContext {
   totalFeeCents: number;
+  /** Service amount paid (excludes processing fees). */
   paidCents: number;
+  /** Total cash received on paid invoices (includes processing fees). */
+  paidTotalCents: number;
   balanceDueCents: number;
   paymentTypeLabel: string;
   paymentStatusLabel: string;
@@ -93,6 +97,7 @@ export const buildInvoiceServiceContext = (
   currentInvoice: ServiceInvoice
 ): InvoiceServiceContext => {
   const paidCents = sumPaidInvoiceCents(invoices);
+  const paidTotalCents = sumPaidInvoiceTotalCents(invoices);
   const balanceDueCents = computeServiceBalanceDueCents(
     service.totalFeeCents,
     invoices
@@ -123,6 +128,7 @@ export const buildInvoiceServiceContext = (
   return {
     totalFeeCents: service.totalFeeCents,
     paidCents,
+    paidTotalCents,
     balanceDueCents,
     paymentTypeLabel: resolveInvoicePaymentTypeLabel(
       currentInvoice,

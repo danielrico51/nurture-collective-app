@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import {
   computeServiceBalanceDueCents,
   sumPaidInvoiceCents,
+  sumPaidInvoiceTotalCents,
 } from "@/lib/client-services/balances";
 import type { ServiceInvoice } from "@/types/clientService";
 
@@ -73,6 +74,7 @@ describe("client service balances", () => {
       }),
     ];
     expect(sumPaidInvoiceCents(invoices)).toBe(10000);
+    expect(sumPaidInvoiceTotalCents(invoices)).toBe(10300);
     expect(computeServiceBalanceDueCents(15000, invoices)).toBe(5000);
   });
 });
