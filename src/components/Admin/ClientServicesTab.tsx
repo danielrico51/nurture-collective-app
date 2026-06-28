@@ -17,7 +17,7 @@ import ServiceFeeItemsEditor, {
   feeItemsFromDrafts,
   type ServiceFeeItemDraft,
 } from "@/components/Admin/ServiceFeeItemsEditor";
-import { PAYMENT_METHODS } from "@/config/paymentMethods";
+import { PAYMENT_METHODS, SERVICE_INVOICE_PAYMENT_METHODS, getPaymentMethod } from "@/config/paymentMethods";
 import { formatServiceInvoiceQuickBooksLabel } from "@/lib/invoices/quickbooksLabels";
 import {
   DEFAULT_PROCESSING_FEE_PERCENT,
@@ -755,7 +755,16 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
               }}
               className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
             >
-              {PAYMENT_METHODS.map((method) => (
+              {!SERVICE_INVOICE_PAYMENT_METHODS.some(
+                (method) => method.id === editInvoiceDraft.method
+              ) ? (
+                <option value={editInvoiceDraft.method}>
+                  {getPaymentMethod(editInvoiceDraft.method)?.label ??
+                    editInvoiceDraft.method}{" "}
+                  (legacy)
+                </option>
+              ) : null}
+              {SERVICE_INVOICE_PAYMENT_METHODS.map((method) => (
                 <option key={method.id} value={method.id}>
                   {method.label}
                 </option>
@@ -1612,7 +1621,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                               }
                               className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
                             >
-                              {PAYMENT_METHODS.map((method) => (
+                              {SERVICE_INVOICE_PAYMENT_METHODS.map((method) => (
                                 <option key={method.id} value={method.id}>
                                   {method.label}
                                 </option>

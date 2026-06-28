@@ -14,10 +14,6 @@ export const clientInvoicePaymentDetails = {
     accountName: clientInvoiceConfig.achAccountName,
     accountType: clientInvoiceConfig.achAccountType,
   },
-  cardDebit: {
-    email: clientInvoiceConfig.brandEmail,
-    processingFeeNote: "A 3% credit card processing fee applies.",
-  },
 } as const;
 
 export const clientInvoicePaymentAssetUrl = (path: string): string =>

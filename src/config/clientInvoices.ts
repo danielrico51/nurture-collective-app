@@ -12,7 +12,7 @@ const readSiteUrl = (): string => {
 
 export const clientInvoiceConfig = {
   siteUrl: readSiteUrl(),
-  logoUrl: `${readSiteUrl()}/branding/nesting-place-logo.png`,
+  logoUrl: `${readSiteUrl()}/branding/nesting-place-invoice-logo.png`,
   brandName: brands.nestingPlace.name,
   brandEmail: brands.nestingPlace.email,
   venmoHandle:

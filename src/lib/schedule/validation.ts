@@ -23,7 +23,7 @@ import {
   type UpdateScheduleShiftInput,
   type UpdateServiceEngagementInput,
 } from "@/types/serviceEngagement";
-import { isKnownPaymentMethod } from "@/config/paymentMethods";
+import { isEngagementPaymentMethod, isKnownPaymentMethod } from "@/config/paymentMethods";
 import type { PaymentMethodId } from "@/types/clientService";
 
 export class ScheduleValidationError extends Error {
@@ -140,6 +140,11 @@ const parsePreferredPaymentMethod = (
   const id = String(value).trim();
   if (!isKnownPaymentMethod(id)) {
     throw new ScheduleValidationError("Invalid preferredPaymentMethod");
+  }
+  if (!isEngagementPaymentMethod(id)) {
+    throw new ScheduleValidationError(
+      "Stripe is not available for engagements. Use QuickBooks for card payments."
+    );
   }
   return id;
 };

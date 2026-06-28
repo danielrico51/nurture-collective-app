@@ -12,9 +12,13 @@ describe("expectationBilling helpers", () => {
     expect(resolveExpectationPaymentMethod("")).toBe("venmo");
   });
 
-  it("keeps known preferred payment methods", () => {
+  it("keeps engagement payment methods", () => {
     expect(resolveExpectationPaymentMethod("zelle")).toBe("zelle");
-    expect(resolveExpectationPaymentMethod("stripe")).toBe("stripe");
+    expect(resolveExpectationPaymentMethod("quickbooks")).toBe("quickbooks");
+  });
+
+  it("maps legacy stripe engagements to quickbooks for invoicing", () => {
+    expect(resolveExpectationPaymentMethod("stripe")).toBe("quickbooks");
   });
 
   it("maps payment methods to invoice payment providers", () => {

@@ -169,7 +169,7 @@ describe("buildInvoiceDocument", () => {
         paymentInstructions: "Pay online",
       })
     );
-    expect(html).toContain("nesting-place-logo.png");
+    expect(html).toContain("nesting-place-invoice-logo.png");
     expect(html).toContain("Hi Jane");
     expect(html).toContain("no attachment required");
     expect(html).toContain("TNP-2026-0042");
@@ -184,7 +184,7 @@ describe("buildInvoiceDocument", () => {
         paymentInstructions: "Pay online",
       })
     );
-    expect(html).toContain("nesting-place-logo.png");
+    expect(html).toContain("nesting-place-invoice-logo.png");
     expect(html).toContain("TNP-2026-0042");
     expect(html).toContain("Pay $74.25 online");
     expect(html).toContain("Installment 1 of 2");

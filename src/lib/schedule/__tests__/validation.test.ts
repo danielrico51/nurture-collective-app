@@ -58,4 +58,14 @@ describe("validateCreateServiceEngagementInput", () => {
       })
     ).toThrow(ScheduleValidationError);
   });
+
+  it("rejects stripe as preferred payment method", () => {
+    expect(() =>
+      validateCreateServiceEngagementInput({
+        bookDate: "2026-01-06",
+        package: { clientFeeCents: 100 },
+        preferredPaymentMethod: "stripe",
+      })
+    ).toThrow(/Stripe is not available for engagements/i);
+  });
 });

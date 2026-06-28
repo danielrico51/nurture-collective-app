@@ -34,6 +34,21 @@ export const PAYMENT_METHODS: PaymentMethodDefinition[] = [
   },
 ];
 
+/** Venmo, Zelle, and QuickBooks — used for service invoices and engagements (not Stripe). */
+export const CRM_PAYMENT_METHODS: PaymentMethodDefinition[] =
+  PAYMENT_METHODS.filter((method) => method.id !== "stripe");
+
+/** @deprecated alias */
+export const SERVICE_INVOICE_PAYMENT_METHODS = CRM_PAYMENT_METHODS;
+
+export const ENGAGEMENT_PAYMENT_METHODS = CRM_PAYMENT_METHODS;
+
+export const isServiceInvoicePaymentMethod = (id: PaymentMethodId): boolean =>
+  CRM_PAYMENT_METHODS.some((method) => method.id === id);
+
+export const isEngagementPaymentMethod = (id: PaymentMethodId): boolean =>
+  CRM_PAYMENT_METHODS.some((method) => method.id === id);
+
 export const getPaymentMethod = (
   id: PaymentMethodId
 ): PaymentMethodDefinition | undefined =>

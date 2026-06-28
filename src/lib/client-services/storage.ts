@@ -28,7 +28,7 @@ import {
   parseServiceIdFromKey,
   SERVICE_INVOICE_FILENAME,
 } from "@/lib/client-services/paths";
-import { isKnownPaymentMethod } from "@/config/paymentMethods";
+import { isKnownPaymentMethod, isServiceInvoicePaymentMethod } from "@/config/paymentMethods";
 import { getClientById } from "@/lib/clients/storage";
 import {
   buildEmptyInvoiceContactFields,
@@ -453,6 +453,14 @@ const mergeInvoiceFieldUpdates = (
   if (raw.paymentMethod && !isKnownPaymentMethod(raw.paymentMethod)) {
     throw new ClientServiceValidationError("Unknown payment method");
   }
+  if (
+    raw.paymentMethod !== undefined &&
+    !isServiceInvoicePaymentMethod(paymentMethod)
+  ) {
+    throw new ClientServiceValidationError(
+      "Stripe is not available for service invoices. Use QuickBooks for card payments."
+    );
+  }
 
   let amountFields;
   try {
@@ -513,6 +521,11 @@ export const createServiceInvoice = async (
   }
   if (!isKnownPaymentMethod(paymentMethod)) {
     throw new ClientServiceValidationError("Unknown payment method");
+  }
+  if (!isServiceInvoicePaymentMethod(paymentMethod)) {
+    throw new ClientServiceValidationError(
+      "Stripe is not available for service invoices. Use QuickBooks for card payments."
+    );
   }
 
   let amountFields;

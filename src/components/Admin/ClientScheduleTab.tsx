@@ -14,7 +14,7 @@ import {
   updateClientEngagement,
   updatePaymentExpectation,
 } from "@/lib/api/scheduleClient";
-import { PAYMENT_METHODS } from "@/config/paymentMethods";
+import { ENGAGEMENT_PAYMENT_METHODS, getPaymentMethod, PAYMENT_METHODS } from "@/config/paymentMethods";
 import { fetchAdminProviders } from "@/lib/api/providersClient";
 import type { ScheduleTourBookDraft } from "@/tour/clientsScheduleTourDemo";
 import { useClientsScheduleTourActions } from "@/tour/useClientsScheduleTourActions";
@@ -461,7 +461,17 @@ const ClientScheduleTab = ({
                   className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
                 >
                   <option value="">Not specified</option>
-                  {PAYMENT_METHODS.map((method) => (
+                  {preferredPaymentMethod &&
+                  !ENGAGEMENT_PAYMENT_METHODS.some(
+                    (method) => method.id === preferredPaymentMethod
+                  ) ? (
+                    <option value={preferredPaymentMethod}>
+                      {getPaymentMethod(preferredPaymentMethod)?.label ??
+                        preferredPaymentMethod}{" "}
+                      (legacy)
+                    </option>
+                  ) : null}
+                  {ENGAGEMENT_PAYMENT_METHODS.map((method) => (
                     <option key={method.id} value={method.id}>
                       {method.label}
                     </option>

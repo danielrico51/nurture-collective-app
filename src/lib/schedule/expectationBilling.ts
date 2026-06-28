@@ -1,4 +1,4 @@
-import { isKnownPaymentMethod } from "@/config/paymentMethods";
+import { isEngagementPaymentMethod, isKnownPaymentMethod } from "@/config/paymentMethods";
 import {
   createServiceInvoice,
   markServiceInvoicePaid,
@@ -14,7 +14,9 @@ import type {
 export const resolveExpectationPaymentMethod = (
   preferred: PaymentMethodId | null | undefined
 ): PaymentMethodId => {
-  if (preferred && isKnownPaymentMethod(preferred)) return preferred;
+  if (preferred && isEngagementPaymentMethod(preferred)) return preferred;
+  if (preferred === "stripe") return "quickbooks";
+  if (preferred && isKnownPaymentMethod(preferred)) return "venmo";
   return "venmo";
 };
 

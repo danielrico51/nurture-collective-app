@@ -1,4 +1,3 @@
-import { clientInvoiceConfig } from "@/config/clientInvoices";
 import {
   clientInvoicePaymentAssetUrl,
   clientInvoicePaymentDetails,
@@ -135,13 +134,3 @@ export const buildManualPaymentHtml = (input: {
 
   return null;
 };
-
-export const buildCardDebitNoteHtml = (): string =>
-  `<p style="margin:16px 0 0;padding-top:12px;border-top:1px solid #e8e2da;font-size:13px;line-height:1.6;color:#6b6560;">
-      Prefer debit or credit? Message us at
-      <a href="mailto:${escapeHtml(clientInvoiceConfig.brandEmail)}" style="color:#6b8f7a;">${escapeHtml(clientInvoiceConfig.brandEmail)}</a>
-      for a unique payment link. ${escapeHtml(clientInvoicePaymentDetails.cardDebit.processingFeeNote)}
-    </p>`;
-
-export const buildCardDebitNotePlainText = (): string =>
-  `Debit / credit: message ${clientInvoiceConfig.brandEmail} for a unique payment link. ${clientInvoicePaymentDetails.cardDebit.processingFeeNote}`;
