@@ -140,6 +140,12 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
   const [editInvoiceDraft, setEditInvoiceDraft] = useState<InvoiceFormDraft | null>(
     null
   );
+  const [linkingInvoiceKey, setLinkingInvoiceKey] = useState<string | null>(null);
+  const [qbLinkDraft, setQbLinkDraft] = useState({
+    recordType: "invoice" as "invoice" | "sales_receipt",
+    lookupBy: "id" as "id" | "doc_number",
+    value: "",
+  });
   const [draftInvoiceNotes, setDraftInvoiceNotes] = useState<
     Record<string, string>
   >({});
@@ -484,10 +490,93 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
     setEditInvoiceDraft(null);
   };
 
+  const startLinkingQuickBooks = (
+    serviceId: string,
+    invoice: ClientServiceWithInvoices["invoices"][number]
+  ) => {
+    setLinkingInvoiceKey(`${serviceId}:${invoice.invoiceId}`);
+    setQbLinkDraft({
+      recordType: invoice.quickbooks?.salesReceiptId ? "sales_receipt" : "invoice",
+      lookupBy: "id",
+      value:
+        invoice.quickbooks?.invoiceId ??
+        invoice.quickbooks?.salesReceiptId ??
+        invoice.quickbooks?.invoiceNumber ??
+        invoice.quickbooks?.salesReceiptNumber ??
+        "",
+    });
+  };
+
+  const cancelLinkingQuickBooks = () => {
+    setLinkingInvoiceKey(null);
+    setQbLinkDraft({ recordType: "invoice", lookupBy: "id", value: "" });
+  };
+
+  const handleLinkQuickBooks = async (serviceId: string, invoiceId: string) => {
+    const value = qbLinkDraft.value.trim();
+    if (!value) {
+      toast.error("Enter a QuickBooks ID or document number");
+      return;
+    }
+
+    const link: import("@/types/clientService").LinkServiceInvoiceQuickBooksInput =
+      {};
+    if (qbLinkDraft.recordType === "invoice") {
+      if (qbLinkDraft.lookupBy === "id") {
+        link.invoiceId = value;
+      } else {
+        link.invoiceNumber = value;
+      }
+    } else if (qbLinkDraft.lookupBy === "id") {
+      link.salesReceiptId = value;
+    } else {
+      link.salesReceiptNumber = value;
+    }
+
+    setSaving(true);
+    try {
+      await updateServiceInvoice(clientId, serviceId, invoiceId, { linkQuickBooks: link });
+      toast.success("QuickBooks record linked");
+      cancelLinkingQuickBooks();
+      await load({ silent: true });
+      onChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not link QuickBooks record");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleUnlinkQuickBooks = async (serviceId: string, invoiceId: string) => {
+    const confirmed = window.confirm(
+      "Remove the QuickBooks link from this invoice? The QuickBooks record itself will not be changed."
+    );
+    if (!confirmed) return;
+
+    setSaving(true);
+    try {
+      await updateServiceInvoice(clientId, serviceId, invoiceId, {
+        linkQuickBooks: { unlink: true },
+      });
+      toast.success("QuickBooks link removed");
+      cancelLinkingQuickBooks();
+      await load({ silent: true });
+      onChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not unlink QuickBooks record");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSaveInvoiceEdit = async (
     serviceId: string,
     invoiceId: string,
-    options: { markSent?: boolean; saveAndResend?: boolean }
+    options: {
+      markSent?: boolean;
+      saveAndResend?: boolean;
+      saveCorrection?: boolean;
+    }
   ) => {
     if (!editInvoiceDraft) return;
 
@@ -522,13 +611,16 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
         dueDate: editInvoiceDraft.dueDate || null,
         markSent: options.markSent,
         saveAndResend: options.saveAndResend,
+        saveCorrection: options.saveCorrection,
       });
       toast.success(
         options.saveAndResend
           ? "Invoice updated and resent"
-          : options.markSent
-            ? "Invoice sent"
-            : "Invoice saved"
+          : options.saveCorrection
+            ? "Invoice updated"
+            : options.markSent
+              ? "Invoice sent"
+              : "Invoice saved"
       );
       cancelEditingInvoice();
       await load({ silent: true });
@@ -605,7 +697,6 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
     }
 
     const preview = editInvoicePreview ?? previewInvoiceAmounts(editInvoiceDraft);
-    const canEditAmount = status !== "paid";
 
     return (
       <div className="rounded-xl border border-violet-200 bg-violet-50/40 p-3 space-y-3">
@@ -624,9 +715,9 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                   current ? { ...current, amount: e.target.value } : current
                 )
               }
-              disabled={!canEditAmount}
               inputMode="decimal"
-              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm disabled:bg-nurture-charcoal/5"
+              disabled={saving}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
             />
           </label>
           <label className="block">
@@ -646,8 +737,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                     : current
                 );
               }}
-              disabled={!canEditAmount}
-              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm disabled:bg-nurture-charcoal/5"
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
             >
               {PAYMENT_METHODS.map((method) => (
                 <option key={method.id} value={method.id}>
@@ -656,16 +746,14 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
               ))}
             </select>
           </label>
-          {canEditAmount
-            ? renderProcessingFeeFields(
-                editInvoiceDraft,
-                preview,
-                (updates) =>
-                  setEditInvoiceDraft((current) =>
-                    current ? { ...current, ...updates } : current
-                  )
+          {renderProcessingFeeFields(
+            editInvoiceDraft,
+            preview,
+            (updates) =>
+              setEditInvoiceDraft((current) =>
+                current ? { ...current, ...updates } : current
               )
-            : null}
+          )}
           <label className="block sm:col-span-2">
             <span className="text-xs text-nurture-charcoal/60">Description</span>
             <input
@@ -675,8 +763,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                   current ? { ...current, description: e.target.value } : current
                 )
               }
-              disabled={!canEditAmount}
-              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm disabled:bg-nurture-charcoal/5"
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
             />
           </label>
           <label className="block sm:col-span-2">
@@ -704,8 +791,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                   current ? { ...current, dueDate: e.target.value } : current
                 )
               }
-              disabled={!canEditAmount}
-              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm disabled:bg-nurture-charcoal/5"
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
             />
           </label>
         </div>
@@ -748,11 +834,123 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
             >
               Save & resend
             </button>
+          ) : status === "paid" ? (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() =>
+                void handleSaveInvoiceEdit(serviceId, invoice.invoiceId, {
+                  saveCorrection: true,
+                })
+              }
+              className="rounded-full bg-emerald-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-emerald-800 disabled:opacity-60"
+            >
+              Save changes
+            </button>
           ) : null}
           <button
             type="button"
             disabled={saving}
             onClick={cancelEditingInvoice}
+            className="rounded-full border border-nurture-sage/30 px-3 py-1.5 text-xs font-semibold text-nurture-charcoal/70 hover:bg-nurture-charcoal/5 disabled:opacity-60"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  const renderQuickBooksLinkForm = (
+    serviceId: string,
+    invoice: ClientServiceWithInvoices["invoices"][number]
+  ) => {
+    if (linkingInvoiceKey !== `${serviceId}:${invoice.invoiceId}`) {
+      return null;
+    }
+
+    return (
+      <div className="rounded-xl border border-sky-200 bg-sky-50/40 p-3 space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-wide text-sky-900">
+          Link QuickBooks record
+        </p>
+        <p className="text-xs text-nurture-charcoal/70">
+          Match this TNP invoice to an existing QuickBooks invoice or sales receipt
+          using the QBO internal Id or document number.
+        </p>
+        <div className="grid gap-3 sm:grid-cols-3">
+          <label className="block">
+            <span className="text-xs text-nurture-charcoal/60">Record type</span>
+            <select
+              value={qbLinkDraft.recordType}
+              onChange={(e) =>
+                setQbLinkDraft((current) => ({
+                  ...current,
+                  recordType: e.target.value as "invoice" | "sales_receipt",
+                }))
+              }
+              disabled={saving}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+            >
+              <option value="invoice">Invoice</option>
+              <option value="sales_receipt">Sales receipt</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-xs text-nurture-charcoal/60">Lookup by</span>
+            <select
+              value={qbLinkDraft.lookupBy}
+              onChange={(e) =>
+                setQbLinkDraft((current) => ({
+                  ...current,
+                  lookupBy: e.target.value as "id" | "doc_number",
+                }))
+              }
+              disabled={saving}
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+            >
+              <option value="id">QBO internal Id</option>
+              <option value="doc_number">Document #</option>
+            </select>
+          </label>
+          <label className="block">
+            <span className="text-xs text-nurture-charcoal/60">Value</span>
+            <input
+              value={qbLinkDraft.value}
+              onChange={(e) =>
+                setQbLinkDraft((current) => ({ ...current, value: e.target.value }))
+              }
+              disabled={saving}
+              placeholder={
+                qbLinkDraft.lookupBy === "id" ? "e.g. 145" : "e.g. 1042"
+              }
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+            />
+          </label>
+        </div>
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            disabled={saving}
+            onClick={() => void handleLinkQuickBooks(serviceId, invoice.invoiceId)}
+            className="rounded-full bg-sky-700 px-3 py-1.5 text-xs font-semibold text-white hover:bg-sky-800 disabled:opacity-60"
+          >
+            Link record
+          </button>
+          {invoice.quickbooks ? (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => void handleUnlinkQuickBooks(serviceId, invoice.invoiceId)}
+              className="rounded-full border border-rose-200 px-3 py-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-50 disabled:opacity-60"
+            >
+              Unlink
+            </button>
+          ) : null}
+          <button
+            type="button"
+            disabled={saving}
+            onClick={cancelLinkingQuickBooks}
             className="rounded-full border border-nurture-sage/30 px-3 py-1.5 text-xs font-semibold text-nurture-charcoal/70 hover:bg-nurture-charcoal/5 disabled:opacity-60"
           >
             Cancel
@@ -1118,6 +1316,17 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     {formatServiceInvoiceQuickBooksLabel(
                                       invoice.quickbooks
                                     )}
+                                    {invoice.quickbooks?.invoiceId ? (
+                                      <span className="text-nurture-charcoal/50">
+                                        {" "}
+                                        (Id {invoice.quickbooks.invoiceId})
+                                      </span>
+                                    ) : invoice.quickbooks?.salesReceiptId ? (
+                                      <span className="text-nurture-charcoal/50">
+                                        {" "}
+                                        (Id {invoice.quickbooks.salesReceiptId})
+                                      </span>
+                                    ) : null}
                                   </p>
                                 ) : null}
                                 {invoice.notes && invoice.status !== "draft" ? (
@@ -1198,7 +1407,8 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                 ) : null}
                                 {(invoice.status === "draft" ||
                                   invoice.status === "sent" ||
-                                  invoice.status === "pending_payment") &&
+                                  invoice.status === "pending_payment" ||
+                                  invoice.status === "paid") &&
                                 editingInvoiceKey !==
                                   `${service.serviceId}:${invoice.invoiceId}` ? (
                                   <button
@@ -1212,6 +1422,31 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     Edit
                                   </button>
                                 ) : null}
+                                <button
+                                  type="button"
+                                  disabled={saving}
+                                  onClick={() => {
+                                    if (
+                                      linkingInvoiceKey ===
+                                      `${service.serviceId}:${invoice.invoiceId}`
+                                    ) {
+                                      cancelLinkingQuickBooks();
+                                    } else {
+                                      startLinkingQuickBooks(
+                                        service.serviceId,
+                                        invoice
+                                      );
+                                    }
+                                  }}
+                                  className="text-sky-800 font-medium hover:underline disabled:opacity-60"
+                                >
+                                  {linkingInvoiceKey ===
+                                  `${service.serviceId}:${invoice.invoiceId}`
+                                    ? "Close QB link"
+                                    : invoice.quickbooks
+                                      ? "Edit QB link"
+                                      : "Link QB"}
+                                </button>
                                 {invoice.status === "paid" ||
                                 invoice.status === "sent" ||
                                 invoice.status === "pending_payment" ? (
@@ -1276,6 +1511,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                 invoice,
                                 invoice.status
                               )}
+                              {renderQuickBooksLinkForm(service.serviceId, invoice)}
                               {invoice.status === "draft" &&
                               editingInvoiceKey !==
                                 `${service.serviceId}:${invoice.invoiceId}` ? (

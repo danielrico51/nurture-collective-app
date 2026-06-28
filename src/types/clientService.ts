@@ -191,6 +191,20 @@ export interface CreateServiceInvoiceInput {
   generateDocument?: boolean;
 }
 
+/** Manually associate a TNP invoice with an existing QuickBooks record. */
+export interface LinkServiceInvoiceQuickBooksInput {
+  /** QBO internal Invoice Id (numeric string from QuickBooks). */
+  invoiceId?: string;
+  /** QBO Invoice DocNumber (customer-facing invoice #). */
+  invoiceNumber?: string;
+  /** QBO internal Sales Receipt Id. */
+  salesReceiptId?: string;
+  /** QBO Sales Receipt DocNumber. */
+  salesReceiptNumber?: string;
+  /** Clear any stored QuickBooks link on this invoice. */
+  unlink?: boolean;
+}
+
 export interface UpdateServiceInvoiceInput {
   status?: ServiceInvoiceStatus;
   amountCents?: number;
@@ -206,6 +220,10 @@ export interface UpdateServiceInvoiceInput {
   resend?: boolean;
   /** Update fields on a sent invoice and resend corrected copy to the client. */
   saveAndResend?: boolean;
+  /** Update a paid invoice and refresh its printable document (no email). */
+  saveCorrection?: boolean;
+  /** Link or unlink a QuickBooks invoice / sales receipt. */
+  linkQuickBooks?: LinkServiceInvoiceQuickBooksInput;
   /** Label a paid invoice as refunded (manual refunds — no payment API). */
   markRefunded?: boolean;
 }

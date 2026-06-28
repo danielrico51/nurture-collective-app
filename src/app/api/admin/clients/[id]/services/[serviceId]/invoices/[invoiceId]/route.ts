@@ -34,7 +34,11 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       params.serviceId,
       params.invoiceId,
       body,
-      body.markSent || body.resend || body.saveAndResend || body.markPaid
+      body.markSent ||
+      body.resend ||
+      body.saveAndResend ||
+      body.markPaid ||
+      body.saveCorrection
         ? {
             actor: { sub: auth.user.sub, email: auth.user.email },
             origin: request.nextUrl.origin,

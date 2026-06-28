@@ -616,21 +616,6 @@ export const updateServiceInvoice = async (
     raw.paymentMethod !== undefined ||
     raw.notes !== undefined;
 
-  if (
-    existing.status === "paid" &&
-    hasFieldEdits &&
-    (raw.amountCents !== undefined ||
-      raw.applyProcessingFee !== undefined ||
-      raw.processingFeePercent !== undefined ||
-      raw.paymentMethod !== undefined ||
-      raw.description !== undefined ||
-      raw.dueDate !== undefined)
-  ) {
-    throw new ClientServiceValidationError(
-      "Paid invoices cannot be edited. Use Resend to send a copy with updated notes."
-    );
-  }
-
   if (raw.markSent) {
     if (!dispatchOptions) {
       throw new ClientServiceValidationError(
@@ -686,6 +671,58 @@ export const updateServiceInvoice = async (
       resend: true,
     });
     return saveInvoice(clientId, serviceId, invoice);
+  }
+
+  if (raw.saveCorrection) {
+    if (!dispatchOptions?.origin) {
+      throw new ClientServiceValidationError(
+        "Invoice correction requires request origin"
+      );
+    }
+    if (existing.status !== "paid") {
+      throw new ClientServiceValidationError(
+        "Only paid invoices can be corrected without resending"
+      );
+    }
+    const corrected = mergeInvoiceFieldUpdates(existing, raw);
+    await assertInvoiceSubtotalWithinBalance(
+      clientId,
+      serviceId,
+      service.totalFeeCents,
+      corrected.subtotalCents,
+      invoiceId
+    );
+    invoice = await generateServiceInvoiceDocument({
+      clientId,
+      serviceId,
+      invoice: corrected,
+      origin: dispatchOptions.origin,
+      asPaid: true,
+      resolvePaymentLinks: false,
+    });
+    return saveInvoice(clientId, serviceId, invoice);
+  }
+
+  if (raw.linkQuickBooks) {
+    const { linkServiceInvoiceQuickBooksRef, QuickBooksLinkError } =
+      await import("@/lib/invoices/linkQuickBooks");
+    try {
+      const quickbooks = await linkServiceInvoiceQuickBooksRef({
+        invoice: existing,
+        link: raw.linkQuickBooks,
+      });
+      const updated: ServiceInvoice = {
+        ...existing,
+        quickbooks,
+        updatedAt: now,
+      };
+      return saveInvoice(clientId, serviceId, updated);
+    } catch (error) {
+      if (error instanceof QuickBooksLinkError) {
+        throw new ClientServiceValidationError(error.message);
+      }
+      throw error;
+    }
   }
 
   if (raw.resend) {

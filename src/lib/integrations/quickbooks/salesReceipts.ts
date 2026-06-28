@@ -1,5 +1,8 @@
 import { serverQuickBooksConfig } from "@/config/quickbooks";
-import { quickBooksPost } from "@/lib/integrations/quickbooks/client";
+import {
+  quickBooksGet,
+  quickBooksPost,
+} from "@/lib/integrations/quickbooks/client";
 import type {
   QuickBooksInvoiceLine,
   QuickBooksRef,
@@ -60,4 +63,31 @@ export const createQuickBooksSalesReceipt = async (
     }
   );
   return response.SalesReceipt;
+};
+
+const escapeQueryValue = (value: string): string =>
+  value.replace(/'/g, "\\'");
+
+export const getQuickBooksSalesReceipt = async (
+  salesReceiptId: string
+): Promise<QuickBooksSalesReceipt> => {
+  const response = await quickBooksGet<{ SalesReceipt: QuickBooksSalesReceipt }>(
+    `/salesreceipt/${salesReceiptId}`
+  );
+  return response.SalesReceipt;
+};
+
+export const findQuickBooksSalesReceiptByDocNumber = async (
+  docNumber: string
+): Promise<QuickBooksSalesReceipt | null> => {
+  const trimmed = docNumber.trim();
+  if (!trimmed) return null;
+
+  const query = `select * from SalesReceipt where DocNumber = '${escapeQueryValue(trimmed)}'`;
+  const response = await quickBooksGet<{
+    QueryResponse?: { SalesReceipt?: QuickBooksSalesReceipt[] };
+  }>(`/query?query=${encodeURIComponent(query)}`);
+
+  const receipts = response.QueryResponse?.SalesReceipt ?? [];
+  return receipts[0] ?? null;
 };

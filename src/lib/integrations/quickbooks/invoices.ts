@@ -120,6 +120,21 @@ export const getQuickBooksInvoice = async (
   return response.Invoice;
 };
 
+export const findQuickBooksInvoiceByDocNumber = async (
+  docNumber: string
+): Promise<QuickBooksInvoice | null> => {
+  const trimmed = docNumber.trim();
+  if (!trimmed) return null;
+
+  const query = `select * from Invoice where DocNumber = '${escapeQueryValue(trimmed)}'`;
+  const response = await quickBooksGet<{
+    QueryResponse?: { Invoice?: QuickBooksInvoice[] };
+  }>(`/query?query=${encodeURIComponent(query)}`);
+
+  const invoices = response.QueryResponse?.Invoice ?? [];
+  return invoices[0] ?? null;
+};
+
 export const sendQuickBooksInvoice = async (
   invoiceId: string,
   email?: string
