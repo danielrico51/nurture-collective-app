@@ -1621,9 +1621,13 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                           </label>
                           {renderProcessingFeeFields(
                             {
+                              amount: invoiceAmount,
                               method: invoiceMethod,
                               applyProcessingFee: invoiceApplyProcessingFee,
                               processingFeePercent: invoiceProcessingFeePercent,
+                              description: invoiceDescription,
+                              notes: invoiceNotes,
+                              dueDate: invoiceDueDate,
                             },
                             newInvoicePreview,
                             (updates) => {
@@ -1636,6 +1640,9 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                 setInvoiceProcessingFeePercent(
                                   updates.processingFeePercent
                                 );
+                              }
+                              if (updates.amount !== undefined) {
+                                setInvoiceAmount(updates.amount);
                               }
                             }
                           )}

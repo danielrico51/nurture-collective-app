@@ -160,10 +160,8 @@ const normalizeServiceInvoice = (
   record: ServiceInvoice,
   key: string
 ): ServiceInvoice => {
-  const amounts = normalizeStoredInvoiceAmounts(record);
   return {
-    ...record,
-    ...amounts,
+    ...withNormalizedInvoiceAmounts(record),
     customerName: record.customerName ?? "",
     customerEmail: record.customerEmail ?? "",
     paymentInstructions: record.paymentInstructions ?? "",
