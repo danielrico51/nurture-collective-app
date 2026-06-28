@@ -37,8 +37,8 @@ import {
   InvoiceDispatchError,
 } from "@/lib/invoices/dispatchInvoice";
 import {
-  normalizeStoredInvoiceAmounts,
-  resolveInvoiceAmountFieldsFromInput,
+  resolveSyncedInvoiceAmountFields,
+  withNormalizedInvoiceAmounts,
 } from "@/lib/invoices/processingFee";
 import type {
   ClientService,
@@ -237,7 +237,9 @@ export const listClientServicesWithInvoices = async (
     serviceIds.map(async (serviceId) => {
       const service = await readClientService(clientId, serviceId);
       if (!service) return null;
-      const invoices = await listInvoicesForService(clientId, serviceId);
+      const invoices = (await listInvoicesForService(clientId, serviceId)).map(
+        withNormalizedInvoiceAmounts
+      );
       const paidCents = sumPaidInvoiceCents(invoices);
       const balanceDueCents = computeServiceBalanceDueCents(
         service.totalFeeCents,
@@ -394,6 +396,57 @@ const assertInvoiceSubtotalWithinBalance = async (
   }
 };
 
+const hasInvoiceFieldEdits = (raw: UpdateServiceInvoiceInput): boolean =>
+  raw.amountCents !== undefined ||
+  raw.applyProcessingFee !== undefined ||
+  raw.processingFeePercent !== undefined ||
+  raw.description !== undefined ||
+  raw.dueDate !== undefined ||
+  raw.paymentMethod !== undefined ||
+  raw.notes !== undefined;
+
+const invoiceAmountFieldsChanged = (raw: UpdateServiceInvoiceInput): boolean =>
+  raw.amountCents !== undefined ||
+  raw.applyProcessingFee !== undefined ||
+  raw.processingFeePercent !== undefined ||
+  raw.paymentMethod !== undefined;
+
+const shouldRefreshInvoiceDocument = (invoice: ServiceInvoice): boolean =>
+  invoice.documentStorageKey != null ||
+  invoice.status === "sent" ||
+  invoice.status === "pending_payment" ||
+  invoice.status === "paid";
+
+const refreshInvoiceDocumentIfNeeded = async (input: {
+  clientId: string;
+  serviceId: string;
+  invoice: ServiceInvoice;
+  origin?: string;
+  refresh: boolean;
+}): Promise<ServiceInvoice> => {
+  if (!input.refresh || !input.origin || !shouldRefreshInvoiceDocument(input.invoice)) {
+    return input.invoice;
+  }
+
+  const refreshed = await generateServiceInvoiceDocument({
+    clientId: input.clientId,
+    serviceId: input.serviceId,
+    invoice: input.invoice,
+    origin: input.origin,
+    asPaid: input.invoice.status === "paid",
+    resolvePaymentLinks: !["paid", "refunded", "cancelled"].includes(
+      input.invoice.status
+    ),
+  });
+
+  return {
+    ...refreshed,
+    status: input.invoice.status,
+    sentAt: input.invoice.sentAt,
+    paidAt: input.invoice.paidAt,
+  };
+};
+
 const mergeInvoiceFieldUpdates = (
   existing: ServiceInvoice,
   raw: UpdateServiceInvoiceInput
@@ -405,7 +458,7 @@ const mergeInvoiceFieldUpdates = (
 
   let amountFields;
   try {
-    amountFields = resolveInvoiceAmountFieldsFromInput({
+    amountFields = resolveSyncedInvoiceAmountFields({
       amountCents: raw.amountCents,
       applyProcessingFee: raw.applyProcessingFee,
       processingFeePercent: raw.processingFeePercent,
@@ -466,7 +519,7 @@ export const createServiceInvoice = async (
 
   let amountFields;
   try {
-    amountFields = resolveInvoiceAmountFieldsFromInput({
+    amountFields = resolveSyncedInvoiceAmountFields({
       amountCents: raw.amountCents,
       applyProcessingFee: raw.applyProcessingFee,
       processingFeePercent: raw.processingFeePercent,
@@ -607,14 +660,13 @@ export const updateServiceInvoice = async (
   let paidAt = existing.paidAt;
   let invoice: ServiceInvoice = { ...existing };
 
-  const hasFieldEdits =
-    raw.amountCents !== undefined ||
-    raw.applyProcessingFee !== undefined ||
-    raw.processingFeePercent !== undefined ||
-    raw.description !== undefined ||
-    raw.dueDate !== undefined ||
-    raw.paymentMethod !== undefined ||
-    raw.notes !== undefined;
+  const hasFieldEdits = hasInvoiceFieldEdits(raw);
+
+  if (raw.saveCorrection && existing.status !== "paid") {
+    throw new ClientServiceValidationError(
+      "Only paid invoices can be corrected without resending"
+    );
+  }
 
   if (raw.markSent) {
     if (!dispatchOptions) {
@@ -669,36 +721,6 @@ export const updateServiceInvoice = async (
       actor: dispatchOptions.actor,
       origin: dispatchOptions.origin,
       resend: true,
-    });
-    return saveInvoice(clientId, serviceId, invoice);
-  }
-
-  if (raw.saveCorrection) {
-    if (!dispatchOptions?.origin) {
-      throw new ClientServiceValidationError(
-        "Invoice correction requires request origin"
-      );
-    }
-    if (existing.status !== "paid") {
-      throw new ClientServiceValidationError(
-        "Only paid invoices can be corrected without resending"
-      );
-    }
-    const corrected = mergeInvoiceFieldUpdates(existing, raw);
-    await assertInvoiceSubtotalWithinBalance(
-      clientId,
-      serviceId,
-      service.totalFeeCents,
-      corrected.subtotalCents,
-      invoiceId
-    );
-    invoice = await generateServiceInvoiceDocument({
-      clientId,
-      serviceId,
-      invoice: corrected,
-      origin: dispatchOptions.origin,
-      asPaid: true,
-      resolvePaymentLinks: false,
     });
     return saveInvoice(clientId, serviceId, invoice);
   }
@@ -802,11 +824,7 @@ export const updateServiceInvoice = async (
 
   if (hasFieldEdits) {
     invoice = mergeInvoiceFieldUpdates(existing, raw);
-    if (
-      raw.amountCents !== undefined ||
-      raw.applyProcessingFee !== undefined ||
-      raw.processingFeePercent !== undefined
-    ) {
+    if (invoiceAmountFieldsChanged(raw)) {
       await assertInvoiceSubtotalWithinBalance(
         clientId,
         serviceId,
@@ -827,7 +845,15 @@ export const updateServiceInvoice = async (
     updatedAt: now,
   };
 
-  return saveInvoice(clientId, serviceId, updated);
+  const synced = await refreshInvoiceDocumentIfNeeded({
+    clientId,
+    serviceId,
+    invoice: updated,
+    origin: dispatchOptions?.origin,
+    refresh: hasFieldEdits,
+  });
+
+  return saveInvoice(clientId, serviceId, synced);
 };
 
 export const markServiceInvoicePaid = async (
@@ -867,7 +893,9 @@ export const getClientServiceWithInvoices = async (
 ): Promise<ClientServiceWithInvoices | null> => {
   const service = await readClientService(clientId, serviceId);
   if (!service) return null;
-  const invoices = await listInvoicesForService(clientId, serviceId);
+  const invoices = (await listInvoicesForService(clientId, serviceId)).map(
+    withNormalizedInvoiceAmounts
+  );
   return {
     ...service,
     invoices,

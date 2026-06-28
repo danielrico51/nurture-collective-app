@@ -4,6 +4,7 @@ import {
   sumPaidInvoiceTotalCents,
 } from "@/lib/client-services/balances";
 import type { ClientService, ServiceInvoice } from "@/types/clientService";
+import { normalizeStoredInvoiceAmounts } from "@/lib/invoices/processingFee";
 
 export interface InvoicePaymentHistoryEntry {
   invoiceId: string;
@@ -96,34 +97,48 @@ export const buildInvoiceServiceContext = (
   invoices: ServiceInvoice[],
   currentInvoice: ServiceInvoice
 ): InvoiceServiceContext => {
-  const paidCents = sumPaidInvoiceCents(invoices);
-  const paidTotalCents = sumPaidInvoiceTotalCents(invoices);
-  const balanceDueCents = computeServiceBalanceDueCents(
-    service.totalFeeCents,
-    invoices
+  const normalizedCurrent: ServiceInvoice = {
+    ...currentInvoice,
+    ...normalizeStoredInvoiceAmounts(currentInvoice),
+  };
+  const normalizedInvoices = replaceInvoiceInList(
+    invoices.map((invoice) => ({
+      ...invoice,
+      ...normalizeStoredInvoiceAmounts(invoice),
+    })),
+    normalizedCurrent
   );
 
-  const paymentHistory = sortInvoicesChronologically(invoices).map((entry) => {
-    const isCurrent = entry.invoiceId === currentInvoice.invoiceId;
-    const statusLabel =
-      isCurrent && entry.status === "draft"
-        ? "Unpaid"
-        : formatClientInvoiceStatusLabel(entry.status);
-    return {
-      invoiceId: entry.invoiceId,
-      invoiceNumber: entry.invoiceNumber,
-      description: entry.description || service.title,
-      amountCents: entry.amountCents,
-      statusLabel,
-      paidAt: entry.paidAt,
-      isCurrent,
-    };
-  });
+  const paidCents = sumPaidInvoiceCents(normalizedInvoices);
+  const paidTotalCents = sumPaidInvoiceTotalCents(normalizedInvoices);
+  const balanceDueCents = computeServiceBalanceDueCents(
+    service.totalFeeCents,
+    normalizedInvoices
+  );
+
+  const paymentHistory = sortInvoicesChronologically(normalizedInvoices).map(
+    (entry) => {
+      const isCurrent = entry.invoiceId === normalizedCurrent.invoiceId;
+      const statusLabel =
+        isCurrent && entry.status === "draft"
+          ? "Unpaid"
+          : formatClientInvoiceStatusLabel(entry.status);
+      return {
+        invoiceId: entry.invoiceId,
+        invoiceNumber: entry.invoiceNumber,
+        description: entry.description || service.title,
+        amountCents: entry.amountCents,
+        statusLabel,
+        paidAt: entry.paidAt,
+        isCurrent,
+      };
+    }
+  );
 
   const paymentStatusLabel =
-    currentInvoice.status === "draft"
+    normalizedCurrent.status === "draft"
       ? "Unpaid"
-      : formatClientInvoiceStatusLabel(currentInvoice.status);
+      : formatClientInvoiceStatusLabel(normalizedCurrent.status);
 
   return {
     totalFeeCents: service.totalFeeCents,
@@ -131,7 +146,7 @@ export const buildInvoiceServiceContext = (
     paidTotalCents,
     balanceDueCents,
     paymentTypeLabel: resolveInvoicePaymentTypeLabel(
-      currentInvoice,
+      normalizedCurrent,
       service,
       balanceDueCents
     ),

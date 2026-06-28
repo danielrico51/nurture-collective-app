@@ -149,3 +149,44 @@ export const resolveInvoiceAmountFieldsFromInput = (input: {
         : existingAmounts?.processingFeePercent,
   });
 };
+
+/** Single resolver for invoice edits — always returns consistent subtotal/fee/total fields. */
+export const resolveSyncedInvoiceAmountFields = (input: {
+  amountCents?: unknown;
+  applyProcessingFee?: boolean;
+  processingFeePercent?: number | null;
+  paymentMethod: PaymentMethodId;
+  existing?: {
+    subtotalCents?: number;
+    processingFeeCents?: number;
+    processingFeePercent?: number | null;
+    amountCents: number;
+    paymentMethod: PaymentMethodId;
+  };
+}): {
+  subtotalCents: number;
+  processingFeeCents: number;
+  processingFeePercent: number | null;
+  amountCents: number;
+} =>
+  normalizeStoredInvoiceAmounts(resolveInvoiceAmountFieldsFromInput(input));
+
+/** Apply normalized amount fields to a stored invoice record. */
+export const withNormalizedInvoiceAmounts = <
+  T extends {
+    amountCents: number;
+    subtotalCents?: number | null;
+    processingFeeCents?: number | null;
+    processingFeePercent?: number | null;
+  },
+>(
+  invoice: T
+): T & {
+  subtotalCents: number;
+  processingFeeCents: number;
+  processingFeePercent: number | null;
+  amountCents: number;
+} => ({
+  ...invoice,
+  ...normalizeStoredInvoiceAmounts(invoice),
+});

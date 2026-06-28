@@ -34,16 +34,10 @@ export async function PATCH(request: NextRequest, { params }: RouteContext) {
       params.serviceId,
       params.invoiceId,
       body,
-      body.markSent ||
-      body.resend ||
-      body.saveAndResend ||
-      body.markPaid ||
-      body.saveCorrection
-        ? {
-            actor: { sub: auth.user.sub, email: auth.user.email },
-            origin: request.nextUrl.origin,
-          }
-        : undefined
+      {
+        actor: { sub: auth.user.sub, email: auth.user.email },
+        origin: request.nextUrl.origin,
+      }
     );
     const service = await getClientServiceWithInvoices(params.id, params.serviceId);
     return NextResponse.json({ invoice, service });
