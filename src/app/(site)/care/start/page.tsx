@@ -72,7 +72,7 @@ export default function CareStartPage() {
   }, [authStatus, publicIntake, ready, router]);
 
   return (
-    <div className="flex min-h-[50vh] items-center justify-center bg-nurture-cream">
+    <div className="floating-header-offset flex min-h-[50vh] items-center justify-center bg-nurture-cream">
       <p className="text-nurture-charcoal/60">Starting your support journey…</p>
     </div>
   );

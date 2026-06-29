@@ -2,15 +2,14 @@
 
 import SectionTitle from "@/components/Common/SectionTitle";
 import type { GoogleReview, GoogleReviewsPayload } from "@/types/googleReview";
-import { useEffect, useState } from "react";
-
+import { useEffect, useState, type ReactNode } from "react";
 const StarRating = ({ rating }: { rating: number }) => (
   <div className="flex items-center gap-0.5" aria-label={`${rating} out of 5 stars`}>
     {Array.from({ length: 5 }).map((_, index) => (
       <span
         key={index}
         className={
-          index < Math.round(rating) ? "text-amber-500" : "text-nurture-charcoal/20"
+          index < Math.round(rating) ? "text-nurture-gold" : "text-nurture-charcoal/20"
         }
       >
         ★
@@ -45,7 +44,7 @@ const ReviewSnippet = ({ review, isOpen, onToggle }: ReviewSnippetProps) => {
     <div className="py-3">
       <button
         type="button"
-        className="flex w-full items-start justify-between gap-3 text-left"
+        className="flex min-h-[44px] w-full items-start justify-between gap-3 py-2 text-left"
         aria-expanded={isOpen}
         aria-controls={panelId}
         onClick={onToggle}
@@ -61,7 +60,7 @@ const ReviewSnippet = ({ review, isOpen, onToggle }: ReviewSnippetProps) => {
             </span>
           ) : null}
         </span>
-        <span className="pt-0.5 text-nurture-sage-dark">
+        <span className="pt-0.5 text-nurture-grape">
           <ChevronIcon expanded={isOpen} />
         </span>
       </button>
@@ -83,6 +82,20 @@ const ReviewSnippet = ({ review, isOpen, onToggle }: ReviewSnippetProps) => {
 interface GoogleReviewsProps {
   className?: string;
 }
+
+const GoogleReviewsSection = ({
+  className,
+  children,
+}: {
+  className: string;
+  children: ReactNode;
+}) => (
+  <section className={`relative overflow-hidden py-8 sm:py-10 ${className}`}>
+    <div className="relative z-[1] mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+      {children}
+    </div>
+  </section>
+);
 
 const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
   const [data, setData] = useState<GoogleReviewsPayload | null>(null);
@@ -122,33 +135,28 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
 
   if (loading) {
     return (
-      <section className={`py-12 ${className}`}>
-        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-nurture-charcoal/60">
-            Loading reviews…
-          </p>
-        </div>
-      </section>
+      <GoogleReviewsSection className={className}>
+        <p className="text-center text-sm text-nurture-charcoal/60">
+          Loading reviews…
+        </p>
+      </GoogleReviewsSection>
     );
   }
 
   if (error || !data) {
     return (
-      <section className={`py-12 ${className}`}>
-        <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-          <p className="text-center text-sm text-red-700/90">
-            {error ?? "Could not load reviews"}
-          </p>
-        </div>
-      </section>
+      <GoogleReviewsSection className={className}>
+        <p className="text-center text-sm text-red-700/90">
+          {error ?? "Could not load reviews"}
+        </p>
+      </GoogleReviewsSection>
     );
   }
 
   return (
-    <section className={`py-12 ${className}`}>
-      <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+    <GoogleReviewsSection className={className}>
         {data.isPlaceholder ? (
-          <div className="mb-6 rounded-xl border border-amber-200/80 bg-amber-50 px-4 py-3 text-center text-sm text-amber-900/90">
+          <div className="mb-4 rounded-xl border border-nurture-oak/50 bg-nurture-oak/30 px-4 py-2.5 text-center text-sm text-nurture-grape">
             <span className="font-semibold">Preview only</span> — sample reviews
             for layout. Connect Google Business Profile after acquisition to
             show live ratings.
@@ -157,6 +165,7 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
 
         <SectionTitle
           title="What families are saying"
+          revealVariant="default"
           subtitle={
             data.isPlaceholder
               ? "Placeholder social proof — real Google reviews will appear here after integration."
@@ -164,7 +173,7 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
           }
         />
 
-        <div className="mx-auto mt-6 flex max-w-xl flex-col items-center gap-3 text-center sm:flex-row sm:justify-center sm:gap-4">
+        <div className="mx-auto mt-4 flex max-w-xl flex-col items-center gap-2 text-center sm:flex-row sm:justify-center sm:gap-3">
           <StarRating rating={data.rating} />
           <p className="text-sm text-nurture-charcoal/70">
             <span className="font-semibold text-nurture-charcoal">
@@ -177,7 +186,7 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
               href={data.googleMapsUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="text-sm font-semibold text-nurture-sage-dark hover:underline"
+              className="text-sm font-semibold text-nurture-grape hover:underline"
             >
               See all on Google →
             </a>
@@ -185,11 +194,11 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
         </div>
 
         {data.reviews.length > 0 ? (
-          <div className="mx-auto mt-8 grid max-w-4xl gap-4 md:grid-cols-2">
+          <div className="mx-auto mt-6 grid max-w-4xl gap-3 md:grid-cols-2">
             {data.reviews.map((review) => (
               <article
                 key={review.id}
-                className="rounded-xl border border-nurture-sage/15 bg-white px-4 shadow-sm"
+                className="rounded-xl border border-nurture-oak/40 bg-nurture-cream px-4 shadow-sm transition hover:border-nurture-lilac/35"
               >
                 <ReviewSnippet
                   review={review}
@@ -209,7 +218,7 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
         ) : null}
 
         {!data.googleMapsUrl ? (
-          <p className="mt-6 text-center text-xs text-nurture-charcoal/45">
+          <p className="mt-4 text-center text-xs text-nurture-charcoal/45">
             Set{" "}
             <code className="rounded bg-nurture-cream px-1.5 py-0.5">
               NEXT_PUBLIC_GOOGLE_REVIEWS_URL
@@ -221,8 +230,7 @@ const GoogleReviews = ({ className = "" }: GoogleReviewsProps) => {
             when your Google Business Profile is ready.
           </p>
         ) : null}
-      </div>
-    </section>
+    </GoogleReviewsSection>
   );
 };
 

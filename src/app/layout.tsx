@@ -11,7 +11,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body className="font-sans">
+      <body className="min-h-screen overflow-x-hidden bg-nurture-cream font-sans text-nurture-charcoal antialiased">
         <RootLayoutClient>{children}</RootLayoutClient>
       </body>
     </html>

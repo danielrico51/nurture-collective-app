@@ -1,63 +1,53 @@
-import BotanicalAccent from "@/components/Art/BotanicalAccent";
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import { buildCareStartHref } from "@/config/carePaths";
 import { brands } from "@/content/site";
 
-const heroDescription =
-  "An experienced maternal wellness and postpartum support practice offering birth doula support, overnight newborn care, postpartum support, lactation support, and prenatal massage — with real people guiding you from your first call through every stage of motherhood.";
-
 const Hero = () => {
   return (
-    <section className="relative overflow-hidden bg-gradient-to-b from-nurture-rose-light/50 via-nurture-blush/30 to-nurture-cream pb-16 pt-8 sm:pb-20 sm:pt-10">
-      <BotanicalAccent position="top-right" variant="leaf" className="opacity-30" />
-      <div className="relative mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
-        <div className="grid items-center gap-10 lg:grid-cols-2 lg:gap-12">
-          <div className="text-left">
-            <p className="text-sm font-semibold uppercase tracking-widest text-nurture-sage-dark">
-              {brands.nestingPlace.tagline}
-            </p>
-            <h1 className="mt-4 font-serif text-4xl font-semibold leading-tight text-nurture-charcoal sm:text-5xl lg:text-[3.25rem] lg:leading-[1.1]">
-              Maternal support, coordinated for every stage of motherhood
-            </h1>
-            <p className="mt-6 text-lg leading-relaxed text-nurture-charcoal/80 sm:text-xl">
-              {heroDescription}
-            </p>
-            <div className="mt-8">
-              <Link
-                href={buildCareStartHref()}
-                className="inline-flex justify-center rounded-full bg-nurture-sage px-8 py-3.5 text-sm font-semibold text-white shadow-sm hover:bg-nurture-sage-dark"
-              >
-                Request support
-              </Link>
-            </div>
-          </div>
+    <section className="floating-header-offset relative min-h-[85vh] overflow-hidden pb-16 sm:min-h-[90vh] sm:pb-20">
+      <div className="absolute inset-0 overflow-hidden">
+        <Image
+          src="/branding/momanddoula.jpg"
+          alt="A mother and doula gently supporting a newborn together in a bright, welcoming home"
+          fill
+          priority
+          quality={100}
+          sizes="(max-width: 640px) 100vw, (max-width: 1024px) 100vw, 1200px"
+          className="object-cover object-[48%_82%] sm:object-[50%_76%] md:object-[50%_70%] lg:object-[52%_66%]"
+        />
+      </div>
 
-          <div className="relative mx-auto w-full max-w-xl lg:max-w-none">
-            <div
-              aria-hidden
-              className="absolute inset-6 rounded-[2.75rem] bg-nurture-rose-light/50 blur-3xl"
-            />
-            <div className="relative px-2 py-3 sm:px-4 sm:py-4">
-              <div className="hero-image-blend overflow-hidden">
-                <Image
-                  src="/images/hero-home.png"
-                  alt="Two caregivers gently supporting a newborn baby together in a bright, welcoming home"
-                  width={1024}
-                  height={682}
-                  priority
-                  className="h-auto w-full object-cover"
-                />
-              </div>
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-2 bg-gradient-to-r from-nurture-rose-light/50 via-transparent to-nurture-rose-light/40 sm:inset-4"
-              />
-              <div
-                aria-hidden
-                className="pointer-events-none absolute inset-2 bg-gradient-to-b from-nurture-rose-light/35 via-transparent to-nurture-cream/55 sm:inset-4"
-              />
-            </div>
+      <div className="relative z-10 px-4 pb-8 pt-6 sm:px-6 sm:pb-10 sm:pt-8 lg:pl-10 lg:pr-8">
+        <div className="hero-intro-card mr-auto ml-4 max-w-[min(100%,27.72rem)] sm:ml-8 sm:max-w-[min(92%,33rem)] md:ml-12 md:max-w-[min(56%,36.96rem)] lg:ml-16 lg:max-w-[min(56%,39.6rem)]">
+          <p className="text-sm font-semibold uppercase tracking-widest text-nurture-grape">
+            {brands.nestingPlace.tagline}
+          </p>
+          <ScrollRevealHeading
+            as="h1"
+            variant="emphasis"
+            className="mt-4 font-serif text-3xl font-semibold leading-tight text-nurture-charcoal sm:mt-5 sm:text-4xl lg:text-[2.65rem] lg:leading-[1.12]"
+          >
+            Maternal support, coordinated for every stage of{" "}
+            <em className="italic">motherhood</em>
+          </ScrollRevealHeading>
+          <p className="mt-4 text-base leading-relaxed text-nurture-charcoal/90 sm:mt-5 sm:text-[1.05rem] lg:mt-6">
+            An experienced maternal wellness and postpartum support practice offering{" "}
+            <strong>birth doula support</strong>, <strong>overnight newborn care</strong>,{" "}
+            <strong>postpartum support</strong>, <strong>lactation support</strong>, and{" "}
+            <strong>prenatal massage</strong> — with real people guiding you from your first call
+            through every stage of motherhood.
+          </p>
+          <div className="mt-6 sm:mt-7">
+            <Link
+              href={buildCareStartHref()}
+              className="btn-primary-hero"
+            >
+              Request support
+            </Link>
           </div>
         </div>
       </div>

@@ -15,6 +15,7 @@ const awsSdkExternals = [
 const nextConfig = {
   reactStrictMode: true,
   swcMinify: true,
+  transpilePackages: ["gsap", "split-type"],
   experimental: {
     serverComponentsExternalPackages: awsSdkExternals,
   },

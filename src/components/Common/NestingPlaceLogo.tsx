@@ -1,3 +1,5 @@
+import BrandBabyMark from "@/components/Common/BrandBabyMark";
+import BrandWordmarkText from "@/components/Common/BrandWordmarkText";
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
@@ -59,27 +61,22 @@ const NestingPlaceLogo = ({
 
   if (compact) {
     content = (
-      <span className="inline-flex items-center gap-2.5 sm:gap-3">
-        <span className="flex h-12 w-12 shrink-0 items-center justify-center sm:h-14 sm:w-14">
-          <Image
-            src={brands.nestingPlace.markSrc}
-            alt=""
-            aria-hidden
-            width={64}
-            height={64}
-            priority={priority}
-            className="h-full w-full object-contain"
-          />
-        </span>
-        <span className="min-w-0 leading-tight">
-          <span
-            className={`block font-serif text-sm font-semibold text-nurture-charcoal sm:text-base ${nameClassName}`.trim()}
-          >
-            <span className="text-nurture-charcoal">The </span>
-            <span className="text-nurture-sage-dark">Nesting</span>
-            <span className="text-nurture-charcoal"> Place</span>
-          </span>
-        </span>
+      <span className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap sm:gap-2.5">
+        <BrandBabyMark
+          size="compact"
+          priority={priority}
+        />
+        <BrandWordmarkText
+          size="compact"
+          className={nameClassName}
+        />
+      </span>
+    );
+  } else if (variant === "wordmark" || variant === "header") {
+    content = (
+      <span className="inline-flex shrink-0 items-center gap-2 whitespace-nowrap sm:gap-2.5">
+        <BrandBabyMark size="header" priority={priority} />
+        <BrandWordmarkText size="header" className={className} />
       </span>
     );
   } else if (useWordmark) {
@@ -90,7 +87,7 @@ const NestingPlaceLogo = ({
         width={WORDMARK_WIDTH}
         height={WORDMARK_HEIGHT}
         priority={priority}
-        className={`object-contain ${VARIANT_MAX_CLASS[variant === "header" ? "wordmark" : variant]} ${className}`.trim()}
+        className={`object-contain ${VARIANT_MAX_CLASS[variant]} ${className}`.trim()}
       />
     );
 
@@ -142,7 +139,11 @@ const NestingPlaceLogo = ({
 
   if (linked) {
     return (
-      <Link href="/" className="inline-flex shrink-0 items-center transition hover:opacity-90">
+      <Link
+        href="/"
+        aria-label={`${brands.nestingPlace.name} — ${brands.nestingPlace.tagline}`}
+        className="inline-flex shrink-0 items-center"
+      >
         {content}
       </Link>
     );

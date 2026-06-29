@@ -6,9 +6,10 @@ export const serviceIllustrationSrc: Partial<Record<ServiceSlug, string>> = {
   "overnight-newborn": "/images/services/overnight-newborn.jpg",
   "postpartum-care": "/images/services/postpartum-care.jpg",
   lactation: "/images/services/lactation.jpg",
-  "prenatal-massage": "/images/services/prenatal-massage.jpg",
-  "postpartum-massage": "/images/services/postpartum-massage.jpg",
+  "prenatal-massage": "/images/services/prenatal-massage-v2.svg",
+  "postpartum-massage": "/images/services/postpartum-massage-v2.svg",
   "childbirth-education": "/images/services/childbirth-education.jpg",
+  "placenta-encapsulation": "/images/services/placenta-encapsulation.svg",
 };
 
 export const serviceIllustrationAlt: Partial<Record<ServiceSlug, string>> = {
@@ -19,6 +20,8 @@ export const serviceIllustrationAlt: Partial<Record<ServiceSlug, string>> = {
   "prenatal-massage": "Prenatal massage with side-lying support",
   "postpartum-massage": "Postpartum massage on a treatment table",
   "childbirth-education": "Childbirth education class with instructor and expectant parents",
+  "placenta-encapsulation":
+    "Specialist preparing placenta capsules for postpartum wellness support",
 };
 
 /** Hero art for the services landing page. */

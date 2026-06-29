@@ -20,7 +20,7 @@ const MomSignupPage = () => {
         </p>
         <Link
           href={buildCareStartHref()}
-          className="mt-8 inline-block rounded-full bg-nurture-sage px-8 py-3 text-sm font-semibold text-white hover:bg-nurture-sage-dark"
+          className="btn-primary-lg mt-8"
         >
           Request support
         </Link>

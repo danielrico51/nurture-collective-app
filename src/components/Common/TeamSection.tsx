@@ -1,3 +1,8 @@
+"use client";
+
+import MarketingSection from "@/components/Common/MarketingSection";
+import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
+import { MARKETING_CREAM } from "@/config/marketingDesign";
 import type { TeamMemberProfile } from "@/content/team";
 import Image from "next/image";
 import Link from "next/link";
@@ -9,28 +14,28 @@ interface TeamMemberCardProps {
 
 const TeamMemberCard = ({ member, compact = false }: TeamMemberCardProps) => (
   <article
-    className={`flex flex-col rounded-2xl border border-nurture-sage/15 bg-white shadow-sm ${
+    className={`flex flex-col rounded-2xl border border-nurture-lilac/25 bg-nurture-cream shadow-sm ${
       compact ? "p-6" : "p-8"
     }`}
   >
     {member.imageSrc ? (
       <div
-        className={`relative shrink-0 overflow-hidden rounded-full border border-nurture-sage/20 bg-nurture-cream ${
-          compact ? "h-16 w-16" : "h-20 w-20"
+        className={`relative shrink-0 overflow-hidden rounded-full border border-nurture-lilac/25 bg-nurture-cream ${
+          compact ? "h-16 w-16" : "h-[8.75rem] w-[8.75rem]"
         }`}
       >
         <Image
           src={member.imageSrc}
           alt={member.imageAlt ?? `${member.name}, ${member.role}`}
           fill
-          sizes={compact ? "64px" : "80px"}
+          sizes={compact ? "64px" : "140px"}
           className="object-cover object-center"
         />
       </div>
     ) : (
       <div
         className={`flex shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-nurture-blush to-nurture-sage/30 font-serif font-semibold text-nurture-sage-dark ${
-          compact ? "h-16 w-16 text-xl" : "h-20 w-20 text-2xl"
+          compact ? "h-16 w-16 text-xl" : "h-[8.75rem] w-[8.75rem] text-3xl"
         }`}
         aria-hidden
       >
@@ -40,11 +45,11 @@ const TeamMemberCard = ({ member, compact = false }: TeamMemberCardProps) => (
     <h3 className="mt-5 font-serif text-xl font-semibold text-nurture-charcoal">
       {member.name}
     </h3>
-    <p className="mt-1 text-sm font-medium text-nurture-sage-dark">
+    <p className="mt-1 text-sm font-medium text-nurture-grape">
       {member.role}
     </p>
     <p
-      className={`mt-3 text-nurture-charcoal/70 ${
+      className={`mt-3 text-justify text-nurture-charcoal/70 ${
         compact ? "line-clamp-4 text-sm" : "text-sm"
       }`}
     >
@@ -60,7 +65,38 @@ interface TeamSectionProps {
   showMeetLink?: boolean;
   compact?: boolean;
   className?: string;
+  organicWaves?: boolean;
+  /** Fill for top wave — match the section background directly above. */
+  waveTopFill?: string;
+  /** Fill for bottom wave — match the section background directly below. */
+  waveBottomFill?: string;
+  /** Section tint — grape uses light copy; lilac uses dark copy on brand lilac. */
+  surface?: "light" | "grape" | "lilac";
 }
+
+const SURFACE_STYLES = {
+  light: {
+    heading: "text-nurture-charcoal",
+    subtitle: "text-nurture-charcoal/70",
+    link: "text-nurture-grape hover:underline",
+  },
+  grape: {
+    heading: "text-nurture-cream",
+    subtitle: "text-nurture-cream/80",
+    link: "text-nurture-lilac hover:text-nurture-cream hover:underline",
+  },
+  lilac: {
+    heading: "text-nurture-charcoal",
+    subtitle: "text-nurture-charcoal/80",
+    link: "text-nurture-grape hover:underline",
+  },
+} as const;
+
+const SURFACE_BG: Record<NonNullable<TeamSectionProps["surface"]>, string> = {
+  light: "",
+  grape: "bg-nurture-grape",
+  lilac: "bg-nurture-lilac",
+};
 
 export const TeamSection = ({
   title = "Meet the team behind your care",
@@ -69,15 +105,24 @@ export const TeamSection = ({
   showMeetLink = false,
   compact = false,
   className = "",
-}: TeamSectionProps) => (
-  <section className={`py-20 ${className}`}>
+  organicWaves = false,
+  waveTopFill = MARKETING_CREAM,
+  waveBottomFill = MARKETING_CREAM,
+  surface = "light",
+}: TeamSectionProps) => {
+  const surfaceStyle = SURFACE_STYLES[surface];
+  const sectionSurfaceClass = SURFACE_BG[surface];
+  const inner = (
     <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
       <div className="mx-auto max-w-2xl text-center">
-        <h2 className="font-serif text-3xl font-semibold text-nurture-charcoal sm:text-4xl">
+        <ScrollRevealHeading
+          variant="gentle"
+          className={`font-serif text-3xl font-semibold sm:text-4xl ${surfaceStyle.heading}`}
+        >
           {title}
-        </h2>
+        </ScrollRevealHeading>
         {subtitle ? (
-          <p className="mt-4 text-lg text-nurture-charcoal/70">{subtitle}</p>
+          <p className={`mt-4 text-lg ${surfaceStyle.subtitle}`}>{subtitle}</p>
         ) : null}
       </div>
       <div
@@ -97,14 +142,33 @@ export const TeamSection = ({
         <div className="mt-10 text-center">
           <Link
             href="/about"
-            className="text-sm font-semibold text-nurture-sage-dark hover:underline"
+            className={`text-sm font-semibold ${surfaceStyle.link}`}
           >
             Learn more about our team →
           </Link>
         </div>
       ) : null}
     </div>
-  </section>
-);
+  );
+
+  if (organicWaves) {
+    return (
+      <MarketingSection
+        waves="both"
+        waveTopFill={waveTopFill}
+        waveBottomFill={waveBottomFill}
+        className={`${sectionSurfaceClass} ${className}`}
+      >
+        {inner}
+      </MarketingSection>
+    );
+  }
+
+  return (
+    <section className={`py-16 sm:py-20 ${sectionSurfaceClass} ${className}`}>
+      {inner}
+    </section>
+  );
+};
 
 export default TeamMemberCard;
