@@ -1,6 +1,6 @@
 import AboutHero from "@/components/About/AboutHero";
 import CoverageMap from "@/components/Common/CoverageMap";
-import { FOOTER_SECTION_CLASS } from "@/components/Common/SectionWaveEdges";
+import { FOOTER_SECTION_CLASS, SECTION_ABOVE_WAVE_OVERLAP_CLASS } from "@/components/Common/SectionWaveEdges";
 import SectionTitle from "@/components/Common/SectionTitle";
 import { TeamSection } from "@/components/Common/TeamSection";
 import JsonLd from "@/components/Seo/JsonLd";
@@ -51,7 +51,7 @@ export default function AboutPage() {
       <AboutHero />
 
       <section
-        className="py-12 sm:py-14"
+        className={`${SECTION_ABOVE_WAVE_OVERLAP_CLASS} py-12 sm:py-14`}
         style={{ backgroundColor: MARKETING_OAK_SURFACE }}
       >
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
@@ -114,7 +114,7 @@ export default function AboutPage() {
       </section>
 
       <TeamSection
-        title="Leadership & ownership"
+        title="Meet the team"
         subtitle="Alex and Barb lead The Nesting Place today — with our entire team continuing the hands-on care families know and trust."
         members={teamMembers}
         organicWaves

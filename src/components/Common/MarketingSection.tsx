@@ -46,9 +46,11 @@ const MarketingSection = ({
   const topOverlapClass =
     showTop && !footerClearance ? SECTION_WAVE_TOP_OVERLAP_CLASS : "";
 
+  const stackClass = topOverlapClass ? "relative z-[1]" : "";
+
   const sectionClass = footerClearance
     ? `${FOOTER_SECTION_CLASS} ${paddingClass} ${className}`.trim()
-    : `relative overflow-hidden ${topOverlapClass} ${paddingClass} ${className}`.trim();
+    : `${stackClass} overflow-hidden ${topOverlapClass} ${paddingClass} ${className}`.trim();
 
   return (
     <section

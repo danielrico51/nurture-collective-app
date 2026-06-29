@@ -11,17 +11,13 @@ import {
 } from "@/content/serviceStats";
 import Image from "next/image";
 import Link from "next/link";
-import { useCallback, useState } from "react";
+import { useState } from "react";
 
 const SLOT_VARIANT_BY_SLUG = {
   "birth-doula": "sage",
   "overnight-newborn": "lilac",
   "postpartum-care": "sage",
 } as const;
-
-const prefersFinePointerHover = () =>
-  typeof window !== "undefined" &&
-  window.matchMedia("(hover: hover) and (pointer: fine)").matches;
 
 const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
   <svg
@@ -41,14 +37,12 @@ const ChevronIcon = ({ expanded }: { expanded: boolean }) => (
 interface ImpactAccordionRowProps {
   service: FeaturedServiceStats;
   isActive: boolean;
-  onActivate: () => void;
   onToggle: () => void;
 }
 
 const ImpactAccordionRow = ({
   service,
   isActive,
-  onActivate,
   onToggle,
 }: ImpactAccordionRowProps) => {
   const iconSrc = homepageServiceBulletIconSrc[service.slug];
@@ -68,10 +62,6 @@ const ImpactAccordionRow = ({
         className="flex w-full cursor-pointer items-center gap-4 px-5 py-3 text-left sm:px-6 sm:py-4"
         aria-expanded={isActive}
         onClick={onToggle}
-        onMouseEnter={() => {
-          if (prefersFinePointerHover()) onActivate();
-        }}
-        onFocus={onActivate}
       >
         {iconSrc ? (
           <div className="relative h-14 w-[4.5rem] shrink-0 sm:h-[4.5rem] sm:w-20">
@@ -149,22 +139,15 @@ const ImpactAccordionRow = ({
 const ImpactAccordion = () => {
   const [activeSlug, setActiveSlug] = useState<
     FeaturedServiceStats["slug"] | null
-  >(featuredServiceStats[0]?.slug ?? null);
-
-  const handleMouseLeave = useCallback(() => {
-    if (prefersFinePointerHover()) {
-      setActiveSlug(null);
-    }
-  }, []);
+  >(null);
 
   return (
-    <div className="space-y-3" onMouseLeave={handleMouseLeave}>
+    <div className="space-y-3">
       {featuredServiceStats.map((service) => (
         <ImpactAccordionRow
           key={service.slug}
           service={service}
           isActive={activeSlug === service.slug}
-          onActivate={() => setActiveSlug(service.slug)}
           onToggle={() =>
             setActiveSlug((current) =>
               current === service.slug ? null : service.slug,

@@ -3,6 +3,7 @@ import ContactOptions from "@/components/Common/ContactOptions";
 import FaqList from "@/components/Common/FaqList";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
 import MarketingSection from "@/components/Common/MarketingSection";
+import { SECTION_ABOVE_WAVE_OVERLAP_CLASS } from "@/components/Common/SectionWaveEdges";
 import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
 import SectionTitle from "@/components/Common/SectionTitle";
 import {
@@ -75,7 +76,7 @@ export default function ForProvidersPage() {
       </section>
 
       <section
-        className="py-12 sm:py-14 lg:py-16"
+        className={`${SECTION_ABOVE_WAVE_OVERLAP_CLASS} py-12 sm:py-14 lg:py-16`}
         style={{ backgroundColor: MARKETING_OAK_SURFACE }}
       >
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">

@@ -1,6 +1,6 @@
 import Breadcrumb from "@/components/Common/Breadcrumb";
 import BookingEmbed from "@/components/Common/BookingEmbed";
-import { FOOTER_SECTION_CLASS } from "@/components/Common/SectionWaveEdges";
+import { FOOTER_SECTION_CLASS, SECTION_ABOVE_WAVE_OVERLAP_CLASS } from "@/components/Common/SectionWaveEdges";
 import ContactOptions from "@/components/Common/ContactOptions";
 import FaqList from "@/components/Common/FaqList";
 import HowItWorksSteps from "@/components/Common/HowItWorksSteps";
@@ -77,7 +77,7 @@ export default function ForMomsPage() {
       </section>
 
       <section
-        className="py-12 sm:py-14 lg:py-16"
+        className={`${SECTION_ABOVE_WAVE_OVERLAP_CLASS} py-12 sm:py-14 lg:py-16`}
         style={{ backgroundColor: MARKETING_OAK_SURFACE }}
       >
         <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">

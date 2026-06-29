@@ -2,6 +2,7 @@
 
 import ImpactAccordion from "@/components/Home/ImpactAccordion";
 import { ScrollRevealHeading } from "@/components/Common/ScrollRevealHeading.client";
+import { SECTION_ABOVE_WAVE_OVERLAP_CLASS } from "@/components/Common/SectionWaveEdges";
 import { buildCareStartHref } from "@/config/carePaths";
 import { MARKETING_OAK_SURFACE } from "@/config/marketingDesign";
 import Link from "next/link";
@@ -9,7 +10,7 @@ import Link from "next/link";
 const ServiceStatsSection = () => {
   return (
     <section
-      className="py-12 sm:py-14"
+      className={`${SECTION_ABOVE_WAVE_OVERLAP_CLASS} py-12 sm:py-14`}
       style={{ backgroundColor: MARKETING_OAK_SURFACE }}
     >
       <div className="mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">

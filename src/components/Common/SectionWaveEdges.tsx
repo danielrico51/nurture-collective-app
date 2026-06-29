@@ -37,6 +37,9 @@ export const FOOTER_WAVE_OVERLAP_CLASS = "-mt-[5rem] sm:-mt-[7rem]";
 /** Pull section up so the top wave overlaps the section above. */
 export const SECTION_WAVE_TOP_OVERLAP_CLASS = FOOTER_WAVE_OVERLAP_CLASS;
 
+/** Keep CTAs and content visible above a following wave-overlap section. */
+export const SECTION_ABOVE_WAVE_OVERLAP_CLASS = "relative z-[2]";
+
 /** Last section before footer — room for content above the footer wave overlap. */
 export const FOOTER_SECTION_CLASS =
   "relative overflow-hidden pb-[calc(5rem+4.5rem)] sm:pb-[calc(7rem+5rem)]";

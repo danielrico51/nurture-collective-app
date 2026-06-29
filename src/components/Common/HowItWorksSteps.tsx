@@ -39,7 +39,7 @@ const HowItWorksSteps = ({
   waveBottomFill = MARKETING_CREAM,
 }: HowItWorksStepsProps) => {
   const sectionClassName = organicWaves
-    ? `relative overflow-hidden ${FOOTER_WAVE_OVERLAP_CLASS} pt-20 pb-24 sm:pt-24 sm:pb-28 ${className}`
+    ? `relative z-[1] overflow-hidden ${FOOTER_WAVE_OVERLAP_CLASS} pt-20 pb-24 sm:pt-24 sm:pb-28 ${className}`
     : className || "py-14 sm:py-16";
 
   return (
