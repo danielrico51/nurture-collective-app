@@ -20,6 +20,7 @@ const client: ClientRecord = {
   coordinatorEmail: "",
   tags: [],
   locationZip: null,
+  homeAddress: null,
   notesSummary: "",
   billing: {
     lifetimeValueCents: 0,

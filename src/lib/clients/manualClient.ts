@@ -31,6 +31,7 @@ export const validateCreateClientInput = (raw: unknown): CreateClientInput => {
   const channel = String(body.channel ?? "")
     .trim() as CreateClientInput["channel"];
   const locationZip = body.locationZip ? String(body.locationZip).trim() : null;
+  const homeAddress = body.homeAddress ? String(body.homeAddress).trim() : null;
   const notes = String(body.notes ?? "").trim();
   const coordinatorId = String(body.coordinatorId ?? "").trim();
   const leadId = body.leadId ? String(body.leadId).trim() : null;
@@ -61,6 +62,7 @@ export const validateCreateClientInput = (raw: unknown): CreateClientInput => {
     leadId: leadId || null,
     cognitoSub: cognitoSub || null,
     locationZip: locationZip || null,
+    homeAddress: homeAddress || null,
     tags,
     notes,
     coordinatorId: coordinatorId || undefined,
@@ -95,6 +97,7 @@ export const buildManualClientRecord = (input: {
     ...assignedCoordinator,
     tags: input.payload.tags ?? [],
     locationZip: input.payload.locationZip ?? null,
+    homeAddress: input.payload.homeAddress ?? null,
     notesSummary: input.payload.notes ?? "",
     billing: { ...EMPTY_CLIENT_BILLING_SUMMARY },
     archivedAt: null,

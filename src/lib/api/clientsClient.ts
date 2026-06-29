@@ -95,6 +95,7 @@ export const updateAdminClient = async (
     phone?: string;
     coordinatorId?: string;
     locationZip?: string | null;
+    homeAddress?: string | null;
     tags?: string[];
     notesSummary?: string;
     archive?: boolean;

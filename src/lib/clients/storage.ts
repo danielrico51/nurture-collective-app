@@ -357,6 +357,10 @@ export const updateClient = async (
       validated.locationZip !== undefined
         ? validated.locationZip
         : existing.locationZip,
+    homeAddress:
+      validated.homeAddress !== undefined
+        ? validated.homeAddress
+        : existing.homeAddress ?? null,
     tags: validated.tags ?? existing.tags,
     notesSummary: validated.notesSummary ?? existing.notesSummary,
     archivedAt:
@@ -495,6 +499,7 @@ const buildClientFromLead = (
     coordinatorEmail: coordinator?.email ?? lead.coordinatorEmail ?? "",
     tags: [],
     locationZip: lead.locationZip,
+    homeAddress: lead.locationAddress ?? null,
     notesSummary: buildClientNotesSummaryFromLead(lead),
     billing: { ...EMPTY_CLIENT_BILLING_SUMMARY },
     archivedAt: null,
@@ -569,6 +574,7 @@ export const ensureMigratedClientForLead = async (
     coordinatorEmail: "",
     tags: [],
     locationZip: null,
+    homeAddress: null,
     notesSummary: "",
     billing: { ...EMPTY_CLIENT_BILLING_SUMMARY },
     archivedAt: null,

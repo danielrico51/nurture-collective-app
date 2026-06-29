@@ -127,6 +127,7 @@ const ClientDetailPanel = ({
   const [profileEmail, setProfileEmail] = useState("");
   const [profilePhone, setProfilePhone] = useState("");
   const [profileZip, setProfileZip] = useState("");
+  const [profileHomeAddress, setProfileHomeAddress] = useState("");
   const [profileTags, setProfileTags] = useState("");
   const [profileNotesSummary, setProfileNotesSummary] = useState("");
   const [editingProfile, setEditingProfile] = useState(false);
@@ -138,6 +139,7 @@ const ClientDetailPanel = ({
     setProfileEmail(client.email);
     setProfilePhone(client.phone);
     setProfileZip(client.locationZip ?? "");
+    setProfileHomeAddress(client.homeAddress ?? "");
     setProfileTags(client.tags.join(", "));
     setProfileNotesSummary(client.notesSummary);
   }, []);
@@ -240,6 +242,7 @@ const ClientDetailPanel = ({
         email: profileEmail.trim(),
         phone: profilePhone.trim(),
         locationZip: profileZip.trim() || null,
+        homeAddress: profileHomeAddress.trim() || null,
         tags,
         notesSummary: profileNotesSummary.trim(),
       });
@@ -467,6 +470,18 @@ const ClientDetailPanel = ({
                 className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage disabled:opacity-60"
               />
             </label>
+            <label className="block sm:col-span-2">
+              <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+                Home address
+              </span>
+              <input
+                value={profileHomeAddress}
+                onChange={(event) => setProfileHomeAddress(event.target.value)}
+                disabled={saving}
+                placeholder="Street, city, state"
+                className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage disabled:opacity-60"
+              />
+            </label>
             <label className="block">
               <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
                 Tags (comma-separated)
@@ -547,6 +562,11 @@ const ClientDetailPanel = ({
                 copyText={client.phone ? formatPhoneForCopy(client.phone) : null}
               />
               <DetailItem label="ZIP" value={client.locationZip || "—"} />
+              <DetailItem
+                label="Home address"
+                value={client.homeAddress || "—"}
+                copyText={client.homeAddress}
+              />
               <DetailItem
                 label="Tags"
                 value={client.tags.length ? client.tags.join(", ") : "—"}

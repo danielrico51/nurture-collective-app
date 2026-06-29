@@ -53,6 +53,8 @@ export interface ClientRecord {
   coordinatorEmail: string;
   tags: string[];
   locationZip: string | null;
+  /** Street address for home visits and correspondence. */
+  homeAddress: string | null;
   notesSummary: string;
   billing: ClientBillingSummary;
   /** When set, client is hidden from the default CRM queue. */
@@ -158,6 +160,7 @@ export interface CreateClientInput {
   leadId?: string | null;
   cognitoSub?: string | null;
   locationZip?: string | null;
+  homeAddress?: string | null;
   tags?: string[];
   notes?: string;
   coordinatorId?: string;
@@ -171,6 +174,7 @@ export interface UpdateClientInput {
   coordinatorId?: string;
   coordinatorEmail?: string;
   locationZip?: string | null;
+  homeAddress?: string | null;
   tags?: string[];
   notesSummary?: string;
   archivedAt?: string | null;

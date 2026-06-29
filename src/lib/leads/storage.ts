@@ -503,6 +503,7 @@ export const updateLeadContactInfo = async (
     | "email"
     | "phone"
     | "locationZip"
+    | "locationAddress"
     | "maternalStage"
     | "supportInterests"
     | "challengesSummary"

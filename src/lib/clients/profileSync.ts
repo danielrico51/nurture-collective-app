@@ -39,6 +39,12 @@ export const validateUpdateClientInput = (
     updates.locationZip = String(updates.locationZip).trim();
   }
 
+  if (updates.homeAddress !== undefined) {
+    updates.homeAddress = updates.homeAddress
+      ? String(updates.homeAddress).trim()
+      : null;
+  }
+
   if (updates.tags !== undefined) {
     updates.tags = updates.tags.map((tag) => String(tag).trim()).filter(Boolean);
   }
@@ -58,7 +64,8 @@ export const propagateClientProfileChanges = async (
     previous.name !== updated.name ||
     previous.email !== updated.email ||
     previous.phone !== updated.phone ||
-    previous.locationZip !== updated.locationZip;
+    previous.locationZip !== updated.locationZip ||
+    (previous.homeAddress ?? null) !== (updated.homeAddress ?? null);
 
   if (!contactChanged) return;
 
@@ -71,6 +78,7 @@ export const propagateClientProfileChanges = async (
           email: updated.email,
           phone: updated.phone,
           locationZip: updated.locationZip,
+          locationAddress: updated.homeAddress ?? null,
         });
       }
     } catch (error) {
@@ -89,7 +97,8 @@ export const propagateClientProfileChanges = async (
       }
       if (updated.email) attributes.email = updated.email;
       if (updated.phone) attributes.phone_number = updated.phone;
-      if (updated.locationZip) attributes.address = updated.locationZip;
+      if (updated.homeAddress) attributes.address = updated.homeAddress;
+      else if (updated.locationZip) attributes.address = updated.locationZip;
 
       await updateMemberProfileAttributes({
         cognitoUsername: updated.cognitoSub,

@@ -25,6 +25,7 @@ const emptyForm = (defaultCoordinatorId = "") => ({
   phone: "",
   channel: "phone" as ManualClientChannel,
   locationZip: "",
+  homeAddress: "",
   tags: "",
   notes: "",
   coordinatorId: defaultCoordinatorId,
@@ -50,6 +51,7 @@ const ClientManualForm = ({
       phone: initialDraft.phone,
       channel: initialDraft.channel,
       locationZip: initialDraft.locationZip,
+      homeAddress: "",
       tags: initialDraft.tags,
       notes: initialDraft.notes,
       coordinatorId: initialDraft.coordinatorId || defaultCoordinatorId,
@@ -66,6 +68,7 @@ const ClientManualForm = ({
         phone: form.phone.trim() || undefined,
         channel: form.channel,
         locationZip: form.locationZip.trim() || null,
+        homeAddress: form.homeAddress.trim() || null,
         tags: form.tags
           .split(",")
           .map((tag) => tag.trim())
@@ -196,6 +199,23 @@ const ClientManualForm = ({
                   locationZip: event.target.value,
                 }))
               }
+              className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
+            />
+          </label>
+
+          <label className="block sm:col-span-2">
+            <span className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/60">
+              Home address
+            </span>
+            <input
+              value={form.homeAddress}
+              onChange={(event) =>
+                setForm((current) => ({
+                  ...current,
+                  homeAddress: event.target.value,
+                }))
+              }
+              placeholder="Street, city, state"
               className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm focus:border-nurture-sage focus:outline-none focus:ring-1 focus:ring-nurture-sage"
             />
           </label>
