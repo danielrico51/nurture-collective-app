@@ -16,6 +16,8 @@ interface HowItWorksStepsProps {
   steps: readonly Step[];
   className?: string;
   organicWaves?: boolean;
+  /** When false, the top wave does not overlap the section above (avoids clipping titles/CTAs). */
+  topOverlap?: boolean;
   /** Fill for the top wave — match the section background above. */
   waveTopFill?: string;
   /** Fill for the bottom wave — match the section background below. */
@@ -35,11 +37,20 @@ const HowItWorksSteps = ({
   steps,
   className = "",
   organicWaves = false,
+  topOverlap = true,
   waveTopFill = MARKETING_CREAM,
   waveBottomFill = MARKETING_CREAM,
 }: HowItWorksStepsProps) => {
   const sectionClassName = organicWaves
-    ? `relative z-[1] overflow-hidden ${FOOTER_WAVE_OVERLAP_CLASS} pt-20 pb-24 sm:pt-24 sm:pb-28 ${className}`
+    ? [
+        "relative overflow-hidden",
+        topOverlap ? `z-[1] ${FOOTER_WAVE_OVERLAP_CLASS}` : "",
+        topOverlap ? "pt-20 sm:pt-24" : "pt-24 sm:pt-28",
+        "pb-24 sm:pb-28",
+        className,
+      ]
+        .filter(Boolean)
+        .join(" ")
     : className || "py-14 sm:py-16";
 
   return (
@@ -47,7 +58,7 @@ const HowItWorksSteps = ({
       {organicWaves && (
         <SectionWaveEdges topFill={waveTopFill} bottomFill={waveBottomFill} />
       )}
-      <div className="relative mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
+      <div className="relative z-[2] mx-auto max-w-screen-xl px-4 sm:px-6 lg:px-8">
         <SectionTitle title={title} subtitle={subtitle} revealVariant="quick" />
         <div
           className={`mt-10 grid gap-8 sm:grid-cols-2 ${

@@ -49,6 +49,7 @@ export default function HomePage() {
         subtitle="From first inquiry to ongoing support."
         steps={momHowItWorks}
         organicWaves
+        topOverlap={false}
         waveTopFill={MARKETING_OAK_SURFACE}
         waveBottomFill={MARKETING_CREAM}
         className="bg-nurture-sage"
