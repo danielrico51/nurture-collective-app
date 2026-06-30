@@ -21,6 +21,7 @@ export {
   voidQuickBooksInvoice,
 } from "@/lib/integrations/quickbooks/invoices";
 export { createQuickBooksSalesReceipt } from "@/lib/integrations/quickbooks/salesReceipts";
+export { createQuickBooksInvoicePayment } from "@/lib/integrations/quickbooks/payments";
 export {
   fetchQuickBooksPaymentsSetup,
   parseQuickBooksPaymentsSetup,

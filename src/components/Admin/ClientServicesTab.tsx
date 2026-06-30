@@ -453,6 +453,13 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
       if (!confirmed) return;
     }
 
+    if (action === "markCancelled") {
+      const confirmed = window.confirm(
+        "Void this invoice? The invoice will be marked cancelled in the CRM. Unpaid QuickBooks invoices will be voided in QBO. Paid invoices cannot be voided."
+      );
+      if (!confirmed) return;
+    }
+
     setSaving(true);
     try {
       await updateServiceInvoice(clientId, serviceId, invoiceId, {
@@ -469,7 +476,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
           : action === "markRefunded"
             ? "Marked refunded"
             : action === "markCancelled"
-              ? "Invoice cancelled"
+              ? "Invoice voided"
             : action === "resend"
               ? "Invoice resent"
               : "Invoice sent"
@@ -1607,6 +1614,24 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     className="text-emerald-700 font-medium hover:underline disabled:opacity-60"
                                   >
                                     Mark paid (no email)
+                                  </button>
+                                ) : null}
+                                {invoice.status !== "paid" &&
+                                invoice.status !== "cancelled" &&
+                                invoice.status !== "refunded" ? (
+                                  <button
+                                    type="button"
+                                    disabled={saving}
+                                    onClick={() =>
+                                      void handleInvoiceAction(
+                                        service.serviceId,
+                                        invoice.invoiceId,
+                                        "markCancelled"
+                                      )
+                                    }
+                                    className="text-nurture-charcoal/70 font-medium hover:underline disabled:opacity-60"
+                                  >
+                                    Void invoice
                                   </button>
                                 ) : null}
                                 {canReissueLinked ? (

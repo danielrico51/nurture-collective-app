@@ -10,6 +10,7 @@ import { resolveServiceInvoiceQuickBooksItemId } from "@/lib/invoices/quickbooks
 import { readEngagementServiceType } from "@/lib/schedule/storage";
 import {
   createQuickBooksInvoice,
+  createQuickBooksInvoicePayment,
   createQuickBooksSalesReceipt,
   ensureQuickBooksCustomer,
   getQuickBooksInvoice,
@@ -25,10 +26,19 @@ import type {
   ServiceInvoiceQuickBooksRef,
 } from "@/types/clientService";
 
-export const serviceInvoiceUsesQuickBooksPaymentSync = (
+export const serviceInvoiceQuickBooksSyncEnabled = (): boolean => {
+  const mode = serverQuickBooksConfig.syncMode;
+  return mode === "direct" || mode === "hybrid";
+};
+
+/** Stripe checkout records a sales receipt on payment — skip open QBO invoice on send. */
+export const shouldCreateQuickBooksInvoiceOnSend = (
   invoice: ServiceInvoice
-): boolean =>
-  invoice.paymentMethod === "stripe" || invoice.paymentMethod === "quickbooks";
+): boolean => invoice.paymentMethod !== "stripe";
+
+export const serviceInvoiceUsesQuickBooksPaymentSync = (
+  _invoice: ServiceInvoice
+): boolean => serviceInvoiceQuickBooksSyncEnabled();
 
 const buildQuickBooksInvoiceRef = (
   customerId: string,
@@ -166,6 +176,8 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
   invoice: ServiceInvoice;
   service: ClientService;
   client: ClientRecord;
+  allowOnlinePayments?: boolean;
+  paymentMethodLabel?: string;
 }): Promise<ServiceInvoiceQuickBooksRef> => {
   const customerEmail = input.client.email.trim().toLowerCase();
   const existing = input.invoice.quickbooks;
@@ -209,19 +221,30 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
       ? `${baseDocNumber.slice(0, 18)}-R`.slice(0, 21)
       : baseDocNumber;
 
+  const allowOnline = input.allowOnlinePayments ?? false;
+  const paymentLabel = input.paymentMethodLabel?.trim();
+  const privateNote = [
+    `TNP service invoice ${input.invoice.invoiceId}`,
+    paymentLabel ? `Payment method: ${paymentLabel}` : null,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+
   const qbInvoice = await createQuickBooksInvoice({
     customerId: customer.Id,
     docNumber,
     dueDate: input.invoice.dueDate ?? undefined,
-    privateNote: `TNP service invoice ${input.invoice.invoiceId}`,
+    privateNote,
     customerMemo: input.invoice.description || input.service.title,
     billEmail: customerEmail,
-    allowOnlineCreditCardPayment: true,
-    allowOnlineAchPayment: true,
+    allowOnlineCreditCardPayment: allowOnline,
+    allowOnlineAchPayment: allowOnline,
     lineItems,
   });
 
-  const paymentLink = await resolveQuickBooksInvoicePaymentLink(qbInvoice.Id);
+  const paymentLink = allowOnline
+    ? await resolveQuickBooksInvoicePaymentLink(qbInvoice.Id)
+    : null;
 
   return buildQuickBooksInvoiceRef(
     customer.Id,
@@ -295,6 +318,38 @@ const syncServiceInvoiceSalesReceiptDirect = async (input: {
   };
 };
 
+const recordQuickBooksInvoicePayment = async (input: {
+  invoice: ServiceInvoice;
+  service: ClientService;
+  payment: { provider: string; reference?: string };
+}): Promise<ServiceInvoiceQuickBooksRef> => {
+  const existing = input.invoice.quickbooks;
+  const qbInvoiceId = existing?.invoiceId;
+  const customerId = existing?.customerId;
+  if (!qbInvoiceId || !customerId) {
+    throw new Error("QuickBooks invoice link is required to record payment");
+  }
+
+  const amounts = resolveQuickBooksInvoiceAmounts(input.invoice);
+  const paymentNote = input.payment.reference
+    ? `${input.payment.provider} ${input.payment.reference}`
+    : input.payment.provider;
+
+  await createQuickBooksInvoicePayment({
+    customerId,
+    invoiceId: qbInvoiceId,
+    amount: amounts.amountCents / 100,
+    privateNote: `TNP ${input.invoice.invoiceNumber} · ${paymentNote}`,
+  });
+
+  return {
+    ...existing,
+    syncStatus: "synced",
+    lastSyncAt: new Date().toISOString(),
+    lastError: undefined,
+  };
+};
+
 /** Record paid service invoice in QuickBooks (Sales Receipt for Stripe; QBO Invoice when pay-via-QB). */
 export const syncServiceInvoicePaymentToQuickBooks = async (input: {
   clientId: string;
@@ -344,8 +399,13 @@ export const syncServiceInvoicePaymentToQuickBooks = async (input: {
       } else {
         quickbooks = await syncServiceInvoiceSalesReceiptDirect(input);
       }
-    } else {
+    } else if (
+      input.invoice.paymentMethod === "stripe" ||
+      !input.invoice.quickbooks?.invoiceId
+    ) {
       quickbooks = await syncServiceInvoiceSalesReceiptDirect(input);
+    } else {
+      quickbooks = await recordQuickBooksInvoicePayment(input);
     }
 
     return saveInvoice(input.clientId, input.serviceId, {

@@ -1,17 +1,21 @@
 import "server-only";
 
 import { clientInvoiceConfig } from "@/config/clientInvoices";
-import { serverQuickBooksConfig } from "@/config/quickbooks";
+import { getPaymentMethod } from "@/config/paymentMethods";
 import { buildVenmoPaymentUrl } from "@/lib/classRegistrations/payments";
 import {
   buildAchInvoiceInstructions,
   buildVenmoInvoiceInstructions,
   buildZelleInvoiceInstructions,
 } from "@/lib/invoices/paymentInstructions";
-import { syncServiceInvoiceToQuickBooks } from "@/lib/invoices/quickbooksSync";
-import { createServiceInvoiceStripeCheckout } from "@/lib/invoices/stripeCheckout";
 import { normalizeStoredInvoiceAmounts } from "@/lib/invoices/processingFee";
-import { getPaymentMethod } from "@/config/paymentMethods";
+import {
+  serviceInvoiceQuickBooksSyncEnabled,
+  shouldCreateQuickBooksInvoiceOnSend,
+  syncServiceInvoiceToQuickBooks,
+} from "@/lib/invoices/quickbooksSync";
+import { createServiceInvoiceStripeCheckout } from "@/lib/invoices/stripeCheckout";
+import { readQuickBooksTokens } from "@/lib/integrations/quickbooks/tokenStorage";
 import type { ClientRecord } from "@/types/client";
 import type {
   ClientService,
@@ -50,6 +54,68 @@ const buildZelleInstructions = (
   client: ClientRecord
 ): string => buildZelleInvoiceInstructions(invoice, client);
 
+const buildFailedQuickBooksRef = (
+  existing: ServiceInvoiceQuickBooksRef | null,
+  message: string
+): ServiceInvoiceQuickBooksRef => ({
+  ...existing,
+  syncStatus: "failed",
+  lastError: message,
+  lastSyncAt: new Date().toISOString(),
+});
+
+const attachQuickBooksInvoiceOnSend = async (input: {
+  invoice: ServiceInvoice;
+  service: ClientService;
+  client: ClientRecord;
+  result: ResolvedInvoicePayment;
+  allowOnlinePayments: boolean;
+  paymentMethodLabel: string;
+  required: boolean;
+}): Promise<ResolvedInvoicePayment> => {
+  if (
+    !serviceInvoiceQuickBooksSyncEnabled() ||
+    !shouldCreateQuickBooksInvoiceOnSend(input.invoice)
+  ) {
+    return input.result;
+  }
+
+  const tokens = await readQuickBooksTokens();
+  if (!tokens?.refreshToken) {
+    const message = "QuickBooks is not connected";
+    if (input.required) {
+      throw new ServiceInvoicePaymentError(message);
+    }
+    console.warn("[service-invoices] Skipping QuickBooks sync on send:", message);
+    return {
+      ...input.result,
+      quickbooks: buildFailedQuickBooksRef(input.invoice.quickbooks, message),
+    };
+  }
+
+  try {
+    const quickbooks = await syncServiceInvoiceToQuickBooks({
+      invoice: input.invoice,
+      service: input.service,
+      client: input.client,
+      allowOnlinePayments: input.allowOnlinePayments,
+      paymentMethodLabel: input.paymentMethodLabel,
+    });
+    return { ...input.result, quickbooks };
+  } catch (error) {
+    const message =
+      error instanceof Error ? error.message : "QuickBooks sync failed";
+    if (input.required) {
+      throw new ServiceInvoicePaymentError(message);
+    }
+    console.error("[service-invoices] QuickBooks sync on send failed:", error);
+    return {
+      ...input.result,
+      quickbooks: buildFailedQuickBooksRef(input.invoice.quickbooks, message),
+    };
+  }
+};
+
 export const resolveServiceInvoicePayment = async (input: {
   invoice: ServiceInvoice;
   service: ClientService;
@@ -68,41 +134,58 @@ export const resolveServiceInvoicePayment = async (input: {
       amountCents: input.invoice.amountCents,
       note: `${input.invoice.invoiceNumber} ${input.service.title}`.slice(0, 200),
     });
-    return {
-      paymentLink,
-      paymentInstructions: buildVenmoInstructions(input.invoice, input.client),
-      quickbooks: null,
-      stripe: null,
-    };
+    return attachQuickBooksInvoiceOnSend({
+      ...input,
+      allowOnlinePayments: false,
+      paymentMethodLabel: method.label,
+      required: false,
+      result: {
+        paymentLink,
+        paymentInstructions: buildVenmoInstructions(input.invoice, input.client),
+        quickbooks: null,
+        stripe: null,
+      },
+    });
   }
 
   if (method.id === "zelle") {
-    return {
-      paymentLink: null,
-      paymentInstructions: buildZelleInstructions(input.invoice, input.client),
-      quickbooks: null,
-      stripe: null,
-    };
+    return attachQuickBooksInvoiceOnSend({
+      ...input,
+      allowOnlinePayments: false,
+      paymentMethodLabel: method.label,
+      required: false,
+      result: {
+        paymentLink: null,
+        paymentInstructions: buildZelleInstructions(input.invoice, input.client),
+        quickbooks: null,
+        stripe: null,
+      },
+    });
   }
 
   if (method.id === "ach") {
-    return {
-      paymentLink: null,
-      paymentInstructions: buildAchInvoiceInstructions(
-        input.invoice,
-        input.client
-      ),
-      quickbooks: null,
-      stripe: null,
-    };
+    return attachQuickBooksInvoiceOnSend({
+      ...input,
+      allowOnlinePayments: false,
+      paymentMethodLabel: method.label,
+      required: false,
+      result: {
+        paymentLink: null,
+        paymentInstructions: buildAchInvoiceInstructions(
+          input.invoice,
+          input.client
+        ),
+        quickbooks: null,
+        stripe: null,
+      },
+    });
   }
 
   if (method.id === "quickbooks") {
-    const mode = serverQuickBooksConfig.syncMode;
-    if (mode !== "direct" && mode !== "hybrid") {
+    if (!serviceInvoiceQuickBooksSyncEnabled()) {
       throw new ServiceInvoicePaymentError(
         "QuickBooks invoices from the CRM require BILLING_SYNC_MODE=direct (or hybrid). " +
-          "Either set that env var and reconnect QuickBooks, or use Venmo/Zelle/Stripe for this invoice."
+          "Either set that env var and reconnect QuickBooks, or use Venmo/Zelle for this invoice."
       );
     }
 
@@ -110,6 +193,8 @@ export const resolveServiceInvoicePayment = async (input: {
       invoice: input.invoice,
       service: input.service,
       client: input.client,
+      allowOnlinePayments: true,
+      paymentMethodLabel: method.label,
     });
 
     const paymentLink =
@@ -152,10 +237,16 @@ export const resolveServiceInvoicePayment = async (input: {
     };
   }
 
-  return {
-    paymentLink: null,
-    paymentInstructions: `Pay ${formatMoney(input.invoice.amountCents)} using ${method.label}. Reference invoice ${input.invoice.invoiceNumber}.`,
-    quickbooks: null,
-    stripe: null,
-  };
+  return attachQuickBooksInvoiceOnSend({
+    ...input,
+    allowOnlinePayments: false,
+    paymentMethodLabel: method.label,
+    required: false,
+    result: {
+      paymentLink: null,
+      paymentInstructions: `Pay ${formatMoney(input.invoice.amountCents)} using ${method.label}. Reference invoice ${input.invoice.invoiceNumber}.`,
+      quickbooks: null,
+      stripe: null,
+    },
+  });
 };

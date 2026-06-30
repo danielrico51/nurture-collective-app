@@ -185,10 +185,12 @@ QuickBooks routes revenue through **service items**, each linked to an income ac
 | `QBO_DEPOSIT_ITEM_ID` | Deposit invoices (`description: Deposit`) |
 | `QBO_BIRTH_SERVICES_ITEM_ID` | Birth doula engagements and birth-related services |
 | `QBO_POSTPARTUM_SUPPORT_ITEM_ID` | Postpartum engagements and doula care balances |
-| `QBO_OTHER_OPERATION_INCOME_ITEM_ID` | Classes, massages, gift cards, and other add-ons |
+| `QBO_OTHER_OPERATION_INCOME_ITEM_ID` | Classes, massages, gift cards — QBO service item **Other Operating Income (Classes, Massages, etc.)** (must be a Service item linked to that income account) |
 | `QBO_DEFAULT_ITEM_ID` | Fallback when a category item is not set |
 
 CRM service invoices pick the item automatically from the linked engagement type, invoice description, and service title. Reissued engagement invoices follow the same rules.
+
+**All payment methods (Venmo, Zelle, QuickBooks, etc.)** create a QuickBooks invoice when sent (`BILLING_SYNC_MODE=direct` or `hybrid`). Manual methods disable QBO online pay links — clients still receive Venmo/Zelle instructions from the CRM. When staff mark a manual invoice paid, the app records a QuickBooks payment against the open invoice. Stripe invoices still use a sales receipt on payment (no open QBO invoice on send).
 
 ### 5. Environment variables
 
