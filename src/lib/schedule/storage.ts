@@ -25,6 +25,7 @@ import {
 } from "@/lib/schedule/payoutStorage";
 import { syncExpectationToServiceInvoice, ExpectationBillingError, reissueExpectationInvoice } from "@/lib/schedule/expectationBilling";
 import { ensureEngagementPaymentInvoicesSynced } from "@/lib/schedule/engagementBillingSync";
+import { syncEngagementLinkedServiceTotal } from "@/lib/schedule/engagementServiceSync";
 import { buildLinkedServiceTitle } from "@/lib/schedule/serviceTitles";
 import { savePaymentExpectation } from "@/lib/schedule/expectationStorage";
 import {
@@ -348,8 +349,10 @@ export const createServiceEngagement = async (
     providerId: input.primaryProviderId ?? null,
     providerName: primaryProvider?.displayName,
     serviceDate: input.bookDate,
-    totalFeeCents: input.package.clientFeeCents,
   });
+
+  const packages = await listPackagesForEngagement(clientId, engagementId);
+  await syncEngagementLinkedServiceTotal(clientId, engagement, packages);
 
   const saved = await readEngagementRecord(clientId, engagementId);
   if (!saved) throw new ScheduleValidationError("Failed to save engagement");
@@ -458,9 +461,7 @@ export const updateEngagementPackage = async (
   await writeJson(key, { ...next, storageKey: key });
 
   const packages = await listPackagesForEngagement(clientId, engagementId);
-  await updateClientService(clientId, engagement.serviceId, {
-    totalFeeCents: sumPackageFees(packages),
-  });
+  await syncEngagementLinkedServiceTotal(clientId, engagement, packages);
 
   return (await getEngagementDetail(clientId, engagementId))!;
 };

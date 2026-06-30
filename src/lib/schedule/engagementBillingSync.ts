@@ -3,13 +3,16 @@ import { updateClientService } from "@/lib/client-services/storage";
 import { listLocalKeys, readLocalJson } from "@/lib/clients/localStorage";
 import { listClientsKeys, readClientsJson } from "@/lib/clients/platformS3";
 import { syncExpectationToServiceInvoice } from "@/lib/schedule/expectationBilling";
+import { syncEngagementLinkedServiceTotal } from "@/lib/schedule/engagementServiceSync";
 import { buildLinkedServiceTitle } from "@/lib/schedule/serviceTitles";
 import {
   buildEngagementKey,
   buildExpectationListPrefix,
+  buildPackageListPrefix,
 } from "@/lib/schedule/paths";
 import type {
   ClientPaymentExpectation,
+  EngagementPackage,
   ServiceEngagement,
 } from "@/types/serviceEngagement";
 
@@ -52,6 +55,21 @@ const listExpectationsForEngagement = async (
   return expectations.sort((a, b) => a.kind.localeCompare(b.kind));
 };
 
+const listPackagesForEngagement = async (
+  clientId: string,
+  engagementId: string
+): Promise<EngagementPackage[]> => {
+  const prefix = buildPackageListPrefix(clientId, engagementId);
+  const keys = await listKeys(prefix);
+  const packages: EngagementPackage[] = [];
+  for (const key of keys) {
+    if (!key.endsWith("/package.json")) continue;
+    const record = await readJson<EngagementPackage>(key);
+    if (record) packages.push(record);
+  }
+  return packages.sort((a, b) => a.sortOrder - b.sortOrder);
+};
+
 /** Backfill deposit/balance invoices for one engagement (idempotent). */
 export const ensureEngagementPaymentInvoicesSynced = async (
   clientId: string,
@@ -59,6 +77,11 @@ export const ensureEngagementPaymentInvoicesSynced = async (
 ): Promise<void> => {
   if (engagement.serviceId) {
     try {
+      const packages = await listPackagesForEngagement(
+        clientId,
+        engagement.engagementId
+      );
+      await syncEngagementLinkedServiceTotal(clientId, engagement, packages);
       await updateClientService(clientId, engagement.serviceId, {
         title: buildLinkedServiceTitle(
           engagement.serviceType,
@@ -66,7 +89,7 @@ export const ensureEngagementPaymentInvoicesSynced = async (
         ),
       });
     } catch (error) {
-      console.error("[schedule] linked service title sync failed", {
+      console.error("[schedule] linked service sync failed", {
         clientId,
         engagementId: engagement.engagementId,
         serviceId: engagement.serviceId,

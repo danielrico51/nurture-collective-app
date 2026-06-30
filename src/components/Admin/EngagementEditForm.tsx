@@ -94,6 +94,18 @@ const EngagementEditForm = ({
     PaymentMethodId | ""
   >(engagement.preferredPaymentMethod ?? "");
 
+  const linkedServiceTotalCents = engagement.service
+    ? engagement.service.feeItems.length > 0
+      ? engagement.service.feeItems.reduce(
+          (sum, item) => sum + item.amountCents,
+          0
+        )
+      : engagement.service.totalFeeCents
+    : null;
+  const serviceTotalOutOfSync =
+    linkedServiceTotalCents !== null &&
+    linkedServiceTotalCents !== engagement.totalClientFeeCents;
+
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
     const clientFeeCents = parseDollarsToCents(clientFee);
@@ -268,6 +280,13 @@ const EngagementEditForm = ({
             onChange={(event) => setClientFee(event.target.value)}
             className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
           />
+          {serviceTotalOutOfSync ? (
+            <p className="mt-1 text-xs text-amber-700">
+              Linked service total is{" "}
+              {formatCentsToDollars(linkedServiceTotalCents)} — save to sync
+              with this engagement fee.
+            </p>
+          ) : null}
         </label>
         <label className="block text-sm">
           <span className="font-medium">Doula fee ($)</span>
