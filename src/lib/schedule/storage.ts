@@ -5,6 +5,8 @@ import {
   listClientServicesWithInvoices,
   readClientService,
   updateClientService,
+  ClientServiceValidationError,
+  type ServiceInvoiceDispatchOptions,
 } from "@/lib/client-services/storage";
 import { getClientById } from "@/lib/clients/storage";
 import { listLocalKeys, readLocalJson, writeLocalJson, deleteLocalJson } from "@/lib/clients/localStorage";
@@ -21,7 +23,7 @@ import {
   listProviderPayoutReport,
   updateProviderPayoutBatch,
 } from "@/lib/schedule/payoutStorage";
-import { syncExpectationToServiceInvoice } from "@/lib/schedule/expectationBilling";
+import { syncExpectationToServiceInvoice, ExpectationBillingError, reissueExpectationInvoice } from "@/lib/schedule/expectationBilling";
 import { ensureEngagementPaymentInvoicesSynced } from "@/lib/schedule/engagementBillingSync";
 import { buildLinkedServiceTitle } from "@/lib/schedule/serviceTitles";
 import { savePaymentExpectation } from "@/lib/schedule/expectationStorage";
@@ -55,6 +57,7 @@ import type {
   CreatePaymentExpectationInput,
   CreateServiceEngagementInput,
   EngagementPackage,
+  EngagementServiceType,
   ServiceEngagement,
   ServiceEngagementWithDetails,
   UpdateEngagementPackageInput,
@@ -466,7 +469,8 @@ export const updatePaymentExpectation = async (
   clientId: string,
   engagementId: string,
   expectationId: string,
-  raw: unknown
+  raw: unknown,
+  dispatchOptions?: ServiceInvoiceDispatchOptions
 ): Promise<ServiceEngagementWithDetails> => {
   const updates = validateUpdatePaymentExpectationInput(raw);
   const engagement = await readEngagementRecord(clientId, engagementId);
@@ -498,12 +502,71 @@ export const updatePaymentExpectation = async (
     (next.kind === "deposit" || next.kind === "balance") &&
     next.amountCents > 0
   ) {
-    await syncExpectationToServiceInvoice(
+    try {
+      await syncExpectationToServiceInvoice(
+        clientId,
+        engagement.serviceId,
+        engagement,
+        next,
+        dispatchOptions
+      );
+    } catch (error) {
+      if (
+        error instanceof ExpectationBillingError ||
+        error instanceof ClientServiceValidationError
+      ) {
+        throw new ScheduleValidationError(
+          error instanceof Error ? error.message : "Invoice sync failed"
+        );
+      }
+      throw error;
+    }
+  }
+
+  return (await getEngagementDetail(clientId, engagementId))!;
+};
+
+export const reissuePaymentExpectationInvoice = async (
+  clientId: string,
+  engagementId: string,
+  expectationId: string,
+  dispatchOptions?: ServiceInvoiceDispatchOptions
+): Promise<ServiceEngagementWithDetails> => {
+  const engagement = await readEngagementRecord(clientId, engagementId);
+  if (!engagement) throw new ScheduleValidationError("Engagement not found");
+
+  const key = buildExpectationKey(clientId, engagementId, expectationId);
+  const expectation = await readJson<ClientPaymentExpectation>(key);
+  if (!expectation) {
+    throw new ScheduleValidationError("Payment expectation not found");
+  }
+  if (
+    (expectation.kind !== "deposit" && expectation.kind !== "balance") ||
+    expectation.amountCents <= 0
+  ) {
+    throw new ScheduleValidationError(
+      "Only deposit and balance expectations with an amount can be reissued"
+    );
+  }
+
+  try {
+    await reissueExpectationInvoice(
       clientId,
       engagement.serviceId,
       engagement,
-      next
+      expectation,
+      dispatchOptions
     );
+  } catch (error) {
+    if (
+      error instanceof ExpectationBillingError ||
+      error instanceof ClientServiceValidationError
+    ) {
+      throw new ScheduleValidationError(
+        error instanceof Error ? error.message : "Invoice reissue failed"
+      );
+    }
+    throw error;
   }
 
   return (await getEngagementDetail(clientId, engagementId))!;
@@ -517,6 +580,15 @@ export const readEngagementPackage = async (
   const key = buildPackageKey(clientId, engagementId, packageId);
   const record = await readJson<EngagementPackage>(key);
   return record ? { ...record, storageKey: key } : null;
+};
+
+export const readEngagementServiceType = async (
+  clientId: string,
+  engagementId: string | null | undefined
+): Promise<EngagementServiceType | null> => {
+  if (!engagementId) return null;
+  const engagement = await readEngagementRecord(clientId, engagementId);
+  return engagement?.serviceType ?? null;
 };
 
 export const readPaymentExpectation = async (

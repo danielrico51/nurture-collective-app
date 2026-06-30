@@ -409,6 +409,50 @@ const invoiceAmountFieldsChanged = (raw: UpdateServiceInvoiceInput): boolean =>
   raw.processingFeePercent !== undefined ||
   raw.paymentMethod !== undefined;
 
+const quickBooksInvoiceFullyUnpaid = (
+  balance: number | undefined,
+  totalAmt: number | undefined
+): boolean => {
+  if (balance == null || totalAmt == null) return false;
+  return balance >= totalAmt && totalAmt > 0;
+};
+
+const voidLinkedQuickBooksInvoiceForCancel = async (
+  invoice: ServiceInvoice
+): Promise<void> => {
+  const qbInvoiceId = invoice.quickbooks?.invoiceId;
+  if (!qbInvoiceId) return;
+
+  const { getQuickBooksInvoice, voidQuickBooksInvoice } = await import(
+    "@/lib/integrations/quickbooks"
+  );
+  const qbInvoice = await getQuickBooksInvoice(qbInvoiceId);
+  const balance = qbInvoice.Balance;
+  const total = qbInvoice.TotalAmt;
+
+  if (
+    balance != null &&
+    total != null &&
+    total > 0 &&
+    balance < total
+  ) {
+    throw new ClientServiceValidationError(
+      "Cannot cancel this invoice — QuickBooks shows a partial payment. Resolve in QuickBooks first."
+    );
+  }
+
+  if (quickBooksInvoiceFullyUnpaid(balance, total)) {
+    await voidQuickBooksInvoice(qbInvoice);
+  }
+};
+
+export const cancelServiceInvoice = async (
+  clientId: string,
+  serviceId: string,
+  invoiceId: string
+): Promise<ServiceInvoice> =>
+  updateServiceInvoice(clientId, serviceId, invoiceId, { markCancelled: true });
+
 const shouldRefreshInvoiceDocument = (invoice: ServiceInvoice): boolean =>
   invoice.documentStorageKey != null ||
   invoice.status === "sent" ||
@@ -831,6 +875,22 @@ export const updateServiceInvoice = async (
       );
     }
     status = "refunded";
+  }
+
+  if (raw.markCancelled) {
+    if (existing.status === "paid") {
+      throw new ClientServiceValidationError("Paid invoices cannot be cancelled");
+    }
+    if (existing.status === "cancelled") {
+      return existing;
+    }
+    await voidLinkedQuickBooksInvoiceForCancel(existing);
+    const cancelled: ServiceInvoice = {
+      ...existing,
+      status: "cancelled",
+      updatedAt: now,
+    };
+    return saveInvoice(clientId, serviceId, cancelled);
   }
 
   if (hasFieldEdits) {

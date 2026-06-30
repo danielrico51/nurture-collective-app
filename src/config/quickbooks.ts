@@ -13,6 +13,8 @@ const readSyncMode = (): BillingSyncMode => {
   return "n8n";
 };
 
+const readItemId = (key: string): string => process.env[key]?.trim() ?? "";
+
 /** Server-only QuickBooks Online + billing configuration. */
 export const serverQuickBooksConfig = {
   environment: readEnvironment(),
@@ -21,8 +23,16 @@ export const serverQuickBooksConfig = {
   realmId: process.env.QBO_REALM_ID?.trim() ?? "",
   refreshToken: process.env.QBO_REFRESH_TOKEN?.trim() ?? "",
   webhookVerifier: process.env.QBO_WEBHOOK_VERIFIER?.trim() ?? "",
-  defaultItemId: process.env.QBO_DEFAULT_ITEM_ID?.trim() ?? "",
-  defaultIncomeAccountId: process.env.QBO_DEFAULT_INCOME_ACCOUNT_ID?.trim() ?? "",
+  /** @deprecated Prefer category-specific itemIds below. */
+  defaultItemId: readItemId("QBO_DEFAULT_ITEM_ID"),
+  defaultIncomeAccountId: readItemId("QBO_DEFAULT_INCOME_ACCOUNT_ID"),
+  /** QBO service items — each item maps to an income account in QuickBooks. */
+  itemIds: {
+    birth_services: readItemId("QBO_BIRTH_SERVICES_ITEM_ID"),
+    postpartum_support: readItemId("QBO_POSTPARTUM_SUPPORT_ITEM_ID"),
+    other_operation_income: readItemId("QBO_OTHER_OPERATION_INCOME_ITEM_ID"),
+    deposit: readItemId("QBO_DEPOSIT_ITEM_ID"),
+  },
   redirectUri: process.env.QBO_REDIRECT_URI?.trim() ?? "",
   syncMode: readSyncMode(),
   billingWebhookUrl: process.env.N8N_BILLING_WEBHOOK_URL?.trim() ?? "",

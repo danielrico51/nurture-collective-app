@@ -226,4 +226,6 @@ export interface UpdateServiceInvoiceInput {
   linkQuickBooks?: LinkServiceInvoiceQuickBooksInput;
   /** Label a paid invoice as refunded (manual refunds — no payment API). */
   markRefunded?: boolean;
+  /** Void linked QuickBooks invoice (when fully unpaid) and mark cancelled. */
+  markCancelled?: boolean;
 }

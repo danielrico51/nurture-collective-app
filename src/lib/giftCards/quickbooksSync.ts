@@ -1,3 +1,4 @@
+import { resolveQuickBooksItemIdForCategory } from "@/lib/invoices/quickbooksIncomeRouting";
 import { serverQuickBooksConfig } from "@/config/quickbooks";
 import { forwardToN8n } from "@/lib/webhooks/n8n";
 import { serverGiftCardConfig } from "@/config/giftCards";
@@ -20,6 +21,10 @@ const syncGiftCardToQuickBooksDirect = async (
   });
 
   const amount = centsToDollars(order.amountCents);
+  const giftCardItemId =
+    resolveQuickBooksItemIdForCategory("other_operation_income") ||
+    serverQuickBooksConfig.defaultItemId ||
+    undefined;
   const receipt = await createQuickBooksSalesReceipt({
     customerId: customer.Id,
     docNumber: order.id.slice(0, 21),
@@ -31,6 +36,7 @@ const syncGiftCardToQuickBooksDirect = async (
         description: `The Nesting Place eGift Card — $${amount.toFixed(2)} (recipient: ${order.recipient.email})`,
         quantity: 1,
         unitPrice: amount,
+        itemId: giftCardItemId,
       },
     ],
   });

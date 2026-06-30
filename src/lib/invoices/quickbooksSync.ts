@@ -6,6 +6,8 @@ import {
   buildServiceInvoiceQuickBooksLineItems,
   resolveQuickBooksInvoiceAmounts,
 } from "@/lib/invoices/quickbooksInvoiceAmounts";
+import { resolveServiceInvoiceQuickBooksItemId } from "@/lib/invoices/quickbooksIncomeRouting";
+import { readEngagementServiceType } from "@/lib/schedule/storage";
 import {
   createQuickBooksInvoice,
   createQuickBooksSalesReceipt,
@@ -168,13 +170,20 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
   const customerEmail = input.client.email.trim().toLowerCase();
   const existing = input.invoice.quickbooks;
   const amounts = resolveQuickBooksInvoiceAmounts(input.invoice);
+  const engagementServiceType = await readEngagementServiceType(
+    input.service.clientId,
+    input.service.engagementId
+  );
+  const quickBooksItemId = resolveServiceInvoiceQuickBooksItemId({
+    invoice: input.invoice,
+    service: input.service,
+    engagementServiceType,
+  });
   const lineItems = buildServiceInvoiceQuickBooksLineItems({
     invoice: input.invoice,
     serviceTitle: input.service.title,
-  }).map((item) => ({
-    ...item,
-    itemId: serverQuickBooksConfig.defaultItemId || undefined,
-  }));
+    itemId: quickBooksItemId || undefined,
+  });
 
   if (existing?.invoiceId && (await shouldReuseQuickBooksInvoice(existing, amounts))) {
     return refreshExistingQuickBooksInvoice(existing, amounts);
@@ -251,6 +260,16 @@ const syncServiceInvoiceSalesReceiptDirect = async (input: {
     ? ` · ${input.payment.provider} ${input.payment.reference}`
     : ` · ${input.payment.provider}`;
 
+  const engagementServiceType = await readEngagementServiceType(
+    input.service.clientId,
+    input.service.engagementId
+  );
+  const quickBooksItemId = resolveServiceInvoiceQuickBooksItemId({
+    invoice: input.invoice,
+    service: input.service,
+    engagementServiceType,
+  });
+
   const receipt = await createQuickBooksSalesReceipt({
     customerId: customer.Id,
     docNumber: input.invoice.invoiceNumber.slice(0, 21),
@@ -259,10 +278,8 @@ const syncServiceInvoiceSalesReceiptDirect = async (input: {
     lineItems: buildServiceInvoiceQuickBooksLineItems({
       invoice: input.invoice,
       serviceTitle: input.service.title,
-    }).map((item) => ({
-      ...item,
-      itemId: serverQuickBooksConfig.defaultItemId || undefined,
-    })),
+      itemId: quickBooksItemId || undefined,
+    }),
   });
 
   return {

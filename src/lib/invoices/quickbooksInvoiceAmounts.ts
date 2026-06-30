@@ -16,6 +16,7 @@ export const resolveQuickBooksInvoiceAmounts = (
 export const buildServiceInvoiceQuickBooksLineItems = (input: {
   invoice: ServiceInvoice;
   serviceTitle: string;
+  itemId?: string;
 }): Array<{
   amount: number;
   description: string;
@@ -25,6 +26,7 @@ export const buildServiceInvoiceQuickBooksLineItems = (input: {
 }> => {
   const amounts = resolveQuickBooksInvoiceAmounts(input.invoice);
   const centsToDollars = (cents: number): number => cents / 100;
+  const itemId = input.itemId;
 
   const lineItems = [
     {
@@ -32,6 +34,7 @@ export const buildServiceInvoiceQuickBooksLineItems = (input: {
       description: input.invoice.description || input.serviceTitle,
       quantity: 1,
       unitPrice: centsToDollars(amounts.subtotalCents),
+      itemId,
     },
   ];
 
@@ -44,6 +47,7 @@ export const buildServiceInvoiceQuickBooksLineItems = (input: {
           : "Credit card processing fee",
       quantity: 1,
       unitPrice: centsToDollars(amounts.processingFeeCents),
+      itemId,
     });
   }
 

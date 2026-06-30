@@ -176,9 +176,19 @@ Register **both** production redirect URIs in Intuit if you use dev and main: `.
 2. Copy verifier token → `QBO_WEBHOOK_VERIFIER`
 3. Subscribe to: `Invoice`, `Payment`, `Customer`
 
-### 4. Default product/service item
+### 4. QuickBooks service items (income accounts)
 
-Create a service item in QBO (e.g. "Care Services") and set `QBO_DEFAULT_ITEM_ID` so invoice line items map correctly.
+QuickBooks routes revenue through **service items**, each linked to an income account. Create four items in QBO and set the corresponding env vars (item **Id** from QBO, not the account Id):
+
+| Env var | Use for |
+|---------|---------|
+| `QBO_DEPOSIT_ITEM_ID` | Deposit invoices (`description: Deposit`) |
+| `QBO_BIRTH_SERVICES_ITEM_ID` | Birth doula engagements and birth-related services |
+| `QBO_POSTPARTUM_SUPPORT_ITEM_ID` | Postpartum engagements and doula care balances |
+| `QBO_OTHER_OPERATION_INCOME_ITEM_ID` | Classes, massages, gift cards, and other add-ons |
+| `QBO_DEFAULT_ITEM_ID` | Fallback when a category item is not set |
+
+CRM service invoices pick the item automatically from the linked engagement type, invoice description, and service title. Reissued engagement invoices follow the same rules.
 
 ### 5. Environment variables
 

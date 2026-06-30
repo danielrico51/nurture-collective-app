@@ -13,7 +13,9 @@ import {
   parseDollarsToCents,
   updateClientEngagement,
   updatePaymentExpectation,
+  reissueExpectationInvoice,
 } from "@/lib/api/scheduleClient";
+import { isExpectationInvoiceOutOfSync } from "@/lib/schedule/expectationInvoiceSync";
 import { ENGAGEMENT_PAYMENT_METHODS, getPaymentMethod, PAYMENT_METHODS } from "@/config/paymentMethods";
 import { fetchAdminProviders } from "@/lib/api/providersClient";
 import type { ScheduleTourBookDraft } from "@/tour/clientsScheduleTourDemo";
@@ -234,6 +236,32 @@ const ClientScheduleTab = ({
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReissueExpectationInvoice = async (
+    engagement: ServiceEngagementWithDetails,
+    expectationId: string
+  ) => {
+    const confirmed = window.confirm(
+      "Void the linked invoice and create a new one? Unpaid QuickBooks invoices will be voided. A replacement is emailed automatically when the prior invoice was already sent."
+    );
+    if (!confirmed) return;
+
+    setSaving(true);
+    try {
+      await reissueExpectationInvoice(
+        clientId,
+        engagement.engagementId,
+        expectationId
+      );
+      toast.success("Invoice voided and reissued");
+      await load();
+      onChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Reissue failed");
     } finally {
       setSaving(false);
     }
@@ -711,7 +739,25 @@ const ClientScheduleTab = ({
                         <p className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
                           Payment schedule
                         </p>
-                        {engagement.expectations.map((expectation) => (
+                        {engagement.expectations.map((expectation) => {
+                          const linkedInvoice = expectation.invoiceId
+                            ? engagement.service?.invoices.find(
+                                (invoice) =>
+                                  invoice.invoiceId === expectation.invoiceId
+                              )
+                            : null;
+                          const outOfSync = isExpectationInvoiceOutOfSync(
+                            linkedInvoice,
+                            expectation
+                          );
+                          const canReissue =
+                            (expectation.kind === "deposit" ||
+                              expectation.kind === "balance") &&
+                            expectation.amountCents > 0 &&
+                            !expectation.paidAt &&
+                            linkedInvoice?.status !== "paid";
+
+                          return (
                           <div
                             key={expectation.expectationId}
                             className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-nurture-sage/15 bg-white px-4 py-3 text-sm"
@@ -734,12 +780,23 @@ const ClientScheduleTab = ({
                                   paid {formatDate(expectation.paidAt)}
                                 </span>
                               ) : null}
-                              {expectation.invoiceId ? (
-                                <span className="ml-2 text-xs text-nurture-charcoal/50">
-                                  invoice linked
+                              {linkedInvoice ? (
+                                <span className="ml-2 text-xs text-nurture-charcoal/60">
+                                  Invoice {linkedInvoice.invoiceNumber} ·{" "}
+                                  {linkedInvoice.status.replace(/_/g, " ")}
+                                </span>
+                              ) : expectation.invoiceId ? (
+                                <span className="ml-2 text-xs text-rose-700">
+                                  invoice missing
+                                </span>
+                              ) : null}
+                              {outOfSync ? (
+                                <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold uppercase tracking-wide text-amber-800">
+                                  Out of sync
                                 </span>
                               ) : null}
                             </div>
+                            <div className="flex flex-wrap items-center gap-2">
                             {!expectation.paidAt ? (
                               <button
                                 type="button"
@@ -755,8 +812,25 @@ const ClientScheduleTab = ({
                                 Mark paid
                               </button>
                             ) : null}
+                            {canReissue ? (
+                              <button
+                                type="button"
+                                disabled={saving}
+                                onClick={() =>
+                                  void handleReissueExpectationInvoice(
+                                    engagement,
+                                    expectation.expectationId
+                                  )
+                                }
+                                className="rounded-full border border-amber-300 bg-amber-50 px-3 py-1 text-xs font-medium text-amber-900"
+                              >
+                                Void & reissue
+                              </button>
+                            ) : null}
+                            </div>
                           </div>
-                        ))}
+                          );
+                        })}
                       </div>
                     ) : null}
                       </>

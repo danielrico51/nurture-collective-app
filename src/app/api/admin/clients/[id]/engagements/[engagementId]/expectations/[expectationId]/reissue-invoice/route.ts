@@ -3,11 +3,11 @@ import {
   handleClientsStorageError,
   requireManagementAuth,
 } from "@/lib/api/routeHelpers";
-import {
-  ScheduleValidationError,
-  updatePaymentExpectation,
-} from "@/lib/schedule/storage";
 import { ClientServiceValidationError } from "@/lib/client-services/storage";
+import {
+  reissuePaymentExpectationInvoice,
+  ScheduleValidationError,
+} from "@/lib/schedule/storage";
 
 export const dynamic = "force-dynamic";
 
@@ -15,23 +15,15 @@ type RouteContext = {
   params: { id: string; engagementId: string; expectationId: string };
 };
 
-export async function PATCH(request: NextRequest, { params }: RouteContext) {
+export async function POST(request: NextRequest, { params }: RouteContext) {
   const auth = await requireManagementAuth(request);
   if (auth.error || !auth.user) return auth.error;
 
-  let body: unknown;
   try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json({ error: "Invalid JSON body" }, { status: 400 });
-  }
-
-  try {
-    const engagement = await updatePaymentExpectation(
+    const engagement = await reissuePaymentExpectationInvoice(
       params.id,
       params.engagementId,
       params.expectationId,
-      body,
       {
         actor: { sub: auth.user.sub, email: auth.user.email },
         origin: request.nextUrl.origin,

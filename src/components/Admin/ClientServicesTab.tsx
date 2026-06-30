@@ -8,7 +8,8 @@ import {
   updateClientService,
   updateServiceInvoice,
 } from "@/lib/api/clientsClient";
-import { fetchClientEngagements } from "@/lib/api/scheduleClient";
+import { fetchClientEngagements, reissueExpectationInvoice } from "@/lib/api/scheduleClient";
+import { isExpectationInvoiceOutOfSync } from "@/lib/schedule/expectationInvoiceSync";
 import { fetchAdminProviders } from "@/lib/api/providersClient";
 import { matchProviderByLabel } from "@/lib/providers/matching";
 import ServiceFeeItemsEditor, {
@@ -29,7 +30,10 @@ import type {
   PaymentMethodId,
   ServiceInvoiceStatus,
 } from "@/types/clientService";
-import type { ServiceEngagementWithDetails } from "@/types/serviceEngagement";
+import type {
+  ClientPaymentExpectation,
+  ServiceEngagementWithDetails,
+} from "@/types/serviceEngagement";
 import type { ProviderRecord } from "@/types/provider";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import toast from "react-hot-toast";
@@ -189,6 +193,23 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
     for (const engagement of engagements) {
       if (engagement.preferredPaymentMethod) {
         map.set(engagement.serviceId, engagement.preferredPaymentMethod);
+      }
+    }
+    return map;
+  }, [engagements]);
+
+  const expectationByInvoiceId = useMemo(() => {
+    const map = new Map<
+      string,
+      {
+        expectation: ClientPaymentExpectation;
+        engagement: ServiceEngagementWithDetails;
+      }
+    >();
+    for (const engagement of engagements) {
+      for (const expectation of engagement.expectations) {
+        if (!expectation.invoiceId) continue;
+        map.set(expectation.invoiceId, { expectation, engagement });
       }
     }
     return map;
@@ -422,7 +443,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
   const handleInvoiceAction = async (
     serviceId: string,
     invoiceId: string,
-    action: "markSent" | "markPaid" | "markRefunded" | "resend",
+    action: "markSent" | "markPaid" | "markRefunded" | "resend" | "markCancelled",
     options?: { notes?: string }
   ) => {
     if (action === "markRefunded") {
@@ -438,6 +459,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
         markSent: action === "markSent",
         markPaid: action === "markPaid",
         markRefunded: action === "markRefunded",
+        markCancelled: action === "markCancelled",
         resend: action === "resend",
         notes: options?.notes,
       });
@@ -446,6 +468,8 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
           ? "Marked paid (no email sent)"
           : action === "markRefunded"
             ? "Marked refunded"
+            : action === "markCancelled"
+              ? "Invoice cancelled"
             : action === "resend"
               ? "Invoice resent"
               : "Invoice sent"
@@ -454,6 +478,28 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Update failed");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleReissueLinkedExpectationInvoice = async (
+    engagementId: string,
+    expectationId: string
+  ) => {
+    const confirmed = window.confirm(
+      "Void this invoice and create a new one from the linked deposit/balance expectation? Unpaid QuickBooks invoices will be voided."
+    );
+    if (!confirmed) return;
+
+    setSaving(true);
+    try {
+      await reissueExpectationInvoice(clientId, engagementId, expectationId);
+      toast.success("Invoice voided and reissued");
+      await load({ silent: true });
+      onChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Reissue failed");
     } finally {
       setSaving(false);
     }
@@ -1310,10 +1356,30 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                         <p className="text-xs text-nurture-charcoal/60">No invoices yet.</p>
                       ) : (
                         <ul className="space-y-2">
-                          {service.invoices.map((invoice) => (
+                          {service.invoices.map((invoice) => {
+                            const linkedExpectation = expectationByInvoiceId.get(
+                              invoice.invoiceId
+                            );
+                            const outOfSync = linkedExpectation
+                              ? isExpectationInvoiceOutOfSync(
+                                  invoice,
+                                  linkedExpectation.expectation
+                                )
+                              : false;
+                            const canReissueLinked =
+                              linkedExpectation &&
+                              !linkedExpectation.expectation.paidAt &&
+                              invoice.status !== "paid" &&
+                              invoice.status !== "cancelled";
+
+                            return (
                             <li
                               key={invoice.invoiceId}
-                              className="rounded-xl border border-nurture-sage/15 bg-white px-3 py-2 text-xs space-y-2"
+                              className={`rounded-xl border border-nurture-sage/15 bg-white px-3 py-2 text-xs space-y-2 ${
+                                invoice.status === "cancelled"
+                                  ? "opacity-60"
+                                  : ""
+                              }`}
                             >
                               <div className="flex flex-wrap items-center justify-between gap-2">
                               <div>
@@ -1326,6 +1392,20 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     (m) => m.id === invoice.paymentMethod
                                   )?.label ?? invoice.paymentMethod}
                                 </p>
+                                {linkedExpectation ? (
+                                  <p className="text-nurture-charcoal/60">
+                                    Linked {linkedExpectation.expectation.kind}{" "}
+                                    expectation ·{" "}
+                                    {formatMoney(
+                                      linkedExpectation.expectation.amountCents
+                                    )}
+                                    {outOfSync ? (
+                                      <span className="ml-2 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-amber-800">
+                                        Out of sync
+                                      </span>
+                                    ) : null}
+                                  </p>
+                                ) : null}
                                 {invoice.processingFeeCents > 0 ? (
                                   <p className="text-nurture-charcoal/60">
                                     {formatMoney(invoice.subtotalCents)} +{" "}
@@ -1529,6 +1609,21 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     Mark paid (no email)
                                   </button>
                                 ) : null}
+                                {canReissueLinked ? (
+                                  <button
+                                    type="button"
+                                    disabled={saving}
+                                    onClick={() =>
+                                      void handleReissueLinkedExpectationInvoice(
+                                        linkedExpectation!.engagement.engagementId,
+                                        linkedExpectation!.expectation.expectationId
+                                      )
+                                    }
+                                    className="text-amber-800 font-medium hover:underline disabled:opacity-60"
+                                  >
+                                    Void & reissue
+                                  </button>
+                                ) : null}
                               </div>
                               </div>
                               {renderInvoiceEditForm(
@@ -1575,7 +1670,8 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                 </label>
                               ) : null}
                             </li>
-                          ))}
+                            );
+                          })}
                         </ul>
                       )}
                     </div>

@@ -139,6 +139,21 @@ export const updatePaymentExpectation = async (
   return handleResponse(response);
 };
 
+export const reissueExpectationInvoice = async (
+  clientId: string,
+  engagementId: string,
+  expectationId: string
+): Promise<{ engagement: ServiceEngagementWithDetails }> => {
+  const response = await fetch(
+    `/api/admin/clients/${encodeURIComponent(clientId)}/engagements/${encodeURIComponent(engagementId)}/expectations/${encodeURIComponent(expectationId)}/reissue-invoice`,
+    {
+      method: "POST",
+      headers: await authHeaders(),
+    }
+  );
+  return handleResponse(response);
+};
+
 export const createEngagementShift = async (
   clientId: string,
   engagementId: string,
