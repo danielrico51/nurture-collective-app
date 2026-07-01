@@ -296,7 +296,12 @@ export const handleClientsStorageError = (error: unknown) => {
   }
 
   return NextResponse.json(
-    { error: "Failed to access client storage" },
+    {
+      error:
+        message && !message.includes("NURTURE_CLIENTS_BUCKET")
+          ? message
+          : "Failed to access client storage",
+    },
     { status: 500 }
   );
 };

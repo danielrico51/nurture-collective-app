@@ -256,10 +256,9 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
   });
 
   const baseDocNumber = input.invoice.invoiceNumber.slice(0, 21);
-  const docNumber =
-    existing?.invoiceId && existing.syncedAmountCents !== amounts.amountCents
-      ? `${baseDocNumber.slice(0, 18)}-R`.slice(0, 21)
-      : baseDocNumber;
+  const docNumber = existing?.invoiceId
+    ? `${baseDocNumber.slice(0, 18)}-R`.slice(0, 21)
+    : baseDocNumber;
 
   const allowOnline = input.allowOnlinePayments ?? false;
   const paymentLabel = input.paymentMethodLabel?.trim();

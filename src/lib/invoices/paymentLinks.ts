@@ -189,31 +189,37 @@ export const resolveServiceInvoicePayment = async (input: {
       );
     }
 
-    const quickbooks = await syncServiceInvoiceToQuickBooks({
-      invoice: input.invoice,
-      service: input.service,
-      client: input.client,
-      allowOnlinePayments: true,
-      paymentMethodLabel: method.label,
-    });
+    try {
+      const quickbooks = await syncServiceInvoiceToQuickBooks({
+        invoice: input.invoice,
+        service: input.service,
+        client: input.client,
+        allowOnlinePayments: true,
+        paymentMethodLabel: method.label,
+      });
 
-    const paymentLink =
-      quickbooks.paymentLink ?? input.invoice.paymentLink ?? null;
-    const amounts = normalizeStoredInvoiceAmounts(input.invoice);
-    const paymentInstructions = paymentLink
-      ? amounts.processingFeeCents > 0
-        ? `Pay ${formatMoney(amounts.amountCents)} securely online (${formatMoney(amounts.subtotalCents)} service + ${formatMoney(amounts.processingFeeCents)} processing fee).`
-        : `Pay ${formatMoney(amounts.amountCents)} securely online.`
-      : amounts.processingFeeCents > 0
-        ? `Your invoice total is ${formatMoney(amounts.amountCents)} (${formatMoney(amounts.subtotalCents)} service + ${formatMoney(amounts.processingFeeCents)} processing fee). Our team will follow up with a secure online payment link shortly.`
-        : `Your invoice total is ${formatMoney(amounts.amountCents)}. Our team will follow up with a secure online payment link shortly.`;
+      const paymentLink =
+        quickbooks.paymentLink ?? input.invoice.paymentLink ?? null;
+      const amounts = normalizeStoredInvoiceAmounts(input.invoice);
+      const paymentInstructions = paymentLink
+        ? amounts.processingFeeCents > 0
+          ? `Pay ${formatMoney(amounts.amountCents)} securely online (${formatMoney(amounts.subtotalCents)} service + ${formatMoney(amounts.processingFeeCents)} processing fee).`
+          : `Pay ${formatMoney(amounts.amountCents)} securely online.`
+        : amounts.processingFeeCents > 0
+          ? `Your invoice total is ${formatMoney(amounts.amountCents)} (${formatMoney(amounts.subtotalCents)} service + ${formatMoney(amounts.processingFeeCents)} processing fee). Our team will follow up with a secure online payment link shortly.`
+          : `Your invoice total is ${formatMoney(amounts.amountCents)}. Our team will follow up with a secure online payment link shortly.`;
 
-    return {
-      paymentLink,
-      paymentInstructions,
-      quickbooks,
-      stripe: null,
-    };
+      return {
+        paymentLink,
+        paymentInstructions,
+        quickbooks,
+        stripe: null,
+      };
+    } catch (error) {
+      throw new ServiceInvoicePaymentError(
+        error instanceof Error ? error.message : "QuickBooks sync failed"
+      );
+    }
   }
 
   if (method.id === "stripe") {

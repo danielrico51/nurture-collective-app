@@ -103,7 +103,9 @@ const buildInvoiceDocumentContext = async (input: {
           if (error instanceof ServiceInvoicePaymentError) {
             throw new InvoiceDispatchError(error.message);
           }
-          throw error;
+          throw new InvoiceDispatchError(
+            error instanceof Error ? error.message : "Invoice payment setup failed"
+          );
         })
       : {
           paymentLink: input.invoice.paymentLink,
