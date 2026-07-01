@@ -16,11 +16,13 @@ import {
   createQuickBooksInvoicePayment,
   createQuickBooksSalesReceipt,
   ensureQuickBooksCustomer,
+  findQuickBooksInvoiceByDocNumber,
   getQuickBooksInvoice,
   quickBooksInvoiceUsesServiceItemId,
   resolveQuickBooksInvoicePaymentLink,
   voidQuickBooksInvoice,
 } from "@/lib/integrations/quickbooks";
+import { QuickBooksApiClientError } from "@/lib/integrations/quickbooks/client";
 import { readQuickBooksTokens } from "@/lib/integrations/quickbooks/tokenStorage";
 import { forwardToN8n } from "@/lib/webhooks/n8n";
 import type { ClientRecord } from "@/types/client";
@@ -72,6 +74,52 @@ const quickBooksTotalCents = (totalAmt: number | undefined): number =>
 const invoiceFullyUnpaid = (balance: number | undefined, totalAmt: number | undefined): boolean => {
   if (balance == null || totalAmt == null) return false;
   return balance >= totalAmt && totalAmt > 0;
+};
+
+const isQuickBooksDuplicateDocNumberError = (error: unknown): boolean => {
+  if (!(error instanceof QuickBooksApiClientError)) return false;
+  const message = error.message.toLowerCase();
+  return (
+    message.includes("duplicate document number") ||
+    message.includes("docnumber") ||
+    message.includes("document number already exists")
+  );
+};
+
+const createOrReuseQuickBooksInvoice = async (input: {
+  customerId: string;
+  docNumber: string;
+  dueDate?: string;
+  privateNote: string;
+  customerMemo: string;
+  billEmail: string;
+  allowOnline: boolean;
+  lineItems: ReturnType<typeof buildServiceInvoiceQuickBooksLineItems>;
+}): Promise<Awaited<ReturnType<typeof createQuickBooksInvoice>>> => {
+  try {
+    return await createQuickBooksInvoice({
+      customerId: input.customerId,
+      docNumber: input.docNumber,
+      dueDate: input.dueDate,
+      privateNote: input.privateNote,
+      customerMemo: input.customerMemo,
+      billEmail: input.billEmail,
+      allowOnlineCreditCardPayment: input.allowOnline,
+      allowOnlineAchPayment: input.allowOnline,
+      lineItems: input.lineItems,
+    });
+  } catch (error) {
+    if (!isQuickBooksDuplicateDocNumberError(error)) {
+      throw error;
+    }
+
+    const existing = await findQuickBooksInvoiceByDocNumber(input.docNumber);
+    if (!existing?.Id) {
+      throw error;
+    }
+
+    return existing;
+  }
 };
 
 const refreshExistingQuickBooksInvoice = async (
@@ -269,15 +317,14 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
     .filter(Boolean)
     .join(" · ");
 
-  const qbInvoice = await createQuickBooksInvoice({
+  const qbInvoice = await createOrReuseQuickBooksInvoice({
     customerId: customer.Id,
     docNumber,
     dueDate: input.invoice.dueDate ?? undefined,
     privateNote,
     customerMemo: input.invoice.description || input.service.title,
     billEmail: customerEmail,
-    allowOnlineCreditCardPayment: allowOnline,
-    allowOnlineAchPayment: allowOnline,
+    allowOnline,
     lineItems,
   });
 

@@ -20,6 +20,7 @@ import ServiceFeeItemsEditor, {
 } from "@/components/Admin/ServiceFeeItemsEditor";
 import { PAYMENT_METHODS, SERVICE_INVOICE_PAYMENT_METHODS, getPaymentMethod } from "@/config/paymentMethods";
 import { formatServiceInvoiceQuickBooksLabel } from "@/lib/invoices/quickbooksLabels";
+import { computeOpenInvoiceCount } from "@/lib/client-services/balances";
 import { classifyServiceInvoiceIncomeCategory } from "@/lib/invoices/quickbooksIncomeCategories";
 import {
   DEFAULT_PROCESSING_FEE_PERCENT,
@@ -27,6 +28,7 @@ import {
   resolveInvoiceAmounts,
 } from "@/lib/invoices/processingFee";
 import type {
+  ClientServiceStatus,
   ClientServiceWithInvoices,
   PaymentMethodId,
   QuickBooksIncomeCategory,
@@ -56,6 +58,13 @@ const STATUS_BADGE: Record<ServiceInvoiceStatus, string> = {
   paid: "bg-emerald-100 text-emerald-800",
   cancelled: "bg-nurture-charcoal/10 text-nurture-charcoal/50",
   refunded: "bg-rose-100 text-rose-800",
+};
+
+const SERVICE_STATUS_BADGE: Record<ClientServiceStatus, string> = {
+  draft: "bg-nurture-charcoal/10 text-nurture-charcoal/70",
+  active: "bg-emerald-100 text-emerald-800",
+  completed: "bg-violet-100 text-violet-800",
+  cancelled: "bg-nurture-charcoal/10 text-nurture-charcoal/50",
 };
 
 const formatMoney = (cents: number): string =>
@@ -485,6 +494,35 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
       onChanged?.();
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Could not update breakdown");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleCancelService = async (service: ClientServiceWithInvoices) => {
+    const openCount = computeOpenInvoiceCount(service.invoices);
+    if (openCount > 0) {
+      toast.error(
+        `Void ${openCount} open invoice${openCount === 1 ? "" : "s"} before cancelling this service.`
+      );
+      return;
+    }
+
+    const confirmed = window.confirm(
+      "Cancel this service? It stays in the client's history for billing records, but no new invoices can be created."
+    );
+    if (!confirmed) return;
+
+    setSaving(true);
+    try {
+      await updateClientService(clientId, service.serviceId, {
+        status: "cancelled",
+      });
+      toast.success("Service cancelled");
+      await load({ silent: true });
+      onChanged?.();
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Could not cancel service");
     } finally {
       setSaving(false);
     }
@@ -1277,7 +1315,9 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
             return (
               <li
                 key={service.serviceId}
-                className="rounded-2xl border border-nurture-sage/15 bg-white overflow-hidden"
+                className={`rounded-2xl border border-nurture-sage/15 bg-white overflow-hidden ${
+                  service.status === "cancelled" ? "opacity-75" : ""
+                }`}
               >
                 <button
                   type="button"
@@ -1290,6 +1330,11 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                     <div>
                       <p className="text-sm font-semibold text-nurture-charcoal">
                         {service.title}
+                        <span
+                          className={`ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${SERVICE_STATUS_BADGE[service.status]}`}
+                        >
+                          {service.status}
+                        </span>
                       </p>
                       <p className="text-xs text-nurture-charcoal/60 mt-0.5">
                         {serviceProviderLabel(service)} · {service.serviceDate}
@@ -1314,6 +1359,31 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
 
                 {expanded ? (
                   <div className="border-t border-nurture-sage/10 px-4 py-4 space-y-4 bg-nurture-cream/30">
+                    {service.status === "cancelled" ? (
+                      <p className="text-xs font-medium text-nurture-charcoal/60">
+                        Service cancelled — invoice history is kept for tracking.
+                      </p>
+                    ) : (
+                      <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border border-nurture-sage/15 bg-white px-3 py-2">
+                        <p className="text-xs text-nurture-charcoal/60">
+                          Cancel keeps billing history and prevents new invoices.
+                        </p>
+                        <button
+                          type="button"
+                          disabled={saving}
+                          onClick={() => void handleCancelService(service)}
+                          className="rounded-full border border-nurture-charcoal/20 px-4 py-2 text-xs font-semibold text-nurture-charcoal/70 transition hover:bg-nurture-charcoal/5 disabled:opacity-60"
+                        >
+                          Cancel service
+                        </button>
+                      </div>
+                    )}
+                    {!service.engagementId && service.status !== "cancelled" ? (
+                      <p className="rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-900">
+                        No linked engagement. Cancel this service when billing is
+                        settled to stop new invoices.
+                      </p>
+                    ) : null}
                     {service.googleDocUrl ? (
                       <a
                         href={service.googleDocUrl}
@@ -1391,7 +1461,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                         {editingFeeServiceId !== service.serviceId ? (
                           <button
                             type="button"
-                            disabled={saving}
+                            disabled={saving || service.status === "cancelled"}
                             onClick={() => startEditingFeeBreakdown(service)}
                             className="text-xs font-semibold text-nurture-sage-dark hover:underline disabled:opacity-60"
                           >
@@ -1821,7 +1891,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                       )}
                     </div>
 
-                    {service.balanceDueCents > 0 ? (
+                    {service.status !== "cancelled" && service.balanceDueCents > 0 ? (
                       <div className="rounded-xl border border-nurture-sage/20 bg-white p-3 space-y-3">
                         <h5 className="text-xs font-semibold uppercase tracking-wide text-nurture-charcoal/50">
                           New invoice
@@ -1995,11 +2065,16 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                           </button>
                         </div>
                       </div>
-                    ) : (
+                    ) : service.status !== "cancelled" ? (
                       <p className="text-xs text-emerald-700 font-medium">
                         Service fully paid.
                       </p>
-                    )}
+                    ) : service.balanceDueCents > 0 ? (
+                      <p className="text-xs text-amber-800 font-medium">
+                        Cancelled — {formatMoney(service.balanceDueCents)} remains
+                        on record for tracking.
+                      </p>
+                    ) : null}
                   </div>
                 ) : null}
               </li>

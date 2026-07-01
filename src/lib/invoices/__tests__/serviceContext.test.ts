@@ -100,6 +100,45 @@ describe("invoice service context", () => {
     expect(context.paymentStatusLabel).toBe("Unpaid");
   });
 
+  it("omits voided invoices from client payment history", () => {
+    const invoices = [
+      invoice({
+        invoiceId: "a",
+        amountCents: 50000,
+        status: "cancelled",
+        invoiceNumber: "TNP-2026-0001",
+        createdAt: "2026-02-01T00:00:00.000Z",
+      }),
+      invoice({
+        invoiceId: "b",
+        amountCents: 50000,
+        status: "paid",
+        paidAt: "2026-02-10T00:00:00.000Z",
+        invoiceNumber: "TNP-2026-0002",
+        createdAt: "2026-02-10T00:00:00.000Z",
+      }),
+      invoice({
+        invoiceId: "c",
+        amountCents: 100000,
+        status: "sent",
+        invoiceNumber: "TNP-2026-0003",
+        createdAt: "2026-02-15T00:00:00.000Z",
+      }),
+    ];
+    const context = buildInvoiceServiceContext(
+      service,
+      invoices,
+      invoices[2]
+    );
+
+    expect(context.paymentHistory.map((entry) => entry.invoiceNumber)).toEqual([
+      "TNP-2026-0002",
+      "TNP-2026-0003",
+    ]);
+    expect(context.paidCents).toBe(50000);
+    expect(context.balanceDueCents).toBe(100000);
+  });
+
   it("uses the current invoice amounts when they differ from stored copies", () => {
     const stored = [
       invoice({

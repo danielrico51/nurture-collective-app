@@ -10,10 +10,17 @@ export {
 } from "@/lib/integrations/quickbooks/tokenStorage";
 export { quickBooksGet, quickBooksPost } from "@/lib/integrations/quickbooks/client";
 export {
+  buildUniqueQuickBooksDisplayName,
   createQuickBooksCustomer,
-  createQuickBooksInvoice,
   ensureQuickBooksCustomer,
+  findQuickBooksCustomerByDisplayName,
   findQuickBooksCustomerByEmail,
+  isQuickBooksDuplicateNameError,
+  readQuickBooksCustomerEmail,
+} from "@/lib/integrations/quickbooks/customers";
+export {
+  createQuickBooksInvoice,
+  findQuickBooksInvoiceByDocNumber,
   getQuickBooksInvoice,
   fetchQuickBooksInvoicePaymentLink,
   resolveQuickBooksInvoicePaymentLink,

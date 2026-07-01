@@ -78,6 +78,15 @@ const sortInvoicesChronologically = (
     (a, b) => Date.parse(a.createdAt) - Date.parse(b.createdAt)
   );
 
+/** Voided invoices are kept for admin records but hidden from client documents. */
+export const isInvoiceVisibleInClientPaymentHistory = (
+  invoice: ServiceInvoice,
+  currentInvoiceId: string
+): boolean => {
+  if (invoice.invoiceId === currentInvoiceId) return true;
+  return invoice.status !== "cancelled";
+};
+
 /** Use the in-memory invoice when building context before/without a storage refresh. */
 export const replaceInvoiceInList = (
   invoices: ServiceInvoice[],
@@ -116,7 +125,14 @@ export const buildInvoiceServiceContext = (
     normalizedInvoices
   );
 
-  const paymentHistory = sortInvoicesChronologically(normalizedInvoices).map(
+  const paymentHistory = sortInvoicesChronologically(normalizedInvoices)
+    .filter((entry) =>
+      isInvoiceVisibleInClientPaymentHistory(
+        entry,
+        normalizedCurrent.invoiceId
+      )
+    )
+    .map(
     (entry) => {
       const isCurrent = entry.invoiceId === normalizedCurrent.invoiceId;
       const statusLabel =

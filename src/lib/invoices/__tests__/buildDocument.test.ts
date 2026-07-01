@@ -223,4 +223,47 @@ describe("buildInvoiceDocument", () => {
     expect(html).toContain("$3.00");
     expect(html).toContain("$103.00");
   });
+
+  it("does not include voided invoices in payment history", () => {
+    const paid = {
+      ...invoice,
+      invoiceId: "inv-paid",
+      invoiceNumber: "TNP-2026-0001",
+      amountCents: 50000,
+      subtotalCents: 50000,
+      status: "paid" as const,
+      paidAt: "2026-02-01T00:00:00.000Z",
+      createdAt: "2026-02-01T00:00:00.000Z",
+    };
+    const voided = {
+      ...invoice,
+      invoiceId: "inv-void",
+      invoiceNumber: "TNP-2026-0002",
+      amountCents: 50000,
+      subtotalCents: 50000,
+      status: "cancelled" as const,
+      createdAt: "2026-02-05T00:00:00.000Z",
+    };
+    const current = {
+      ...invoice,
+      invoiceId: "inv-current",
+      invoiceNumber: "TNP-2026-0003",
+      amountCents: 100000,
+      subtotalCents: 100000,
+      status: "sent" as const,
+      createdAt: "2026-02-10T00:00:00.000Z",
+    };
+    const html = buildInvoiceEmailHtml({
+      ...docInput({ invoice: current }),
+      serviceContext: buildInvoiceServiceContext(
+        service,
+        [paid, voided, current],
+        current
+      ),
+    });
+
+    expect(html).toContain("TNP-2026-0001");
+    expect(html).toContain("TNP-2026-0003");
+    expect(html).not.toContain("TNP-2026-0002");
+  });
 });

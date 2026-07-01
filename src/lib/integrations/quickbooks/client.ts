@@ -19,7 +19,11 @@ export class QuickBooksApiClientError extends Error {
 
 const parseErrorMessage = (payload: QuickBooksApiError): string => {
   const first = payload.Fault?.Error?.[0];
-  return first?.Detail ?? first?.Message ?? "QuickBooks API request failed";
+  const detail = first?.Detail?.trim();
+  const message = first?.Message?.trim();
+  if (detail && detail.toLowerCase() !== "null") return detail;
+  if (message) return message;
+  return "QuickBooks API request failed";
 };
 
 export const quickBooksRequest = async <T>(

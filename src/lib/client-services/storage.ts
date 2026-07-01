@@ -6,6 +6,7 @@ import {
   writeClientsJson,
 } from "@/lib/clients/platformS3";
 import {
+  computeOpenInvoiceCount,
   computeServiceBalanceDueCents,
   sumPaidInvoiceCents,
 } from "@/lib/client-services/balances";
@@ -307,6 +308,17 @@ export const createClientService = async (
   return { ...service, storageKey: key };
 };
 
+export const validateServiceCanBeCancelled = (
+  invoices: ServiceInvoice[]
+): void => {
+  const openCount = computeOpenInvoiceCount(invoices);
+  if (openCount > 0) {
+    throw new ClientServiceValidationError(
+      `Void or cancel ${openCount} open invoice${openCount === 1 ? "" : "s"} before cancelling this service.`
+    );
+  }
+};
+
 export const updateClientService = async (
   clientId: string,
   serviceId: string,
@@ -314,6 +326,12 @@ export const updateClientService = async (
 ): Promise<ClientService> => {
   const existing = await readClientService(clientId, serviceId);
   if (!existing) throw new ClientServiceValidationError("Service not found");
+
+  const nextStatus = raw.status ?? existing.status;
+  if (nextStatus === "cancelled" && existing.status !== "cancelled") {
+    const invoices = await listInvoicesForService(clientId, serviceId);
+    validateServiceCanBeCancelled(invoices);
+  }
 
   const feeItems = resolveFeeItemsFromInput(raw, existing);
   const totalFeeCents = resolveTotalFeeCentsFromInput(feeItems, raw, existing);
@@ -358,7 +376,7 @@ export const updateClientService = async (
       raw.googleDocUrl !== undefined
         ? raw.googleDocUrl?.trim() || null
         : existing.googleDocUrl,
-    status: raw.status ?? existing.status,
+    status: nextStatus,
     notes: raw.notes !== undefined ? String(raw.notes).trim() : existing.notes,
     engagementId:
       raw.engagementId !== undefined ? raw.engagementId : existing.engagementId,
@@ -581,6 +599,11 @@ export const createServiceInvoice = async (
 ): Promise<ServiceInvoice> => {
   const service = await readClientService(clientId, serviceId);
   if (!service) throw new ClientServiceValidationError("Service not found");
+  if (service.status === "cancelled") {
+    throw new ClientServiceValidationError(
+      "Cannot create invoices on a cancelled service."
+    );
+  }
 
   const paymentMethod = String(raw.paymentMethod ?? "").trim();
   if (!paymentMethod) {

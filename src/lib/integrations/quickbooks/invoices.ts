@@ -2,50 +2,13 @@ import { serverQuickBooksConfig } from "@/config/quickbooks";
 import { QBO_API_MINOR_VERSION } from "@/lib/integrations/quickbooks/constants";
 import { quickBooksGet, quickBooksPost } from "@/lib/integrations/quickbooks/client";
 import type {
-  QuickBooksCreateCustomerInput,
   QuickBooksCreateInvoiceInput,
-  QuickBooksCustomer,
   QuickBooksInvoice,
   QuickBooksInvoiceLine,
 } from "@/lib/integrations/quickbooks/types";
 
 const escapeQueryValue = (value: string): string =>
   value.replace(/'/g, "\\'");
-
-export const findQuickBooksCustomerByEmail = async (
-  email: string
-): Promise<QuickBooksCustomer | null> => {
-  const query = `select * from Customer where PrimaryEmailAddr = '${escapeQueryValue(email)}'`;
-  const response = await quickBooksGet<{
-    QueryResponse?: { Customer?: QuickBooksCustomer[] };
-  }>(`/query?query=${encodeURIComponent(query)}`);
-
-  const customers = response.QueryResponse?.Customer ?? [];
-  return customers[0] ?? null;
-};
-
-export const createQuickBooksCustomer = async (
-  input: QuickBooksCreateCustomerInput
-): Promise<QuickBooksCustomer> => {
-  const response = await quickBooksPost<{ Customer: QuickBooksCustomer }>(
-    "/customer",
-    {
-      DisplayName: input.displayName,
-      GivenName: input.givenName,
-      FamilyName: input.familyName,
-      PrimaryEmailAddr: { Address: input.email },
-    }
-  );
-  return response.Customer;
-};
-
-export const ensureQuickBooksCustomer = async (
-  input: QuickBooksCreateCustomerInput
-): Promise<QuickBooksCustomer> => {
-  const existing = await findQuickBooksCustomerByEmail(input.email);
-  if (existing) return existing;
-  return createQuickBooksCustomer(input);
-};
 
 const buildInvoiceLines = (
   input: QuickBooksCreateInvoiceInput
