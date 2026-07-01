@@ -139,4 +139,25 @@ describe("engagementServiceSync", () => {
     expect(updated).toBe(false);
     expect(updateClientService).not.toHaveBeenCalled();
   });
+
+  it("preserves itemized fee lines when they match the engagement total", async () => {
+    readClientService.mockResolvedValue(
+      baseService({
+        totalFeeCents: 540_000,
+        feeItems: [
+          { id: "fee-1", label: "Doula fee", amountCents: 500_000 },
+          { id: "fee-2", label: "TNP", amountCents: 40_000 },
+        ],
+      })
+    );
+
+    const updated = await syncEngagementLinkedServiceTotal(
+      "client-1",
+      engagement,
+      packages
+    );
+
+    expect(updated).toBe(false);
+    expect(updateClientService).not.toHaveBeenCalled();
+  });
 });

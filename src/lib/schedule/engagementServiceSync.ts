@@ -14,7 +14,7 @@ export const sumEngagementPackageFees = (
 
 /**
  * Keep the linked ClientService total aligned with engagement package fees.
- * Clears itemized fee lines so the engagement package total is authoritative.
+ * Clears itemized fee lines only when they no longer match the engagement total.
  */
 export const syncEngagementLinkedServiceTotal = async (
   clientId: string,
@@ -32,8 +32,7 @@ export const syncEngagementLinkedServiceTotal = async (
   const itemizedTotal =
     service.feeItems.length > 0 ? sumFeeItemsCents(service.feeItems) : null;
   const effectiveTotal = itemizedTotal ?? service.totalFeeCents;
-  const alreadySynced =
-    effectiveTotal === totalFeeCents && service.feeItems.length === 0;
+  const alreadySynced = effectiveTotal === totalFeeCents;
 
   if (alreadySynced) return false;
 
