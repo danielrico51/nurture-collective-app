@@ -31,6 +31,8 @@ export interface QuickBooksCreateInvoiceInput {
     unitPrice?: number;
     itemId?: string;
   }>;
+  /** Used when a line omits itemId (e.g. e-commerce orders). Service invoices must set itemId per line. */
+  defaultItemId?: string;
   dueDate?: string;
   docNumber?: string;
   privateNote?: string;
@@ -49,6 +51,7 @@ export interface QuickBooksInvoice {
   CustomerRef?: QuickBooksRef;
   SyncToken?: string;
   InvoiceLink?: string;
+  Line?: QuickBooksInvoiceLine[];
 }
 
 export interface QuickBooksCustomer {

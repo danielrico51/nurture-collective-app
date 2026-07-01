@@ -17,6 +17,8 @@ export {
   getQuickBooksInvoice,
   fetchQuickBooksInvoicePaymentLink,
   resolveQuickBooksInvoicePaymentLink,
+  quickBooksInvoiceUsesServiceItemId,
+  readQuickBooksInvoiceServiceItemIds,
   sendQuickBooksInvoice,
   voidQuickBooksInvoice,
 } from "@/lib/integrations/quickbooks/invoices";

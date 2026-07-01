@@ -6,7 +6,10 @@ import {
   buildServiceInvoiceQuickBooksLineItems,
   resolveQuickBooksInvoiceAmounts,
 } from "@/lib/invoices/quickbooksInvoiceAmounts";
-import { resolveServiceInvoiceQuickBooksItemId } from "@/lib/invoices/quickbooksIncomeRouting";
+import {
+  resolveServiceInvoiceIncomeCategory,
+  resolveServiceInvoiceQuickBooksItemId,
+} from "@/lib/invoices/quickbooksIncomeRouting";
 import { readEngagementServiceType } from "@/lib/schedule/storage";
 import {
   createQuickBooksInvoice,
@@ -14,6 +17,7 @@ import {
   createQuickBooksSalesReceipt,
   ensureQuickBooksCustomer,
   getQuickBooksInvoice,
+  quickBooksInvoiceUsesServiceItemId,
   resolveQuickBooksInvoicePaymentLink,
   voidQuickBooksInvoice,
 } from "@/lib/integrations/quickbooks";
@@ -72,7 +76,8 @@ const invoiceFullyUnpaid = (balance: number | undefined, totalAmt: number | unde
 
 const refreshExistingQuickBooksInvoice = async (
   existing: ServiceInvoiceQuickBooksRef,
-  amounts: ReturnType<typeof resolveQuickBooksInvoiceAmounts>
+  amounts: ReturnType<typeof resolveQuickBooksInvoiceAmounts>,
+  itemId: string
 ): Promise<ServiceInvoiceQuickBooksRef> => {
   const paymentLink =
     existing.paymentLink ??
@@ -85,6 +90,7 @@ const refreshExistingQuickBooksInvoice = async (
     paymentLink,
     syncedSubtotalCents: amounts.subtotalCents,
     syncedAmountCents: amounts.amountCents,
+    syncedItemId: itemId || existing.syncedItemId,
     syncStatus: "synced",
     lastSyncAt: new Date().toISOString(),
     lastError: undefined,
@@ -118,6 +124,17 @@ const shouldReuseQuickBooksInvoice = async (
 
   if (itemId && existing.syncedItemId && existing.syncedItemId !== itemId) {
     return false;
+  }
+
+  if (itemId && existing.invoiceId) {
+    try {
+      const qbInvoice = await getQuickBooksInvoice(existing.invoiceId);
+      if (!quickBooksInvoiceUsesServiceItemId(qbInvoice, itemId)) {
+        return false;
+      }
+    } catch {
+      return false;
+    }
   }
 
   if (
@@ -198,14 +215,30 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
     service: input.service,
     engagementServiceType,
   });
+  const incomeCategory = resolveServiceInvoiceIncomeCategory({
+    invoice: input.invoice,
+    service: input.service,
+    engagementServiceType,
+  });
+
+  if (!quickBooksItemId) {
+    const configHint =
+      incomeCategory === "deposit"
+        ? "Set QBO_DEFERRED_REVENUE_ITEM_ID or QBO_DEPOSIT_ITEM_ID"
+        : "Set the category QuickBooks item env var or QBO_DEFAULT_ITEM_ID";
+    throw new Error(
+      `QuickBooks service item is not configured for ${incomeCategory}. ${configHint}.`
+    );
+  }
+
   const lineItems = buildServiceInvoiceQuickBooksLineItems({
     invoice: input.invoice,
     serviceTitle: input.service.title,
-    itemId: quickBooksItemId || undefined,
+    itemId: quickBooksItemId,
   });
 
   if (existing?.invoiceId && (await shouldReuseQuickBooksInvoice(existing, amounts, quickBooksItemId))) {
-    return refreshExistingQuickBooksInvoice(existing, amounts);
+    return refreshExistingQuickBooksInvoice(existing, amounts, quickBooksItemId);
   }
 
   if (existing?.invoiceId) {
