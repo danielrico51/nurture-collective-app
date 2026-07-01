@@ -57,7 +57,9 @@ export interface SyncExpectationInvoiceOptions {
   forceReissue?: boolean;
 }
 
-const isBillableExpectation = (expectation: ClientPaymentExpectation): boolean =>
+const isBillableExpectation = (
+  expectation: ClientPaymentExpectation
+): expectation is ClientPaymentExpectation & { kind: "deposit" | "balance" } =>
   (expectation.kind === "deposit" || expectation.kind === "balance") &&
   expectation.amountCents > 0;
 
