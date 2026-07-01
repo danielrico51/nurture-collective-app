@@ -20,7 +20,7 @@ import ServiceFeeItemsEditor, {
 } from "@/components/Admin/ServiceFeeItemsEditor";
 import { PAYMENT_METHODS, SERVICE_INVOICE_PAYMENT_METHODS, getPaymentMethod } from "@/config/paymentMethods";
 import { formatServiceInvoiceQuickBooksLabel } from "@/lib/invoices/quickbooksLabels";
-import { classifyServiceInvoiceIncomeCategory } from "@/lib/invoices/quickbooksIncomeRouting";
+import { classifyServiceInvoiceIncomeCategory } from "@/lib/invoices/quickbooksIncomeCategories";
 import {
   DEFAULT_PROCESSING_FEE_PERCENT,
   paymentMethodSupportsProcessingFee,

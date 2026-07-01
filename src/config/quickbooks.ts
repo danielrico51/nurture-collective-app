@@ -15,6 +15,25 @@ const readSyncMode = (): BillingSyncMode => {
 
 const readItemId = (key: string): string => process.env[key]?.trim() ?? "";
 
+/** Read QBO service item ids at call time (Amplify runtime env). */
+export const readQuickBooksCategoryItemId = (
+  category: import("@/types/clientService").QuickBooksIncomeCategory
+): string => {
+  const depositItemId =
+    readItemId("QBO_DEFERRED_REVENUE_ITEM_ID") ||
+    readItemId("QBO_DEPOSIT_ITEM_ID");
+  const itemIds = {
+    birth_services: readItemId("QBO_BIRTH_SERVICES_ITEM_ID"),
+    postpartum_support: readItemId("QBO_POSTPARTUM_SUPPORT_ITEM_ID"),
+    other_operation_income: readItemId("QBO_OTHER_OPERATION_INCOME_ITEM_ID"),
+    deposit: depositItemId,
+  };
+  if (category === "deposit") {
+    return itemIds.deposit;
+  }
+  return itemIds[category] || readItemId("QBO_DEFAULT_ITEM_ID");
+};
+
 /** Server-only QuickBooks Online + billing configuration. */
 export const serverQuickBooksConfig = {
   environment: readEnvironment(),
@@ -24,9 +43,10 @@ export const serverQuickBooksConfig = {
   refreshToken: process.env.QBO_REFRESH_TOKEN?.trim() ?? "",
   webhookVerifier: process.env.QBO_WEBHOOK_VERIFIER?.trim() ?? "",
   /** @deprecated Prefer category-specific itemIds below. */
+  /** @deprecated Prefer readQuickBooksCategoryItemId — cached at module load. */
   defaultItemId: readItemId("QBO_DEFAULT_ITEM_ID"),
   defaultIncomeAccountId: readItemId("QBO_DEFAULT_INCOME_ACCOUNT_ID"),
-  /** QBO service item for client deposits — must link to Deferred Revenue, not Services income. */
+  /** @deprecated Prefer readQuickBooksCategoryItemId — cached at module load. */
   itemIds: {
     birth_services: readItemId("QBO_BIRTH_SERVICES_ITEM_ID"),
     postpartum_support: readItemId("QBO_POSTPARTUM_SUPPORT_ITEM_ID"),

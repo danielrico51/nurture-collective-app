@@ -1,20 +1,10 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 import type { ClientService, ServiceInvoice } from "@/types/clientService";
-
-vi.mock("@/config/quickbooks", () => ({
-  serverQuickBooksConfig: {
-    defaultItemId: "fallback-item",
-    itemIds: {
-      birth_services: "birth-item",
-      postpartum_support: "postpartum-item",
-      other_operation_income: "other-item",
-      deposit: "deposit-item",
-    },
-  },
-}));
 
 import {
   classifyServiceInvoiceIncomeCategory,
+} from "@/lib/invoices/quickbooksIncomeCategories";
+import {
   resolveQuickBooksItemIdForCategory,
   resolveServiceInvoiceQuickBooksItemId,
 } from "@/lib/invoices/quickbooksIncomeRouting";
@@ -132,6 +122,19 @@ describe("classifyServiceInvoiceIncomeCategory", () => {
 });
 
 describe("resolveQuickBooksItemIdForCategory", () => {
+  beforeEach(() => {
+    vi.stubEnv("QBO_DEFAULT_ITEM_ID", "fallback-item");
+    vi.stubEnv("QBO_BIRTH_SERVICES_ITEM_ID", "birth-item");
+    vi.stubEnv("QBO_POSTPARTUM_SUPPORT_ITEM_ID", "postpartum-item");
+    vi.stubEnv("QBO_OTHER_OPERATION_INCOME_ITEM_ID", "other-item");
+    vi.stubEnv("QBO_DEPOSIT_ITEM_ID", "deposit-item");
+    vi.stubEnv("QBO_DEFERRED_REVENUE_ITEM_ID", "");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("maps categories to configured item ids with fallback", () => {
     expect(resolveQuickBooksItemIdForCategory("deposit")).toBe("deposit-item");
     expect(resolveQuickBooksItemIdForCategory("birth_services")).toBe("birth-item");
@@ -142,31 +145,31 @@ describe("resolveQuickBooksItemIdForCategory", () => {
       "other-item"
     );
   });
-});
 
-describe("resolveQuickBooksItemIdForCategory without deposit item", () => {
-  it("does not fall back to the generic Services item for deposits", async () => {
-    vi.resetModules();
-    vi.doMock("@/config/quickbooks", () => ({
-      serverQuickBooksConfig: {
-        defaultItemId: "fallback-item",
-        itemIds: {
-          birth_services: "",
-          postpartum_support: "postpartum-item",
-          other_operation_income: "",
-          deposit: "",
-        },
-      },
-    }));
-    const { resolveQuickBooksItemIdForCategory: resolve } = await import(
-      "@/lib/invoices/quickbooksIncomeRouting"
+  it("does not fall back to the generic Services item for deposits", () => {
+    vi.stubEnv("QBO_DEPOSIT_ITEM_ID", "");
+    vi.stubEnv("QBO_DEFERRED_REVENUE_ITEM_ID", "");
+    expect(resolveQuickBooksItemIdForCategory("deposit")).toBe("");
+    expect(resolveQuickBooksItemIdForCategory("postpartum_support")).toBe(
+      "postpartum-item"
     );
-    expect(resolve("deposit")).toBe("");
-    expect(resolve("postpartum_support")).toBe("postpartum-item");
+  });
+
+  it("prefers QBO_DEFERRED_REVENUE_ITEM_ID over QBO_DEPOSIT_ITEM_ID", () => {
+    vi.stubEnv("QBO_DEFERRED_REVENUE_ITEM_ID", "deferred-item");
+    expect(resolveQuickBooksItemIdForCategory("deposit")).toBe("deferred-item");
   });
 });
 
 describe("resolveServiceInvoiceQuickBooksItemId", () => {
+  beforeEach(() => {
+    vi.stubEnv("QBO_DEPOSIT_ITEM_ID", "deposit-item");
+  });
+
+  afterEach(() => {
+    vi.unstubAllEnvs();
+  });
+
   it("returns the item id for the classified category", () => {
     expect(
       resolveServiceInvoiceQuickBooksItemId({
@@ -178,6 +181,7 @@ describe("resolveServiceInvoiceQuickBooksItemId", () => {
   });
 
   it("uses an explicit income category when set on the invoice", () => {
+    vi.stubEnv("QBO_OTHER_OPERATION_INCOME_ITEM_ID", "other-item");
     expect(
       resolveServiceInvoiceQuickBooksItemId({
         invoice: baseInvoice({
