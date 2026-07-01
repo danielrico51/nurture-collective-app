@@ -40,7 +40,7 @@ export const QUICKBOOKS_INCOME_CATEGORY_LABELS: Record<
   QuickBooksIncomeCategory,
   string
 > = {
-  deposit: "Deposits",
+  deposit: "Deferred Revenue",
   birth_services: "Birth Doula Services",
   postpartum_support: "Postpartum Doula Services",
   other_operation_income: "Other Operating Income (Classes, Massages, etc.)",

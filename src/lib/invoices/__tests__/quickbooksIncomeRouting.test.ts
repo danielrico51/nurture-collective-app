@@ -81,6 +81,14 @@ describe("classifyServiceInvoiceIncomeCategory", () => {
         engagementServiceType: "postpartum",
       })
     ).toBe("deposit");
+
+    expect(
+      classifyServiceInvoiceIncomeCategory({
+        invoice: baseInvoice({ description: "Initial deposit" }),
+        service: baseService(),
+        engagementServiceType: "postpartum",
+      })
+    ).toBe("deposit");
   });
 
   it("routes birth engagement balances to birth services", () => {
@@ -133,6 +141,28 @@ describe("resolveQuickBooksItemIdForCategory", () => {
     expect(resolveQuickBooksItemIdForCategory("other_operation_income")).toBe(
       "other-item"
     );
+  });
+});
+
+describe("resolveQuickBooksItemIdForCategory without deposit item", () => {
+  it("does not fall back to the generic Services item for deposits", async () => {
+    vi.resetModules();
+    vi.doMock("@/config/quickbooks", () => ({
+      serverQuickBooksConfig: {
+        defaultItemId: "fallback-item",
+        itemIds: {
+          birth_services: "",
+          postpartum_support: "postpartum-item",
+          other_operation_income: "",
+          deposit: "",
+        },
+      },
+    }));
+    const { resolveQuickBooksItemIdForCategory: resolve } = await import(
+      "@/lib/invoices/quickbooksIncomeRouting"
+    );
+    expect(resolve("deposit")).toBe("");
+    expect(resolve("postpartum_support")).toBe("postpartum-item");
   });
 });
 

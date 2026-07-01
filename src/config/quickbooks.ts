@@ -26,12 +26,14 @@ export const serverQuickBooksConfig = {
   /** @deprecated Prefer category-specific itemIds below. */
   defaultItemId: readItemId("QBO_DEFAULT_ITEM_ID"),
   defaultIncomeAccountId: readItemId("QBO_DEFAULT_INCOME_ACCOUNT_ID"),
-  /** QBO service items — each item maps to an income account in QuickBooks. */
+  /** QBO service item for client deposits — must link to Deferred Revenue, not Services income. */
   itemIds: {
     birth_services: readItemId("QBO_BIRTH_SERVICES_ITEM_ID"),
     postpartum_support: readItemId("QBO_POSTPARTUM_SUPPORT_ITEM_ID"),
     other_operation_income: readItemId("QBO_OTHER_OPERATION_INCOME_ITEM_ID"),
-    deposit: readItemId("QBO_DEPOSIT_ITEM_ID"),
+    deposit:
+      readItemId("QBO_DEFERRED_REVENUE_ITEM_ID") ||
+      readItemId("QBO_DEPOSIT_ITEM_ID"),
   },
   redirectUri: process.env.QBO_REDIRECT_URI?.trim() ?? "",
   syncMode: readSyncMode(),

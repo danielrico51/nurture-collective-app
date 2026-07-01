@@ -182,7 +182,8 @@ QuickBooks routes revenue through **service items**, each linked to an income ac
 
 | Env var | Use for |
 |---------|---------|
-| `QBO_DEPOSIT_ITEM_ID` | Deposit invoices (`description: Deposit`) |
+| `QBO_DEFERRED_REVENUE_ITEM_ID` | Client deposit invoices — QBO **Service** item whose account is **Deferred Revenue** (liability), not Services income |
+| `QBO_DEPOSIT_ITEM_ID` | Alias for `QBO_DEFERRED_REVENUE_ITEM_ID` (legacy name) |
 | `QBO_BIRTH_SERVICES_ITEM_ID` | Birth doula engagements and birth-related services |
 | `QBO_POSTPARTUM_SUPPORT_ITEM_ID` | Postpartum engagements and doula care balances |
 | `QBO_OTHER_OPERATION_INCOME_ITEM_ID` | Classes, massages, gift cards — QBO service item **Other Operating Income (Classes, Massages, etc.)** (must be a Service item linked to that income account) |

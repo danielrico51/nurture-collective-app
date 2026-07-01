@@ -8,7 +8,7 @@ import type { EngagementServiceType } from "@/types/serviceEngagement";
 
 export type { QuickBooksIncomeCategory };
 
-const DEPOSIT_DESCRIPTION = /^deposit$/i;
+const DEPOSIT_DESCRIPTION = /\bdeposit\b/i;
 
 const OTHER_OPERATION_TITLE =
   /\b(massage|class|cpr|workshop|lactation consult|gift card|egift|event|training|course)\b/i;
@@ -64,6 +64,10 @@ export const resolveQuickBooksItemIdForCategory = (
 ): string => {
   const { itemIds, defaultItemId } = serverQuickBooksConfig;
   const categoryItemId = itemIds[category];
+  // Deposits must hit Deferred Revenue — never fall back to the generic Services item.
+  if (category === "deposit") {
+    return categoryItemId || "";
+  }
   return categoryItemId || defaultItemId || "";
 };
 

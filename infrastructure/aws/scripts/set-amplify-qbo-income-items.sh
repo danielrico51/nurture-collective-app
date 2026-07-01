@@ -5,7 +5,8 @@
 #   QBO_BIRTH_SERVICES_ITEM_ID=2 \
 #   QBO_POSTPARTUM_SUPPORT_ITEM_ID=3 \
 #   QBO_OTHER_OPERATION_INCOME_ITEM_ID=12 \
-#   QBO_DEPOSIT_ITEM_ID=5 \
+#   QBO_DEFERRED_REVENUE_ITEM_ID=11  (Service item → Deferred Revenue liability; alias: QBO_DEPOSIT_ITEM_ID)
+#   QBO_DEPOSIT_ITEM_ID=11 \
 #   ./infrastructure/aws/scripts/set-amplify-qbo-income-items.sh
 #
 # Usage (single branch):
