@@ -48,6 +48,7 @@ const baseInvoice = (overrides: Partial<ServiceInvoice> = {}): ServiceInvoice =>
   processingFeePercent: null,
   amountCents: 50_000,
   description: "Balance",
+  quickbooksIncomeCategory: null,
   dueDate: "2026-03-01",
   paymentMethod: "quickbooks",
   status: "sent",
@@ -144,5 +145,18 @@ describe("resolveServiceInvoiceQuickBooksItemId", () => {
         engagementServiceType: "postpartum",
       })
     ).toBe("deposit-item");
+  });
+
+  it("uses an explicit income category when set on the invoice", () => {
+    expect(
+      resolveServiceInvoiceQuickBooksItemId({
+        invoice: baseInvoice({
+          description: "Balance",
+          quickbooksIncomeCategory: "other_operation_income",
+        }),
+        service: baseService({ title: "Postpartum doula 2026" }),
+        engagementServiceType: "postpartum",
+      })
+    ).toBe("other-item");
   });
 });

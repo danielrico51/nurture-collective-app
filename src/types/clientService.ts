@@ -22,6 +22,36 @@ export type ServiceInvoiceStatus =
   | "cancelled"
   | "refunded";
 
+/** QuickBooks income account routing via linked service items. */
+export type QuickBooksIncomeCategory =
+  | "deposit"
+  | "birth_services"
+  | "postpartum_support"
+  | "other_operation_income";
+
+export const QUICKBOOKS_INCOME_CATEGORIES: QuickBooksIncomeCategory[] = [
+  "deposit",
+  "birth_services",
+  "postpartum_support",
+  "other_operation_income",
+];
+
+export const QUICKBOOKS_INCOME_CATEGORY_LABELS: Record<
+  QuickBooksIncomeCategory,
+  string
+> = {
+  deposit: "Deposits",
+  birth_services: "Birth Doula Services",
+  postpartum_support: "Postpartum Doula Services",
+  other_operation_income: "Other Operating Income (Classes, Massages, etc.)",
+};
+
+export const isQuickBooksIncomeCategory = (
+  value: unknown
+): value is QuickBooksIncomeCategory =>
+  typeof value === "string" &&
+  (QUICKBOOKS_INCOME_CATEGORIES as string[]).includes(value);
+
 export const SERVICE_INVOICE_STATUSES: ServiceInvoiceStatus[] = [
   "draft",
   "sent",
@@ -44,6 +74,8 @@ export interface ServiceInvoiceQuickBooksRef {
   syncedSubtotalCents?: number;
   /** Total (subtotal + fee) last synced to QuickBooks. */
   syncedAmountCents?: number;
+  /** QBO service item Id used on the last sync. */
+  syncedItemId?: string;
   syncStatus?: "pending" | "synced" | "failed";
   lastSyncAt?: string;
   lastError?: string;
@@ -71,6 +103,8 @@ export interface ServiceInvoice {
   /** Total due (subtotal + processing fee). */
   amountCents: number;
   description: string;
+  /** Explicit QBO income routing; null uses legacy inference at sync time. */
+  quickbooksIncomeCategory: QuickBooksIncomeCategory | null;
   dueDate: string | null;
   paymentMethod: PaymentMethodId;
   status: ServiceInvoiceStatus;
@@ -178,6 +212,7 @@ export interface CreateServiceInvoiceInput {
   applyProcessingFee?: boolean;
   processingFeePercent?: number | null;
   description?: string;
+  quickbooksIncomeCategory?: QuickBooksIncomeCategory | null;
   dueDate?: string | null;
   paymentMethod: PaymentMethodId;
   installmentIndex?: number | null;
@@ -211,6 +246,7 @@ export interface UpdateServiceInvoiceInput {
   applyProcessingFee?: boolean;
   processingFeePercent?: number | null;
   description?: string;
+  quickbooksIncomeCategory?: QuickBooksIncomeCategory | null;
   dueDate?: string | null;
   paymentMethod?: PaymentMethodId;
   notes?: string;

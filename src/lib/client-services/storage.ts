@@ -46,10 +46,12 @@ import type {
   CreateClientServiceInput,
   CreateServiceInvoiceInput,
   InvoiceDispatchActor,
+  QuickBooksIncomeCategory,
   ServiceInvoice,
   UpdateClientServiceInput,
   UpdateServiceInvoiceInput,
 } from "@/types/clientService";
+import { isQuickBooksIncomeCategory } from "@/types/clientService";
 
 export class ClientServiceValidationError extends Error {
   constructor(message: string) {
@@ -162,6 +164,7 @@ const normalizeServiceInvoice = (
 ): ServiceInvoice => {
   return {
     ...withNormalizedInvoiceAmounts(record),
+    quickbooksIncomeCategory: record.quickbooksIncomeCategory ?? null,
     customerName: record.customerName ?? "",
     customerEmail: record.customerEmail ?? "",
     paymentInstructions: record.paymentInstructions ?? "",
@@ -399,9 +402,21 @@ const hasInvoiceFieldEdits = (raw: UpdateServiceInvoiceInput): boolean =>
   raw.applyProcessingFee !== undefined ||
   raw.processingFeePercent !== undefined ||
   raw.description !== undefined ||
+  raw.quickbooksIncomeCategory !== undefined ||
   raw.dueDate !== undefined ||
   raw.paymentMethod !== undefined ||
   raw.notes !== undefined;
+
+const parseQuickBooksIncomeCategoryInput = (
+  raw: QuickBooksIncomeCategory | null | undefined
+): QuickBooksIncomeCategory | null | undefined => {
+  if (raw === undefined) return undefined;
+  if (raw === null) return null;
+  if (!isQuickBooksIncomeCategory(raw)) {
+    throw new ClientServiceValidationError("Invalid QuickBooks income category");
+  }
+  return raw;
+};
 
 const invoiceAmountFieldsChanged = (raw: UpdateServiceInvoiceInput): boolean =>
   raw.amountCents !== undefined ||
@@ -525,6 +540,10 @@ const mergeInvoiceFieldUpdates = (
     throw new ClientServiceValidationError("Invoice amount must be greater than zero");
   }
 
+  const quickbooksIncomeCategory = parseQuickBooksIncomeCategoryInput(
+    raw.quickbooksIncomeCategory
+  );
+
   return {
     ...existing,
     ...amountFields,
@@ -532,6 +551,10 @@ const mergeInvoiceFieldUpdates = (
       raw.description !== undefined
         ? String(raw.description).trim()
         : existing.description,
+    quickbooksIncomeCategory:
+      quickbooksIncomeCategory !== undefined
+        ? quickbooksIncomeCategory
+        : existing.quickbooksIncomeCategory,
     dueDate: raw.dueDate !== undefined ? raw.dueDate : existing.dueDate,
     paymentMethod,
     notes: raw.notes !== undefined ? String(raw.notes).trim() : existing.notes,
@@ -623,6 +646,8 @@ export const createServiceInvoice = async (
       (raw.installmentIndex
         ? `Installment ${raw.installmentIndex}${raw.installmentTotal ? ` of ${raw.installmentTotal}` : ""}`
         : service.title),
+    quickbooksIncomeCategory:
+      parseQuickBooksIncomeCategoryInput(raw.quickbooksIncomeCategory) ?? null,
     dueDate: raw.dueDate ?? null,
     paymentMethod,
     status: "draft",

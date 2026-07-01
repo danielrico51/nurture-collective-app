@@ -8,6 +8,7 @@ import {
 } from "@/lib/client-services/storage";
 import { savePaymentExpectation } from "@/lib/schedule/expectationStorage";
 import { invoiceMatchesExpectation } from "@/lib/schedule/expectationInvoiceSync";
+import { resolveExpectationQuickBooksIncomeCategory } from "@/lib/invoices/quickbooksIncomeRouting";
 import type {
   PaymentMethodId,
   ServiceInvoice,
@@ -104,6 +105,10 @@ export const syncExpectationToServiceInvoice = async (
   }
 
   const description = expectation.kind === "deposit" ? "Deposit" : "Balance";
+  const quickbooksIncomeCategory = resolveExpectationQuickBooksIncomeCategory({
+    kind: expectation.kind,
+    engagementServiceType: engagement.serviceType,
+  });
   const paymentMethod = resolveExpectationPaymentMethod(
     engagement.preferredPaymentMethod
   );
@@ -177,6 +182,7 @@ export const syncExpectationToServiceInvoice = async (
         amountCents: expectation.amountCents,
         paymentMethod,
         description,
+        quickbooksIncomeCategory,
         dueDate: expectation.dueDate,
         notes: expectation.notes || `Engagement ${expectation.kind}`,
         send: shouldAutoSendPriorInvoice(priorStatus),
@@ -203,6 +209,7 @@ export const syncExpectationToServiceInvoice = async (
     amountCents: expectation.amountCents,
     paymentMethod,
     description,
+    quickbooksIncomeCategory,
     dueDate: expectation.dueDate,
     notes: expectation.notes || `Engagement ${expectation.kind}`,
   });

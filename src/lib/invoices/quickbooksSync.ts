@@ -46,6 +46,7 @@ const buildQuickBooksInvoiceRef = (
   invoiceNumber: string,
   paymentLink: string | null,
   amounts: ReturnType<typeof resolveQuickBooksInvoiceAmounts>,
+  itemId: string,
   existing?: ServiceInvoiceQuickBooksRef | null
 ): ServiceInvoiceQuickBooksRef => ({
   ...existing,
@@ -55,6 +56,7 @@ const buildQuickBooksInvoiceRef = (
   paymentLink,
   syncedSubtotalCents: amounts.subtotalCents,
   syncedAmountCents: amounts.amountCents,
+  syncedItemId: itemId || existing?.syncedItemId,
   syncStatus: "synced",
   lastSyncAt: new Date().toISOString(),
   lastError: undefined,
@@ -107,9 +109,14 @@ const voidStaleQuickBooksInvoice = async (
 
 const shouldReuseQuickBooksInvoice = async (
   existing: ServiceInvoiceQuickBooksRef,
-  amounts: ReturnType<typeof resolveQuickBooksInvoiceAmounts>
+  amounts: ReturnType<typeof resolveQuickBooksInvoiceAmounts>,
+  itemId: string
 ): Promise<boolean> => {
   if (!existing.invoiceId || existing.syncStatus !== "synced") {
+    return false;
+  }
+
+  if (itemId && existing.syncedItemId && existing.syncedItemId !== itemId) {
     return false;
   }
 
@@ -197,7 +204,7 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
     itemId: quickBooksItemId || undefined,
   });
 
-  if (existing?.invoiceId && (await shouldReuseQuickBooksInvoice(existing, amounts))) {
+  if (existing?.invoiceId && (await shouldReuseQuickBooksInvoice(existing, amounts, quickBooksItemId))) {
     return refreshExistingQuickBooksInvoice(existing, amounts);
   }
 
@@ -252,6 +259,7 @@ export const syncServiceInvoiceToQuickBooks = async (input: {
     qbInvoice.DocNumber ?? docNumber,
     paymentLink,
     amounts,
+    quickBooksItemId,
     existing?.invoiceId ? { ...existing, invoiceId: undefined } : existing
   );
 };
@@ -312,6 +320,7 @@ const syncServiceInvoiceSalesReceiptDirect = async (input: {
     salesReceiptNumber: receipt.DocNumber,
     syncedSubtotalCents: amounts.subtotalCents,
     syncedAmountCents: amounts.amountCents,
+    syncedItemId: quickBooksItemId || existing?.syncedItemId,
     syncStatus: "synced",
     lastSyncAt: new Date().toISOString(),
     lastError: undefined,

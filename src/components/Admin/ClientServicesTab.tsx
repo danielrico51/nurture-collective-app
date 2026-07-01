@@ -20,6 +20,7 @@ import ServiceFeeItemsEditor, {
 } from "@/components/Admin/ServiceFeeItemsEditor";
 import { PAYMENT_METHODS, SERVICE_INVOICE_PAYMENT_METHODS, getPaymentMethod } from "@/config/paymentMethods";
 import { formatServiceInvoiceQuickBooksLabel } from "@/lib/invoices/quickbooksLabels";
+import { classifyServiceInvoiceIncomeCategory } from "@/lib/invoices/quickbooksIncomeRouting";
 import {
   DEFAULT_PROCESSING_FEE_PERCENT,
   paymentMethodSupportsProcessingFee,
@@ -28,7 +29,12 @@ import {
 import type {
   ClientServiceWithInvoices,
   PaymentMethodId,
+  QuickBooksIncomeCategory,
   ServiceInvoiceStatus,
+} from "@/types/clientService";
+import {
+  QUICKBOOKS_INCOME_CATEGORIES,
+  QUICKBOOKS_INCOME_CATEGORY_LABELS,
 } from "@/types/clientService";
 import type {
   ClientPaymentExpectation,
@@ -71,17 +77,22 @@ interface InvoiceFormDraft {
   dueDate: string;
   applyProcessingFee: boolean;
   processingFeePercent: string;
+  incomeCategory: QuickBooksIncomeCategory;
 }
 
-const invoiceFormDraftFromInvoice = (invoice: {
-  subtotalCents: number;
-  processingFeeCents: number;
-  processingFeePercent: number | null;
-  paymentMethod: PaymentMethodId;
-  description: string;
-  notes: string;
-  dueDate: string | null;
-}): InvoiceFormDraft => ({
+const invoiceFormDraftFromInvoice = (
+  invoice: {
+    subtotalCents: number;
+    processingFeeCents: number;
+    processingFeePercent: number | null;
+    paymentMethod: PaymentMethodId;
+    description: string;
+    notes: string;
+    dueDate: string | null;
+    quickbooksIncomeCategory?: QuickBooksIncomeCategory | null;
+  },
+  fallbackIncomeCategory: QuickBooksIncomeCategory
+): InvoiceFormDraft => ({
   amount: (invoice.subtotalCents / 100).toFixed(2),
   method: invoice.paymentMethod,
   description: invoice.description,
@@ -91,6 +102,7 @@ const invoiceFormDraftFromInvoice = (invoice: {
   processingFeePercent: String(
     invoice.processingFeePercent ?? DEFAULT_PROCESSING_FEE_PERCENT
   ),
+  incomeCategory: invoice.quickbooksIncomeCategory ?? fallbackIncomeCategory,
 });
 
 const previewInvoiceAmounts = (draft: InvoiceFormDraft) => {
@@ -140,6 +152,8 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
   const [invoiceProcessingFeePercent, setInvoiceProcessingFeePercent] = useState(
     String(DEFAULT_PROCESSING_FEE_PERCENT)
   );
+  const [invoiceIncomeCategory, setInvoiceIncomeCategory] =
+    useState<QuickBooksIncomeCategory>("postpartum_support");
   const [editingInvoiceKey, setEditingInvoiceKey] = useState<string | null>(null);
   const [editInvoiceDraft, setEditInvoiceDraft] = useState<InvoiceFormDraft | null>(
     null
@@ -215,6 +229,33 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
     return map;
   }, [engagements]);
 
+  const inferIncomeCategoryForService = useCallback(
+    (
+      service: ClientServiceWithInvoices,
+      description: string
+    ): QuickBooksIncomeCategory => {
+      const engagement = engagements.find(
+        (row) => row.serviceId === service.serviceId
+      );
+      return classifyServiceInvoiceIncomeCategory({
+        invoice: { description: description.trim() || "Balance" },
+        service,
+        engagementServiceType: engagement?.serviceType ?? null,
+      });
+    },
+    [engagements]
+  );
+
+  const expandedService = useMemo(
+    () => services.find((service) => service.serviceId === expandedId) ?? null,
+    [services, expandedId]
+  );
+
+  const inferredNewInvoiceCategory = useMemo(() => {
+    if (!expandedService) return "postpartum_support" as QuickBooksIncomeCategory;
+    return inferIncomeCategoryForService(expandedService, invoiceDescription);
+  }, [expandedService, inferIncomeCategoryForService, invoiceDescription]);
+
   useEffect(() => {
     if (!expandedId) return;
     const preferred = preferredPaymentMethodByServiceId.get(expandedId);
@@ -222,6 +263,13 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
       setInvoiceMethod(preferred);
     }
   }, [expandedId, preferredPaymentMethodByServiceId]);
+
+  useEffect(() => {
+    if (!expandedService) return;
+    setInvoiceIncomeCategory(
+      inferIncomeCategoryForService(expandedService, invoiceDescription)
+    );
+  }, [expandedId]);
 
   const newInvoicePreview = useMemo(
     () =>
@@ -233,6 +281,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
         dueDate: invoiceDueDate,
         applyProcessingFee: invoiceApplyProcessingFee,
         processingFeePercent: invoiceProcessingFeePercent,
+        incomeCategory: invoiceIncomeCategory,
       }),
     [
       invoiceAmount,
@@ -374,6 +423,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
         processingFeePercent: amounts.processingFeePercent,
         paymentMethod: invoiceMethod,
         description: invoiceDescription.trim() || undefined,
+        quickbooksIncomeCategory: invoiceIncomeCategory,
         notes: invoiceNotes.trim() || undefined,
         dueDate: invoiceDueDate || null,
         send: options?.markPaid ? false : (options?.send ?? true),
@@ -532,10 +582,16 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
 
   const startEditingInvoice = (
     serviceId: string,
-    invoice: ClientServiceWithInvoices["invoices"][number]
+    invoice: ClientServiceWithInvoices["invoices"][number],
+    service: ClientServiceWithInvoices
   ) => {
     setEditingInvoiceKey(`${serviceId}:${invoice.invoiceId}`);
-    setEditInvoiceDraft(invoiceFormDraftFromInvoice(invoice));
+    setEditInvoiceDraft(
+      invoiceFormDraftFromInvoice(
+        invoice,
+        inferIncomeCategoryForService(service, invoice.description)
+      )
+    );
   };
 
   const cancelEditingInvoice = () => {
@@ -660,6 +716,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
         processingFeePercent: amounts.processingFeePercent,
         paymentMethod: editInvoiceDraft.method,
         description: editInvoiceDraft.description.trim(),
+        quickbooksIncomeCategory: editInvoiceDraft.incomeCategory,
         notes: editInvoiceDraft.notes.trim(),
         dueDate: editInvoiceDraft.dueDate || null,
         markSent: options.markSent,
@@ -684,6 +741,45 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
       setSaving(false);
     }
   };
+
+  const renderIncomeCategoryField = (
+    value: QuickBooksIncomeCategory,
+    onChange: (category: QuickBooksIncomeCategory) => void,
+    options?: { disabled?: boolean; suggestedCategory?: QuickBooksIncomeCategory }
+  ) => (
+    <label className="block sm:col-span-2">
+      <span className="text-xs text-nurture-charcoal/60">
+        QuickBooks income account
+      </span>
+      <select
+        value={value}
+        disabled={options?.disabled ?? saving}
+        onChange={(event) =>
+          onChange(event.target.value as QuickBooksIncomeCategory)
+        }
+        className="mt-1 w-full rounded-xl border border-nurture-sage/30 px-3 py-2 text-sm"
+      >
+        {QUICKBOOKS_INCOME_CATEGORIES.map((category) => (
+          <option key={category} value={category}>
+            {QUICKBOOKS_INCOME_CATEGORY_LABELS[category]}
+          </option>
+        ))}
+      </select>
+      <p className="mt-1 text-[11px] text-nurture-charcoal/50">
+        Routes this invoice to the matching QuickBooks service item when synced.
+      </p>
+      {options?.suggestedCategory && options.suggestedCategory !== value ? (
+        <button
+          type="button"
+          disabled={options?.disabled ?? saving}
+          onClick={() => onChange(options.suggestedCategory!)}
+          className="mt-1 text-[11px] text-nurture-sage-dark hover:underline disabled:opacity-60"
+        >
+          Use suggested: {QUICKBOOKS_INCOME_CATEGORY_LABELS[options.suggestedCategory]}
+        </button>
+      ) : null}
+    </label>
+  );
 
   const renderProcessingFeeFields = (
     draft: InvoiceFormDraft,
@@ -831,6 +927,11 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
               setEditInvoiceDraft((current) =>
                 current ? { ...current, ...updates } : current
               )
+          )}
+          {renderIncomeCategoryField(editInvoiceDraft.incomeCategory, (category) =>
+            setEditInvoiceDraft((current) =>
+              current ? { ...current, incomeCategory: category } : current
+            )
           )}
           <label className="block sm:col-span-2">
             <span className="text-xs text-nurture-charcoal/60">Description</span>
@@ -1399,6 +1500,21 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     (m) => m.id === invoice.paymentMethod
                                   )?.label ?? invoice.paymentMethod}
                                 </p>
+                                <p className="text-nurture-charcoal/60">
+                                  QBO income:{" "}
+                                  {QUICKBOOKS_INCOME_CATEGORY_LABELS[
+                                    invoice.quickbooksIncomeCategory ??
+                                      inferIncomeCategoryForService(
+                                        service,
+                                        invoice.description
+                                      )
+                                  ]}
+                                  {!invoice.quickbooksIncomeCategory ? (
+                                    <span className="ml-1 text-amber-700">
+                                      (inferred)
+                                    </span>
+                                  ) : null}
+                                </p>
                                 {linkedExpectation ? (
                                   <p className="text-nurture-charcoal/60">
                                     Linked {linkedExpectation.expectation.kind}{" "}
@@ -1527,7 +1643,11 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                     type="button"
                                     disabled={saving}
                                     onClick={() =>
-                                      startEditingInvoice(service.serviceId, invoice)
+                                      startEditingInvoice(
+                                        service.serviceId,
+                                        invoice,
+                                        service
+                                      )
                                     }
                                     className="text-nurture-charcoal font-medium hover:underline disabled:opacity-60"
                                   >
@@ -1758,6 +1878,7 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                               description: invoiceDescription,
                               notes: invoiceNotes,
                               dueDate: invoiceDueDate,
+                              incomeCategory: invoiceIncomeCategory,
                             },
                             newInvoicePreview,
                             (updates) => {
@@ -1775,6 +1896,11 @@ const ClientServicesTab = ({ clientId, onChanged }: ClientServicesTabProps) => {
                                 setInvoiceAmount(updates.amount);
                               }
                             }
+                          )}
+                          {renderIncomeCategoryField(
+                            invoiceIncomeCategory,
+                            setInvoiceIncomeCategory,
+                            { suggestedCategory: inferredNewInvoiceCategory }
                           )}
                           <label className="block sm:col-span-2">
                             <span className="text-xs text-nurture-charcoal/60">

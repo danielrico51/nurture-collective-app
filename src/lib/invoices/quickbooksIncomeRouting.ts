@@ -1,12 +1,12 @@
 import { serverQuickBooksConfig } from "@/config/quickbooks";
-import type { ClientService, ServiceInvoice } from "@/types/clientService";
+import type {
+  ClientService,
+  QuickBooksIncomeCategory,
+  ServiceInvoice,
+} from "@/types/clientService";
 import type { EngagementServiceType } from "@/types/serviceEngagement";
 
-export type QuickBooksIncomeCategory =
-  | "deposit"
-  | "birth_services"
-  | "postpartum_support"
-  | "other_operation_income";
+export type { QuickBooksIncomeCategory };
 
 const DEPOSIT_DESCRIPTION = /^deposit$/i;
 
@@ -20,8 +20,8 @@ const POSTPARTUM_SERVICE_TITLE =
   /\b(postpartum|overnight|newborn care|night doula|day doula)\b/i;
 
 export const classifyServiceInvoiceIncomeCategory = (input: {
-  invoice: ServiceInvoice;
-  service: ClientService;
+  invoice: Pick<ServiceInvoice, "description">;
+  service: Pick<ClientService, "title">;
   engagementServiceType?: EngagementServiceType | null;
 }): QuickBooksIncomeCategory => {
   const description = input.invoice.description.trim();
@@ -49,6 +49,16 @@ export const classifyServiceInvoiceIncomeCategory = (input: {
   return "postpartum_support";
 };
 
+export const resolveExpectationQuickBooksIncomeCategory = (input: {
+  kind: "deposit" | "balance";
+  engagementServiceType: EngagementServiceType;
+}): QuickBooksIncomeCategory => {
+  if (input.kind === "deposit") return "deposit";
+  if (input.engagementServiceType === "birth") return "birth_services";
+  if (input.engagementServiceType === "other") return "other_operation_income";
+  return "postpartum_support";
+};
+
 export const resolveQuickBooksItemIdForCategory = (
   category: QuickBooksIncomeCategory
 ): string => {
@@ -57,11 +67,19 @@ export const resolveQuickBooksItemIdForCategory = (
   return categoryItemId || defaultItemId || "";
 };
 
+export const resolveServiceInvoiceIncomeCategory = (input: {
+  invoice: Pick<ServiceInvoice, "description" | "quickbooksIncomeCategory">;
+  service: Pick<ClientService, "title">;
+  engagementServiceType?: EngagementServiceType | null;
+}): QuickBooksIncomeCategory =>
+  input.invoice.quickbooksIncomeCategory ??
+  classifyServiceInvoiceIncomeCategory(input);
+
 export const resolveServiceInvoiceQuickBooksItemId = (input: {
-  invoice: ServiceInvoice;
-  service: ClientService;
+  invoice: Pick<ServiceInvoice, "description" | "quickbooksIncomeCategory">;
+  service: Pick<ClientService, "title">;
   engagementServiceType?: EngagementServiceType | null;
 }): string => {
-  const category = classifyServiceInvoiceIncomeCategory(input);
+  const category = resolveServiceInvoiceIncomeCategory(input);
   return resolveQuickBooksItemIdForCategory(category);
 };
